@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a0a">
+    <title>O Que Assistir?</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<!-- LOGIN OVERLAY -->
+<div class="login-overlay" id="login-overlay">
+    <div class="login-box">
+        <div class="login-logo">
+            <h1>🎬</h1>
+            <p>O Que Assistir?</p>
+        </div>
+
+        <div class="login-tabs" role="tablist" aria-label="Opções de autenticação">
+            <button class="login-tab active" role="tab" aria-selected="true" aria-controls="login-form" onclick="switchLoginTab('login')" tabindex="0">Entrar</button>
+            <button class="login-tab" role="tab" aria-selected="false" aria-controls="register-form" onclick="switchLoginTab('register')" tabindex="-1">Criar Conta</button>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <div class="login-form active" id="login-form" role="tabpanel" aria-labelledby="login-tab">
+            <div class="error-message" id="login-error" role="alert" aria-live="polite"></div>
+            <div class="form-group">
+                <label for="login-username">Usuário</label>
+                <input type="text" id="login-username" placeholder="Digite seu usuário" aria-required="true" autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="login-password">Senha</label>
+                <input type="password" id="login-password" placeholder="Digite sua senha" aria-required="true" autocomplete="current-password">
+            </div>
+            <button class="btn-login ripple" onclick="loginUser()" aria-label="Fazer login">Entrar</button>
+            <button class="btn-guest ripple" onclick="loginAsGuest()" aria-label="Entrar como convidado sem criar conta">🚶 Entrar como Convidado</button>
+        </div>
+
+        <!-- REGISTER FORM -->
+        <div class="login-form" id="register-form" role="tabpanel" aria-labelledby="register-tab">
+            <div class="error-message" id="register-error" role="alert" aria-live="polite"></div>
+            <div class="form-group">
+                <label for="register-username">Escolha um usuário</label>
+                <input type="text" id="register-username" placeholder="Ex: Matheus" aria-required="true" autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="register-password">Escolha uma senha</label>
+                <input type="password" id="register-password" placeholder="Mínimo 4 caracteres" aria-required="true" autocomplete="new-password" oninput="checkPasswordStrength(this.value)">
+                <div class="password-strength" aria-label="Força da senha">
+                    <div class="password-strength-bar" id="password-strength-bar"></div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="register-confirm">Confirme a senha</label>
+                <input type="password" id="register-confirm" placeholder="Digite a senha novamente" aria-required="true" autocomplete="new-password">
+            </div>
+            <button class="btn-login ripple" onclick="registerUser()" aria-label="Criar nova conta">Criar Conta</button>
+            <button class="btn-guest ripple" onclick="loginAsGuest()" aria-label="Entrar como convidado sem criar conta">🚶 Entrar como Convidado</button>
+        </div>
+    </div>
+</div>
+    <div class="container">
+        <!-- HEADER -->
+<header>
+    <div class="logo">
+        <h1>🎬 O Que Assistir?</h1>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="user-pill" onclick="abrirPerfil()">
+            <div class="avatar" id="user-avatar">?</div>
+            <span class="user-name" id="user-display">Convidado</span>
+        </div>
+        <button class="logout-btn" id="logout-btn" onclick="logout()" style="display: none;">Sair</button>
+    </div>
+</header>
+
+        <div class="mode-tabs" role="tablist" aria-label="Modos de navegação">
+            <div class="mode-tab active" role="tab" tabindex="0" aria-selected="true" aria-controls="view-discover" onclick="switchMode('discover')" onkeydown="handleTabKey(event, 'discover')">🔍 Descobrir</div>
+            <div class="mode-tab" role="tab" tabindex="-1" aria-selected="false" aria-controls="view-roulette" onclick="switchMode('roulette')" onkeydown="handleTabKey(event, 'roulette')">🎰 Roleta</div>
+        </div>
+
+        <div id="view-discover">
+            <div class="section">
+                <div class="section-header"><div class="badge-num">1</div><div class="section-title">O que você procura?</div></div>
+                <div class="options-grid" role="radiogroup" aria-label="Tipo de conteúdo">
+                    <div id="btn-movie" class="card selected" role="radio" tabindex="0" aria-checked="true" onclick="selecionarTipo('movie')" onkeydown="handleCardKey(event, 'movie')"><div class="icon" aria-hidden="true">🎞️</div><h3>FILME</h3></div>
+                    <div id="btn-tv" class="card" role="radio" tabindex="-1" aria-checked="false" onclick="selecionarTipo('tv')" onkeydown="handleCardKey(event, 'tv')"><div class="icon" aria-hidden="true">📺</div><h3>SÉRIE</h3></div>
+                    <div id="btn-dorama" class="card" role="radio" tabindex="-1" aria-checked="false" onclick="selecionarTipo('dorama')" onkeydown="handleCardKey(event, 'dorama')"><div class="icon" aria-hidden="true">🌸</div><h3>DORAMA</h3></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header"><div class="badge-num">2</div><div class="section-title">Filtros Inteligentes</div></div>
+                
+                <div style="margin-bottom:15px; position:relative;" class="input-wrapper">
+                    <input type="text" id="actor-input" class="input-dark" placeholder="Com qual ator/diretor? (Ex: Wagner Moura)" oninput="debounce(buscarPessoa, 300)(this.value)" aria-label="Buscar ator ou diretor" aria-autocomplete="list" aria-controls="actor-list">
+                    <button class="input-clear" onclick="clearInput('actor-input')" aria-label="Limpar busca">×</button>
+                    <div id="actor-list" class="suggestions-box" role="listbox" aria-label="Sugestões de atores"></div>
+                    <div id="selected-person" class="selected-pill" onclick="limparPessoa()" role="button" tabindex="0" aria-label="Remover pessoa selecionada"><span id="person-name">Nome</span> ✕</div>
+                </div>
+
+                <div class="grid-2">
+                    <select id="input-genero" class="input-dark" aria-label="Selecionar gênero">
+                        <option value="">Gênero: Todos</option>
+                        <option value="35,10749">💘 Comédia Romântica</option>
+                        <option value="28">⚔️ Ação</option>
+                        <option value="35">😂 Comédia</option>
+                        <option value="27">👻 Terror</option>
+                        <option value="10749">💘 Romance</option>
+                        <option value="878">👽 Sci-Fi</option>
+                        <option value="16">🧸 Animação</option>
+                        <option value="99">🧠 Documentário</option>
+                    </select>
+                    <select id="input-provider" class="input-dark" aria-label="Selecionar plataforma de streaming">
+                        <option value="">Onde: Todos</option>
+                        <option value="8">Netflix</option>
+                        <option value="337">Disney+</option>
+                        <option value="119">Prime Video</option>
+                        <option value="1899">Max</option>
+                        <option value="307">Globoplay</option>
+                    </select>
+                </div>
+                
+                <select id="duration-select" class="input-dark" style="margin-top:10px" aria-label="Selecionar duração">
+                    <option value="">Duração: Qualquer</option>
+                    <option value="short">⚡ Rapidinho (&lt; 90m)</option>
+                    <option value="medium">🎬 Padrão (90-120m)</option>
+                    <option value="long">🍿 Longo (&gt; 120m)</option>
+                </select>
+
+                <div class="grid-2" style="margin-top:10px">
+                    <input type="number" id="year-from" class="input-dark" placeholder="📅 De (ano)" min="1900" max="2025" aria-label="Ano inicial">
+                    <input type="number" id="year-to" class="input-dark" placeholder="📅 Até (ano)" min="1900" max="2025" aria-label="Ano final">
+                </div>
+            </div>
+
+            <div class="actions-container">
+                <button class="btn-main ripple" onclick="sortearFilme()" aria-label="Sortear filme ou série aleatório">✨ Sortear Agora</button>
+                <button class="btn-outline btn-main ripple" onclick="mostrarTop10()" aria-label="Ver top 10 mais populares">🔥 Ver Top 10</button>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-bottom:30px; border-top:1px solid #222; padding-top:20px" class="input-wrapper">
+                <input id="direct-search" class="input-dark" style="margin:0" placeholder="Busca específica..." onkeypress="if(event.key==='Enter') buscarDireto()" oninput="toggleClearButton(this)" aria-label="Buscar título específico">
+                <button class="btn-outline ripple" style="width:auto; margin:0; padding:0 20px" onclick="buscarDireto()" aria-label="Buscar">🔎</button>
+            </div>
+
+            <div id="results-area" class="results-grid" role="region" aria-live="polite" aria-label="Resultados da busca"></div>
+
+            <div class="section" style="margin-top:40px; padding-top:10px">
+                <div style="display:flex; gap:20px; border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:20px;" role="tablist" aria-label="Biblioteca">
+                    <div id="tab-watchlist" role="tab" tabindex="0" aria-selected="true" aria-controls="library-content" style="cursor:pointer; color:var(--primary); font-weight:bold; transition: all 0.3s;" onclick="switchTab('watchlist')" onkeydown="if(event.key==='Enter') switchTab('watchlist')" class="tooltip" data-tooltip="Lista de desejos">⭐ Quero Assistir</div>
+                    <div id="tab-vistos" role="tab" tabindex="-1" aria-selected="false" aria-controls="library-content" style="cursor:pointer; color:#888; font-weight:bold; transition: all 0.3s;" onclick="switchTab('vistos')" onkeydown="if(event.key==='Enter') switchTab('vistos')" class="tooltip" data-tooltip="Histórico completo">✅ Já Assistidos</div>
+                </div>
+                <div id="library-content" class="results-grid" role="tabpanel" aria-live="polite"></div>
+            </div>
+        </div>
+
+        <div id="view-roulette" style="display: none;" role="tabpanel" aria-labelledby="roulette-tab">
+            <div class="section" style="text-align:center">
+                <h2>🎰 Roleta Personalizada</h2>
+                <p style="color:#888; font-size:0.9rem; margin-bottom:20px">Adicione opções e gire a sorte!</p>
+
+                <div style="display:flex; gap:10px; margin-bottom:20px">
+                    <input id="roulette-input" class="input-dark" style="margin:0" placeholder="Nome do filme..." onkeypress="if(event.key==='Enter') addRoletaItem()" aria-label="Digite o nome do filme ou série">
+                    <button class="btn-main ripple" style="width:auto; padding:0 20px" onclick="addRoletaItem()" aria-label="Adicionar item à roleta">+ Adicionar</button>
+                </div>
+
+                <div id="roulette-pool" class="roulette-pool"></div>
+                
+                <div class="roulette-wheel-wrapper">
+                    <div class="roulette-pointer"></div>
+                    <div id="roulette-wheel" class="roulette-wheel"></div>
+                    <div class="roulette-center" id="roulette-result">🎲</div>
+                </div>
+                
+                <button class="btn-main ripple" style="width:100%; font-size:1.1rem; padding:18px; margin-bottom:10px" onclick="girarRoleta()" aria-label="Girar roleta e sortear">🎰 Girar Roleta!</button>
+                <button class="btn-outline ripple" style="width:100%; margin-top:10px" onclick="limparRoleta()" aria-label="Limpar todos os itens da roleta">🗑️ Limpar Lista</button>
+            </div>
+        </div>
+
+        <div style="margin-top: 60px; display: flex; gap: 20px; justify-content: center; padding-top: 20px; border-top: 1px solid #222; opacity: 0.6;">
+            <a href="https://www.buymeacoffee.com" target="_blank" style="text-decoration: none; color: #fff; display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; gap: 5px; cursor: pointer; transition: 0.2s;">
+                <svg viewBox="0 0 24 24" style="width: 24px; height: 24px; fill: currentColor;"><path d="M20,3H4V5H20V3M20,7H4C2.9,7 2,7.9 2,9V14C2,15.1 2.9,16 4,16H6V18C6,19.1 6.9,20 8,20H14C15.1,20 16,19.1 16,18V16H20C21.1,16 22,15.1 22,14V9C22,7.9 21.1,7 20,7M20,14H18V9H20V14M16,18H8V9H16V18Z" /></svg>
+                <span>Apoiar</span>
+            </a>
+            <a href="mailto:contato@app.com" style="text-decoration: none; color: #fff; display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; gap: 5px; cursor: pointer; transition: 0.2s;">
+                <svg viewBox="0 0 24 24" style="width: 24px; height: 24px; fill: currentColor;"><path d="M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4A2,2 0 0,0 20,2M20,16H6L4,18V4H20V16Z" /></svg>
+                <span>Feedback</span>
+            </a>
+        </div>
+    </div>
+
+    <div id="modal-resultado" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-poster-container">
+                <img id="m-poster" class="modal-poster" src="">
+            </div>
+            <div class="modal-body">
+                <h2 id="m-title" class="modal-title">Título</h2>
+                
+                <div class="modal-info">
+                    <span id="m-year">2024</span> • <span id="m-rating" style="color: var(--accent);">⭐ 8.5</span>
+                </div>
+
+                <div id="video-area" class="video-container" style="display: none;">
+                    <iframe id="trailer-frame" src="" allowfullscreen></iframe>
+                </div>
+
+                <p id="m-desc" style="color:#aaa; font-size:0.95rem; line-height:1.6">Sinopse...</p>
+
+                <div style="margin-top:20px">
+                    <p style="font-size:0.75rem; color:#666; font-weight:bold; margin-bottom:10px; text-transform:uppercase">Elenco Principal</p>
+                    <div id="cast-list" class="cast-list"></div>
+                </div>
+
+                <div style="margin:20px 0; padding:15px; background:#111; border-radius:8px">
+                    <p style="font-size:0.75rem; color:#666; font-weight:bold; margin-bottom:10px; text-transform:uppercase">Onde Assistir (Brasil)</p>
+                    <div id="m-providers" style="display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap;"></div>
+                </div>
+
+                <div class="modal-actions">
+                    <button id="btn-visto" class="btn-modal btn-green ripple tooltip" data-tooltip="Marcar como assistido" aria-label="Marcar como assistido">✅ Já Vi</button>
+                    <button id="btn-salvar" class="btn-modal ripple tooltip" data-tooltip="Adicionar à lista" aria-label="Adicionar à lista de desejos">⭐ Salvar</button>
+                    <button class="btn-modal btn-roleta btn-full-width ripple tooltip" onclick="addCurrentToRoulette()" data-tooltip="Adicionar à roleta personalizada" aria-label="Adicionar à roleta">🎰 Adicionar à Roleta</button>
+                    <button class="btn-modal btn-full-width ripple tooltip" onclick="compartilhar()" data-tooltip="Compartilhar com amigos" aria-label="Compartilhar">📤 Compartilhar</button>
+                </div>
+            </div>
+            <button class="close-btn" onclick="fecharModal()">FECHAR</button>
+        </div>
+    </div>
+
+    <div id="modal-profile" class="modal-overlay">
+        <div class="modal-content" style="max-width:500px; padding:25px;">
+            <div style="text-align:center">
+                <h2 style="margin-top:0">🔐 Meu Perfil</h2>
+                <div class="avatar" style="width:80px; height:80px; margin:20px auto; font-size:2.5rem" id="profile-avatar-large">?</div>
+                
+                <input type="text" id="profile-name" class="input-dark" 
+                       style="text-align:center; font-weight:bold; font-size:1.2rem; margin-bottom:15px" 
+                       placeholder="Digite seu nome..." maxlength="30">
+                
+                <input type="email" id="profile-email" class="input-dark" 
+                       style="text-align:center; margin-bottom:15px" 
+                       placeholder="Email (opcional)">
+                
+                <input type="password" id="profile-password" class="input-dark" 
+                       style="text-align:center; margin-bottom:0" 
+                       placeholder="Senha (opcional)">
+            </div>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:20px 0; text-align:center">
+                <div style="background:#222; padding:15px; border-radius:10px">
+                    <div style="font-size:1.8rem; color:var(--primary); font-weight:bold" id="stats-count">0</div>
+                    <div style="font-size:0.8rem; color:#888">Filmes Assistidos</div>
+                </div>
+                <div style="background:#222; padding:15px; border-radius:10px">
+                    <div style="font-size:1.8rem; color:var(--accent); font-weight:bold" id="stats-wins">0</div>
+                    <div style="font-size:0.8rem; color:#888">Vitórias Roleta</div>
+                </div>
+            </div>
+
+            <h3 style="font-size:1rem; margin-bottom:15px">🏆 Conquistas Desbloqueadas</h3>
+            <div id="badges-container" class="badge-grid"></div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:30px">
+                <button class="btn-main" onclick="salvarPerfil()">💾 Salvar</button>
+                <button class="btn-outline" style="border:2px solid var(--primary)" onclick="document.getElementById('modal-profile').style.display='none'">Fechar</button>
+            </div>
+        </div>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <!-- SCROLL TO TOP BUTTON -->
+    <button id="scroll-top" class="scroll-top-btn" onclick="scrollToTop()" aria-label="Voltar ao topo" title="Voltar ao topo">
+        ↑
+    </button>
+
+    <!-- ONBOARDING -->
+    <div class="onboarding-overlay" id="onboarding-overlay">
+        <div class="onboarding-card">
+            <div class="onboarding-icon" id="onboarding-icon">🎬</div>
+            <h2 class="onboarding-title" id="onboarding-title">Bem-vindo!</h2>
+            <p class="onboarding-desc" id="onboarding-desc">Descubra filmes e séries de forma inteligente</p>
+            <div class="onboarding-dots">
+                <span class="onboarding-dot active"></span>
+                <span class="onboarding-dot"></span>
+                <span class="onboarding-dot"></span>
+            </div>
+            <button class="btn-main ripple" onclick="nextOnboarding()" id="onboarding-btn">Começar</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
