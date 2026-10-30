@@ -3,10 +3,12 @@ import { parseUrlState, serializeUrlState } from '../domain/urlState.js';
 import { state } from '../state/appState.js';
 import { carregarDetalhes } from './titleModal.js';
 import { selectPerson } from './discover.js';
+import { rememberProviderValue } from './myProviders.js';
 import { selecionarTipo, switchMode } from '../ui/navigation.js';
 
 const FIELD_IDS = {
   genre: 'input-genero',
+  mood: 'input-mood',
   provider: 'input-provider',
   duration: 'duration-select',
   similar: 'input-similar',
@@ -24,7 +26,7 @@ function readFields() {
 
 export function syncUrl() {
   if (!ready) return;
-  const mode = document.getElementById('view-roulette').style.display === 'block' ? 'roulette' : 'discover';
+  const mode = ['roulette', 'match'].find(m => document.getElementById(`view-${m}`).style.display === 'block') || 'discover';
   const search = serializeUrlState({
     mode,
     type: state.type,
@@ -48,6 +50,7 @@ export function initUrlState() {
   Object.entries(FIELD_IDS).forEach(([key, id]) => {
     if (initial[key]) document.getElementById(id).value = initial[key];
   });
+  rememberProviderValue();
   if (initial.personId) selectPerson(Number(initial.personId), initial.personName || 'Pessoa selecionada');
 
   pendingTitle = initial.title || null;

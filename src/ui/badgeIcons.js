@@ -27,6 +27,18 @@ export const BADGE_ICONS = {
   roulette: svg(`<rect ${TONE} x="3.5" y="3.5" width="17" height="17" rx="3.5"/><circle ${SOLID} cx="8.2" cy="8.2" r="1.4"/><circle ${SOLID} cx="15.8" cy="8.2" r="1.4"/><circle ${SOLID} cx="12" cy="12" r="1.4"/><circle ${SOLID} cx="8.2" cy="15.8" r="1.4"/><circle ${SOLID} cx="15.8" cy="15.8" r="1.4"/>`),
   // Fita VHS
   vhs: svg(`<rect ${TONE} x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="8" cy="12" r="2.4"/><circle cx="16" cy="12" r="2.4"/><path d="M8 14.4h8"/>`),
+  // Troféu
+  trophy: svg(`<path ${TONE} d="M7 3h10v7a5 5 0 0 1-10 0z"/><path d="M7 5H3.5v2a3.5 3.5 0 0 0 3.5 3.5M17 5h3.5v2a3.5 3.5 0 0 1-3.5 3.5M12 15v4M8 21h8M9.5 21l.5-2h4l.5 2"/>`),
+  // Flor de cerejeira
+  sakura: svg([0, 72, 144, 216, 288].map(a => `<path ${TONE} transform="rotate(${a} 12 12)" d="M12 12c-2.7-2-3.5-5.5-2-7.8.6-.9 1.4-1 2-.2.6-.8 1.4-.7 2 .2 1.5 2.3.7 5.8-2 7.8z"/>`).join('') + `<circle ${SOLID} cx="12" cy="12" r="1.4"/>`),
+  // Brilhos da animação
+  sparkles: svg(`<path ${TONE} d="M11 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/><path d="M18.5 3.5v3M17 5h3M19 17v3M17.5 18.5h3"/>`),
+  // Câmera de documentário
+  camera: svg(`<rect ${TONE} x="2.5" y="7" width="13" height="10" rx="2"/><path d="M15.5 11l6-3v8l-6-3"/><circle ${SOLID} cx="6.5" cy="10.5" r="1.2"/>`),
+  // Chapéu de detetive
+  detective: svg(`<path ${TONE} d="M6 12l1.5-6.5a1.5 1.5 0 0 1 2-1l2.5 1 2.5-1a1.5 1.5 0 0 1 2 1L18 12z"/><path d="M3 12h18"/><circle cx="8" cy="17" r="2.8"/><circle cx="16" cy="17" r="2.8"/><path d="M10.8 16.5c.8-.5 1.6-.5 2.4 0"/>`),
+  // Chama da sequência
+  flame: svg(`<path ${TONE} d="M12 2.5c.5 3.5 5.5 5.5 5.5 11a5.5 5.5 0 0 1-11 0c0-2.2 1-3.7 2-4.7.2 1.5 1 2.4 2 2.7-.5-3.5 0-6.5 1.5-9z"/>`),
   // Lua com estrelas
   moon: svg(`<path ${TONE} d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/><path d="M17 3.5v3.4M15.3 5.2h3.4M20.8 9v1.8M19.9 9.9h1.8"/>`),
 };

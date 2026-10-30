@@ -435,7 +435,11 @@ npm test                         # 145/145 (12 suítes) em 2026-10-30
 
 ## Notas
 
+- 2026-10-30, T001-072 a T001-076: Jest 212, banco 15 (PGlite) e Playwright 79 passando; cabeçalho e janela de Amigos conferidos no Chrome em computador e 390px; bilhete e números conferidos no Chrome em computador. O perfil do amigo e a opção de ocultar não rodaram no Supabase real: falta a segunda conta.
 - Pendente de validação humana: iPhone real (AC-001), histórico de sorteios e modal aninhado (AC-007), conquista com login (AC-009).
 - Achados durante os testes viraram backlog: FR-036 (SW serve JS antigo), FR-039 (banner PWA cobre o FECHAR), `.user-pill` sem foco por teclado (FR-003).
 - 2026-10-30, Supabase real: gravar em nome de outro usuário recusado (42501) em 6 tabelas (Claude); leitura entre duas contas de teste conferida e aprovada pelo usuário.
 - 2026-10-30, Supabase real: "Deletar conta" com 8 tabelas preenchidas apagou o login e deixou 0 linhas em todas (conferido com o token antigo); chamada sem login recusada com 401. A limpeza da sessão local foi corrigida depois e não teve novo teste de ponta a ponta.
+- 2026-10-30, Supabase falso: FR-040 com senha removida ao abrir, aviso no login, falha do banco sem perda, adiamento de 7 dias, importação sem duplicatas e chaves antigas removidas. Falta o teste real.
+- 2026-10-30, Supabase real: FR-040 importou 1 em Quero Assistir e 2 em Já Assistidos, sem duplicar um título já existente nem ao repetir; vitórias 0 para 3; chaves antigas removidas; sem erros no console.
+- 2026-10-30, T001-051 a T001-056: 23 testes Playwright passando; 4 erros introduzidos de propósito (roleta, repetição no sorteio, modal esperando as seções, importação apagando antes de confirmar) foram detectados. Com o TMDB real: modal abriu em 515 ms mostrando "Carregando elenco...", clima enviou 28|12 e plataformas enviou 8|119. Sintaxe de OU e exclusão de gêneros conferida na API: 20/20 com o gênero pedido, 0 com excluídos.

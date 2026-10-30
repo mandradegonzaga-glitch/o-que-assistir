@@ -111,7 +111,7 @@ Numeração = itens da análise de 2026-10-28. Status atualizado ao fim de cada 
 | FR-032 | Migrar `legacy/script.js` para módulos ES (unificar `src/domain`) | modern-js | P1 | ✅ Done (T001-037) |
 | FR-033 | `addEventListener` + delegação no lugar de `onclick` | modern-js | P2 | ✅ Done (T001-038) |
 | FR-034 | Cliente TMDB único com erro/abort/cache | modern-js | P2 | ✅ Done (T001-035) |
-| FR-035 | Proxy para a chave do TMDB | modern-js | P2 | ⏸️ Adiado — dependia de Edge Function no Supabase (D001-010) |
+| FR-035 | Proxy para a chave do TMDB | modern-js | P2 | ✅ Done (T001-061) |
 | FR-036 | Remover código morto + versionar cache do SW | modern-js | P1 | ✅ Done (T001-014) |
 | FR-037 | Ajustar `.gitignore` | — | P1 | ✅ Done (T001-005) — premissa original estava errada |
 | FR-038 | Funções sem `event` global (`switchMode`, `sortearFilme`, `mostrarTop10`) | — | P1 | ✅ Done (T001-006) — achado durante os testes |
@@ -120,7 +120,7 @@ Numeração = itens da análise de 2026-10-28. Status atualizado ao fim de cada 
 | FR-R3 | Textos de ajuda nos filtros (de `React/`) | reuso | P3 | ✅ Done (T001-010) |
 | FR-R4 | Avisar falha de seção do modal (ideia de `novo/`) | reuso | P2 | ✅ Done (T001-011) |
 | FR-039 | Banner "Instalar App" cobre o botão FECHAR do modal | — | P2 | ✅ Done (T001-026) |
-| FR-040 | Migração `localStorage` → Supabase para usuários da versão no ar | — | P1 | ⏸️ Adiado — nada no Supabase por enquanto (D001-010) |
+| FR-040 | Migração `localStorage` → Supabase para usuários da versão no ar | — | P1 | ✅ Done (T001-050) |
 | FR-041 | Tela de login/onboarding prender o foco (fundo `inert`) | a11y | P2 | ✅ Done (T001-019) — achado no T001-018 |
 
 ---

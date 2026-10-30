@@ -14,5 +14,6 @@ export const session = {
   sorteioHistory: [],
   sorteioHistoryIndex: -1,
   blacklist: [],
+  progress: { xp: 0, streak: 0, bestStreak: 0, lastVisit: null, log: [] },
   episodes: { seriesId: null, watchedKeys: new Set(), seasonData: {} },
 };

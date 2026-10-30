@@ -3,14 +3,19 @@
 import { debounce } from '../utils/debounce.js';
 import { checkPasswordStrength, esqueceuSenha, loginAsGuest, loginUser, logout, registerUser, switchLoginTab } from './auth.js';
 import { adicionarBlacklist, limparBlacklist, removerBlacklist } from './blacklist.js';
-import { buscarDireto, buscarPessoa, limparPessoa, mostrarTop10, selectPerson, sortearFilme } from './discover.js';
+import { buscarDireto, buscarPessoa, limparPessoa, mostrarTop10, selectPerson, sortearFilme, sortearOutro } from './discover.js';
+import { matchSendToFriend, matchContinue, matchDraw, matchEmailInvite, matchInvite, matchJoin, matchRestart, matchSendAnswer, matchSendInvite, matchStart, matchVote } from './match.js';
+import { filterProviders, onProviderChange, toggleMyProvider } from './myProviders.js';
+import { compartilhar } from './ticket.js';
+import { syncUrl } from './urlSync.js';
 import { desmarcarTemporadaAtual, desmarcarTodosEpisodios, marcarTemporadaAtual, marcarTodosEpisodios, onSeasonChange, toggleEpisode } from './episodes.js';
+import { friendAccept, friendAdd, friendInvite, friendMatchCurrent, friendOpen, friendRemove, friendUnfriendCurrent, matchInboxDelete, matchInboxOpen, openFriends, toggleShareWithFriends } from './friends.js';
 import { removeLibItem } from './library.js';
 import { nextOnboarding } from './onboarding.js';
 import { abrirPerfil, alterarSenha, deletarConta, salvarPerfil } from './profile.js';
 import { addCurrentToRoulette, addRoletaItem, girarRoleta, limparRoleta, removeRoletaItem } from './roulette.js';
 import { abrirDoHistorico, abrirHistoricoSorteios, limparHistoricoSorteios, navigateSorteio } from './sorteioHistory.js';
-import { abrirEpisodios, carregarDetalhes, compartilhar, fecharModal, marcarVistoAtual, toggleSalvarAtual } from './titleModal.js';
+import { abrirEpisodios, carregarDetalhes, fecharModal, marcarVistoAtual, toggleSalvarAtual } from './titleModal.js';
 import { dismissInstall, installPWA } from './pwa.js';
 import { undoLast } from '../ui/feedback.js';
 import { clearInput, scrollToTop, selecionarTipo, switchMode, switchTab } from '../ui/navigation.js';
@@ -37,9 +42,31 @@ const clickActions = {
   dismissInstall,
   esqueceuSenha,
   fecharModal,
+  friendAccept: el => friendAccept(el.dataset.arg),
+  friendAdd,
+  friendRemove: el => friendRemove(el.dataset.arg),
+  friendSendMatch: el => matchSendToFriend(el.dataset.arg),
+  friendInvite,
+  openFriends,
+  friendMatchCurrent,
+  friendOpen: el => friendOpen(el.dataset.arg),
+  friendUnfriendCurrent,
+  matchInboxDelete: el => matchInboxDelete(el.dataset.arg),
+  matchInboxOpen,
   focusSearch: () => document.getElementById('direct-search').focus(),
   girarRoleta,
   installPWA,
+  matchContinue,
+  matchDraw,
+  matchEmailInvite,
+  matchInvite,
+  matchJoin,
+  matchSendAnswer,
+  matchSendInvite,
+  matchNo: () => matchVote(false),
+  matchRestart,
+  matchStart,
+  matchYes: () => matchVote(true),
   limparBlacklist,
   limparHistoricoSorteios,
   limparPessoa,
@@ -62,6 +89,7 @@ const clickActions = {
   selecionarTipo: el => selecionarTipo(el.dataset.arg),
   selectPerson: el => selectPerson(Number(el.dataset.id), el.dataset.name),
   sortearFilme,
+  sortearOutro,
   switchLoginTab: el => switchLoginTab(el.dataset.arg),
   switchMode: el => switchMode(el.dataset.arg),
   switchTab: el => switchTab(el.dataset.arg),
@@ -77,16 +105,31 @@ const clickActions = {
 const buscarPessoaDebounced = debounce(buscarPessoa, 300);
 
 const inputActions = {
+  filterProviders,
   buscarPessoa: el => buscarPessoaDebounced(el.value),
   checkPasswordStrength: el => checkPasswordStrength(el.value),
 };
 
+// Gênero e clima são alternativos: escolher um limpa o outro
+function clearOther(otherId) {
+  return el => {
+    if (!el.value) return;
+    document.getElementById(otherId).value = '';
+    syncUrl();
+  };
+}
+
 const changeActions = {
+  clearMood: clearOther('input-mood'),
+  clearGenre: clearOther('input-genero'),
+  onProviderChange,
+  toggleMyProvider,
   onSeasonChange: el => onSeasonChange(el.value),
+  toggleShareWithFriends,
   toggleEpisode: el => toggleEpisode(Number(el.dataset.series), Number(el.dataset.season), Number(el.dataset.episode), el.checked),
 };
 
-const enterActions = { addRoletaItem, buscarDireto };
+const enterActions = { addRoletaItem, buscarDireto, friendAdd };
 
 export function initActions() {
   document.addEventListener('click', (e) => {

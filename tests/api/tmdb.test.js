@@ -4,11 +4,11 @@ import { buildTmdbUrl, tmdbGet, latestSignal, isAbortError, clearTmdbCache, Tmdb
 const ok = body => ({ ok: true, status: 200, json: async () => body });
 
 describe('buildTmdbUrl', () => {
-  it('adds the key and pt-BR by default', () => {
+  it('goes through the proxy, in pt-BR by default', () => {
     const url = new URL(buildTmdbUrl('/movie/1'));
-    expect(url.pathname).toBe('/3/movie/1');
+    expect(url.pathname).toBe('/functions/v1/tmdb/movie/1');
     expect(url.searchParams.get('language')).toBe('pt-BR');
-    expect(url.searchParams.get('api_key')).toBeTruthy();
+    expect(url.searchParams.has('api_key')).toBe(false); // a chave só existe no servidor
   });
 
   it('omits language when null and skips empty params', () => {

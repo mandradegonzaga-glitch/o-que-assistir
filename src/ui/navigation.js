@@ -52,8 +52,9 @@ export function switchMode(mode) {
         activeTab.setAttribute('tabindex', '0');
     }
 
-    document.getElementById('view-discover').style.display = mode === 'discover' ? 'block' : 'none';
-    document.getElementById('view-roulette').style.display = mode === 'roulette' ? 'block' : 'none';
+    ['discover', 'roulette', 'match'].forEach(view => {
+        document.getElementById(`view-${view}`).style.display = mode === view ? 'block' : 'none';
+    });
 
     // Salvar preferência
     localStorage.setItem('last_mode', mode);
@@ -75,7 +76,7 @@ export function initRovingGroups() {
         const idx = items.indexOf(current);
         if (idx === -1) return;
         e.preventDefault();
-        let next = idx;
+        let next;
         if (e.key === 'Home') next = 0;
         else if (e.key === 'End') next = items.length - 1;
         else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') next = (idx - 1 + items.length) % items.length;

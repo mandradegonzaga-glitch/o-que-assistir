@@ -1,8 +1,11 @@
 // Estado compartilhável na URL (modo, tipo, filtros e título aberto) em português, sem depender do DOM.
+import { MOODS } from './moods.js';
+
 const FIELDS = {
   mode: 'modo',
   type: 'tipo',
   genre: 'genero',
+  mood: 'clima',
   provider: 'onde',
   duration: 'duracao',
   similar: 'parecido',
@@ -12,7 +15,7 @@ const FIELDS = {
   personName: 'pessoaNome',
 };
 const DEFAULTS = { mode: 'discover', type: 'movie' };
-const MODES = ['discover', 'roulette'];
+const MODES = ['discover', 'roulette', 'match'];
 const TYPES = ['movie', 'tv', 'dorama'];
 const DURATIONS = ['short', 'medium', 'long'];
 const TITLE_PATTERN = /^(movie|tv|dorama)-(\d+)$/;
@@ -29,9 +32,9 @@ export function parseUrlState(search) {
   if (result.mode && !MODES.includes(result.mode)) delete result.mode;
   if (result.type && !TYPES.includes(result.type)) delete result.type;
   if (result.duration && !DURATIONS.includes(result.duration)) delete result.duration;
-  ['genre', 'provider'].forEach(key => {
-    if (result[key] && !/^[\d,]+$/.test(result[key])) delete result[key];
-  });
+  if (result.genre && !/^[\d,]+$/.test(result.genre)) delete result.genre;
+  if (result.provider && !/^(\d+|minhas)$/.test(result.provider)) delete result.provider;
+  if (result.mood && !(result.mood in MOODS)) delete result.mood;
   ['yearFrom', 'yearTo'].forEach(key => {
     if (result[key] && !/^\d{4}$/.test(result[key])) delete result[key];
   });

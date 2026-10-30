@@ -1,6 +1,8 @@
 // Roleta personalizada
 import { supabaseIncrementRouletteWins } from '../api/supabase.js';
-import { checkBadgeUnlock } from './profile.js';
+import { saveGuestWins } from './guestLibrary.js';
+import { checkAllBadges } from './profile.js';
+import { grantXp } from './progress.js';
 import { fecharModal } from './titleModal.js';
 import { computeSpinRotation } from '../domain/roulette.js';
 import { session, state } from '../state/appState.js';
@@ -8,11 +10,26 @@ import { createConfetti, scheduleUndoable, showToast } from '../ui/feedback.js';
 import { confirmDialog } from '../ui/modals.js';
 import { switchMode } from '../ui/navigation.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
+import { storage } from '../utils/storage.js';
 import { CLOSE_ICON } from '../ui/icons.js';
+import { STAR_ICON, TICKET_ICON, WHEEL_ICON } from '../ui/icons.js';
+
+const SPIN_MS = 4000;
+const ITEMS_KEY = 'roulette_items';
+let spinning = false;
 
 // ROLETA
 
+export function initRoulette() {
+    const saved = storage.get(ITEMS_KEY, []);
+    if (Array.isArray(saved) && saved.length > 0) {
+        state.rouletteItems = saved.filter(item => typeof item === 'string');
+    }
+    renderRoleta();
+}
+
 export function addRoletaItem() {
+    if (spinning) return;
     const val = document.getElementById('roulette-input').value.trim();
     if(val) {
         state.rouletteItems.push(val);
@@ -23,6 +40,7 @@ export function addRoletaItem() {
 }
 
 export function addCurrentToRoulette() {
+    if (spinning) return;
     if(state.currentMovie) {
         const title = state.currentMovie.title || state.currentMovie.name;
         state.rouletteItems.push(title);
@@ -39,12 +57,16 @@ export function renderRoleta() {
         `<div class="pool-tag">${escapeHtml(i)} <button type="button" class="pool-tag__remove" data-action="removeRoletaItem" data-arg="${idx}" aria-label="Remover ${escapeHtml(i)} da roleta">${CLOSE_ICON}</button></div>`
     ).join('');
 
-    if(state.rouletteItems.length > 0) {
-        desenharRoleta();
-    }
+    storage.set(ITEMS_KEY, state.rouletteItems);
+    resetWheel();
+    desenharRoleta();
+    document.getElementById('roulette-winner').hidden = true;
+    document.getElementById('roulette-result').innerHTML = TICKET_ICON;
+    updateRouletteControls();
 }
 
 export function removeRoletaItem(idx) {
+    if (spinning) return;
     const name = state.rouletteItems[idx];
     scheduleUndoable({
         message: `"${name}" removido da roleta.`,
@@ -52,7 +74,6 @@ export function removeRoletaItem(idx) {
             const hadFocus = !!document.activeElement?.closest('#roulette-pool');
             state.rouletteItems.splice(idx, 1);
             renderRoleta();
-            if (state.rouletteItems.length === 0) document.getElementById('roulette-wheel').innerHTML = '';
             return hadFocus;
         },
         undo: (refocus) => {
@@ -72,11 +93,13 @@ export function desenharRoleta() {
     if(state.rouletteItems.length === 0) return;
 
     const canvas = document.createElement('canvas');
-    canvas.width = 320;
-    canvas.height = 320;
+    const scale = window.devicePixelRatio || 1; // nítido em telas de alta densidade
+    canvas.width = 320 * scale;
+    canvas.height = 320 * scale;
     wheel.appendChild(canvas);
 
     const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
     const items = state.rouletteItems;
     const sliceAngle = (2 * Math.PI) / items.length;
     const colors = ['#ffc94d', '#3dd6c6', '#ff8fb8', '#9d8cff', '#ff9f5a'];
@@ -107,12 +130,7 @@ export function desenharRoleta() {
 }
 
 export function girarRoleta() {
-    if(state.rouletteItems.length < 2) {
-        showToast("Adicione pelo menos 2 itens!", "error");
-        return;
-    }
-
-    desenharRoleta();
+    if (spinning || state.rouletteItems.length < 2) return;
 
     const wheel = document.getElementById('roulette-wheel');
     const center = document.getElementById('roulette-result');
@@ -122,50 +140,60 @@ export function girarRoleta() {
     const winner = items[winnerIndex];
     document.getElementById('roulette-winner').hidden = true;
 
-    const totalRotation = computeSpinRotation(winnerIndex, items.length, 5 + Math.random() * 3);
+    spinning = true;
+    updateRouletteControls();
+    resetWheel(); // a roda ficou parada no vencedor anterior
 
-    center.innerHTML = '<svg class="icon-40" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/><circle cx="12" cy="12" r="3"/></svg>';
-    wheel.style.transform = `rotate(${totalRotation}deg)`;
+    center.innerHTML = WHEEL_ICON;
+    wheel.style.transform = `rotate(${computeSpinRotation(winnerIndex, items.length, 5 + Math.random() * 3)}deg)`;
 
     setTimeout(async () => {
-        center.innerHTML = '<svg class="icon-40" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+        center.innerHTML = STAR_ICON;
         const winnerBox = document.getElementById('roulette-winner');
         winnerBox.textContent = `Hoje é dia de: ${winner}`;
         winnerBox.hidden = false;
+        spinning = false;
+        updateRouletteControls();
         createConfetti();
 
-        if (session.currentUserId) {
+        grantXp('roulette');
+        if (session.currentUser === 'guest') {
+            session.user.rouletteWins = (session.user.rouletteWins || 0) + 1;
+            saveGuestWins(session.user.rouletteWins);
+        } else if (session.currentUserId) {
             // Incrementar vitórias no Supabase
             const result = await supabaseIncrementRouletteWins(session.currentUserId);
             if (result.success) {
                 session.user.rouletteWins = result.wins;
             }
-        } else {
-            session.user.rouletteWins = (session.user.rouletteWins || 0) + 1;
         }
 
         // Verificar conquista
-        await checkBadgeUnlock('Apostador');
-
-        setTimeout(() => {
-            wheel.style.transition = 'none';
-            wheel.style.transform = 'rotate(0deg)';
-            setTimeout(() => {
-                wheel.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
-                desenharRoleta();
-                center.innerHTML = '<svg class="icon-40" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="3"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="17" cy="17" r="1.5" fill="currentColor"/></svg>';
-            }, 50);
-        }, 2000);
-    }, 4000);
+        await checkAllBadges();
+    }, SPIN_MS);
 }
 
 export async function limparRoleta() {
-    if(state.rouletteItems.length === 0) return;
+    if (spinning || state.rouletteItems.length === 0) return;
     if (await confirmDialog({ title: 'Limpar roleta', message: 'Deseja limpar toda a lista da roleta?', confirmLabel: 'Limpar', danger: true })) {
         state.rouletteItems = [];
         renderRoleta();
-        document.getElementById('roulette-result').innerHTML = '<svg class="icon-40" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="3"/><circle cx="7" cy="7" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="17" cy="17" r="1.5" fill="currentColor"/></svg>';
-        document.getElementById('roulette-wheel').innerHTML = '';
         showToast("Lista limpa!");
     }
+}
+
+// Volta ao início sem animar; o reflow aplica o giro antes de reativar a transição
+function resetWheel() {
+    const wheel = document.getElementById('roulette-wheel');
+    wheel.style.transition = 'none';
+    wheel.style.transform = 'rotate(0deg)';
+    void wheel.offsetWidth;
+    wheel.style.transition = '';
+}
+
+function updateRouletteControls() {
+    const count = state.rouletteItems.length;
+    document.getElementById('btn-girar').disabled = spinning || count < 2;
+    document.getElementById('btn-limpar-roleta').hidden = count === 0;
+    document.getElementById('roulette-hint').hidden = count >= 2;
 }

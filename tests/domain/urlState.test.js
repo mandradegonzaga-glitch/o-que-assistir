@@ -12,6 +12,11 @@ describe('parseUrlState', () => {
     expect(parseUrlState('?modo=x&tipo=<b>&genero=abc&de=19&duracao=y&titulo=movie-abc&pessoa=z&pessoaNome=q')).toEqual({});
   });
 
+  it('accepts known moods and the personal providers filter', () => {
+    expect(parseUrlState('?clima=leve&onde=minhas')).toEqual({ mood: 'leve', provider: 'minhas' });
+    expect(parseUrlState('?clima=xyz&onde=abc')).toEqual({});
+  });
+
   it('keeps free text as text', () => {
     expect(parseUrlState('?parecido=Ocean%27s%20%26%2011').similar).toBe("Ocean's & 11");
   });

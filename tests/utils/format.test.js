@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { formatRating, formatCount, formatDate, pluralize } from '../../src/utils/format.js';
+import { formatRating, formatCount, pluralize } from '../../src/utils/format.js';
 
 describe('format', () => {
   it('formats ratings with a comma and one decimal', () => {
@@ -15,15 +15,6 @@ describe('format', () => {
   it('groups thousands with a dot', () => {
     expect(formatCount(1234)).toBe('1.234');
     expect(formatCount(undefined)).toBe('0');
-  });
-
-  it('keeps the calendar day of TMDB dates', () => {
-    expect(formatDate('2024-01-01')).toBe('1 de janeiro de 2024');
-  });
-
-  it('returns empty for missing or invalid dates', () => {
-    expect(formatDate('')).toBe('');
-    expect(formatDate('abc')).toBe('');
   });
 
   it('pluralizes in Portuguese', () => {

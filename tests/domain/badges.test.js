@@ -116,6 +116,22 @@ describe('computeBadgeStatuses', () => {
   });
 });
 
+describe('streak badges', () => {
+  it('uses the best streak, not the current one', () => {
+    expect(isBadgeEarned('Foguinho', [], 0, { bestStreak: 7 })).toBe(true);
+    expect(isBadgeEarned('Foguinho', [], 0, { bestStreak: 6 })).toBe(false);
+    expect(isBadgeEarned('Imparável', [], 0, { bestStreak: 100 })).toBe(true);
+  });
+
+  it('does not break without progress', () => {
+    expect(isBadgeEarned('Constante', [], 0)).toBe(false);
+  });
+
+  it('has the 20 badges of the spec', () => {
+    expect(computeBadgeStatuses([], 0)).toHaveLength(20);
+  });
+});
+
 describe('isNightOwlWatch', () => {
   it('true from 0h to 4h59', () => {
     expect(isNightOwlWatch({ watchedAt: new Date(2026, 0, 1, 0, 0).toISOString() })).toBe(true);

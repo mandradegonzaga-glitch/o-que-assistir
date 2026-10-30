@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach } from '@jest/globals';
 import { MemoryCache } from '../../src/utils/cache.js';
 
 describe('MemoryCache', () => {

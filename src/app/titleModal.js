@@ -54,42 +54,34 @@ export function showSectionError(containerId, message) {
     container.replaceChildren(note);
 }
 
-export async function abrirModal(f) {
-    state.currentMovie = f;
-    const signal = latestSignal('title');
-    setUrlTitle({ type: f.media_type === 'dorama' ? 'dorama' : (f.media_type || state.type), id: f.id });
-    const mediaType = f.media_type || state.type;
-    const type = mediaType === 'dorama' ? 'tv' : mediaType;
+function showSectionLoading(containerId, message) {
+    const note = document.createElement('span');
+    note.className = 'section-loading';
+    note.textContent = message;
+    document.getElementById(containerId).replaceChildren(note);
+}
 
-    document.getElementById('m-title').innerText = f.title || f.name;
-    document.getElementById('m-desc').innerText = f.overview || "Sem sinopse.";
-
-    // Links de crítica: RT por busca no título; IMDb só se houver imdb_id (séries precisam de external_ids)
+async function loadImdbLink(f, type, signal) {
     const linkImdb = document.getElementById('link-imdb');
-    const linkRt = document.getElementById('link-rt');
-    linkRt.href = `https://www.rottentomatoes.com/search?search=${encodeURIComponent(f.original_title || f.original_name || f.title || f.name)}`;
-    linkImdb.hidden = true;
-    (async () => {
-        try {
-            let imdbId = f.imdb_id;
-            if (!imdbId) {
-                imdbId = (await tmdbGet(`/${type}/${f.id}/external_ids`, { language: null }, { signal })).imdb_id;
-            }
-            if (imdbId && state.currentMovie?.id === f.id) {
-                linkImdb.href = `https://www.imdb.com/title/${encodeURIComponent(imdbId)}/`;
-                linkImdb.hidden = false;
-            }
-        } catch (e) {
-            if (!isAbortError(e)) console.error('Erro ao buscar IMDb ID:', e);
+    try {
+        let imdbId = f.imdb_id;
+        if (!imdbId) {
+            imdbId = (await tmdbGet(`/${type}/${f.id}/external_ids`, { language: null }, { signal })).imdb_id;
         }
-    })();
-    document.getElementById('m-rating').innerHTML = `<svg aria-hidden="true" class="icon icon-14 icon-lead-2" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>${formatRating(f.vote_average)}`;
-    document.getElementById('m-year').innerText = (f.release_date || f.first_air_date || '').split('-')[0];
-    document.getElementById('m-poster').src = f.backdrop_path ? IMG_URL + f.backdrop_path : (f.poster_path ? IMG_URL + f.poster_path : '');
+        if (imdbId && !signal.aborted) {
+            linkImdb.href = `https://www.imdb.com/title/${encodeURIComponent(imdbId)}/`;
+            linkImdb.hidden = false;
+        }
+    } catch (e) {
+        if (!isAbortError(e)) console.error('Erro ao buscar IMDb ID:', e);
+    }
+}
 
-    // Elenco
+// Cada seção carrega por conta própria: o modal já está aberto e uma falha não afeta as outras
+async function loadCast(f, type, signal) {
     try {
         const cData = await tmdbGet(`/${type}/${f.id}/credits`, {}, { signal });
+        if (signal.aborted) return; // resposta do cache não passa pelo abort
         const castDiv = document.getElementById('cast-list');
         castDiv.innerHTML = '';
         cData.cast.slice(0,8).forEach(a => {
@@ -100,13 +92,16 @@ export async function abrirModal(f) {
         console.error('Erro ao carregar elenco:', e);
         showSectionError('cast-list', 'Não foi possível carregar o elenco.');
     }
+}
 
-    // Trailer
+async function loadTrailer(f, type, signal) {
     try {
         let vData = await tmdbGet(`/${type}/${f.id}/videos`, {}, { signal });
+        if (signal.aborted) return;
         if(vData.results.length === 0) {
             vData = await tmdbGet(`/${type}/${f.id}/videos`, { language: 'en-US' }, { signal });
         }
+        if (signal.aborted) return;
         const trailer = vData.results.find(v => v.site === 'YouTube');
         const vidArea = document.getElementById('video-area');
         if(trailer) {
@@ -122,10 +117,12 @@ export async function abrirModal(f) {
         document.getElementById('video-area').style.display = 'none';
         document.getElementById('trailer-frame').src = '';
     }
+}
 
-    // Streaming
+async function loadProviders(f, type, signal) {
     try {
         const pData = await tmdbGet(`/${type}/${f.id}/watch/providers`, { language: null }, { signal });
+        if (signal.aborted) return; // resposta do cache não passa pelo abort
         const provDiv = document.getElementById('m-providers');
         provDiv.innerHTML = '';
         if(pData.results?.BR?.flatrate) {
@@ -141,10 +138,38 @@ export async function abrirModal(f) {
         console.error('Erro ao carregar plataformas:', e);
         showSectionError('m-providers', 'Não foi possível verificar onde assistir.');
     }
+}
+
+export async function abrirModal(f, { fromDraw = false } = {}) {
+    state.currentMovie = f;
+    const signal = latestSignal('title');
+    setUrlTitle({ type: f.media_type === 'dorama' ? 'dorama' : (f.media_type || state.type), id: f.id });
+    const mediaType = f.media_type || state.type;
+    const type = mediaType === 'dorama' ? 'tv' : mediaType;
+
+    document.getElementById('m-title').innerText = f.title || f.name;
+    document.getElementById('m-desc').innerText = f.overview || "Sem sinopse.";
+
+    // Links de crítica: RT por busca no título; IMDb só se houver imdb_id (séries precisam de external_ids)
+    const linkImdb = document.getElementById('link-imdb');
+    const linkRt = document.getElementById('link-rt');
+    linkRt.href = `https://www.rottentomatoes.com/search?search=${encodeURIComponent(f.original_title || f.original_name || f.title || f.name)}`;
+    linkImdb.hidden = true;
+    document.getElementById('m-rating').innerHTML = `<svg aria-hidden="true" class="icon icon-14 icon-lead-2" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>${formatRating(f.vote_average)}`;
+    document.getElementById('m-year').innerText = (f.release_date || f.first_air_date || '').split('-')[0];
+    document.getElementById('m-poster').src = f.backdrop_path ? IMG_URL + f.backdrop_path : (f.poster_path ? IMG_URL + f.poster_path : '');
+
+    // Mostra "Sortear outro" só para o que veio de um sorteio
+    document.getElementById('btn-sortear-outro').hidden = !fromDraw;
+
+    // Limpa o título anterior antes de abrir: as seções abaixo chegam depois
+    document.getElementById('video-area').style.display = 'none';
+    document.getElementById('trailer-frame').src = '';
+    showSectionLoading('cast-list', 'Carregando elenco...');
+    showSectionLoading('m-providers', 'Verificando onde assistir...');
 
     // Botões
     const vistos = session.user.history || [];
-    const wl = JSON.parse(localStorage.getItem('watchlist_obj')) || [];
 
     const btnV = document.getElementById('btn-visto');
     const btnS = document.getElementById('btn-salvar');
@@ -174,6 +199,13 @@ export async function abrirModal(f) {
     loadEpisodesSection(f);
 
     document.getElementById('modal-resultado').style.display = 'flex';
+
+    await Promise.all([
+        loadImdbLink(f, type, signal),
+        loadCast(f, type, signal),
+        loadTrailer(f, type, signal),
+        loadProviders(f, type, signal),
+    ]);
 }
 
 export function marcarVistoAtual() {
@@ -197,52 +229,3 @@ export function fecharModal() {
 
 // COMPARTILHAR
 
-export async function compartilhar() {
-    if(state.currentMovie) {
-        const title = state.currentMovie.title || state.currentMovie.name;
-        const rating = formatRating(state.currentMovie.vote_average);
-        const text = `${title}\n★ ${rating}/10\n\nDescubra em: ${window.location.href}`;
-
-        if(navigator.share) {
-            try {
-                await navigator.share({
-                    title: 'O Que Assistir?',
-                    text: text,
-                    url: window.location.href
-                });
-                showToast("Compartilhado com sucesso!");
-            } catch(e) {
-                if(e.name !== 'AbortError') {
-                    copyToClipboard(text);
-                }
-            }
-        } else {
-            copyToClipboard(text);
-        }
-    }
-}
-
-export function copyToClipboard(text) {
-    if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(() => {
-            showToast("Copiado para área de transferência!");
-        }).catch(() => {
-            showToast("Erro ao copiar", "error");
-        });
-    } else {
-        // Fallback for older browsers
-        const textarea = document.createElement('textarea');
-        textarea.value = text;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.select();
-        try {
-            document.execCommand('copy');
-            showToast("Copiado para área de transferência!");
-        } catch(e) {
-            showToast("Erro ao copiar", "error");
-        }
-        document.body.removeChild(textarea);
-    }
-}

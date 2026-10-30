@@ -1,5 +1,5 @@
 // Cliente único do TMDB: monta a URL, faz cache, cancela pedidos obsoletos e padroniza erros.
-import { API_KEY, BASE_URL, CACHE_TTL_MS } from '../config/constants.js';
+import { BASE_URL, CACHE_TTL_MS } from '../config/constants.js';
 import { MemoryCache } from '../utils/cache.js';
 
 const responses = new MemoryCache(CACHE_TTL_MS);
@@ -20,7 +20,6 @@ export function isAbortError(error) {
 // `language: null` omite o idioma (ex.: external_ids, trailers em inglês têm o próprio valor)
 export function buildTmdbUrl(path, params = {}) {
   const url = new URL(`${BASE_URL}${path}`);
-  url.searchParams.set('api_key', API_KEY);
   const { language = 'pt-BR', ...rest } = params;
   if (language) url.searchParams.set('language', language);
   Object.entries(rest).forEach(([key, value]) => {

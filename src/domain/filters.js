@@ -1,8 +1,17 @@
-import { BASE_URL, API_KEY } from '../config/constants.js';
+import { BASE_URL } from '../config/constants.js';
+import { getMoodGenres } from './moods.js';
+
+export const MY_PROVIDERS_VALUE = 'minhas';
+
+export function normalizeProviderIds(ids) {
+  if (!Array.isArray(ids)) return [];
+  return [...new Set(ids.map(String).filter(id => /^\d+$/.test(id)))];
+}
 
 export function buildDiscoverUrl(endpoint, filters = {}) {
   const {
     genre = '',
+    mood = '',
     provider = '',
     duration = '',
     yearFrom = '',
@@ -13,10 +22,16 @@ export function buildDiscoverUrl(endpoint, filters = {}) {
     sortBy = 'popularity.desc'
   } = filters;
 
-  let url = `${BASE_URL}/discover/${endpoint}?api_key=${API_KEY}&language=pt-BR&sort_by=${sortBy}&vote_count.gte=${minVotes}`;
+  let url = `${BASE_URL}/discover/${endpoint}?language=pt-BR&sort_by=${sortBy}&vote_count.gte=${minVotes}`;
 
-  if (isDorama) url += '&with_origin_country=KR&without_genres=16';
-  if (genre)    url += `&with_genres=${genre}`;
+  // Gênero escolhido à mão vence o clima
+  const moodGenres = genre ? null : getMoodGenres(mood, endpoint);
+  const withGenres = genre || moodGenres?.with;
+  const withoutGenres = [isDorama ? '16' : '', moodGenres?.without].filter(Boolean).join('|');
+
+  if (isDorama) url += '&with_origin_country=KR';
+  if (withGenres)    url += `&with_genres=${withGenres}`;
+  if (withoutGenres) url += `&without_genres=${withoutGenres}`;
   if (provider) url += `&with_watch_providers=${provider}&watch_region=BR`;
   if (personId) url += `&with_people=${personId}`;
 

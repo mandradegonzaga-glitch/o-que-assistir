@@ -24,7 +24,7 @@ function showInstallPrompt() {
   installBanner.id = 'pwa-install-banner';
   installBanner.className = 'install-banner';
   installBanner.innerHTML = `
-    <svg aria-hidden="true" class="install-banner__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2.5a1.5 1.5 0 0 0 0 3V16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2.5a1.5 1.5 0 0 0 0-3z"/><path d="M15 6v2M15 11v2M15 16v2"/></svg>
+    <svg aria-hidden="true" class="install-banner__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path fill="currentColor" fill-opacity="0.2" d="M2 8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2.5a1.5 1.5 0 0 0 0 3V16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2.5a1.5 1.5 0 0 0 0-3z"/><path d="M16 6v2M16 11v2M16 16v2"/><path fill="currentColor" stroke="none" d="M8 9v6l5-3z"/></svg>
     <div class="install-banner__text">
       <strong>Instalar App</strong>
       <span>Acesse mais rápido pela tela inicial</span>

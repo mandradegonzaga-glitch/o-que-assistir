@@ -2,7 +2,7 @@
 
 > Feature ID: 006
 > Created: 2026-03-24
-> Status: Planned
+> Status: Implemented (sem tabela: user_metadata; ver 008 D001-025)
 
 ## Overview
 

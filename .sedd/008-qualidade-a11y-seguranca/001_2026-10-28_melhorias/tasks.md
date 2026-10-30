@@ -7,7 +7,7 @@
 
 ## Summary
 
-Total: 49 | Completed: 49 | Pending: 0 (restam só FR-035 e FR-040, adiados por D001-010)
+Total: 71 | Completed: 70 | Pending: 0 (restam só FR-035 e FR-040, adiados por D001-010)
 
 Regra de trabalho (pedido do usuário): **um item por vez, testar, evidenciar e perguntar antes do próximo.** Os 18 itens de T001-026 em diante foram feitos em sequência a pedido do usuário em 2026-10-30.
 
@@ -151,6 +151,45 @@ Regra de trabalho (pedido do usuário): **um item por vez, testar, evidenciar e 
 - [x] T001-048 [Backlog] Bugs da revisão geral: roleta para na fatia do vencedor; série sorteada traz temporadas; doramas aparecem na biblioteca (e contam em Maratonista); arrastar o elenco não fecha o modal; convidado recupera ignorados e histórico
 
 - [x] T001-049 [Backlog] "Deletar conta" pela Edge Function `delete-account` (apaga o login; cascata leva os dados) — publicada e testada no real (limpeza da sessão local sem novo teste de ponta a ponta)
+
+- [x] T001-050 [Backlog] Importar dados da versão antiga (FR-040): senhas locais apagadas em toda abertura, aviso no login, importação com consentimento e sem duplicar — testada no Supabase real
+
+- [x] T001-051 [Backlog] "Sortear outro" no modal, sem repetir os 20 últimos sorteios
+- [x] T001-052 [Backlog] Modal abre na hora; elenco, trailer, plataformas e IMDb carregam em paralelo, cada um com a própria falha
+- [x] T001-053 [Backlog] Ícones PNG (72, 180, 192, 512), imagem de compartilhamento e `title` no iframe do trailer
+- [x] T001-054 [Backlog] Testes de navegador com Playwright (23 cenários, Supabase e TMDB simulados): `npm run test:e2e`
+- [x] T001-055 [Backlog] "Minhas plataformas" no perfil, salvo no aparelho (D001-024)
+- [x] T001-056 [Backlog] Filtro por clima, com gêneros próprios para filmes e séries
+
+- [x] T001-057 [Backlog] Plataformas: id da Apple TV corrigido (531 era Paramount+), 11 destaques, lista completa do TMDB com busca, sem lojas e canais; seta própria nos seletores
+
+- [x] T001-058 [Backlog] Ícones das boas-vindas redesenhados; "Onde" lista os destaques de `providers.js`, com "Minhas plataformas" e atalho para escolher no perfil
+
+- [x] T001-059 [Backlog] Roleta: roda visível quando vazia, ícones novos, orientação até ter 2 opções, sem giro duplo e roda parada no vencedor
+
+- [x] T001-060 [Backlog] ESLint, `npm run check` e CI no GitHub Actions; código sem uso removido (`tmdbSeries.js`, `formatDate`, histórico de busca, login anônimo)
+- [x] T001-062 [Backlog] Modo convidado: lista, vistos, conquistas e roleta salvas no aparelho; oferecidos à conta ao criá-la
+- [x] T001-063 [Backlog] Minhas plataformas sincronizadas pelos metadados da conta (D001-025)
+- [x] T001-064 [Backlog] Sequência diária, XP e 6 níveis no perfil (feature 005, D001-025)
+- [x] T001-065 [Backlog] 20 conquistas em 3 categorias (feature 007), incluindo marcos de sequência
+- [x] T001-066 [Backlog] Match no mesmo celular: aba própria, votos escondidos, swipe, setas e sorteio entre os matches (D001-026)
+- [x] T001-067 [Backlog] Ingresso compartilhável em PNG, gerado no aparelho
+- [x] T001-061 [Backlog] FR-035: função `tmdb` publicada e app usando o proxy; a chave saiu do código (ainda está no histórico do git)
+
+- [x] T001-068 [Backlog] "Compartilhar" envia ingresso, texto e link juntos; substitui "Gerar ingresso"
+- [x] T001-069 [Backlog] QR code no ingresso, lido por decodificador independente mesmo reduzido e em JPEG
+- [x] T001-070 [Backlog] Match por link e email: votos no próprio link, sem conta para quem recebe, com resposta de volta
+- [ ] T001-071 [Backlog] Amigos por username e convites de Match no app: código e `database/friends.sql` prontos, testados em Postgres local; SQL rodado pelo usuário em 2026-10-30; falta testar no Supabase real com duas contas (D001-028)
+- [x] T001-072 [Backlog] Amigos no cabeçalho, com contador de pedidos e janela própria (D001-029)
+- [x] T001-073 [Backlog] Convite de amizade por link (`?amigo=`), com confirmação, inclusive depois do login
+- [x] T001-074 [Backlog] Perfil do amigo: assistidos, lista, conquistas e o que os dois querem ver (`get_friend_profile`, só amizade aceita)
+- [x] T001-075 [Backlog] Opção de ocultar a atividade dos amigos, aplicada no servidor (D001-029)
+- [x] T001-076 [Backlog] Mesmo bilhete âmbar com play em todo o app; números das etapas mais legíveis
+- [ ] T001-077 [Próxima sessão] Separar "Gerar ingresso" de "Compartilhar" no modal do título
+- [ ] T001-078 [Próxima sessão] "Compartilhar" envia as informações do título, o link e o ingresso
+- [ ] T001-079 [Próxima sessão] Compartilhar com amigos do app, além do WhatsApp (deve exigir SQL novo, no modelo de `match_invites`)
+- [ ] T001-080 [Próxima sessão] Ingresso na cor do tipo: âmbar Filme, teal Série, rosa Dorama
+- [ ] T001-081 [Próxima sessão] Ingresso com sinopse cortada, 3 ou 4 nomes do elenco e onde assistir (logos só se o canvas puder exportá-los; senão, o nome da plataforma)
 
 Bugs herdados encontrados e corrigidos nessa rodada:
 - Filtro "Até (ano)" era ignorado em séries (o `replace` só trocava o `.gte`).

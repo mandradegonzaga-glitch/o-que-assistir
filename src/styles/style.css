@@ -3522,3 +3522,506 @@ header { gap: var(--space-sm); }
     width: 20px;
     height: 20px;
 }
+
+/* Aviso para quem vem da versão antiga */
+.legacy-hint {
+    margin-bottom: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    background: rgba(var(--accent-primary-rgb), 0.1);
+    border: 1px solid rgba(var(--accent-primary-rgb), 0.35);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+/* Sortear outro: fica à mão logo acima das ações */
+.sortear-outro {
+    width: 100%;
+    margin: var(--space-md) 0;
+}
+
+.section-loading {
+    color: var(--text-tertiary);
+    font-size: 0.85rem;
+}
+
+/* Minhas plataformas */
+.provider-choices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-sm);
+}
+
+.provider-choice {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    min-height: 44px;
+    padding: 0 var(--space-md);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.provider-choice:has(input:checked) {
+    border-color: var(--accent-primary);
+}
+
+.provider-choice input {
+    accent-color: var(--accent-primary);
+}
+
+/* Seta própria nos seletores: a do navegador fica colada na borda */
+select.input-dark,
+.episodes-season-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-opacity='0.7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 16px;
+    padding-right: 42px;
+    cursor: pointer;
+}
+
+select.input-dark:hover {
+    border-color: var(--border-strong);
+}
+
+/* Todas as plataformas */
+.more-providers {
+    margin-top: var(--space-md);
+}
+
+.more-providers summary {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    color: var(--accent-text);
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.more-providers .input-dark {
+    margin-bottom: var(--space-sm);
+}
+
+.more-providers .provider-choices {
+    max-height: 260px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+/* Roleta: a roda existe mesmo vazia, com aro e fatias apagadas */
+.roulette-wheel {
+    box-shadow: 0 0 0 6px var(--bg-tertiary), 0 0 0 7px var(--border-default), var(--shadow-lg);
+    overflow: hidden;
+}
+
+.roulette-wheel:empty {
+    background: repeating-conic-gradient(rgba(255, 255, 255, 0.07) 0 45deg, rgba(255, 255, 255, 0.025) 45deg 90deg);
+}
+
+.roulette-wheel canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.roulette-pointer {
+    top: -18px;
+}
+
+.roulette-center {
+    color: var(--accent-text);
+}
+
+.roulette-hint {
+    margin-bottom: var(--space-md);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.btn-main:disabled {
+    cursor: not-allowed;
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    transform: none;
+    box-shadow: none;
+}
+
+/* Sequência, nível e categorias de conquistas */
+.progress-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.progress-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    text-align: left;
+}
+
+.progress-card--level {
+    display: block;
+}
+
+.progress-card__value {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 900;
+    line-height: 1.1;
+}
+
+.progress-card--level .badges-progress__track {
+    margin-top: var(--space-sm);
+}
+
+.xp-log {
+    margin-bottom: var(--space-lg);
+    list-style: none;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    line-height: 1.7;
+}
+
+.badge-category {
+    grid-column: 1 / -1;
+    margin-top: var(--space-sm);
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+@media (max-width: 640px) {
+    .progress-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Match */
+.mode-tab {
+    min-width: 0;
+    padding-inline: var(--space-sm);
+}
+
+.match-names {
+    margin-bottom: var(--space-md);
+}
+
+.match-status {
+    margin-bottom: var(--space-sm);
+}
+
+.match-status strong {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 900;
+    overflow-wrap: anywhere;
+}
+
+.match-card {
+    display: grid;
+    grid-template-columns: minmax(0, 200px) minmax(0, 1fr);
+    gap: var(--space-lg);
+    margin: var(--space-md) 0;
+    touch-action: pan-y;
+}
+
+.match-card__poster {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+}
+
+.match-card__title {
+    font-size: 1.9rem;
+    font-weight: 900;
+    line-height: 1.05;
+    overflow-wrap: anywhere;
+}
+
+.match-card__meta {
+    margin: var(--space-sm) 0;
+    color: var(--accent-text);
+    font-size: 0.9rem;
+}
+
+.match-card__overview {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 7;
+    overflow: hidden;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.match-tip {
+    margin: var(--space-sm) 0 0;
+}
+
+.match-pass__title {
+    margin-bottom: var(--space-md);
+    font-size: 2.2rem;
+    font-weight: 900;
+    line-height: 1.1;
+    overflow-wrap: anywhere;
+}
+
+.match-pass__title:focus {
+    outline: none;
+}
+
+.match-result-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.match-result-item {
+    padding: 0;
+    background: none;
+    border: 0;
+    color: var(--text-primary);
+    text-align: left;
+    cursor: pointer;
+}
+
+.match-result-item img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 2 / 3;
+    margin-bottom: var(--space-xs);
+    border-radius: var(--radius-md);
+}
+
+@media (max-width: 640px) {
+    .match-card {
+        grid-template-columns: minmax(0, 130px) minmax(0, 1fr);
+        gap: var(--space-md);
+    }
+
+    .match-card__title {
+        font-size: 1.5rem;
+    }
+
+    .match-card__overview {
+        -webkit-line-clamp: 5;
+    }
+
+    .match-names {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Amigos */
+.friend-list {
+    list-style: none;
+    display: grid;
+    gap: var(--space-xs);
+    margin: var(--space-sm) 0;
+}
+
+.friend-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    min-height: 44px;
+}
+
+.friend-row__name {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.friend-row__name small {
+    display: block;
+    color: var(--text-tertiary);
+    font-size: 0.8rem;
+}
+
+.friend-targets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+}
+
+.friend-target {
+    width: auto;
+    padding: var(--space-sm) var(--space-md);
+}
+
+.match-inbox {
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-md);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+/* Aba e perfil de amigos */
+.mode-tab {
+    position: relative;
+}
+
+.mode-tab__badge {
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #ff8fb8;
+    border-radius: var(--radius-full);
+    color: #17121f;
+    font-family: var(--font-family);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.friends-add {
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-md);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.friend-action {
+    width: auto;
+    flex-shrink: 0;
+    padding: var(--space-sm) var(--space-md);
+    font-size: 1rem;
+}
+
+.friends-privacy {
+    margin: var(--space-lg) 0 0;
+}
+
+.friend-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: var(--space-md) 0;
+}
+
+.friend-block {
+    margin-bottom: var(--space-lg);
+}
+
+.friend-titles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: var(--space-sm);
+}
+
+.friend-title {
+    padding: 0;
+    background: none;
+    border: 0;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    line-height: 1.3;
+    text-align: left;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+}
+
+.friend-title img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 2 / 3;
+    margin-bottom: var(--space-xs);
+    background: var(--bg-elevated);
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+}
+
+
+/* Amigos no cabeçalho, junto da conta */
+.header-friends {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    background: transparent;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.header-friends:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-text);
+}
+
+.header-friends .mode-tab__badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+}
+
+.friends-privacy {
+    margin-top: var(--space-lg);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--border-subtle);
+}
+
+.friends-share {
+    padding-block: var(--space-sm);
+    margin-bottom: var(--space-sm);
+    line-height: 1.35;
+}
+
+@media (max-width: 640px) {
+    .logo h1 {
+        font-size: 1.25rem;
+    }
+
+    .user-name {
+        display: none;
+    }
+
+    .header-actions {
+        gap: 6px;
+    }
+}
+
+/* Marca: o mesmo bilhete âmbar em todas as telas */
+.login-logo h1 {
+    color: var(--accent-text);
+}
+
+.logo h1 .icon-logo {
+    width: 32px;
+    height: 32px;
+}
+
+/* Etapas: número legível, na fonte de títulos */
+.badge-num {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    background: var(--accent-primary);
+    border: 0;
+    color: #17121f;
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 900;
+    font-variant-numeric: lining-nums;
+    line-height: 1;
+}

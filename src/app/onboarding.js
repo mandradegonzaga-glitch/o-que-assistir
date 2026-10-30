@@ -7,17 +7,17 @@ export let onboardingStep = 0;
 
 export const onboardingSteps = [
     {
-        icon: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="2"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>',
+        icon: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path fill="currentColor" fill-opacity="0.2" d="M2 8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2.5a1.5 1.5 0 0 0 0 3V16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2.5a1.5 1.5 0 0 0 0-3z"/><path d="M16 6v2M16 11v2M16 16v2"/><path fill="currentColor" stroke="none" d="M8 9v6l5-3z"/></svg>',
         title: 'Bem-vindo!',
         desc: 'Descubra filmes e séries de forma inteligente com filtros personalizados'
     },
     {
-        icon: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+        icon: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect fill="currentColor" fill-opacity="0.2" x="3.5" y="3.5" width="17" height="17" rx="3.5"/><circle fill="currentColor" stroke="none" cx="8.2" cy="8.2" r="1.4"/><circle fill="currentColor" stroke="none" cx="15.8" cy="8.2" r="1.4"/><circle fill="currentColor" stroke="none" cx="12" cy="12" r="1.4"/><circle fill="currentColor" stroke="none" cx="8.2" cy="15.8" r="1.4"/><circle fill="currentColor" stroke="none" cx="15.8" cy="15.8" r="1.4"/></svg>',
         title: 'Sorteio Inteligente',
         desc: 'Use filtros avançados e deixe o algoritmo escolher a melhor opção para você'
     },
     {
-        icon: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/><circle cx="12" cy="12" r="3"/></svg>',
+        icon: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle fill="currentColor" fill-opacity="0.2" cx="12" cy="13.5" r="8.5"/><path d="M12 13.5V5M12 13.5l7.4 4.2M12 13.5l-7.4 4.2"/><circle fill="currentColor" stroke="none" cx="12" cy="13.5" r="1.7"/><path fill="currentColor" stroke="none" d="M12 6 9.6 1.5h4.8z"/></svg>',
         title: 'Roleta Personalizada',
         desc: 'Crie sua própria roleta com filmes e deixe a sorte decidir!'
     }

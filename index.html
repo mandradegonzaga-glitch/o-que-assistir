@@ -12,14 +12,17 @@
     <meta name="apple-mobile-web-app-title" content="OQueAssistir">
     <meta name="application-name" content="O Que Assistir?">
     <meta name="msapplication-TileColor" content="#14101F">
-    <meta name="msapplication-config" content="browserconfig.xml">
     <meta name="description" content="Descubra filmes e séries de forma inteligente com filtros personalizados">
 
     <!-- Open Graph / Social -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="O Que Assistir?">
     <meta property="og:description" content="Descubra filmes e séries de forma inteligente com filtros personalizados">
-    <meta property="og:image" content="icons/icon-512.png">
+    <meta property="og:url" content="https://o-que-assistir-watch.vercel.app/">
+    <meta property="og:image" content="https://o-que-assistir-watch.vercel.app/icons/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
 
     <title>O Que Assistir?</title>
 
@@ -28,7 +31,7 @@
 
     <!-- Favicon & Icons -->
     <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
-    <link rel="apple-touch-icon" href="icons/icon.svg">
+    <link rel="apple-touch-icon" href="icons/icon-180.png">
 
     <!-- Conexões antecipadas: primeira busca e primeiros pôsteres mais rápidos -->
     <link rel="preconnect" href="https://api.themoviedb.org">
@@ -45,7 +48,7 @@
         <div class="login-box" role="dialog" aria-modal="true" aria-labelledby="login-title" tabindex="-1">
             <div class="login-logo">
                 <h1 id="login-title">
-                    <svg aria-hidden="true" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2.5a1.5 1.5 0 0 0 0 3V16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2.5a1.5 1.5 0 0 0 0-3z"/><path d="M15 6v2M15 11v2M15 16v2"/></svg>
+                    <svg aria-hidden="true" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path fill="currentColor" fill-opacity="0.2" d="M2 8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2.5a1.5 1.5 0 0 0 0 3V16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2.5a1.5 1.5 0 0 0 0-3z"/><path d="M16 6v2M16 11v2M16 16v2"/><path fill="currentColor" stroke="none" d="M8 9v6l5-3z"/></svg>
                     <span class="sr-only">O Que Assistir?</span>
                 </h1>
                 <p aria-hidden="true">O Que Assistir?</p>
@@ -58,6 +61,7 @@
 
             <!-- LOGIN FORM -->
             <div class="login-form active" id="login-form" role="tabpanel" aria-labelledby="login-tab">
+                <p id="legacy-hint" class="legacy-hint" hidden>Usava a versão antiga? Agora o acesso é por email: crie uma conta nova em "Criar Conta" e sua lista será trazida.</p>
                 <div class="error-message" id="login-error" role="alert" aria-live="polite"></div>
                 <div class="form-group">
                     <label for="login-email">Email</label>
@@ -117,7 +121,7 @@
         <header>
             <div class="logo">
                 <h1>
-                    <svg aria-hidden="true" class="icon-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2.5a1.5 1.5 0 0 0 0 3V16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2.5a1.5 1.5 0 0 0 0-3z"/><path d="M15 6v2M15 11v2M15 16v2"/></svg>
+                    <svg aria-hidden="true" class="icon-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path fill="currentColor" fill-opacity="0.2" d="M2 8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2.5a1.5 1.5 0 0 0 0 3V16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2.5a1.5 1.5 0 0 0 0-3z"/><path d="M16 6v2M16 11v2M16 16v2"/><path fill="currentColor" stroke="none" d="M8 9v6l5-3z"/></svg>
                     O Que Assistir?
                 </h1>
             </div>
@@ -126,6 +130,10 @@
                     <span class="avatar" id="user-avatar" aria-hidden="true">?</span>
                     <span class="user-name" id="user-display">Convidado</span>
                     <span id="user-pill-hint" class="sr-only">Abrir meu perfil</span>
+                </button>
+                <button type="button" id="btn-friends" class="header-friends" data-action="openFriends" aria-label="Amigos">
+                    <svg aria-hidden="true" class="icon icon-24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle fill="currentColor" fill-opacity="0.2" cx="9" cy="8" r="3.5"/><path fill="currentColor" fill-opacity="0.2" d="M2.5 20a6.5 6.5 0 0 1 13 0z"/><path d="M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.2a6.5 6.5 0 0 1 3.5 5.8"/></svg>
+                    <span id="friends-badge" class="mode-tab__badge" hidden></span>
                 </button>
                 <button class="logout-btn is-hidden" id="logout-btn" data-action="logout">Sair</button>
             </div>
@@ -140,13 +148,12 @@
                 Descobrir
             </button>
             <button type="button" id="tab-mode-roulette" class="mode-tab" role="tab" tabindex="-1" aria-selected="false" aria-controls="view-roulette" data-action="switchMode" data-arg="roulette">
-                <svg aria-hidden="true" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 2a10 10 0 0 1 10 10"/>
-                    <path d="M12 12l4-4"/>
-                    <circle cx="12" cy="12" r="2"/>
-                </svg>
+                <svg aria-hidden="true" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle fill="currentColor" fill-opacity="0.2" cx="12" cy="13.5" r="8.5"/><path d="M12 13.5V5M12 13.5l7.4 4.2M12 13.5l-7.4 4.2"/><circle fill="currentColor" stroke="none" cx="12" cy="13.5" r="1.7"/><path fill="currentColor" stroke="none" d="M12 6 9.6 1.5h4.8z"/></svg>
                 Roleta
+            </button>
+            <button type="button" id="tab-mode-match" class="mode-tab" role="tab" tabindex="-1" aria-selected="false" aria-controls="view-match" data-action="switchMode" data-arg="match">
+                <svg aria-hidden="true" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path fill="currentColor" fill-opacity="0.2" d="M9 19s-6.5-4-6.5-8.8A3.7 3.7 0 0 1 9 8a3.7 3.7 0 0 1 6.5 2.2C15.5 15 9 19 9 19z"/><path d="M14.5 5.8A3.3 3.3 0 0 1 21.5 7.5c0 2.7-1.8 5-3.8 6.8"/></svg>
+                Match
             </button>
         </div>
 
@@ -185,8 +192,18 @@
                     <button type="button" id="selected-person" class="selected-pill" data-action="limparPessoa" aria-label="Remover pessoa selecionada"><span id="person-name">Nome</span> <svg aria-hidden="true" class="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                 </div>
 
+                <select id="input-mood" class="input-dark mb-10" aria-label="Selecionar clima" data-change="clearGenre">
+                    <option value="">Clima: Qualquer</option>
+                    <option value="leve">Leve e divertido</option>
+                    <option value="chorar">Para chorar</option>
+                    <option value="tensao">Tensão</option>
+                    <option value="adrenalina">Adrenalina</option>
+                    <option value="imaginacao">Viajar na imaginação</option>
+                </select>
+
+
                 <div class="grid-2">
-                    <select id="input-genero" class="input-dark" aria-label="Selecionar gênero">
+                    <select id="input-genero" class="input-dark" aria-label="Selecionar gênero" data-change="clearMood">
                         <option value="">Gênero: Todos</option>
                         <option value="35,10749">Comédia Romântica</option>
                         <option value="28">Ação</option>
@@ -206,15 +223,8 @@
                         <option value="10752">Guerra</option>
                         <option value="37">Faroeste</option>
                     </select>
-                    <select id="input-provider" class="input-dark" aria-label="Selecionar plataforma de streaming">
-                        <option value="">Onde: Todos</option>
-                        <option value="8">Netflix</option>
-                        <option value="337">Disney+</option>
-                        <option value="119">Prime Video</option>
-                        <option value="1899">HBO Max</option>
-                        <option value="307">Globoplay</option>
-                        <option value="531">Apple TV+</option>
-                        <option value="283">Crunchyroll</option>
+                    <select id="input-provider" class="input-dark" aria-label="Selecionar plataforma de streaming" data-change="onProviderChange">
+                        <option value="">Onde: Todas as plataformas</option>
                     </select>
                 </div>
 
@@ -299,18 +309,13 @@
         <div class="is-hidden" id="view-roulette" role="tabpanel" aria-labelledby="tab-mode-roulette">
             <div class="section text-center">
                 <h2 class="panel-title panel-title--large">
-                    <svg aria-hidden="true" class="icon icon-28 text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M12 2a10 10 0 0 1 10 10"/>
-                        <path d="M12 12l4-4"/>
-                        <circle cx="12" cy="12" r="2"/>
-                    </svg>
+                    <svg aria-hidden="true" class="icon icon-28 text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle fill="currentColor" fill-opacity="0.2" cx="12" cy="13.5" r="8.5"/><path d="M12 13.5V5M12 13.5l7.4 4.2M12 13.5l-7.4 4.2"/><circle fill="currentColor" stroke="none" cx="12" cy="13.5" r="1.7"/><path fill="currentColor" stroke="none" d="M12 6 9.6 1.5h4.8z"/></svg>
                     Roleta Personalizada
                 </h2>
-                <p class="panel-hint">Adicione opções e gire a sorte!</p>
+                <p class="panel-hint">Em dúvida entre alguns títulos? Adicione e deixe a sorte decidir.</p>
 
                 <div class="input-row">
-                    <input id="roulette-input" class="input-dark m-0" placeholder="Nome do filme..." data-enter="addRoletaItem" aria-label="Digite o nome do filme ou série">
+                    <input id="roulette-input" class="input-dark m-0" placeholder="Digite um filme ou série" data-enter="addRoletaItem" aria-label="Digite o nome do filme ou série">
                     <button class="btn-main ripple btn-compact" data-action="addRoletaItem" aria-label="Adicionar item à roleta">+ Adicionar</button>
                 </div>
 
@@ -321,25 +326,16 @@
                     <div class="roulette-pointer"></div>
                     <div id="roulette-wheel" class="roulette-wheel"></div>
                     <div class="roulette-center" id="roulette-result">
-                        <svg aria-hidden="true" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="2" y="4" width="20" height="16" rx="2"/>
-                            <path d="M2 8h20"/>
-                            <circle cx="8" cy="14" r="2"/>
-                            <circle cx="16" cy="14" r="2"/>
-                        </svg>
+                        <svg aria-hidden="true" class="icon-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path fill="currentColor" fill-opacity="0.2" d="M2 8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2.5a1.5 1.5 0 0 0 0 3V16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2.5a1.5 1.5 0 0 0 0-3z"/><path d="M16 6v2M16 11v2M16 16v2"/><path fill="currentColor" stroke="none" d="M8 9v6l5-3z"/></svg>
                     </div>
                 </div>
 
-                <button class="btn-main ripple btn-spin" data-action="girarRoleta" aria-label="Girar roleta e sortear">
-                    <svg aria-hidden="true" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <path d="M12 2a10 10 0 0 1 10 10"/>
-                        <path d="M12 12l4-4"/>
-                        <circle cx="12" cy="12" r="2"/>
-                    </svg>
+                <p id="roulette-hint" class="roulette-hint" role="status">Adicione pelo menos 2 opções para girar.</p>
+                <button id="btn-girar" class="btn-main ripple btn-spin" data-action="girarRoleta" disabled aria-label="Girar roleta e sortear">
+                    <svg aria-hidden="true" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle fill="currentColor" fill-opacity="0.2" cx="12" cy="13.5" r="8.5"/><path d="M12 13.5V5M12 13.5l7.4 4.2M12 13.5l-7.4 4.2"/><circle fill="currentColor" stroke="none" cx="12" cy="13.5" r="1.7"/><path fill="currentColor" stroke="none" d="M12 6 9.6 1.5h4.8z"/></svg>
                     Girar Roleta!
                 </button>
-                <button class="btn-outline ripple row-center w-full mt-10" data-action="limparRoleta" aria-label="Limpar todos os itens da roleta">
+                <button id="btn-limpar-roleta" class="btn-outline ripple row-center w-full mt-10" data-action="limparRoleta" hidden aria-label="Limpar todos os itens da roleta">
                     <svg aria-hidden="true" class="icon icon-16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="3 6 5 6 21 6"/>
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -349,6 +345,94 @@
             </div>
         </div>
 
+        <div id="view-match" class="is-hidden" role="tabpanel" aria-labelledby="tab-mode-match">
+            <div class="section match-section">
+                <div id="match-setup">
+                    <div id="match-inbox" class="match-inbox" hidden>
+                        <h3 class="subsection-title">Convites para você</h3>
+                        <ul id="match-inbox-list" class="friend-list"></ul>
+                    </div>
+                    <h2 class="panel-title panel-title--large"><svg aria-hidden="true" class="icon icon-28 text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path fill="currentColor" fill-opacity="0.2" d="M9 19s-6.5-4-6.5-8.8A3.7 3.7 0 0 1 9 8a3.7 3.7 0 0 1 6.5 2.2C15.5 15 9 19 9 19z"/><path d="M14.5 5.8A3.3 3.3 0 0 1 21.5 7.5c0 2.7-1.8 5-3.8 6.8"/></svg> Match</h2>
+                    <p class="panel-hint text-center">Duas pessoas, um celular. Cada uma vota sem ver a outra, e só aparece o que as duas quiseram.</p>
+                    <div class="grid-two match-names">
+                        <div>
+                            <label for="match-name-1" class="field-label">Primeira pessoa</label>
+                            <input type="text" id="match-name-1" class="input-dark" placeholder="Pessoa 1" maxlength="20" autocomplete="off">
+                        </div>
+                        <div>
+                            <label for="match-name-2" class="field-label">Segunda pessoa</label>
+                            <input type="text" id="match-name-2" class="input-dark" placeholder="Pessoa 2" maxlength="20" autocomplete="off">
+                        </div>
+                    </div>
+                    <p class="section-note text-center">Usa o tipo e os filtros escolhidos em Descobrir.</p>
+                    <button type="button" id="btn-match-start" class="btn-main ripple w-full mb-10" data-action="matchStart">Jogar no mesmo celular</button>
+                    <button type="button" id="btn-match-invite" class="btn-outline ripple w-full" data-action="matchInvite">Convidar por link ou email</button>
+                    <p class="section-note text-center mt-10">No convite, você vota primeiro e envia o link. A outra pessoa não precisa de conta.</p>
+                </div>
+
+                <div id="match-voting" hidden>
+                    <div class="row-between match-status">
+                        <strong id="match-player"></strong>
+                        <span id="match-counter" class="text-small text-secondary" role="status"></span>
+                    </div>
+                    <div class="badges-progress__track"><div class="badges-progress__fill" id="match-fill"></div></div>
+                    <div id="match-card" class="match-card"></div>
+                    <div class="grid-two">
+                        <button type="button" class="btn-outline ripple" data-action="matchNo">Não quero</button>
+                        <button type="button" class="btn-main ripple" data-action="matchYes">Quero</button>
+                    </div>
+                    <p class="section-note text-center match-tip">Também dá para arrastar o cartão para o lado.</p>
+                </div>
+
+                <div id="match-pass" class="text-center" hidden>
+                    <h2 class="match-pass__title">Passe o celular para <span id="match-pass-name"></span></h2>
+                    <p class="panel-hint">Os votos da primeira pessoa ficam escondidos.</p>
+                    <button type="button" id="btn-match-continue" class="btn-main ripple w-full" data-action="matchContinue">Continuar</button>
+                </div>
+
+                <div id="match-invite" hidden>
+                    <h2 class="match-pass__title text-center">Agora é com a outra pessoa</h2>
+                    <p class="panel-hint text-center">Seus votos estão guardados no link. Quem abrir vota nos mesmos títulos e vê o resultado na hora.</p>
+                    <label for="match-link" class="field-label">Link do convite</label>
+                    <input type="text" id="match-link" class="input-dark mb-10" readonly>
+                    <button type="button" id="btn-match-send" class="btn-main ripple w-full mb-15" data-action="matchSendInvite">Enviar convite</button>
+                    <div data-friend-targets class="mb-15" hidden>
+                        <p class="field-label">Enviar para um amigo</p>
+                        <div class="friend-targets"></div>
+                    </div>
+                    <label for="match-email" class="field-label">Ou mande por email</label>
+                    <div class="input-row">
+                        <input type="email" id="match-email" class="input-dark m-0" placeholder="email@exemplo.com" autocomplete="off" spellcheck="false">
+                        <button type="button" class="btn-outline ripple btn-compact" data-action="matchEmailInvite">Abrir email</button>
+                    </div>
+                    <button type="button" class="btn-outline ripple w-full" data-action="matchRestart">Começar outro</button>
+                </div>
+
+                <div id="match-joined" class="text-center" hidden>
+                    <h2 class="match-pass__title"><span id="match-joined-from"></span> te chamou para um Match</h2>
+                    <p class="panel-hint">Vote nos títulos sem ver os votos da outra pessoa. No fim, aparece só o que as duas quiseram.</p>
+                    <label for="match-joined-name" class="field-label">Seu nome (opcional)</label>
+                    <input type="text" id="match-joined-name" class="input-dark mb-15" placeholder="Pessoa 2" maxlength="20" autocomplete="off">
+                    <button type="button" class="btn-main ripple w-full" data-action="matchJoin">Começar a votar</button>
+                </div>
+
+                <div id="match-result" hidden>
+                    <h2 id="match-result-title" class="match-pass__title text-center" tabindex="-1"></h2>
+                    <div id="match-result-list" class="match-result-list"></div>
+                    <button type="button" id="btn-match-draw" class="btn-main ripple w-full mb-10" data-action="matchDraw" hidden>Sortear entre os matches</button>
+                    <div id="match-answer" class="match-answer" hidden>
+                        <div data-friend-targets class="mb-15" hidden>
+                        <p class="field-label">Enviar para um amigo</p>
+                        <div class="friend-targets"></div>
+                    </div>
+                        <p class="section-note">Avise <span id="match-answer-name"></span> do resultado:</p>
+                        <input type="text" id="match-answer-link" class="input-dark mb-10" aria-label="Link do resultado" readonly>
+                        <button type="button" class="btn-main ripple w-full mb-10" data-action="matchSendAnswer">Enviar resultado</button>
+                    </div>
+                    <button type="button" class="btn-outline ripple w-full" data-action="matchRestart">Jogar de novo</button>
+                </div>
+            </div>
+        </div>
         <div class="site-footer">
             <a class="site-footer__link" href="https://www.buymeacoffee.com" target="_blank">
                 <svg class="site-footer__icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M20,3H4V5H20V3M20,7H4C2.9,7 2,7.9 2,9V14C2,15.1 2.9,16 4,16H6V18C6,19.1 6.9,20 8,20H14C15.1,20 16,19.1 16,18V16H20C21.1,16 22,15.1 22,14V9C22,7.9 21.1,7 20,7M20,14H18V9H20V14M16,18H8V9H16V18Z" /></svg>
@@ -358,6 +442,96 @@
                 <svg class="site-footer__icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4A2,2 0 0,0 20,2M20,16H6L4,18V4H20V16Z" /></svg>
                 <span>Feedback</span>
             </a>
+        </div>
+    </div>
+
+    <!-- Amigos: antes do perfil do amigo e do título, que abrem por cima -->
+    <div id="modal-friends" class="modal-overlay">
+        <div class="modal-content modal-content--panel" role="dialog" aria-modal="true" aria-label="Amigos" tabindex="-1">
+
+                <div id="friends-guest" hidden>
+                    <h2 class="panel-title panel-title--large"><svg aria-hidden="true" class="icon icon-28 text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle fill="currentColor" fill-opacity="0.2" cx="9" cy="8" r="3.5"/><path fill="currentColor" fill-opacity="0.2" d="M2.5 20a6.5 6.5 0 0 1 13 0z"/><path d="M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.2a6.5 6.5 0 0 1 3.5 5.8"/></svg> Amigos</h2>
+                    <p class="panel-hint text-center">Crie uma conta para adicionar amigos, ver o que cada um assistiu e chamar para um Match. Saia do modo convidado e toque em "Criar Conta".</p>
+                </div>
+                <p id="friends-unavailable" class="panel-hint text-center" hidden>Amigos indisponíveis no momento. Tente de novo mais tarde.</p>
+
+                <div id="friends-content" hidden>
+                    <div class="friends-add">
+                        <h2 class="panel-title panel-title--large"><svg aria-hidden="true" class="icon icon-28 text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle fill="currentColor" fill-opacity="0.2" cx="9" cy="8" r="3.5"/><path fill="currentColor" fill-opacity="0.2" d="M2.5 20a6.5 6.5 0 0 1 13 0z"/><path d="M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.2a6.5 6.5 0 0 1 3.5 5.8"/></svg> Amigos</h2>
+                        <button type="button" class="btn-main ripple w-full mb-10" data-action="friendInvite">Convidar amigo por link</button>
+                        <p class="section-note text-center">Quem abrir o link já pede amizade. Seu usuário é <strong id="my-username"></strong>.</p>
+                        <label for="friend-username" class="field-label">Ou adicione pelo usuário exato</label>
+                        <div class="input-row">
+                            <input type="text" id="friend-username" class="input-dark m-0" placeholder="@usuario" autocomplete="off" spellcheck="false" data-enter="friendAdd">
+                            <button type="button" class="btn-outline ripple btn-compact" data-action="friendAdd">Adicionar</button>
+                        </div>
+                    </div>
+
+                    <div data-friends-group hidden>
+                        <h3 class="subsection-title">Pedidos para você</h3>
+                        <ul id="friends-received" class="friend-list"></ul>
+                    </div>
+                    <div data-friends-group hidden>
+                        <h3 class="subsection-title">Seus amigos</h3>
+                        <ul id="friends-list" class="friend-list"></ul>
+                    </div>
+                    <p id="friends-empty" class="section-note text-center">Você ainda não tem amigos aqui. Mande o link para alguém!</p>
+                    <div data-friends-group hidden>
+                        <h3 class="subsection-title">Aguardando resposta</h3>
+                        <ul id="friends-sent" class="friend-list"></ul>
+                    </div>
+                    <div class="friends-privacy">
+                    <label class="provider-choice friends-share">
+                        <input type="checkbox" id="friends-share" data-change="toggleShareWithFriends">
+                        <span>Amigos podem ver o que assisti, minha lista e minhas conquistas</span>
+                    </label>
+                    <p class="section-note">Quem não é amigo nunca vê. Desligado, nem amigos veem.</p>
+                </div>
+                </div>
+            
+            <button type="button" class="btn-outline ripple w-full mt-20" data-action="closeModal" data-arg="modal-friends">Fechar</button>
+        </div>
+    </div>
+
+    <!-- Perfil de amigo: antes do modal de título, que abre por cima dele -->
+    <div id="modal-friend" class="modal-overlay">
+        <div class="modal-content modal-content--panel modal-content--wide" role="dialog" aria-modal="true" aria-labelledby="friend-title" tabindex="-1">
+            <div class="text-center">
+                <div class="avatar avatar--large" id="friend-avatar" aria-hidden="true"></div>
+                <h2 id="friend-title" class="match-pass__title m-0"></h2>
+                <p id="friend-handle" class="section-note"></p>
+            </div>
+            <button type="button" class="btn-main ripple w-full mb-15" data-action="friendMatchCurrent">Chamar para um Match</button>
+            <p id="friend-private" class="section-note text-center" hidden>Esta pessoa prefere não mostrar a atividade dela.</p>
+            <div id="friend-activity">
+            <div class="friend-stats">
+                <div class="stat-card text-center"><div class="stat-card__value text-accent" id="friend-stat-watched">0</div><div class="stat-card__label">Assistidos</div></div>
+                <div class="stat-card text-center"><div class="stat-card__value text-accent" id="friend-stat-wants">0</div><div class="stat-card__label">Quer ver</div></div>
+                <div class="stat-card text-center"><div class="stat-card__value text-accent" id="friend-stat-badges">0</div><div class="stat-card__label">Conquistas</div></div>
+            </div>
+
+            <div id="friend-common-box" class="friend-block" hidden>
+                <h3 class="subsection-title">Vocês dois querem ver</h3>
+                <div id="friend-common" class="friend-titles"></div>
+            </div>
+            <div class="friend-block">
+                <h3 class="subsection-title">Já assistiu</h3>
+                <div id="friend-history" class="friend-titles"></div>
+            </div>
+            <div class="friend-block">
+                <h3 class="subsection-title">Quer assistir</h3>
+                <div id="friend-watchlist" class="friend-titles"></div>
+            </div>
+            <div id="friend-badges-box" class="friend-block" hidden>
+                <h3 class="subsection-title">Conquistas</h3>
+                <div id="friend-badges" class="badge-grid"></div>
+            </div>
+            </div>
+
+            <div class="grid-two mt-20">
+                <button type="button" class="btn-outline ripple" data-action="friendUnfriendCurrent">Remover amizade</button>
+                <button type="button" class="btn-main ripple" data-action="closeModal" data-arg="modal-friend">Fechar</button>
+            </div>
         </div>
     </div>
 
@@ -395,8 +569,13 @@
                     </span>
                 </div>
 
+                <button type="button" id="btn-sortear-outro" class="btn-main ripple sortear-outro" data-action="sortearOutro" hidden>
+                    <svg aria-hidden="true" class="icon icon-18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4L21 8"/><path d="M21 3v5h-5"/></svg>
+                    Sortear outro
+                </button>
+
                 <div id="video-area" class="video-container is-hidden">
-                    <iframe id="trailer-frame" src="" allowfullscreen></iframe>
+                    <iframe id="trailer-frame" src="" title="Trailer" allowfullscreen></iframe>
                 </div>
 
                 <p class="modal-synopsis" id="m-desc">Sinopse...</p>
@@ -458,7 +637,7 @@
                         </svg>
                         Adicionar à Roleta
                     </button>
-                    <button class="btn-modal btn-full-width ripple tooltip" data-action="compartilhar" data-tooltip="Compartilhar com amigos" aria-label="Compartilhar">
+                    <button type="button" id="btn-compartilhar" class="btn-modal btn-full-width ripple" data-action="compartilhar">
                         <svg aria-hidden="true" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="18" cy="5" r="3"/>
                             <circle cx="6" cy="12" r="3"/>
@@ -514,6 +693,25 @@
                     <div class="stat-card__label">Vitórias Roleta</div>
                 </div>
             </div>
+            <!-- Sequência e nível -->
+            <div class="progress-cards">
+                <div class="stat-card progress-card">
+                    <svg aria-hidden="true" class="icon-28 text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path fill="currentColor" fill-opacity="0.2" d="M12 2.5c.5 3.5 5.5 5.5 5.5 11a5.5 5.5 0 0 1-11 0c0-2.2 1-3.7 2-4.7.2 1.5 1 2.4 2 2.7-.5-3.5 0-6.5 1.5-9z"/></svg>
+                    <div>
+                        <div class="progress-card__value" id="streak-current">0 dias</div>
+                        <div class="stat-card__label" id="streak-best">Recorde: 0 dias</div>
+                    </div>
+                </div>
+                <div class="stat-card progress-card progress-card--level">
+                    <div class="progress-card__value" id="level-name">Calouro</div>
+                    <div class="stat-card__label" id="level-xp">0 XP</div>
+                    <div class="badges-progress__track" role="progressbar" id="level-bar" aria-label="Progresso até o próximo nível" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                        <div class="badges-progress__fill" id="level-fill"></div>
+                    </div>
+                </div>
+            </div>
+            <ul id="xp-log" class="xp-log" aria-label="Últimos pontos ganhos" hidden></ul>
+
 
             <h3 class="subsection-title">
                 <svg aria-hidden="true" class="icon icon-20 text-gold" viewBox="0 0 24 24" fill="currentColor">
@@ -528,6 +726,20 @@
                 </div>
             </div>
             <div id="badges-container" class="badge-grid"></div>
+
+            <!-- Minhas plataformas -->
+            <div class="profile-section">
+                <h3 class="subsection-title">Minhas plataformas</h3>
+                <p class="section-note">Marque o que você assina para filtrar os sorteios só por esses streamings. Com conta, acompanha você em outros aparelhos.</p>
+                <div id="my-providers" class="provider-choices"></div>
+                <details id="more-providers" class="more-providers" hidden>
+                    <summary>Ver todas as plataformas</summary>
+                    <label for="provider-search" class="field-label">Buscar plataforma</label>
+                    <input type="search" id="provider-search" class="input-dark" placeholder="Ex: Pluto TV" autocomplete="off" data-input="filterProviders">
+                    <div id="all-providers" class="provider-choices"></div>
+                    <p id="providers-empty" class="section-note" hidden>Nenhuma plataforma com esse nome.</p>
+                </details>
+            </div>
 
             <!-- Seção Blacklist -->
             <div class="profile-section">
@@ -672,12 +884,7 @@
     <div class="onboarding-overlay" id="onboarding-overlay">
         <div class="onboarding-card" role="dialog" aria-modal="true" aria-labelledby="onboarding-title" aria-describedby="onboarding-desc" tabindex="-1">
             <div class="onboarding-icon" id="onboarding-icon">
-                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <rect x="2" y="2" width="20" height="20" rx="2"/>
-                    <line x1="7" y1="2" x2="7" y2="22"/>
-                    <line x1="17" y1="2" x2="17" y2="22"/>
-                    <line x1="2" y1="12" x2="22" y2="12"/>
-                </svg>
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path fill="currentColor" fill-opacity="0.2" d="M2 8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2.5a1.5 1.5 0 0 0 0 3V16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2.5a1.5 1.5 0 0 0 0-3z"/><path d="M16 6v2M16 11v2M16 16v2"/><path fill="currentColor" stroke="none" d="M8 9v6l5-3z"/></svg>
             </div>
             <h2 class="onboarding-title" id="onboarding-title">Bem-vindo!</h2>
             <p class="onboarding-desc" id="onboarding-desc">Descubra filmes e séries de forma inteligente</p>

@@ -131,7 +131,8 @@ export function createConfetti() {
 
 // Bilhete de conquista: momento próprio para o desbloqueio, sem interromper o que a pessoa faz
 let achievementTimer;
-export function showAchievement({ name, desc, icon }) {
+export function showAchievement({ name, desc, icon, kicker = 'Conquista desbloqueada' }) {
+    document.querySelector('.achievement__kicker').textContent = kicker;
     document.getElementById('achievement-icon').innerHTML = BADGE_ICONS[icon] || '';
     document.getElementById('achievement-name').textContent = name;
     document.getElementById('achievement-desc').textContent = desc;

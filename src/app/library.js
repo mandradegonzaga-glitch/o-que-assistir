@@ -2,7 +2,9 @@
 import { supabase, supabaseAddToHistory, supabaseAddToWatchlist, supabaseGetAllSeriesInProgress, supabaseGetWatchlist, supabaseRemoveFromHistory, supabaseRemoveFromWatchlist } from '../api/supabase.js';
 import { tmdbGet } from '../api/tmdb.js';
 import { fetchAllSeasonsLocal } from './episodes.js';
-import { checkBadgeUnlock } from './profile.js';
+import { saveGuestHistory, saveGuestWatchlist } from './guestLibrary.js';
+import { checkAllBadges } from './profile.js';
+import { grantXp } from './progress.js';
 import { calcProgressPercent, getNextEpisode } from '../domain/seriesProgress.js';
 import { session, state } from '../state/appState.js';
 import { pendingRemovals, scheduleUndoable, showToast } from '../ui/feedback.js';
@@ -14,11 +16,10 @@ import { TV_ICON } from '../ui/icons.js';
 
 // DADOS
 
+const isGuest = () => session.currentUser === 'guest';
+
 export async function salvarHistorico(f) {
-    if (!session.currentUserId) {
-        showToast('Faça login para salvar!', 'error');
-        return;
-    }
+    if (!session.currentUser) return;
 
     if (session.user.history.find(h => h.id === f.id)) return;
 
@@ -32,26 +33,33 @@ export async function salvarHistorico(f) {
         watchedAt: new Date().toISOString() // o Supabase grava o próprio watched_at; este é só para o estado local
     };
 
-    // Adicionar ao Supabase
-    const result = await supabaseAddToHistory(session.currentUserId, entry);
+    // Convidado guarda no aparelho; conta, no Supabase
+    const result = isGuest() ? { success: true } : await supabaseAddToHistory(session.currentUserId, entry);
 
     if (result.success) {
         session.user.history.push(entry);
+        if (isGuest()) saveGuestHistory(session.user.history);
         showToast("Marcado como visto!");
         await renderLibrary();
-
-        // Verificar conquistas
-        await checkBadgeUnlock('Iniciante');
-        await checkBadgeUnlock('Cinéfilo');
-        await checkBadgeUnlock('Madrugador');
+        grantXp('watched');
+        await checkAllBadges();
     } else {
         showToast("Erro ao salvar!", "error");
     }
 }
 
 export async function toggleWatchlist(f) {
-    if (!session.currentUserId) {
-        showToast('Faça login para salvar!', 'error');
+    if (!session.currentUser) return;
+
+    if (isGuest()) {
+        const list = session.user.watchlist || [];
+        const exists = list.some(i => i.id === f.id);
+        session.user.watchlist = exists
+            ? list.filter(i => i.id !== f.id)
+            : [...list, { id: f.id, poster: f.poster_path, title: f.title || f.name, type: f.media_type || state.type }];
+        saveGuestWatchlist(session.user.watchlist);
+        showToast(exists ? "Removido da lista!" : "Adicionado a Quero Assistir!");
+        renderLibrary();
         return;
     }
 
@@ -85,7 +93,7 @@ export async function toggleWatchlist(f) {
 }
 
 export async function renderLibrary() {
-    if (!session.currentUserId) return;
+    if (!session.currentUser) return;
 
     const div = document.getElementById('library-content');
 
@@ -95,10 +103,14 @@ export async function renderLibrary() {
         return;
     }
 
-    let list = [];
+    let list;
     if (state.tab === 'watchlist') {
-        const result = await supabaseGetWatchlist(session.currentUserId);
-        list = result.success ? result.watchlist : [];
+        if (isGuest()) {
+            list = session.user.watchlist || [];
+        } else {
+            const result = await supabaseGetWatchlist(session.currentUserId);
+            list = result.success ? result.watchlist : [];
+        }
     } else {
         list = session.user.history || [];
     }
@@ -140,14 +152,14 @@ function libraryGroup(title, items, media, key) {
 export async function renderAndando(div) {
     div.innerHTML = '<div class="library-note">Carregando...</div>';
 
-    const result = await supabaseGetAllSeriesInProgress(session.currentUserId);
+    const result = isGuest() ? { success: false, series: [] } : await supabaseGetAllSeriesInProgress(session.currentUserId);
     if (!result.success || result.series.length === 0) {
         const playIcon = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
         div.innerHTML = `
             <div class="empty-state grid-full">
                 <div class="empty-state-icon">${playIcon}</div>
                 <h3 class="empty-state-title">Nenhuma série em andamento</h3>
-                <p class="empty-state-desc">Marque episódios como assistidos no modal de uma série para acompanhar seu progresso.</p>
+                <p class="empty-state-desc">${isGuest() ? 'Crie uma conta para marcar episódios e acompanhar cada série.' : 'Marque episódios como assistidos no modal de uma série para acompanhar seu progresso.'}</p>
             </div>`;
         return;
     }
@@ -197,7 +209,7 @@ export async function renderAndando(div) {
 }
 
 export function removeLibItem(key, id, btn) {
-    if (!session.currentUserId) return;
+    if (!session.currentUser) return;
     const card = btn?.closest('.library-item');
     scheduleUndoable({
         message: key === 'vistos_obj' ? 'Removido de Já Assistidos.' : 'Removido de Quero Assistir.',
@@ -222,6 +234,18 @@ export function removeLibItem(key, id, btn) {
 }
 
 export async function commitRemoveLibItem(key, id) {
+    if (isGuest()) {
+        if (key === 'vistos_obj') {
+            session.user.history = session.user.history.filter(i => i.id !== id);
+            saveGuestHistory(session.user.history);
+        } else {
+            session.user.watchlist = (session.user.watchlist || []).filter(i => i.id !== id);
+            saveGuestWatchlist(session.user.watchlist);
+        }
+        renderLibrary();
+        return;
+    }
+
     if (key === 'vistos_obj') {
         const result = await supabaseRemoveFromHistory(session.currentUserId, id);
         if (result.success) {

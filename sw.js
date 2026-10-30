@@ -1,6 +1,6 @@
 // Service Worker - O Que Assistir? PWA
 // Trocar CACHE_VERSION a cada deploy: o activate apaga os caches de versões anteriores.
-const CACHE_VERSION = 'v6';
+const CACHE_VERSION = 'v18';
 const STATIC_CACHE = `oqueassistir-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `oqueassistir-dynamic-${CACHE_VERSION}`;
 
@@ -16,22 +16,35 @@ const STATIC_ASSETS = [
     '/src/app/blacklist.js',
     '/src/app/discover.js',
     '/src/app/episodes.js',
+    '/src/app/legacyImport.js',
+    '/src/app/friends.js',
+    '/src/app/guestLibrary.js',
     '/src/app/library.js',
+    '/src/app/match.js',
+    '/src/app/myProviders.js',
     '/src/app/onboarding.js',
     '/src/app/profile.js',
+    '/src/app/progress.js',
     '/src/app/pwa.js',
     '/src/app/roulette.js',
     '/src/app/sorteioHistory.js',
     '/src/app/titleModal.js',
+    '/src/app/ticket.js',
     '/src/app/urlSync.js',
     '/src/config/constants.js',
     '/src/domain/badges.js',
     '/src/domain/filters.js',
     '/src/domain/gestures.js',
     '/src/domain/history.js',
+    '/src/domain/legacyData.js',
+    '/src/domain/match.js',
     '/src/domain/mediaItem.js',
+    '/src/domain/moods.js',
     '/src/domain/passwordStrength.js',
+    '/src/domain/progress.js',
+    '/src/domain/providers.js',
     '/src/domain/roulette.js',
+    '/src/domain/qr.js',
     '/src/domain/seriesProgress.js',
     '/src/domain/urlState.js',
     '/src/main.js',
@@ -41,6 +54,7 @@ const STATIC_ASSETS = [
     '/src/ui/icons.js',
     '/src/ui/modals.js',
     '/src/ui/navigation.js',
+    '/src/vendor/qrcode.js',
     '/src/utils/cache.js',
     '/src/utils/debounce.js',
     '/src/utils/escapeHtml.js',
@@ -89,14 +103,14 @@ self.addEventListener('fetch', (event) => {
     // Ignorar requisições não-GET
     if (request.method !== 'GET') return;
 
-    // Ignorar requisições do Supabase (sempre online)
-    if (url.hostname.includes('supabase')) return;
-
-    // Estratégia para API do TMDB: Network First, Cache Fallback
-    if (url.hostname.includes('themoviedb.org') || url.hostname.includes('tmdb.org')) {
+    // Proxy do TMDB: Network First, com o último resultado disponível offline
+    if (url.pathname.includes('/functions/v1/tmdb')) {
         event.respondWith(networkFirst(request));
         return;
     }
+
+    // Ignorar requisições do Supabase (sempre online)
+    if (url.hostname.includes('supabase')) return;
 
     // Estratégia para imagens: Cache First
     if (request.destination === 'image') {

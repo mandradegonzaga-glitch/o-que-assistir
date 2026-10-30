@@ -2,7 +2,7 @@
 
 > Feature ID: 005
 > Created: 2026-03-24
-> Status: Planned (Killer Feature)
+> Status: Partially Implemented (versão local; tempo real pendente, ver 008 D001-026)
 
 ## Overview
 

@@ -2,7 +2,7 @@
 
 > Feature ID: 004
 > Created: 2026-03-24
-> Status: Partially Implemented
+> Status: Implemented (20 badges em 3 categorias; compartilhar badge segue futuro)
 
 ## Overview
 

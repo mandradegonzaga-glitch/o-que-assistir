@@ -2,10 +2,15 @@
 // então a inicialização pode usar qualquer função ou constante sem risco de TDZ.
 import { supabaseOnAuthStateChange } from './api/supabase.js';
 import { initActions } from './app/actions.js';
-import { checkAuth, loadUserData } from './app/auth.js';
+import { checkAuth, loadUserData, loginAsGuest } from './app/auth.js';
+import { offerLegacyImport, removeLegacyPasswords, showLegacyHint } from './app/legacyImport.js';
 import { renderLibrary } from './app/library.js';
+import { openFriendLinkFromUrl } from './app/friends.js';
+import { hasMatchInvite, initMatch, openMatchFromUrl } from './app/match.js';
+import { initMyProviders } from './app/myProviders.js';
 import { checkFirstVisit } from './app/onboarding.js';
 import { initPwa } from './app/pwa.js';
+import { initRoulette } from './app/roulette.js';
 import { initUrlState, openTitleFromUrl } from './app/urlSync.js';
 import { initModalA11y } from './ui/modals.js';
 import { initAccessibility, initRovingGroups, initScrollButton, initYearInputs, setupInputWrappers } from './ui/navigation.js';
@@ -13,20 +18,32 @@ import { session } from './state/appState.js';
 
 initActions();
 initPwa();
+removeLegacyPasswords();
+showLegacyHint();
 
 (async () => {
   initYearInputs();
   initRovingGroups();
   await checkAuth();
+  // Quem recebe um convite de Match vota direto, sem passar pela tela de entrada
+  if (!session.currentUser && hasMatchInvite()) loginAsGuest();
   initModalA11y();
   renderLibrary();
   initAccessibility();
+  initMyProviders(); // antes da URL: um link com filtro próprio vence a preferência
   initUrlState();
   setupInputWrappers();
-  checkFirstVisit();
+  if (!hasMatchInvite()) checkFirstVisit();
   initScrollButton();
+  initRoulette();
+  initMatch();
+  openMatchFromUrl();
   // Sem sessão, o título do link abre depois do login (ver auth.js)
-  if (session.currentUser) openTitleFromUrl();
+  if (session.currentUser) {
+    openTitleFromUrl();
+    await openFriendLinkFromUrl();
+    offerLegacyImport();
+  }
 })();
 
 // Detecta mudanças de autenticação automaticamente

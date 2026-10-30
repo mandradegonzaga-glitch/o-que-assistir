@@ -350,6 +350,19 @@ Use este documento para verificar se todas as funcionalidades estão funcionando
 - [ ] Controles de episódios em 2 colunas no celular; textos longos não estouram a tela
 - [ ] Link com filtros e `titulo=` restaura a tela e abre o título (convidado: depois de entrar)
 - [ ] Banner de instalação nunca cobre o FECHAR
+- [ ] Convidado: lista, vistos e roleta continuam depois de recarregar; ao criar conta, o app oferece trazer tudo
+- [ ] Perfil mostra sequência, recorde, nível, XP e 20 conquistas em 3 categorias
+- [ ] Match: duas pessoas votam nos mesmos títulos; só aparece o que coincidiu; swipe, botões e setas funcionam
+- [ ] Amigos (botão ao lado do perfil): convidar por link, adicionar por usuário exato, aceitar, recusar; contador de pedidos na aba
+- [ ] Perfil do amigo: assistidos, lista, conquistas e o que os dois querem ver; só entre amigos aceitos
+- [ ] Enviar Match para amigo; convites aparecem na aba Match
+- [ ] Match por link: votar, enviar por link ou email; quem abre vota sem conta, vê o resultado e pode devolvê-lo
+- [ ] Ingresso tem QR code que abre o título pela câmera
+- [ ] "Compartilhar": no celular envia ingresso, texto e link juntos; no computador baixa o ingresso e copia o texto com o link
+- [ ] "Sortear outro" aparece em título sorteado e não repete os últimos sorteios
+- [ ] Modal abre na hora; seções mostram "Carregando..." e falham separadamente
+- [ ] Filtro de clima: envia gêneros diferentes para filme e série; escolher gênero limpa o clima e vice-versa
+- [ ] Minhas plataformas (perfil): marcar filtra os sorteios; continua após recarregar; desmarcar tudo tira a opção
 - [ ] Conquista nova mostra o bilhete; vencedor da roleta em destaque; perfil mostra "n de 12 conquistas"
 
 ### 9.3 Acessibilidade
@@ -558,7 +571,7 @@ Use este documento para verificar se todas as funcionalidades estão funcionando
 
 ### Credenciais de Teste
 - Supabase URL: `https://wzelzstndxtqnboravze.supabase.co`
-- TMDB API: `f956c9480373479f4dcd6da9f1d1b6f1`
+- TMDB API: chave guardada como segredo `TMDB_API_KEY` da função `tmdb` no Supabase
 
 ### Usuário de Teste
 - Criar novo usuário para cada bateria de testes

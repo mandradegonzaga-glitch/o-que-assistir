@@ -74,6 +74,72 @@
 
 ---
 
+## D001-029 — Amigos no cabeçalho; privacidade no servidor
+
+**Decisão:** Amigos abre por um botão ao lado do perfil, sem aba própria. Quem desliga o compartilhamento não tem histórico, lista e conquistas enviados nem para amigos: a regra está em `get_friend_profile`, não na tela.
+
+**Por que essa:** amigos pertencem à conta; as abas ficam para as ações do momento. Esconder só na interface deixaria os dados acessíveis para quem chamasse a função diretamente.
+
+**Padrão:** compartilhamento ligado, com aviso na própria tela.
+
+---
+
+## D001-028 — Amigos: busca só por username exato
+
+**Decisão:** Encontrar alguém só pelo username exato; nunca por email nem por parte do nome. Convite de Match no app só entre amigos aceitos. Perfis seguem privados: funções expõem só id, username e nome.
+
+**Alternativas consideradas:** busca por email → rejeitada: revelaria quem tem conta. Busca parcial → rejeitada: permitiria varrer os usuários.
+
+**Impacto:** sem o SQL aplicado, as seções ficam ocultas e o Match por link continua funcionando.
+
+---
+
+## D001-027 — FR-035 em duas etapas
+
+**Decisão:** O cliente só passa a usar o proxy depois de a função estar publicada com o segredo.
+
+**Por que essa:** gravar segredo e publicar função exigem autorização do usuário nesta máquina. Trocar o cliente antes deixaria o site sem filmes. A chave atual continua no histórico do git, então deve ser trocada no TMDB.
+
+---
+
+## D001-026 — Match no mesmo celular antes do tempo real
+
+**Decisão:** Duas pessoas votam passando o aparelho; sem sessão, link nem banco.
+
+**Alternativas consideradas:** Supabase Realtime com link (spec 006) → adiado: exige tabelas novas. A versão local testa se a ideia agrada antes desse investimento.
+
+---
+
+## D001-025 — Progresso e plataformas nos metadados da conta
+
+**Decisão:** Sequência, XP e plataformas ficam em `user_metadata`.
+
+**Alternativas consideradas:** colunas novas em `profiles`/`user_preferences` → adiado: migração de banco. Metadados sincronizam entre aparelhos sem mudar o schema.
+
+**Limitação:** a própria pessoa consegue alterar esses valores. Não importa sem ranking; um ranking futuro exigiria mover para tabela com regra no servidor.
+
+---
+
+## D001-024 — Minhas plataformas fica no aparelho
+
+**Decisão:** Guardar em `localStorage`, inclusive para quem está logado.
+
+**Alternativas consideradas:** coluna nova em `user_preferences` para sincronizar entre aparelhos → adiado: exige mudar o banco; dá para evoluir depois sem perder a tela.
+
+**Impacto:** a escolha não acompanha a conta em outro aparelho, e a tela avisa isso.
+
+---
+
+## D001-023 — Migração com consentimento, sem levar contas
+
+**Decisão:** Contas antigas não migram (eram locais, sem email): a pessoa cria uma conta e o app oferece trazer a lista. "Agora não" pergunta de novo em 7 dias. Os dados locais só saem depois de o banco confirmar; as senhas em texto puro saem em toda abertura, com ou sem importação. Vale o perfil em uso; sem ele, a soma dos perfis do navegador.
+
+**Alternativas consideradas:** importar sozinho no login → rejeitado: o navegador pode ser compartilhado e a lista seria de outra pessoa.
+
+**Limitação:** `localStorage` é por domínio, então só funciona se a versão nova for publicada no mesmo endereço da antiga.
+
+---
+
 ## D001-022 — Apagar a conta só pelo servidor
 
 **Decisão:** Edge Function `delete-account` remove o usuário de `auth.users`; o `ON DELETE CASCADE` leva o resto. O id vem do token validado. O cliente só informa sucesso com a confirmação do servidor.

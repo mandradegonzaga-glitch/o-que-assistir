@@ -1,8 +1,8 @@
 # Implementation Progress
 
 > Feature: 008-qualidade-a11y-seguranca
-> Last Updated: 2026-10-30 (backlog concluído)
-> Branch: `004-series-tracking` (D001-001) — **nada commitado** (D001-009: commit único ao final)
+> Last Updated: 2026-10-30 (amigos e marca)
+> Branch: `004-series-tracking` (D001-001). Todo push nesta branch publica o site na Vercel.
 
 ## Summary
 
@@ -20,14 +20,14 @@
 
 ## Para retomar
 
-**Backlog encerrado:** só restam FR-035 e FR-040, que dependem do Supabase (D001-010). Depois, conforme D001-009, vem o commit único da feature.
+**Próxima sessão:** começar pelas tarefas T001-077 a T001-081 (ingresso e compartilhar), em "O que falta".
 
 **Regras combinadas com o usuário (pedido em 2026-10-28):**
 1. Um item por vez; perguntar "podemos continuar?" antes do próximo (exceção em 2026-10-30: 18 itens em sequência, a pedido).
 2. Testar de verdade (Jest + Chrome em `http://localhost:5173`), limpando service worker/caches no início, e mostrar evidência.
 3. Registrar cada item em `tasks.md`, `acceptance.md` (+ `evidence/`), `decisions.md` quando houver escolha, `spec.md`, `CHANGELOG.md`, `_meta.json` e `docs/FUNCIONALIDADES.md` (CRLF).
-4. Não mexer no Supabase (schema/dados/Edge Functions); só usar o que o cliente já chama.
-5. Commit só quando todo o backlog terminar.
+4. Mudança no banco: entregar SQL para o usuário rodar no SQL Editor; o CLI não tem permissão para alterar o banco.
+5. Commit e push só quando o usuário pedir: push nesta branch é publicação.
 
 **Armadilhas já conhecidas:**
 - O site não funciona por `file://` (módulos ES): usar `INICIAR_SITE.bat`, e testar também o que muda ao abrir assim.
@@ -103,11 +103,24 @@ Testes: Jest 125 → **145** (12 suítes, todos passando).
 
 ## O que falta
 
-### ⏸️ Adiados (D001-010 — Supabase desabilitado pelo usuário)
+### Próxima sessão: ingresso e compartilhar
 | ID | Item |
 |---|---|
-| FR-035 | Proxy para a chave do TMDB (Edge Function) |
-| FR-040 | Migração `localStorage` → Supabase para usuários da versão no ar (`Index/index.html`) — **fazer antes de publicar a versão nova** |
+| T001-077 | Separar "Gerar ingresso" de "Compartilhar" no modal do título |
+| T001-078 | "Compartilhar" envia as informações do título, o link e o ingresso |
+| T001-079 | Compartilhar com amigos do app, além do WhatsApp (deve exigir SQL novo, no modelo de `match_invites`) |
+| T001-080 | Ingresso na cor do tipo: âmbar Filme, teal Série, rosa Dorama |
+| T001-081 | Ingresso com sinopse cortada, 3 ou 4 nomes do elenco e onde assistir (logos só se o canvas puder exportá-los; senão, o nome da plataforma) |
+
+### Antes de publicar
+| Item | Estado |
+|---|---|
+| Teste real de amizade entre duas contas (T001-071) | SQL rodado pelo usuário; falta a segunda conta e informar o username dela |
+| Push do commit local | Aguardando pedido do usuário |
+| Revogar a chave TMDB antiga | Só depois do push e de conferir o site; confirmar antes que o segredo é a chave nova |
+
+### Com o usuário
+Ligar confirmação de email, conferir Site URL no Supabase e branch de produção na Vercel, links do rodapé (Apoiar/Feedback), limpar dados de teste da conta real.
 
 ---
 
@@ -122,22 +135,12 @@ Testes: Jest 125 → **145** (12 suítes, todos passando).
 
 ---
 
-## Supabase desabilitado
-
-O projeto Supabase está desabilitado de propósito pelo usuário (motivo de D001-010), por isso o host não resolve e o console mostra `Failed to fetch` em `/auth/v1/user`. Não é bug. Testar como convidado ou com Supabase simulado; as validações "Com login" ficam para quando for reabilitado.
-
----
-
-## Blocked Tasks
-
-| Task | Blocked By | Notes |
-|------|------------|-------|
-| FR-035, FR-040 | D001-010 | Retomar quando o Supabase for liberado |
-
----
-
 ## Test Results
 
 | Migration | Unit (Jest) | Navegador (Chrome) |
 |-----------|-------------|--------------------|
 | 001 | 145/145 ✅ | critérios AC-001…AC-043 ✅, com as ressalvas acima |
+
+## Publicação
+
+O site `https://o-que-assistir-watch.vercel.app/` publicou o commit 42c4d1b da branch `004-series-tracking` após o push, embora a `main` esteja em ee53316. Tratar todo push nessa branch como publicação até conferir a configuração da Vercel.

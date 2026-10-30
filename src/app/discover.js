@@ -3,11 +3,14 @@ import { isAbortError, latestSignal, tmdbFetch, tmdbGet } from '../api/tmdb.js';
 import { addToSorteioHistory } from './sorteioHistory.js';
 import { abrirModal } from './titleModal.js';
 import { syncUrl } from './urlSync.js';
+import { resolveProviderFilter } from './myProviders.js';
 import { buildDiscoverUrl, getRandomPage } from '../domain/filters.js';
 import { session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { IMG_URL } from '../config/constants.js';
+
+const RECENT_DRAWS = 20;
 
 
 // Foto padrão de pessoa (local: evita requisição a serviço de terceiros por pessoa sem foto)
@@ -65,6 +68,29 @@ export function limparPessoa() {
 
 // LÓGICA PRINCIPAL
 
+export function getFilterOptions() {
+    return {
+        genre: document.getElementById('input-genero').value,
+        mood: document.getElementById('input-mood').value,
+        provider: resolveProviderFilter(),
+        duration: document.getElementById('duration-select').value,
+        yearFrom: document.getElementById('year-from').value,
+        yearTo: document.getElementById('year-to').value,
+        personId: state.personId,
+    };
+}
+
+export async function sortearOutro() {
+    const btn = document.getElementById('btn-sortear-outro');
+    if (btn.disabled) return;
+    btn.disabled = true;
+    btn.classList.add('loading');
+    await sortearFilme();
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    document.getElementById('modal-resultado').scrollTop = 0;
+}
+
 export async function sortearFilme() {
     const btn = document.getElementById('btn-sortear');
     if (btn.disabled) return; // evita sorteios duplicados com cliques repetidos
@@ -107,7 +133,8 @@ export async function sortearFilme() {
             // Busca normal com filtros
             const url = buildDiscoverUrl(endpoint, {
                 genre: document.getElementById('input-genero').value,
-                provider: document.getElementById('input-provider').value,
+                mood: document.getElementById('input-mood').value,
+                provider: resolveProviderFilter(),
                 duration: document.getElementById('duration-select').value,
                 yearFrom: document.getElementById('year-from').value,
                 yearTo: document.getElementById('year-to').value,
@@ -128,7 +155,11 @@ export async function sortearFilme() {
         const valid = lista.filter(m => m.poster_path && !session.blacklist.includes(m.id));
 
         if(valid.length > 0) {
-            const escolhido = valid[Math.floor(Math.random() * valid.length)];
+            // Evita repetir o que acabou de sair; se só restar isso, repete em vez de falhar
+            const recentes = new Set(session.sorteioHistory.slice(0, RECENT_DRAWS).map(h => h.id));
+            const novos = valid.filter(m => !recentes.has(m.id));
+            const opcoes = novos.length > 0 ? novos : valid;
+            const escolhido = opcoes[Math.floor(Math.random() * opcoes.length)];
             const sorteado = { ...escolhido, media_type: escolhido.media_type || state.type }; // cópia: a resposta fica no cache
             let completo = sorteado;
             try {
@@ -136,7 +167,7 @@ export async function sortearFilme() {
             } catch (e) {
                 console.error('Erro ao carregar detalhes do sorteado:', e); // abre com o resumo, sem episódios
             }
-            abrirModal(completo);
+            abrirModal(completo, { fromDraw: true });
             addToSorteioHistory(sorteado);
         } else {
             showToast("Nada encontrado (ou tudo na sua blacklist)!", "error");
@@ -161,11 +192,6 @@ export function showSkeletonLoader() {
     }
 }
 
-export function hideSkeletonLoader() {
-    const area = document.getElementById('results-area');
-    area.innerHTML = '';
-}
-
 export async function mostrarTop10() {
     const btn = document.getElementById('btn-top10');
     if (btn.disabled) return;
@@ -179,7 +205,8 @@ export async function mostrarTop10() {
         const endpoint = state.type === 'dorama' ? 'tv' : state.type;
         const data = await tmdbFetch(buildDiscoverUrl(endpoint, {
             genre: document.getElementById('input-genero').value,
-            provider: document.getElementById('input-provider').value,
+            mood: document.getElementById('input-mood').value,
+            provider: resolveProviderFilter(),
             yearFrom: document.getElementById('year-from').value,
             yearTo: document.getElementById('year-to').value,
             isDorama: state.type === 'dorama',
@@ -239,19 +266,6 @@ export function renderResults(list, rank=false) {
 
 // SEARCH HISTORY
 
-export function saveSearchHistory(query) {
-    let history = JSON.parse(localStorage.getItem('search_history')) || [];
-    history = history.filter(item => item !== query);
-    history.unshift(query);
-    history = history.slice(0, 5); // Keep last 5
-    localStorage.setItem('search_history', JSON.stringify(history));
-}
-
-export function getSearchHistory() {
-    return JSON.parse(localStorage.getItem('search_history')) || [];
-}
-
-// Enhanced search with history
 
 export async function buscarDireto() {
     const query = document.getElementById('direct-search').value;
@@ -261,8 +275,6 @@ export async function buscarDireto() {
         showToast("Digite pelo menos 2 caracteres", "error");
         return;
     }
-
-    saveSearchHistory(query);
 
     area.innerHTML = '<p class="text-secondary grid-full">Buscando...</p>';
     area.style.display = 'grid';

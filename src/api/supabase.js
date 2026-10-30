@@ -108,20 +108,6 @@ export async function supabaseGetCurrentUser() {
     }
 }
 
-/**
- * Login como convidado (anônimo)
- */
-export async function supabaseLoginAsGuest() {
-    try {
-        const { data, error } = await supabase.auth.signInAnonymously();
-        if (error) throw error;
-        return { success: true, user: data.user };
-    } catch (error) {
-        console.error('Erro ao fazer login como convidado:', error);
-        return { success: false, error: error.message };
-    }
-}
-
 // ================================================
 // FUNÇÕES DE PERFIL
 // ================================================
@@ -324,6 +310,40 @@ export async function supabaseAddToWatchlist(userId, item) {
     } catch (error) {
         console.error('Erro ao adicionar à watchlist:', error);
         return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Importar dados da versão antiga. Upsert ignora o que já existe, então repetir não duplica.
+ * A data real não existe nos dados antigos: meio-dia evita desbloquear "Madrugador" por acidente.
+ * @param {string} userId - ID do usuário
+ * @param {{history: Array, watchlist: Array}} data - Itens normalizados
+ */
+export async function supabaseImportLegacyData(userId, { history, watchlist }) {
+    try {
+        const noon = new Date();
+        noon.setHours(12, 0, 0, 0);
+
+        if (watchlist.length > 0) {
+            const { error } = await supabase.from('watchlist').upsert(
+                watchlist.map(i => ({ user_id: userId, tmdb_id: i.id, title: i.title, poster_path: i.poster, media_type: i.type })),
+                { onConflict: 'user_id,tmdb_id', ignoreDuplicates: true }
+            );
+            if (error) throw error;
+        }
+
+        if (history.length > 0) {
+            const { error } = await supabase.from('watch_history').upsert(
+                history.map(i => ({ user_id: userId, tmdb_id: i.id, title: i.title, poster_path: i.poster, media_type: i.type, release_year: i.year, genres: i.genres, watched_at: noon.toISOString() })),
+                { onConflict: 'user_id,tmdb_id', ignoreDuplicates: true }
+            );
+            if (error) throw error;
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error('Erro ao importar dados antigos:', error);
+        return { success: false };
     }
 }
 
@@ -570,6 +590,76 @@ export async function supabaseResetPassword(email) {
 // DELETAR CONTA
 // ================================================
 
+// ================================================
+// AMIZADES E CONVITES (database/friends.sql)
+// ================================================
+
+export async function supabaseFindUser(username) {
+    const { data, error } = await supabase.rpc('find_user_by_username', { p_username: username });
+    if (error) return { success: false };
+    return { success: true, user: data?.[0] || null };
+}
+
+// Sem as tabelas no banco devolve success: false, e a tela de amigos fica oculta
+export async function supabaseListFriends() {
+    const { data, error } = await supabase.rpc('list_friends');
+    if (error) return { success: false, friends: [] };
+    return { success: true, friends: data || [] };
+}
+
+export async function supabaseGetFriendProfile(friendId) {
+    const { data, error } = await supabase.rpc('get_friend_profile', { p_friend: friendId });
+    if (error) return { success: false };
+    return { success: true, profile: data };
+}
+
+export async function supabaseRequestFriend(userId, friendId) {
+    const { error } = await supabase.from('friendships').insert({ requester_id: userId, addressee_id: friendId });
+    if (error?.code === '23505') return { success: false, duplicate: true };
+    return { success: !error };
+}
+
+export async function supabaseAcceptFriend(friendshipId) {
+    const { error } = await supabase.from('friendships').update({ status: 'accepted' }).eq('id', friendshipId);
+    return { success: !error };
+}
+
+export async function supabaseRemoveFriend(friendshipId) {
+    const { error } = await supabase.from('friendships').delete().eq('id', friendshipId);
+    return { success: !error };
+}
+
+export async function supabaseSendMatchInvite(userId, friendId, payload) {
+    const { error } = await supabase.from('match_invites').insert({ from_user: userId, to_user: friendId, payload });
+    return { success: !error };
+}
+
+export async function supabaseListMatchInvites() {
+    const { data, error } = await supabase.rpc('list_match_invites');
+    if (error) return { success: false, invites: [] };
+    return { success: true, invites: data || [] };
+}
+
+export async function supabaseDeleteMatchInvite(inviteId) {
+    const { error } = await supabase.from('match_invites').delete().eq('id', inviteId);
+    return { success: !error };
+}
+
+/**
+ * Guardar dados do usuário nos metadados da conta (sincroniza entre aparelhos sem tabela nova)
+ * @param {Object} data - Campos a gravar
+ */
+export async function supabaseUpdateUserData(data) {
+    try {
+        const { error } = await supabase.auth.updateUser({ data });
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        console.error('Erro ao salvar dados da conta:', error);
+        return { success: false };
+    }
+}
+
 /**
  * Deletar a conta do usuário logado (login e todos os dados) pela Edge Function delete-account.
  * Só informa sucesso depois de o servidor confirmar.
@@ -623,7 +713,7 @@ export async function supabaseGetSorteioHistory(userId) {
  */
 export async function supabaseAddToSorteioHistory(userId, item) {
     try {
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('sorteio_history')
             .upsert({
                 user_id: userId,
@@ -692,7 +782,7 @@ export async function supabaseGetBlacklist(userId) {
  */
 export async function supabaseAddToBlacklist(userId, item) {
     try {
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('blacklist')
             .insert({
                 user_id: userId,

@@ -86,7 +86,7 @@ export async function renderBlacklist() {
         return;
     }
 
-    let items = [];
+    let items;
     if (session.currentUserId && session.currentUser !== 'guest') {
         const result = await supabaseGetBlacklist(session.currentUserId);
         items = result.blacklist || [];

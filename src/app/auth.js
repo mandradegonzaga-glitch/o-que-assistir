@@ -1,6 +1,11 @@
 // Login, cadastro, sessão e dados do usuário
 import { supabaseGetBlacklist, supabaseGetCurrentUser, supabaseGetPreferences, supabaseGetProfile, supabaseGetSorteioHistory, supabaseGetWatchHistory, supabaseGetWatchlist, supabaseLogin, supabaseLogout, supabaseRegister, supabaseResetPassword, supabaseUpdatePreferences, supabaseUpdateProfile } from '../api/supabase.js';
+import { legacyDataAvailable, offerLegacyImport } from './legacyImport.js';
+import { openFriendLinkFromUrl, refreshFriends } from './friends.js';
+import { getGuestData } from './guestLibrary.js';
 import { renderLibrary } from './library.js';
+import { syncProvidersWithAccount } from './myProviders.js';
+import { registerDailyVisit } from './progress.js';
 import { updateHistoryButton } from './sorteioHistory.js';
 import { openTitleFromUrl } from './urlSync.js';
 import { scorePassword } from '../domain/passwordStrength.js';
@@ -77,6 +82,9 @@ export async function loadUserData() {
 
     renderLibrary();
     updateHeader();
+    syncProvidersWithAccount();
+    registerDailyVisit();
+    refreshFriends();
 }
 
 export async function saveUserData() {
@@ -205,6 +213,7 @@ export async function registerUser() {
 
     showToast('Conta criada com sucesso!');
     openTitleFromUrl();
+    openFriendLinkFromUrl();
 
     // Fazer login automático
     session.currentUser = result.user;
@@ -212,6 +221,7 @@ export async function registerUser() {
     await loadUserData();
     document.getElementById('login-overlay').style.display = 'none';
     updateUserDisplay();
+    offerLegacyImport();
 }
 
 export async function loginUser() {
@@ -240,9 +250,15 @@ export async function loginUser() {
     updateUserDisplay();
     showToast(`Bem-vindo(a), ${session.user.name || 'Usuário'}!`);
     openTitleFromUrl();
+    openFriendLinkFromUrl();
+    offerLegacyImport();
 }
 
 function loadGuestData() {
+    const saved = getGuestData();
+    session.user.history = saved.history;
+    session.user.watchlist = saved.watchlist;
+    session.user.rouletteWins = saved.rouletteWins;
     const history = storage.get('sorteio_history', []);
     const ignored = storage.get('blacklist', []);
     session.sorteioHistory = Array.isArray(history) ? history : [];
@@ -265,8 +281,11 @@ export function loginAsGuest() {
 
     document.getElementById('login-overlay').style.display = 'none';
     updateUserDisplay();
-    showToast('Bem-vindo(a), Convidado!');
+    showToast(legacyDataAvailable() ? 'Crie uma conta para recuperar sua lista antiga.' : 'Bem-vindo(a), Convidado!');
+    renderLibrary();
+    registerDailyVisit();
     openTitleFromUrl();
+    openFriendLinkFromUrl();
 }
 
 // ESQUECI MINHA SENHA

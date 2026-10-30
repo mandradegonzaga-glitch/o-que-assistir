@@ -4,6 +4,18 @@ All notable changes to this feature will be documented in this file.
 
 ## [Unreleased] - 2026-10-30
 
+### Added (amigos)
+
+- Botão de Amigos no cabeçalho, com contador de pedidos e janela própria
+- Convite de amizade por link
+- Perfil do amigo com assistidos, lista, conquistas e títulos em comum
+- Opção de ocultar a atividade dos amigos, aplicada no servidor
+
+### Changed (marca)
+
+- Mesmo bilhete âmbar com play em todas as telas
+- Números das etapas maiores e com mais contraste
+
 ### Changed (rodada final — T001-026…T001-043)
 
 - App migrado para módulos ES (`src/main.js`); `legacy/` retirado do projeto

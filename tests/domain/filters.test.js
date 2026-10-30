@@ -1,14 +1,14 @@
 import { describe, it, expect } from '@jest/globals';
+import { BASE_URL } from '../../src/config/constants.js';
 import { buildDiscoverUrl, getRandomPage } from '../../src/domain/filters.js';
 
-const API_KEY = 'f956c9480373479f4dcd6da9f1d1b6f1';
-const BASE    = 'https://api.themoviedb.org/3';
+const BASE = BASE_URL;
 
 describe('buildDiscoverUrl', () => {
   it('builds base URL for movie with no filters', () => {
     const url = buildDiscoverUrl('movie', {});
     expect(url).toContain(`${BASE}/discover/movie`);
-    expect(url).toContain(`api_key=${API_KEY}`);
+    expect(url).not.toContain('api_key');
     expect(url).toContain('vote_count.gte=50');
   });
 

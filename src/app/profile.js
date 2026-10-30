@@ -2,17 +2,22 @@
 import { supabaseChangePassword, supabaseCheckBadge, supabaseDeleteAccount, supabaseUnlockBadge, supabaseUpdateProfile } from '../api/supabase.js';
 import { updateHeader, updateUserDisplay } from './auth.js';
 import { renderBlacklist } from './blacklist.js';
-import { computeBadgeStatuses, isBadgeEarned } from '../domain/badges.js';
+import { BADGE_CATEGORIES, computeBadgeStatuses } from '../domain/badges.js';
 import { session } from '../state/appState.js';
 import { BADGE_ICONS } from '../ui/badgeIcons.js';
 import { showAchievement, showToast } from '../ui/feedback.js';
 import { confirmDialog } from '../ui/modals.js';
 import { formatCount } from '../utils/format.js';
 import { BADGE_DEFINITIONS } from '../domain/badges.js';
+import { addGuestBadge, getGuestBadges } from './guestLibrary.js';
+import { renderProgress } from './progress.js';
+import { loadAllProviders } from './myProviders.js';
 
 // PERFIL
 
 export function abrirPerfil() {
+    loadAllProviders();
+    renderProgress();
     document.getElementById('profile-name').value = session.user.name;
     document.getElementById('profile-email').value = session.user.email || '';
     document.getElementById('profile-avatar-large').innerText = session.user.name.charAt(0).toUpperCase();
@@ -37,6 +42,10 @@ export function abrirPerfil() {
 }
 
 export async function salvarPerfil() {
+    if (session.currentUser === 'guest') {
+        document.getElementById('modal-profile').style.display = 'none';
+        return;
+    }
     if (!session.currentUserId) return;
 
     const name = document.getElementById('profile-name').value.trim();
@@ -152,14 +161,16 @@ export async function deletarConta() {
 export function renderBadges() {
     const container = document.getElementById('badges-container');
     container.innerHTML = '';
-    const statuses = computeBadgeStatuses(session.user.history, session.user.rouletteWins);
+    const statuses = computeBadgeStatuses(session.user.history, session.user.rouletteWins, session.progress);
     const unlockedCount = statuses.filter(s => s.unlocked).length;
     const bar = document.getElementById('badges-progress-bar');
     document.getElementById('badges-progress-label').textContent = `${formatCount(unlockedCount)} de ${formatCount(statuses.length)} conquistas`;
     bar.setAttribute('aria-valuemax', statuses.length);
     bar.setAttribute('aria-valuenow', unlockedCount);
     document.getElementById('badges-progress-fill').style.width = `${(unlockedCount / statuses.length) * 100}%`;
-    statuses.forEach(({ badge: b, unlocked }) => {
+    BADGE_CATEGORIES.forEach(category => {
+      container.insertAdjacentHTML('beforeend', `<h4 class="badge-category">${category}</h4>`);
+      statuses.filter(s => s.badge.category === category).forEach(({ badge: b, unlocked }) => {
         container.innerHTML += `
             <div class="badge-item ${unlocked ? 'unlocked' : ''}" data-color="${b.color}">
                 <div class="badge-icon">${BADGE_ICONS[b.icon]}</div>
@@ -168,24 +179,31 @@ export function renderBadges() {
                     <p>${b.desc}</p>
                 </div>
             </div>`;
+      });
     });
 }
 
 // BADGE UNLOCK CHECKER
 
-export async function checkBadgeUnlock(badgeName) {
-    if (!session.currentUserId) return;
+// Avalia todas as conquistas e comemora as novas
+export async function checkAllBadges() {
+    if (!session.currentUser) return;
+    const earned = BADGE_DEFINITIONS.filter(b => b.check(session.user.history, session.user.rouletteWins, session.progress));
+    if (earned.length === 0) return;
 
-    if (isBadgeEarned(badgeName, session.user.history, session.user.rouletteWins)) {
-        // Verificar se já foi desbloqueado no Supabase
-        const checkResult = await supabaseCheckBadge(session.currentUserId, badgeName);
+    if (session.currentUser === 'guest') {
+        const known = getGuestBadges();
+        earned.filter(b => !known.includes(b.name)).forEach(b => {
+            addGuestBadge(b.name);
+            showAchievement(b);
+        });
+        return;
+    }
 
-        if (!checkResult.unlocked) {
-            // Desbloquear no Supabase
-            const unlockResult = await supabaseUnlockBadge(session.currentUserId, badgeName);
-            if (unlockResult.success) {
-                showAchievement(BADGE_DEFINITIONS.find(b => b.name === badgeName));
-            }
-        }
+    for (const badge of earned) {
+        const { unlocked } = await supabaseCheckBadge(session.currentUserId, badge.name);
+        if (unlocked) continue;
+        const result = await supabaseUnlockBadge(session.currentUserId, badge.name);
+        if (result.success) showAchievement(badge);
     }
 }
