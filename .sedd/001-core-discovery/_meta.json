@@ -1,0 +1,54 @@
+{
+  "featureId": "001",
+  "featureName": "core-discovery",
+  "branch": "001-core-discovery",
+  "createdAt": "2026-03-24T23:04:07.128Z",
+  "specCreatedAt": "2026-03-24T23:04:07.128Z",
+  "currentMigration": null,
+  "migrations": {},
+  "splits": [],
+  "commits": [],
+  "expectation": {
+    "summary": "Usuário descobre filmes e séries de forma rápida e personalizada com filtros combinados",
+    "must": [
+      "Buscar filmes/séries via TMDB API com randomização real",
+      "Filtrar por tipo: Filmes, Séries, K-dramas",
+      "Filtrar por gênero, ano e nota mínima",
+      "Exibir card com poster, título, ano, gêneros e nota",
+      "Modal de detalhes com sinopse, elenco e ações",
+      "Persistir ações (watchlist, assistido, blacklist) no Supabase",
+      "Ignorar itens da blacklist nas sugestões"
+    ],
+    "mustNot": [
+      "Sugerir o mesmo item repetidamente na mesma sessão",
+      "Exibir itens da blacklist do usuário",
+      "Usar localStorage como armazenamento primário",
+      "Travar se a API TMDB falhar"
+    ]
+  },
+  "status": "implemented",
+  "architectureAnalysis": {
+    "performedAt": "2026-03-24",
+    "filesToModify": ["script.js", "style.css"],
+    "filesAffected": ["index.html", "supabase-config.js"],
+    "dbChangesNeeded": false,
+    "apiChangesNeeded": false,
+    "reusableAssets": ["supabaseGetBlacklist", "supabaseAddToWatchlist", "supabaseAddToHistory"],
+    "risks": ["Limite de rate da TMDB API com muitas páginas aleatórias"],
+    "recommendedApproach": "Manter arquitetura atual, implementar Vibe Filter como extensão do filtro de gênero usando TMDB keywords"
+  },
+  "lastValidation": {
+    "timestamp": "2026-03-24",
+    "coveragePercentage": 88,
+    "overallQuality": "good",
+    "qualityScores": {
+      "frontend": 90,
+      "backend": 85,
+      "database": 90,
+      "general": 88
+    },
+    "qualityCriticals": 0,
+    "qualityWarnings": 1,
+    "recommendation": "Implementar Vibe Filter (P3) na próxima iteração"
+  }
+}

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#14101F"/>
+  <!-- Bilhete de cinema com picote -->
+  <path d="M72 176a32 32 0 0 1 32-32h304a32 32 0 0 1 32 32v44a36 36 0 0 0 0 72v44a32 32 0 0 1-32 32H104a32 32 0 0 1-32-32v-44a36 36 0 0 0 0-72z" fill="#FFC94D"/>
+  <path d="M340 164v184" stroke="#14101F" stroke-width="12" stroke-linecap="round" stroke-dasharray="20 22"/>
+  <path d="M170 204v104l92-52z" fill="#14101F"/>
+</svg>

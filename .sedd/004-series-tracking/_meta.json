@@ -1,0 +1,114 @@
+{
+  "featureId": "004",
+  "featureName": "series-tracking",
+  "branch": "004-series-tracking",
+  "createdAt": "2026-03-24T23:21:38.513Z",
+  "specCreatedAt": "2026-03-24T23:21:38.513Z",
+  "currentMigration": "001",
+  "migrations": {
+    "001": {
+      "folder": "001_2026-03-24_clarify",
+      "createdAt": "2026-03-24",
+      "status": "clarified",
+      "tasks": [
+        "T001-001",
+        "T001-002",
+        "T001-003",
+        "T001-004",
+        "T001-005",
+        "T001-006",
+        "T001-007",
+        "T001-008",
+        "T001-009",
+        "T001-010"
+      ],
+      "tasksCompleted": [
+        "T001-001",
+        "T001-002",
+        "T001-003",
+        "T001-004",
+        "T001-005",
+        "T001-006",
+        "T001-007",
+        "T001-008",
+        "T001-009",
+        "T001-010"
+      ],
+      "files": {
+        "clarify": "001_2026-03-24_clarify/clarify.md",
+        "tasks": "001_2026-03-24_clarify/tasks.md",
+        "decisions": "001_2026-03-24_clarify/decisions.md",
+        "acceptance": "001_2026-03-24_clarify/acceptance.md"
+      }
+    }
+  },
+  "splits": [],
+  "commits": [],
+  "expectation": {
+    "summary": "Usuário marca episódios assistidos e vê o próximo episódio a assistir no widget Up Next",
+    "must": [
+      "Marcar episódio individual como assistido (S01E01...)",
+      "Exibir progresso da série: Temporada X, Episódio Y de Z",
+      "Widget Up Next na tela principal com próximo episódio",
+      "Buscar estrutura via TMDB API e cachear",
+      "Persistir progresso por episódio no Supabase",
+      "Distinguir série em andamento de série concluída",
+      "Funcionar para doramas"
+    ],
+    "mustNot": [
+      "Misturar progresso de séries com histórico de filmes",
+      "Marcar série inteira sem episódios individuais",
+      "Fazer chamadas à TMDB por episódio sem cache",
+      "Exibir Up Next para séries concluídas"
+    ]
+  },
+  "status": "implemented",
+  "priority": "immediate",
+  "architectureAnalysis": {
+    "performedAt": "2026-03-24",
+    "filesToModify": [
+      "script.js",
+      "index.html",
+      "style.css",
+      "supabase-config.js",
+      "supabase-schema.sql"
+    ],
+    "filesAffected": [],
+    "dbChangesNeeded": true,
+    "apiChangesNeeded": false,
+    "reusableAssets": [
+      "supabaseGetCurrentUser",
+      "supabaseAddToHistory"
+    ],
+    "risks": [
+      "TMDB Season 0 (episódios especiais) pode quebrar lógica de progresso",
+      "Séries em andamento (novos eps sendo lançados) precisam de tratamento especial"
+    ],
+    "recommendedApproach": "Nova tabela episode_progress com UNIQUE constraint. View series_progress para calcular estado. Widget Up Next via supabaseGetAllSeriesInProgress() no app load."
+  },
+  "lastValidation": {
+    "timestamp": null,
+    "coveragePercentage": 0,
+    "overallQuality": "not-started",
+    "qualityScores": {
+      "frontend": 0,
+      "backend": 0,
+      "database": 0,
+      "general": 0
+    },
+    "qualityCriticals": 0,
+    "qualityWarnings": 0,
+    "recommendation": "PRIORIDADE IMEDIATA — maior impacto em retenção D7/D30. Iniciar com /sedd.clarify."
+  },
+  "lastSession": {
+    "completed": [],
+    "inProgress": null,
+    "nextSteps": [],
+    "filesModified": [
+      "index.html",
+      "script.js",
+      "style.css"
+    ],
+    "timestamp": "2026-10-28T22:24:40.266Z"
+  }
+}

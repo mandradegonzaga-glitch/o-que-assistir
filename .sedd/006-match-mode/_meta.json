@@ -1,0 +1,58 @@
+{
+  "featureId": "006",
+  "featureName": "match-mode",
+  "branch": "006-match-mode",
+  "createdAt": "2026-03-24T23:04:48.424Z",
+  "specCreatedAt": "2026-03-24T23:04:48.424Z",
+  "currentMigration": null,
+  "migrations": {},
+  "splits": [],
+  "commits": [],
+  "expectation": {
+    "summary": "Dois usuários votam em filmes em tempo real via swipe e recebem um match quando ambos curtem",
+    "must": [
+      "Criar sessão de match com link/código compartilhável",
+      "Votação simultânea com Supabase Realtime",
+      "Detectar match mútuo em tempo real e celebrar",
+      "Salvar título matched na watchlist de ambos",
+      "UI de swipe com animações (❤️ / ✕)",
+      "Sessão expira após inatividade",
+      "Funcionar em mobile via PWA"
+    ],
+    "mustNot": [
+      "Revelar voto de um usuário ao outro antes do match",
+      "Requerer conta premium",
+      "Usar polling (deve ser Supabase Realtime)",
+      "Perder votos se usuário ficar offline momentaneamente"
+    ]
+  },
+  "status": "planned",
+  "architectureAnalysis": {
+    "performedAt": "2026-03-24",
+    "filesToModify": ["script.js", "index.html", "style.css", "supabase-config.js", "supabase-schema.sql"],
+    "filesAffected": [],
+    "dbChangesNeeded": true,
+    "apiChangesNeeded": false,
+    "reusableAssets": ["supabaseGetCurrentUser", "supabaseAddToWatchlist"],
+    "risks": [
+      "Supabase Realtime Broadcast requer configuração específica de canais",
+      "Sincronização de títulos entre usuários requer lógica cuidadosa de seed",
+      "Feature de maior porte — requer migração dedicada"
+    ],
+    "recommendedApproach": "Criar tabelas match_sessions, match_votes, match_results. Usar Supabase Realtime Broadcast para sync de votos. UI de swipe com CSS transform/transition nativo."
+  },
+  "lastValidation": {
+    "timestamp": null,
+    "coveragePercentage": 0,
+    "overallQuality": "not-started",
+    "qualityScores": {
+      "frontend": 0,
+      "backend": 0,
+      "database": 0,
+      "general": 0
+    },
+    "qualityCriticals": 0,
+    "qualityWarnings": 0,
+    "recommendation": "Killer feature — priorizar após Streaks/XP (005). Requer /sedd.clarify para planejar migração."
+  }
+}

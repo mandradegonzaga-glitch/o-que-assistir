@@ -1,0 +1,57 @@
+{
+  "featureId": "005",
+  "featureName": "streaks-xp",
+  "branch": "005-streaks-xp",
+  "createdAt": "2026-03-24T23:04:50.570Z",
+  "specCreatedAt": "2026-03-24T23:04:50.570Z",
+  "currentMigration": null,
+  "migrations": {},
+  "splits": [],
+  "commits": [],
+  "expectation": {
+    "summary": "Usuário acumula XP e mantém streak diário, evoluindo de Calouro a Lenda",
+    "must": [
+      "Check-in diário registrado ao abrir o app",
+      "Streak atual calculado e exibido no perfil",
+      "Zerar streak após 48h sem acesso (grace period de 1 dia)",
+      "XP concedido por: abrir app, marcar assistido, usar roleta, match",
+      "Níveis de usuário: Calouro, Aprendiz, Cinéfilo, Crítico, Maratonista, Lenda",
+      "Manter best_streak histórico",
+      "Badges por marcos de streak (7, 30, 100 dias)"
+    ],
+    "mustNot": [
+      "Conceder XP duplicado por mesma ação na sessão",
+      "Zerar streak por clock skew de menos de 1 hora",
+      "Exibir streaks/XP para usuários convidados",
+      "Validar timestamp apenas no cliente (validar no Supabase)"
+    ]
+  },
+  "status": "planned",
+  "architectureAnalysis": {
+    "performedAt": "2026-03-24",
+    "filesToModify": ["script.js", "index.html", "style.css", "supabase-config.js", "supabase-schema.sql"],
+    "filesAffected": ["supabase-schema.sql"],
+    "dbChangesNeeded": true,
+    "apiChangesNeeded": false,
+    "reusableAssets": ["supabaseGetProfile", "supabaseUpdateProfile"],
+    "risks": [
+      "Timezone differences podem quebrar cálculo de streak para usuários internacionais",
+      "Sem backend dedicado, validação server-side usa Supabase Edge Functions ou RPC"
+    ],
+    "recommendedApproach": "Adicionar colunas em profiles (current_streak, best_streak, last_checkin, total_xp, level). Criar função Supabase RPC para daily_checkin que valida server-side. Chamar no app load."
+  },
+  "lastValidation": {
+    "timestamp": null,
+    "coveragePercentage": 0,
+    "overallQuality": "not-started",
+    "qualityScores": {
+      "frontend": 0,
+      "backend": 0,
+      "database": 0,
+      "general": 0
+    },
+    "qualityCriticals": 0,
+    "qualityWarnings": 0,
+    "recommendation": "Priorizar antes do Match Mode — impacto direto em D7/D30 retention. Iniciar com /sedd.clarify."
+  }
+}

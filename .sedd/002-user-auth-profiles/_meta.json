@@ -1,0 +1,56 @@
+{
+  "featureId": "002",
+  "featureName": "user-auth-profiles",
+  "branch": "002-user-auth-profiles",
+  "createdAt": "2026-03-24T23:04:09.540Z",
+  "specCreatedAt": "2026-03-24T23:04:09.540Z",
+  "currentMigration": null,
+  "migrations": {},
+  "splits": [],
+  "commits": [],
+  "expectation": {
+    "summary": "Usuário cria conta, faz login e tem dados sincronizados entre dispositivos",
+    "must": [
+      "Registro com email/senha",
+      "Login com email/senha",
+      "Logout seguro",
+      "Modo convidado (anonymous login)",
+      "Persistir preferências do usuário no Supabase",
+      "Perfil com avatar, stats de filmes, badges e roulette wins",
+      "RLS ativo em todas as tabelas",
+      "Sincronização automática entre dispositivos"
+    ],
+    "mustNot": [
+      "Armazenar senha em texto plano",
+      "Permitir acesso a dados de outros usuários",
+      "Perder dados ao fazer logout e login",
+      "Bloquear uso do app para não autenticados",
+      "Expor service_role key no frontend"
+    ]
+  },
+  "status": "implemented",
+  "architectureAnalysis": {
+    "performedAt": "2026-03-24",
+    "filesToModify": ["supabase-config.js", "script.js"],
+    "filesAffected": ["index.html", "supabase-schema.sql"],
+    "dbChangesNeeded": false,
+    "apiChangesNeeded": false,
+    "reusableAssets": ["supabaseOnAuthStateChange", "supabaseGetProfile", "supabaseUpdatePreferences"],
+    "risks": ["Migração de dados de convidado para conta real requer linkIdentity API"],
+    "recommendedApproach": "Manter arquitetura atual. Para login social, usar supabase.auth.signInWithOAuth()"
+  },
+  "lastValidation": {
+    "timestamp": "2026-03-24",
+    "coveragePercentage": 85,
+    "overallQuality": "good",
+    "qualityScores": {
+      "frontend": 85,
+      "backend": 90,
+      "database": 95,
+      "general": 85
+    },
+    "qualityCriticals": 0,
+    "qualityWarnings": 2,
+    "recommendation": "Implementar migração de dados de convidado e login social como próximos passos"
+  }
+}

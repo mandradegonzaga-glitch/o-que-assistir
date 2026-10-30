@@ -1,0 +1,67 @@
+# ================================================
+# GITIGNORE - O QUE ASSISTIR
+# ================================================
+
+# Arquivos de ambiente (credenciais)
+.env
+.env.local
+.env.production
+
+# Configuração do Supabase com credenciais reais
+# (use .env ao invés de hardcode)
+# supabase-config.js (descomentar se usar .env)
+
+# Node modules (se usar npm)
+node_modules/
+yarn.lock
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build e cache
+dist/
+build/
+.cache/
+.parcel-cache/
+
+# Arquivos temporários
+*.tmp
+*.temp
+.temp/
+
+# SEDD
+.sedd/cache/
+.sedd/scripts/
+.sedd/templates/
+
+# SEDD config (uncomment to ignore)
+# sedd.config.json
+
+# Uncomment to ignore entire SEDD directory
+# .sedd/
+
+# Claude Code hooks output
+.claude/hooks/*.log
+.claude/hooks/*.tmp
+
+# Claude Code — configurações pessoais (não compartilhar)
+.claude/settings.local.json
+
+# Gerados localmente
+coverage/
+.claude/worktrees/

@@ -1,0 +1,290 @@
+// Descobrir: filtros, sorteio, Top 10 e busca
+import { isAbortError, latestSignal, tmdbFetch, tmdbGet } from '../api/tmdb.js';
+import { addToSorteioHistory } from './sorteioHistory.js';
+import { abrirModal } from './titleModal.js';
+import { syncUrl } from './urlSync.js';
+import { buildDiscoverUrl, getRandomPage } from '../domain/filters.js';
+import { session, state } from '../state/appState.js';
+import { showToast } from '../ui/feedback.js';
+import { escapeHtml } from '../utils/escapeHtml.js';
+import { IMG_URL } from '../config/constants.js';
+
+
+// Foto padrão de pessoa (local: evita requisição a serviço de terceiros por pessoa sem foto)
+
+export const PERSON_PLACEHOLDER = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60"><rect width="60" height="60" fill="#1f1f1f"/><circle cx="30" cy="23" r="11" fill="#555"/><path d="M10 56c3-11 11-17 20-17s17 6 20 17" fill="#555"/></svg>');
+
+// FILTRO ATOR (com debounce implementado via input)
+
+export async function buscarPessoa(val) {
+    if(val.length < 3) {
+        document.getElementById('actor-list').style.display = 'none';
+        return;
+    }
+
+    try {
+        const data = await tmdbGet('/search/person', { query: val }, { signal: latestSignal('person') });
+        renderPersonSuggestions(data.results);
+    } catch(e) {
+        if (!isAbortError(e)) console.error('Erro ao buscar pessoa:', e);
+    }
+}
+
+export function renderPersonSuggestions(results) {
+    const box = document.getElementById('actor-list');
+    box.innerHTML = '';
+    box.style.display = 'block';
+
+    results.slice(0,5).forEach((p) => {
+        const item = document.createElement('div');
+        item.className = 'suggestion-item';
+        item.setAttribute('role', 'option');
+        item.setAttribute('tabindex', '0');
+        item.dataset.action = 'selectPerson';
+        item.dataset.id = p.id;
+        item.dataset.name = p.name;
+        item.innerHTML = `<img class="suggestion-img" src="${p.profile_path ? IMG_URL+p.profile_path : PERSON_PLACEHOLDER}" alt="" width="36" height="36" loading="lazy"> ${escapeHtml(p.name)}`;
+        box.appendChild(item);
+    });
+}
+
+export function selectPerson(id, name) {
+    state.personId = id;
+    document.getElementById('actor-input').value = '';
+    document.getElementById('actor-list').style.display = 'none';
+    document.getElementById('selected-person').style.display = 'flex';
+    document.getElementById('person-name').innerText = name;
+    syncUrl();
+}
+
+export function limparPessoa() {
+    state.personId = null;
+    document.getElementById('selected-person').style.display = 'none';
+    syncUrl();
+}
+
+// LÓGICA PRINCIPAL
+
+export async function sortearFilme() {
+    const btn = document.getElementById('btn-sortear');
+    if (btn.disabled) return; // evita sorteios duplicados com cliques repetidos
+    btn.innerHTML = '<svg aria-hidden="true" class="icon spin icon-16 icon-lead-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>Buscando...';
+    btn.disabled = true;
+    btn.classList.add('loading');
+
+    const endpoint = state.type === 'dorama' ? 'tv' : state.type;
+    const similarInput = document.getElementById('input-similar').value.trim();
+
+    try {
+        let lista = [];
+
+        // Se o campo "Parecido com..." estiver preenchido
+        if (similarInput.length > 2) {
+            // Buscar o título informado
+            const buscaData = await tmdbGet(`/search/${endpoint}`, { query: similarInput });
+
+            if (buscaData.results && buscaData.results.length > 0) {
+                // Pegar recomendações do primeiro resultado
+                const tituloEncontrado = buscaData.results[0];
+                const recData = await tmdbGet(`/${endpoint}/${tituloEncontrado.id}/recommendations`);
+
+                if (recData.results && recData.results.length > 0) {
+                    lista = recData.results;
+                    showToast(`Buscando similares a "${tituloEncontrado.title || tituloEncontrado.name}"...`);
+                } else {
+                    // Se não houver recomendações, tentar similares
+                    const simData = await tmdbGet(`/${endpoint}/${tituloEncontrado.id}/similar`);
+                    lista = simData.results || [];
+                }
+            } else {
+                showToast("Não encontrei esse título. Tente outro nome!", "error");
+                btn.innerHTML = '<svg aria-hidden="true" class="icon icon-18 icon-lead-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.5 4.5H18l-3.5 2.5 1.5 4.5-4-3-4 3 1.5-4.5L6 7.5h4.5L12 3z"/></svg>Sortear Agora';
+                btn.disabled = false;
+                btn.classList.remove('loading');
+                return;
+            }
+        } else {
+            // Busca normal com filtros
+            const url = buildDiscoverUrl(endpoint, {
+                genre: document.getElementById('input-genero').value,
+                provider: document.getElementById('input-provider').value,
+                duration: document.getElementById('duration-select').value,
+                yearFrom: document.getElementById('year-from').value,
+                yearTo: document.getElementById('year-to').value,
+                personId: state.personId,
+                isDorama: state.type === 'dorama',
+            });
+
+            let data = await tmdbFetch(url + `&page=${getRandomPage()}`);
+
+            if(!data.results || data.results.length === 0) {
+                data = await tmdbFetch(url + '&page=1');
+            }
+
+            lista = data.results || [];
+        }
+
+        // Filtrar resultados válidos (com poster) e excluir blacklist
+        const valid = lista.filter(m => m.poster_path && !session.blacklist.includes(m.id));
+
+        if(valid.length > 0) {
+            const sorteado = valid[Math.floor(Math.random() * valid.length)];
+            sorteado.media_type = sorteado.media_type || state.type;
+            abrirModal(sorteado);
+            addToSorteioHistory(sorteado);
+        } else {
+            showToast("Nada encontrado (ou tudo na sua blacklist)!", "error");
+        }
+    } catch(e) {
+        console.error(e);
+        showToast("Erro na API.", "error");
+    }
+    btn.innerHTML = '<svg aria-hidden="true" class="icon icon-18 icon-lead-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.5 4.5H18l-3.5 2.5 1.5 4.5-4-3-4 3 1.5-4.5L6 7.5h4.5L12 3z"/></svg>Sortear Agora';
+    btn.disabled = false;
+    btn.classList.remove('loading');
+}
+
+// SKELETON LOADERS
+
+export function showSkeletonLoader() {
+    const area = document.getElementById('results-area');
+    area.innerHTML = '';
+    area.style.display = 'grid';
+    for (let i = 0; i < 10; i++) {
+        area.innerHTML += '<div class="skeleton-card"></div>';
+    }
+}
+
+export function hideSkeletonLoader() {
+    const area = document.getElementById('results-area');
+    area.innerHTML = '';
+}
+
+export async function mostrarTop10() {
+    const btn = document.getElementById('btn-top10');
+    if (btn.disabled) return;
+    btn.innerHTML = '<svg aria-hidden="true" class="icon spin icon-16 icon-lead-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>Carregando...';
+    btn.disabled = true;
+    btn.classList.add('loading');
+
+    showSkeletonLoader();
+
+    try {
+        const endpoint = state.type === 'dorama' ? 'tv' : state.type;
+        const data = await tmdbFetch(buildDiscoverUrl(endpoint, {
+            genre: document.getElementById('input-genero').value,
+            provider: document.getElementById('input-provider').value,
+            yearFrom: document.getElementById('year-from').value,
+            yearTo: document.getElementById('year-to').value,
+            isDorama: state.type === 'dorama',
+            minVotes: 100,
+        }));
+        renderResults(data.results.slice(0,10), true);
+        showToast("Top 10 carregado!");
+    } catch(e) {
+        showToast("Erro ao carregar Top 10", "error");
+    } finally {
+        btn.innerHTML = '<svg aria-hidden="true" class="icon icon-18 icon-lead-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>Ver Top 10';
+        btn.disabled = false;
+        btn.classList.remove('loading');
+    }
+}
+
+export function renderResults(list, rank=false) {
+    const area = document.getElementById('results-area');
+    area.innerHTML = '';
+    area.style.display = 'grid';
+
+    if(list.length === 0) {
+        area.innerHTML = `
+            <div class="empty-state grid-full">
+                <div class="empty-state-icon"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></div>
+                <h3 class="empty-state-title">Nenhum resultado encontrado</h3>
+                <p class="empty-state-desc">Tente ajustar seus filtros ou fazer uma nova busca</p>
+                <button class="empty-state-cta ripple" data-action="focusSearch">
+                    <svg class="icon-16 icon-lead-6" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="2"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>Nova Busca
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    list.forEach((f, i) => {
+        if(f.poster_path) {
+            const title = f.title || f.name;
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'result-item';
+            item.setAttribute('aria-label', `${title}${rank ? `, posição ${i+1}` : ''}`);
+            item.dataset.action = 'carregarDetalhes';
+            item.dataset.id = f.id;
+            item.dataset.media = state.type;
+
+            item.innerHTML = `
+                ${rank ? `<span class="result-rank">${i+1}º</span>` : ''}
+                <img src="${IMG_URL + f.poster_path}" alt="${escapeHtml(title)}" width="500" height="750" loading="lazy">
+                <span class="result-title-preview">${escapeHtml(title)}</span>
+            `;
+
+            area.appendChild(item);
+        }
+    });
+}
+
+// SEARCH HISTORY
+
+export function saveSearchHistory(query) {
+    let history = JSON.parse(localStorage.getItem('search_history')) || [];
+    history = history.filter(item => item !== query);
+    history.unshift(query);
+    history = history.slice(0, 5); // Keep last 5
+    localStorage.setItem('search_history', JSON.stringify(history));
+}
+
+export function getSearchHistory() {
+    return JSON.parse(localStorage.getItem('search_history')) || [];
+}
+
+// Enhanced search with history
+
+export async function buscarDireto() {
+    const query = document.getElementById('direct-search').value;
+    const area = document.getElementById('results-area');
+
+    if(query.length < 2) {
+        showToast("Digite pelo menos 2 caracteres", "error");
+        return;
+    }
+
+    saveSearchHistory(query);
+
+    area.innerHTML = '<p class="text-secondary grid-full">Buscando...</p>';
+    area.style.display = 'grid';
+
+    showSkeletonLoader();
+
+    try {
+        const endpoint = state.type === 'dorama' ? 'tv' : state.type;
+
+        const data = await tmdbGet(`/search/${endpoint}`, { query }, { signal: latestSignal('search') });
+
+        area.innerHTML = '';
+
+        if(data.results.length === 0) {
+            area.innerHTML = `
+                <div class="empty-state grid-full">
+                    <div class="empty-state-icon"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></div>
+                    <h3 class="empty-state-title">Nenhum resultado para "${escapeHtml(query)}"</h3>
+                    <p class="empty-state-desc">Tente palavras diferentes ou verifique a ortografia</p>
+                </div>
+            `;
+            return;
+        }
+
+        renderResults(data.results);
+    } catch(e) {
+        if (isAbortError(e)) return;
+        console.error(e);
+        showToast("Erro na busca", "error");
+    }
+}

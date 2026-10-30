@@ -1,0 +1,54 @@
+{
+  "featureId": "007",
+  "featureName": "gamification-badges",
+  "branch": "007-gamification-badges",
+  "createdAt": "2026-03-24T23:04:46.130Z",
+  "specCreatedAt": "2026-03-24T23:04:46.130Z",
+  "currentMigration": null,
+  "migrations": {},
+  "splits": [],
+  "commits": [],
+  "expectation": {
+    "summary": "Usuário desbloqueia badges por ações no app e sente progressão constante",
+    "must": [
+      "Sistema de badges persistido no Supabase",
+      "Verificar e desbloquear badges automaticamente após ações",
+      "Exibir badges no perfil do usuário",
+      "Celebração visual ao desbloquear badge",
+      "Implementar ao menos 20 badges prioritárias",
+      "Grid de badges com desbloqueadas e bloqueadas com dicas",
+      "Categorias de badges (Descoberta, Maratona, Roleta, Social)"
+    ],
+    "mustNot": [
+      "Desbloquear a mesma badge duas vezes",
+      "Verificar badges sem ação do usuário (evitar spam)",
+      "Mostrar todas badges bloqueadas sem contexto",
+      "Depender de dados externos para calcular badges"
+    ]
+  },
+  "status": "partially-implemented",
+  "architectureAnalysis": {
+    "performedAt": "2026-03-24",
+    "filesToModify": ["script.js", "index.html", "style.css"],
+    "filesAffected": ["supabase-config.js", "supabase-schema.sql"],
+    "dbChangesNeeded": true,
+    "apiChangesNeeded": false,
+    "reusableAssets": ["supabaseGetBadges", "supabaseUnlockBadge", "supabaseCheckBadge"],
+    "risks": ["Definição das 20 badges prioritárias requer decisão de produto antes de implementar"],
+    "recommendedApproach": "Definir lista de badges em constante no script.js, verificar via supabaseCheckBadge após cada ação relevante"
+  },
+  "lastValidation": {
+    "timestamp": "2026-03-24",
+    "coveragePercentage": 45,
+    "overallQuality": "needs-work",
+    "qualityScores": {
+      "frontend": 40,
+      "backend": 70,
+      "database": 80,
+      "general": 45
+    },
+    "qualityCriticals": 1,
+    "qualityWarnings": 3,
+    "recommendation": "Infraestrutura pronta, faltam as 20 badges concretas e o grid visual no perfil"
+  }
+}

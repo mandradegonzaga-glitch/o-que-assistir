@@ -1,0 +1,248 @@
+// Modal de detalhes do título
+import { isAbortError, latestSignal, tmdbGet } from '../api/tmdb.js';
+import { PERSON_PLACEHOLDER } from './discover.js';
+import { loadEpisodesSection } from './episodes.js';
+import { salvarHistorico, toggleWatchlist } from './library.js';
+import { updateHistoryNav } from './sorteioHistory.js';
+import { setUrlTitle } from './urlSync.js';
+import { session, state } from '../state/appState.js';
+import { showToast } from '../ui/feedback.js';
+import { escapeHtml } from '../utils/escapeHtml.js';
+import { formatRating } from '../utils/format.js';
+import { IMG_URL } from '../config/constants.js';
+
+// ================================================
+// EPISÓDIOS — abre modal de tracking (T001-009)
+// ================================================
+
+
+export async function abrirEpisodios(seriesId, mediaType) {
+    await carregarDetalhes(seriesId, mediaType);
+    // Rolar até a seção de episódios após o modal abrir
+    setTimeout(() => {
+        const section = document.getElementById('episodes-section');
+        if (section && !section.hidden) {
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, 300);
+}
+
+// MODAL
+
+export async function carregarDetalhes(id, type) {
+    const endpoint = type === 'dorama' ? 'tv' : type;
+    try {
+        // Dois cliques seguidos: vale o último, mesmo que a resposta do primeiro chegue depois
+        const data = await tmdbGet(`/${endpoint}/${id}`, {}, { signal: latestSignal('details') });
+        const f = { ...data, media_type: endpoint }; // cópia: a resposta fica no cache
+        await abrirModal(f);
+    } catch(e) {
+        if (isAbortError(e)) return;
+        console.error('Erro ao carregar título:', e);
+        showToast('Não foi possível abrir este título. Verifique a conexão e tente de novo.', 'error');
+    }
+}
+
+// Substitui o conteúdo de uma seção do modal por um aviso (evita mostrar dados do título anterior)
+
+export function showSectionError(containerId, message) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const note = document.createElement('span');
+    note.className = 'section-error';
+    note.textContent = message;
+    container.replaceChildren(note);
+}
+
+export async function abrirModal(f) {
+    state.currentMovie = f;
+    const signal = latestSignal('title');
+    setUrlTitle({ type: f.media_type === 'dorama' ? 'dorama' : (f.media_type || state.type), id: f.id });
+    const mediaType = f.media_type || state.type;
+    const type = mediaType === 'dorama' ? 'tv' : mediaType;
+
+    document.getElementById('m-title').innerText = f.title || f.name;
+    document.getElementById('m-desc').innerText = f.overview || "Sem sinopse.";
+
+    // Links de crítica: RT por busca no título; IMDb só se houver imdb_id (séries precisam de external_ids)
+    const linkImdb = document.getElementById('link-imdb');
+    const linkRt = document.getElementById('link-rt');
+    linkRt.href = `https://www.rottentomatoes.com/search?search=${encodeURIComponent(f.original_title || f.original_name || f.title || f.name)}`;
+    linkImdb.hidden = true;
+    (async () => {
+        try {
+            let imdbId = f.imdb_id;
+            if (!imdbId) {
+                imdbId = (await tmdbGet(`/${type}/${f.id}/external_ids`, { language: null }, { signal })).imdb_id;
+            }
+            if (imdbId && state.currentMovie?.id === f.id) {
+                linkImdb.href = `https://www.imdb.com/title/${encodeURIComponent(imdbId)}/`;
+                linkImdb.hidden = false;
+            }
+        } catch (e) {
+            if (!isAbortError(e)) console.error('Erro ao buscar IMDb ID:', e);
+        }
+    })();
+    document.getElementById('m-rating').innerHTML = `<svg aria-hidden="true" class="icon icon-14 icon-lead-2" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>${formatRating(f.vote_average)}`;
+    document.getElementById('m-year').innerText = (f.release_date || f.first_air_date || '').split('-')[0];
+    document.getElementById('m-poster').src = f.backdrop_path ? IMG_URL + f.backdrop_path : (f.poster_path ? IMG_URL + f.poster_path : '');
+
+    // Elenco
+    try {
+        const cData = await tmdbGet(`/${type}/${f.id}/credits`, {}, { signal });
+        const castDiv = document.getElementById('cast-list');
+        castDiv.innerHTML = '';
+        cData.cast.slice(0,8).forEach(a => {
+            castDiv.innerHTML += `<div class="cast-item"><img src="${a.profile_path ? IMG_URL+a.profile_path : PERSON_PLACEHOLDER}" class="cast-photo" alt="" width="60" height="60" loading="lazy"><br>${escapeHtml(a.name)}</div>`;
+        });
+    } catch(e) {
+        if (isAbortError(e)) return;
+        console.error('Erro ao carregar elenco:', e);
+        showSectionError('cast-list', 'Não foi possível carregar o elenco.');
+    }
+
+    // Trailer
+    try {
+        let vData = await tmdbGet(`/${type}/${f.id}/videos`, {}, { signal });
+        if(vData.results.length === 0) {
+            vData = await tmdbGet(`/${type}/${f.id}/videos`, { language: 'en-US' }, { signal });
+        }
+        const trailer = vData.results.find(v => v.site === 'YouTube');
+        const vidArea = document.getElementById('video-area');
+        if(trailer) {
+            vidArea.style.display = 'block';
+            document.getElementById('trailer-frame').src = `https://www.youtube-nocookie.com/embed/${trailer.key}`;
+        } else {
+            vidArea.style.display = 'none';
+        }
+    } catch(e) {
+        if (isAbortError(e)) return;
+        // Sem trailer é um estado normal: só esconde a área, sem aviso
+        console.error('Erro ao carregar trailer:', e);
+        document.getElementById('video-area').style.display = 'none';
+        document.getElementById('trailer-frame').src = '';
+    }
+
+    // Streaming
+    try {
+        const pData = await tmdbGet(`/${type}/${f.id}/watch/providers`, { language: null }, { signal });
+        const provDiv = document.getElementById('m-providers');
+        provDiv.innerHTML = '';
+        if(pData.results?.BR?.flatrate) {
+            const link = pData.results.BR.link;
+            pData.results.BR.flatrate.forEach(p => {
+                provDiv.innerHTML += `<a href="${escapeHtml(link)}" target="_blank" rel="noopener" aria-label="Ver no ${escapeHtml(p.provider_name)} (abre em nova aba)"><img src="${IMG_URL+p.logo_path}" class="provider-logo" alt="" width="44" height="44" loading="lazy" title="Ver no ${escapeHtml(p.provider_name)}"></a>`;
+            });
+        } else {
+            provDiv.innerHTML = '<span class="text-tertiary text-small">Indisponível em streaming</span>';
+        }
+    } catch(e) {
+        if (isAbortError(e)) return;
+        console.error('Erro ao carregar plataformas:', e);
+        showSectionError('m-providers', 'Não foi possível verificar onde assistir.');
+    }
+
+    // Botões
+    const vistos = session.user.history || [];
+    const wl = JSON.parse(localStorage.getItem('watchlist_obj')) || [];
+
+    const btnV = document.getElementById('btn-visto');
+    const btnS = document.getElementById('btn-salvar');
+
+    const isSeries = (f.media_type === 'tv' || f.media_type === 'dorama' || state.type === 'tv' || state.type === 'dorama');
+
+    if (isSeries) {
+        // Para séries: btn-visto é controlado pelo progresso de episódios
+        const jaVisto = vistos.find(i => i.id === f.id);
+        btnV.innerHTML = '<svg aria-hidden="true" class="icon icon-16 icon-lead-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' + (jaVisto ? 'JÁ VISTO' : 'Assistindo');
+        btnV.disabled = true;
+                    } else {
+        btnV.innerHTML = vistos.find(i=>i.id===f.id) ? '<svg aria-hidden="true" class="icon icon-16 icon-lead-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>JÁ VISTO' : '<svg aria-hidden="true" class="icon icon-16 icon-lead-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Já Vi';
+        btnV.disabled = !!vistos.find(i=>i.id===f.id);
+    }
+
+    const starIcon = '<svg aria-hidden="true" class="icon icon-16 icon-lead-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>';
+    const removeIcon = '<svg aria-hidden="true" class="icon icon-16 icon-lead-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    const inWatchlist = !!(session.user.watchlist || []).find(i => i.id === f.id);
+    const watchlistLabel = isSeries ? 'Quero Assistir' : 'Salvar';
+    btnS.innerHTML = inWatchlist ? `${removeIcon}Remover da Lista` : `${starIcon}${watchlistLabel}`;
+
+    // Atualizar navegação do histórico de sorteios
+    updateHistoryNav();
+
+    // Carregar seção de episódios (TV/Dorama only — T001-009)
+    loadEpisodesSection(f);
+
+    document.getElementById('modal-resultado').style.display = 'flex';
+}
+
+export function marcarVistoAtual() {
+    salvarHistorico(state.currentMovie);
+    fecharModal();
+}
+
+export async function toggleSalvarAtual() {
+    await toggleWatchlist(state.currentMovie);
+    fecharModal();
+}
+
+export function fecharModal() {
+    document.getElementById('modal-resultado').style.display = 'none';
+    document.getElementById('trailer-frame').src = "";
+    latestSignal('title'); // cancela o que ainda estava carregando
+    setUrlTitle(null);
+    // Limpar estado de episódios
+    session.episodes = { seriesId: null, watchedKeys: new Set(), seasonData: {} };
+}
+
+// COMPARTILHAR
+
+export async function compartilhar() {
+    if(state.currentMovie) {
+        const title = state.currentMovie.title || state.currentMovie.name;
+        const rating = formatRating(state.currentMovie.vote_average);
+        const text = `${title}\n★ ${rating}/10\n\nDescubra em: ${window.location.href}`;
+
+        if(navigator.share) {
+            try {
+                await navigator.share({
+                    title: 'O Que Assistir?',
+                    text: text,
+                    url: window.location.href
+                });
+                showToast("Compartilhado com sucesso!");
+            } catch(e) {
+                if(e.name !== 'AbortError') {
+                    copyToClipboard(text);
+                }
+            }
+        } else {
+            copyToClipboard(text);
+        }
+    }
+}
+
+export function copyToClipboard(text) {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast("Copiado para área de transferência!");
+        }).catch(() => {
+            showToast("Erro ao copiar", "error");
+        });
+    } else {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            showToast("Copiado para área de transferência!");
+        } catch(e) {
+            showToast("Erro ao copiar", "error");
+        }
+        document.body.removeChild(textarea);
+    }
+}

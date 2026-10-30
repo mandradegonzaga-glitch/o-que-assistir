@@ -1,0 +1,39 @@
+{
+  "specsDir": ".sedd",
+  "branchPattern": "{{id}}-{{name}}",
+  "scriptRunner": "auto",
+  "autoSplit": {
+    "enabled": true,
+    "maxLines": 400
+  },
+  "hooks": {
+    "assertive": true,
+    "skills": [
+      "langchain-expert",
+      "architecture-mapper",
+      "defect-analyzer"
+    ],
+    "checkOnlyCurrentMigration": true,
+    "showSyncWarnings": true,
+    "blockOnSyncError": false
+  },
+  "commit": {
+    "askBeforeCommit": true,
+    "messagePattern": "{{type}}({{id}}): {{message}}"
+  },
+  "github": {
+    "engine": "local",
+    "columns": {
+      "fieldId": "",
+      "options": {}
+    },
+    "columnMapping": {
+      "pending": "Todo",
+      "in-progress": "In Progress",
+      "completed": "Done",
+      "blocked": "Blocked"
+    },
+    "autoSync": "ask",
+    "syncTasks": "off"
+  }
+}

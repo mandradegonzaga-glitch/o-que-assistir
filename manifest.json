@@ -1,0 +1,56 @@
+{
+  "name": "O Que Assistir?",
+  "short_name": "OQueAssistir",
+  "description": "Descubra filmes e séries de forma inteligente com filtros personalizados",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#14101F",
+  "theme_color": "#14101F",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "pt-BR",
+  "categories": ["entertainment", "lifestyle"],
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Sortear Filme",
+      "short_name": "Sortear",
+      "description": "Sortear um filme aleatório",
+      "url": "/?action=sortear&type=movie",
+      "icons": [{ "src": "icons/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Sortear Série",
+      "short_name": "Série",
+      "description": "Sortear uma série aleatória",
+      "url": "/?action=sortear&type=tv",
+      "icons": [{ "src": "icons/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Roleta",
+      "short_name": "Roleta",
+      "description": "Abrir a roleta personalizada",
+      "url": "/?mode=roulette",
+      "icons": [{ "src": "icons/icon.svg", "sizes": "any" }]
+    }
+  ]
+}

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerador de Ícones PWA</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        h1 { color: #e50914; }
+        .icons { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; margin: 30px 0; }
+        .icon-item { background: #222; padding: 20px; border-radius: 12px; }
+        .icon-item canvas { display: block; margin: 0 auto 10px; border-radius: 20%; }
+        .icon-item a { color: #e50914; text-decoration: none; font-weight: bold; }
+        button { background: #e50914; color: white; border: none; padding: 15px 30px; font-size: 16px; border-radius: 8px; cursor: pointer; margin: 10px; }
+        button:hover { background: #ff1a1a; }
+        .note { color: #888; font-size: 14px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Gerador de Ícones PWA</h1>
+    <p>Clique nos botões abaixo para gerar e baixar os ícones PNG para o PWA.</p>
+
+    <button onclick="generateAll()">Gerar Todos os Ícones</button>
+
+    <div class="icons" id="icons"></div>
+
+    <p class="note">
+        Após baixar, coloque os arquivos PNG na pasta <code>icons/</code> do seu projeto.
+    </p>
+
+    <script>
+        const sizes = [72, 96, 128, 144, 152, 180, 192, 384, 512];
+
+        function generateIcon(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // Background with rounded corners
+            const radius = size * 0.1875;
+            ctx.fillStyle = '#0a0a0a';
+            ctx.beginPath();
+            ctx.roundRect(0, 0, size, size, radius);
+            ctx.fill();
+
+            // Scale factor
+            const s = size / 512;
+
+            // Film reel decoration
+            ctx.fillStyle = '#1a1a1a';
+            [[80, 80], [432, 80], [80, 432], [432, 432]].forEach(([x, y]) => {
+                ctx.beginPath();
+                ctx.arc(x * s, y * s, 24 * s, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Clapperboard base
+            ctx.fillStyle = '#1a1a1a';
+            ctx.beginPath();
+            ctx.roundRect(96 * s, 160 * s, 320 * s, 240 * s, 16 * s);
+            ctx.fill();
+
+            // Red stripe
+            ctx.fillStyle = '#e50914';
+            ctx.fillRect(96 * s, 160 * s, 320 * s, 40 * s);
+
+            // White stripes
+            ctx.fillStyle = '#ffffff';
+            [[96, 140], [180, 220], [260, 300], [340, 380]].forEach(([x1, x2], i) => {
+                ctx.beginPath();
+                ctx.moveTo((96 + i * 80) * s, 160 * s);
+                ctx.lineTo((160 + i * 80) * s, 160 * s);
+                ctx.lineTo((140 + i * 80) * s, 200 * s);
+                ctx.lineTo((96 + i * 80) * s, 200 * s);
+                ctx.fill();
+            });
+
+            // Play button circle
+            ctx.fillStyle = '#e50914';
+            ctx.beginPath();
+            ctx.arc(256 * s, 300 * s, 64 * s, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Play triangle
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.moveTo(236 * s, 268 * s);
+            ctx.lineTo(236 * s, 332 * s);
+            ctx.lineTo(292 * s, 300 * s);
+            ctx.fill();
+
+            // Film perforations
+            ctx.fillStyle = '#333';
+            [140, 200, 260, 320, 380].forEach(y => {
+                ctx.beginPath();
+                ctx.roundRect(64 * s, y * s, 16 * s, 24 * s, 4 * s);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.roundRect(432 * s, y * s, 16 * s, 24 * s, 4 * s);
+                ctx.fill();
+            });
+
+            return canvas;
+        }
+
+        function downloadIcon(canvas, size) {
+            const link = document.createElement('a');
+            link.download = `icon-${size}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function generateAll() {
+            const container = document.getElementById('icons');
+            container.innerHTML = '';
+
+            sizes.forEach(size => {
+                const canvas = generateIcon(size);
+                const div = document.createElement('div');
+                div.className = 'icon-item';
+                div.appendChild(canvas);
+
+                const label = document.createElement('div');
+                label.textContent = `${size}x${size}`;
+                div.appendChild(label);
+
+                const link = document.createElement('a');
+                link.href = '#';
+                link.textContent = 'Baixar';
+                link.onclick = (e) => {
+                    e.preventDefault();
+                    downloadIcon(canvas, size);
+                };
+                div.appendChild(link);
+
+                container.appendChild(div);
+
+                // Auto download
+                setTimeout(() => downloadIcon(canvas, size), sizes.indexOf(size) * 300);
+            });
+        }
+
+        // Polyfill for roundRect
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+                if (w < 2 * r) r = w / 2;
+                if (h < 2 * r) r = h / 2;
+                this.moveTo(x + r, y);
+                this.arcTo(x + w, y, x + w, y + h, r);
+                this.arcTo(x + w, y + h, x, y + h, r);
+                this.arcTo(x, y + h, x, y, r);
+                this.arcTo(x, y, x + w, y, r);
+                this.closePath();
+            };
+        }
+    </script>
+</body>
+</html>
