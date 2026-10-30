@@ -7,6 +7,7 @@ import { scorePassword } from '../domain/passwordStrength.js';
 import { session } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { confirmDialog } from '../ui/modals.js';
+import { storage } from '../utils/storage.js';
 
 export async function checkAuth() {
     const user = await supabaseGetCurrentUser();
@@ -241,6 +242,15 @@ export async function loginUser() {
     openTitleFromUrl();
 }
 
+function loadGuestData() {
+    const history = storage.get('sorteio_history', []);
+    const ignored = storage.get('blacklist', []);
+    session.sorteioHistory = Array.isArray(history) ? history : [];
+    session.sorteioHistoryIndex = session.sorteioHistory.length > 0 ? 0 : -1;
+    session.blacklist = Array.isArray(ignored) ? ignored : [];
+    updateHistoryButton();
+}
+
 export function loginAsGuest() {
     session.currentUser = 'guest';
     session.currentUserId = null; // Convidado não usa Supabase
@@ -251,6 +261,7 @@ export function loginAsGuest() {
         history: [],
         rouletteWins: 0
     };
+    loadGuestData();
 
     document.getElementById('login-overlay').style.display = 'none';
     updateUserDisplay();

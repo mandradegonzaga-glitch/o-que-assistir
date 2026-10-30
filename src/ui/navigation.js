@@ -2,7 +2,8 @@
 import { renderLibrary } from '../app/library.js';
 import { syncUrl } from '../app/urlSync.js';
 import { state } from '../state/appState.js';
-import { closeModalWithAnimation } from './modals.js';
+import { isHorizontalSwipe } from '../domain/gestures.js';
+import { closeModalWithAnimation, getActiveModal } from './modals.js';
 
 // RIPPLE EFFECT
 
@@ -196,28 +197,34 @@ export function initAccessibility() {
 
 // MOBILE GESTURES
 
-export let touchStartX = 0;
+let touchStart = null;
 
-export let touchEndX = 0;
+// Áreas que rolam para o lado (elenco, por exemplo) usam o gesto para rolar
+function scrollsSideways(element) {
+    for (let el = element; el && el !== document.body; el = el.parentElement) {
+        const overflow = getComputedStyle(el).overflowX;
+        if ((overflow === 'auto' || overflow === 'scroll') && el.scrollWidth > el.clientWidth) return true;
+    }
+    return false;
+}
 
 document.addEventListener('touchstart', (e) => {
-    touchStartX = e.changedTouches[0].screenX;
+    const { screenX, screenY } = e.changedTouches[0];
+    touchStart = { x: screenX, y: screenY, ignore: scrollsSideways(e.target) };
 });
 
 document.addEventListener('touchend', (e) => {
-    touchEndX = e.changedTouches[0].screenX;
-    handleSwipe();
+    if (!touchStart) return;
+    const { screenX, screenY } = e.changedTouches[0];
+    const { x, y, ignore } = touchStart;
+    touchStart = null;
+    if (!ignore && isHorizontalSwipe(screenX - x, screenY - y)) handleSwipe();
 });
 
 export function handleSwipe() {
-    const swipeThreshold = 100;
-    const diff = touchStartX - touchEndX;
-
-    // Swipe left/right on modals to close
-    const modal = document.querySelector('.modal-overlay[style*="display: flex"]');
-    if (modal && Math.abs(diff) > swipeThreshold) {
-        closeModalWithAnimation(modal);
-    }
+    // Fecha só o diálogo do topo
+    const modal = getActiveModal();
+    if (modal?.classList.contains('modal-overlay')) closeModalWithAnimation(modal);
 }
 
 // FILTRO DE ANO — limite máximo acompanha o ano atual

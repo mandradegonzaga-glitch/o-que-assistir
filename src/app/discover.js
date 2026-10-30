@@ -128,9 +128,15 @@ export async function sortearFilme() {
         const valid = lista.filter(m => m.poster_path && !session.blacklist.includes(m.id));
 
         if(valid.length > 0) {
-            const sorteado = valid[Math.floor(Math.random() * valid.length)];
-            sorteado.media_type = sorteado.media_type || state.type;
-            abrirModal(sorteado);
+            const escolhido = valid[Math.floor(Math.random() * valid.length)];
+            const sorteado = { ...escolhido, media_type: escolhido.media_type || state.type }; // cópia: a resposta fica no cache
+            let completo = sorteado;
+            try {
+                completo = { ...sorteado, ...await tmdbGet(`/${endpoint}/${sorteado.id}`), media_type: sorteado.media_type };
+            } catch (e) {
+                console.error('Erro ao carregar detalhes do sorteado:', e); // abre com o resumo, sem episódios
+            }
+            abrirModal(completo);
             addToSorteioHistory(sorteado);
         } else {
             showToast("Nada encontrado (ou tudo na sua blacklist)!", "error");

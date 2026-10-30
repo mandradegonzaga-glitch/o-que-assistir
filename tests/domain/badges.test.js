@@ -28,6 +28,11 @@ describe('isBadgeEarned', () => {
     expect(isBadgeEarned('Maratonista', series(4), 0)).toBe(false);
   });
 
+  it('Maratonista: doramas count as series', () => {
+    const items = Array.from({ length: 5 }, (_, i) => ({ id: i, type: i % 2 ? 'tv' : 'dorama' }));
+    expect(isBadgeEarned('Maratonista', items, 0)).toBe(true);
+  });
+
   it('Crítico: true when history has 50 items', () => {
     expect(isBadgeEarned('Crítico', makeHistory(50), 0)).toBe(true);
   });

@@ -437,3 +437,5 @@ npm test                         # 145/145 (12 suítes) em 2026-10-30
 
 - Pendente de validação humana: iPhone real (AC-001), histórico de sorteios e modal aninhado (AC-007), conquista com login (AC-009).
 - Achados durante os testes viraram backlog: FR-036 (SW serve JS antigo), FR-039 (banner PWA cobre o FECHAR), `.user-pill` sem foco por teclado (FR-003).
+- 2026-10-30, Supabase real: gravar em nome de outro usuário recusado (42501) em 6 tabelas (Claude); leitura entre duas contas de teste conferida e aprovada pelo usuário.
+- 2026-10-30, Supabase real: "Deletar conta" com 8 tabelas preenchidas apagou o login e deixou 0 linhas em todas (conferido com o token antigo); chamada sem login recusada com 401. A limpeza da sessão local foi corrigida depois e não teve novo teste de ponta a ponta.

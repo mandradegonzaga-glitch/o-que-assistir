@@ -1,5 +1,5 @@
 // Perfil, conta e conquistas
-import { supabaseChangePassword, supabaseCheckBadge, supabaseDeleteUserData, supabaseUnlockBadge, supabaseUpdateProfile } from '../api/supabase.js';
+import { supabaseChangePassword, supabaseCheckBadge, supabaseDeleteAccount, supabaseUnlockBadge, supabaseUpdateProfile } from '../api/supabase.js';
 import { updateHeader, updateUserDisplay } from './auth.js';
 import { renderBlacklist } from './blacklist.js';
 import { computeBadgeStatuses, isBadgeEarned } from '../domain/badges.js';
@@ -131,7 +131,7 @@ export async function deletarConta() {
 
     showToast("Deletando conta...");
 
-    const result = await supabaseDeleteUserData(session.currentUserId);
+    const result = await supabaseDeleteAccount();
 
     if (result.success) {
         session.currentUser = null;
@@ -145,7 +145,7 @@ export async function deletarConta() {
 
         showToast("Conta deletada com sucesso. Até mais!");
     } else {
-        showToast("Erro ao deletar conta: " + result.error, "error");
+        showToast("Não foi possível deletar a conta. Nada foi apagado; tente de novo.", "error");
     }
 }
 

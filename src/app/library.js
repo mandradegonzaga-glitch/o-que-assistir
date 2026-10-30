@@ -123,23 +123,18 @@ export async function renderLibrary() {
         return;
     }
 
-    const movies = list.filter(i => i.type === 'movie' || !i.type);
-    const tvs = list.filter(i => i.type === 'tv');
+    const key = state.tab === 'watchlist' ? 'watchlist_obj' : 'vistos_obj';
+    div.innerHTML = [
+        libraryGroup('FILMES', list.filter(i => i.type === 'movie' || !i.type), 'movie', key),
+        libraryGroup('SÉRIES', list.filter(i => i.type === 'tv'), 'tv', key),
+        libraryGroup('DORAMAS', list.filter(i => i.type === 'dorama'), 'dorama', key),
+    ].join('');
+}
 
-    let html = '';
-    if (movies.length > 0) {
-        html += `<div class="library-group-title">FILMES (${movies.length})</div>`;
-        movies.forEach(f => {
-            html += `<div class="library-item"><button type="button" class="library-item__open" data-action="carregarDetalhes" data-id="${f.id}" data-media="movie" aria-label="${escapeHtml(f.title || 'Abrir título')}"><img src="${IMG_URL + f.poster}" alt="" width="500" height="750" loading="lazy"></button><button type="button" class="remove-btn" data-action="removeLibItem" data-key="${state.tab === 'watchlist' ? 'watchlist_obj' : 'vistos_obj'}" data-id="${f.id}" aria-label="Remover ${escapeHtml(f.title || 'título')}">${CLOSE_ICON}</button></div>`;
-        });
-    }
-    if (tvs.length > 0) {
-        html += `<div class="library-group-title">SÉRIES (${tvs.length})</div>`;
-        tvs.forEach(f => {
-            html += `<div class="library-item"><button type="button" class="library-item__open" data-action="carregarDetalhes" data-id="${f.id}" data-media="tv" aria-label="${escapeHtml(f.title || 'Abrir título')}"><img src="${IMG_URL + f.poster}" alt="" width="500" height="750" loading="lazy"></button><button type="button" class="remove-btn" data-action="removeLibItem" data-key="${state.tab === 'watchlist' ? 'watchlist_obj' : 'vistos_obj'}" data-id="${f.id}" aria-label="Remover ${escapeHtml(f.title || 'título')}">${CLOSE_ICON}</button></div>`;
-        });
-    }
-    div.innerHTML = html;
+function libraryGroup(title, items, media, key) {
+    if (items.length === 0) return '';
+    const cards = items.map(f => `<div class="library-item"><button type="button" class="library-item__open" data-action="carregarDetalhes" data-id="${f.id}" data-media="${media}" aria-label="${escapeHtml(f.title || 'Abrir título')}"><img src="${IMG_URL + f.poster}" alt="" width="500" height="750" loading="lazy"></button><button type="button" class="remove-btn" data-action="removeLibItem" data-key="${key}" data-id="${f.id}" aria-label="Remover ${escapeHtml(f.title || 'título')}">${CLOSE_ICON}</button></div>`);
+    return `<div class="library-group-title">${title} (${items.length})</div>${cards.join('')}`;
 }
 
 export async function renderAndando(div) {

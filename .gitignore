@@ -65,3 +65,5 @@ build/
 # Gerados localmente
 coverage/
 .claude/worktrees/
+supabase/.temp/
+supabase/.branches/

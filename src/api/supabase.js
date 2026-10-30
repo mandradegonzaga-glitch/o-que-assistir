@@ -16,6 +16,9 @@ if (typeof window.supabase === 'undefined') {
     throw new Error('Supabase SDK não carregou');
 }
 
+// Onde o SDK guarda a sessão no navegador
+const AUTH_STORAGE_KEY = `sb-${new URL(SUPABASE_URL).hostname.split('.')[0]}-auth-token`;
+
 export let supabase;
 try {
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -568,41 +571,23 @@ export async function supabaseResetPassword(email) {
 // ================================================
 
 /**
- * Deletar conta do usuário (dados do banco)
- * Nota: Isso deleta os dados das tabelas. O usuário em auth.users
- * precisa ser deletado via Supabase Dashboard ou Edge Function.
- * @param {string} userId - ID do usuário
+ * Deletar a conta do usuário logado (login e todos os dados) pela Edge Function delete-account.
+ * Só informa sucesso depois de o servidor confirmar.
  */
-export async function supabaseDeleteUserData(userId) {
+export async function supabaseDeleteAccount() {
     try {
-        // Deletar em ordem para respeitar foreign keys
-        // 1. Badges
-        await supabase.from('user_badges').delete().eq('user_id', userId);
-
-        // 2. Preferências
-        await supabase.from('user_preferences').delete().eq('user_id', userId);
-
-        // 3. Watchlist
-        await supabase.from('watchlist').delete().eq('user_id', userId);
-
-        // 4. Progresso de episódios
-        await supabase.from('episode_progress').delete().eq('user_id', userId);
-
-        // 5. Histórico
-        await supabase.from('watch_history').delete().eq('user_id', userId);
-
-        // 6. Perfil (isso deve ser por último devido ao CASCADE)
-        const { error } = await supabase.from('profiles').delete().eq('id', userId);
-
+        const { data, error } = await supabase.functions.invoke('delete-account', { method: 'POST' });
         if (error) throw error;
+        if (!data?.deleted) throw new Error('Resposta inesperada do servidor');
 
-        // 7. Fazer logout
-        await supabase.auth.signOut();
+        // O usuário não existe mais, então o signOut responde 403 e mantém a sessão salva: limpa à mão
+        const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' });
+        if (signOutError) localStorage.removeItem(AUTH_STORAGE_KEY);
 
         return { success: true };
     } catch (error) {
         console.error('Erro ao deletar conta:', error);
-        return { success: false, error: error.message };
+        return { success: false };
     }
 }
 

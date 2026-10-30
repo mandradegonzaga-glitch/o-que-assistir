@@ -14,7 +14,7 @@ export const BADGE_DEFINITIONS = [
   { name: 'Iniciante', desc: 'Assistiu 1 filme/série', icon: 'popcorn', color: 'gold', check: h => h.length >= 1 },
   { name: 'Cinéfilo', desc: 'Assistiu 10 filmes/séries', icon: 'film', color: 'red', check: h => h.length >= 10 },
   { name: 'Crítico', desc: 'Assistiu 50 itens', icon: 'monocle', color: 'purple', check: h => h.length >= 50 },
-  { name: 'Maratonista', desc: 'Assistiu 5 séries', icon: 'tv', color: 'blue', check: h => h.filter(i => i.type === 'tv').length >= 5 },
+  { name: 'Maratonista', desc: 'Assistiu 5 séries', icon: 'tv', color: 'blue', check: h => h.filter(i => i.type === 'tv' || i.type === 'dorama').length >= 5 },
   { name: 'Rei do Terror', desc: '3 filmes de terror', icon: 'ghost', color: 'violet', check: h => countGenre(h, 27) >= 3 },
   { name: 'Comediante', desc: '3 comédias', icon: 'laugh', color: 'yellow', check: h => countGenre(h, 35) >= 3 },
   { name: 'Romântico', desc: '3 romances', icon: 'heart', color: 'pink', check: h => countGenre(h, 10749) >= 3 },

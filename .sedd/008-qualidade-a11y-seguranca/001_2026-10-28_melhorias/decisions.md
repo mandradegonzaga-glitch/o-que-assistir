@@ -74,6 +74,24 @@
 
 ---
 
+## D001-022 — Apagar a conta só pelo servidor
+
+**Decisão:** Edge Function `delete-account` remove o usuário de `auth.users`; o `ON DELETE CASCADE` leva o resto. O id vem do token validado. O cliente só informa sucesso com a confirmação do servidor.
+
+**Alternativas consideradas:** criar regras de DELETE em `profiles` e demais tabelas → rejeitado: o login continuaria existindo e a pessoa poderia entrar de novo em uma conta vazia.
+
+**Por que mudou:** o código antigo apagava só parte dos dados e dizia "sucesso" mesmo sem nenhuma linha removida, porque as tabelas não têm regra de DELETE e o Supabase não trata isso como erro. Substitui parcialmente D001-010 (autorizado pelo usuário em 2026-10-30).
+
+---
+
+## D001-021 — Dorama como grupo próprio na biblioteca
+
+**Decisão:** Títulos com tipo `dorama` ganham o grupo "DORAMAS" e contam para a conquista Maratonista.
+
+**Alternativas consideradas:** gravar dorama como `tv` → rejeitado: exigiria migrar o que já está salvo e perderia a distinção que o app oferece.
+
+---
+
 ## D001-020 — Site abre por servidor local
 
 **Decisão:** Sem etapa de build. `INICIAR_SITE.bat` (`npm start`) sobe o servidor e abre o navegador; aberto por `file://`, o site mostra um aviso com a instrução.

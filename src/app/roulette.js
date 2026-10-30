@@ -2,6 +2,7 @@
 import { supabaseIncrementRouletteWins } from '../api/supabase.js';
 import { checkBadgeUnlock } from './profile.js';
 import { fecharModal } from './titleModal.js';
+import { computeSpinRotation } from '../domain/roulette.js';
 import { session, state } from '../state/appState.js';
 import { createConfetti, scheduleUndoable, showToast } from '../ui/feedback.js';
 import { confirmDialog } from '../ui/modals.js';
@@ -121,10 +122,7 @@ export function girarRoleta() {
     const winner = items[winnerIndex];
     document.getElementById('roulette-winner').hidden = true;
 
-    const sliceAngle = 360 / items.length;
-    const spins = 5 + Math.random() * 3;
-    const winnerAngle = winnerIndex * sliceAngle;
-    const totalRotation = (spins * 360) + (360 - winnerAngle);
+    const totalRotation = computeSpinRotation(winnerIndex, items.length, 5 + Math.random() * 3);
 
     center.innerHTML = '<svg class="icon-40" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/><circle cx="12" cy="12" r="3"/></svg>';
     wheel.style.transform = `rotate(${totalRotation}deg)`;

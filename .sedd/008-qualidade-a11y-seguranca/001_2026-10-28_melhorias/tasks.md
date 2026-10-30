@@ -7,7 +7,7 @@
 
 ## Summary
 
-Total: 47 | Completed: 47 | Pending: 0 (restam só FR-035 e FR-040, adiados por D001-010)
+Total: 49 | Completed: 49 | Pending: 0 (restam só FR-035 e FR-040, adiados por D001-010)
 
 Regra de trabalho (pedido do usuário): **um item por vez, testar, evidenciar e perguntar antes do próximo.** Os 18 itens de T001-026 em diante foram feitos em sequência a pedido do usuário em 2026-10-30.
 
@@ -147,6 +147,10 @@ Regra de trabalho (pedido do usuário): **um item por vez, testar, evidenciar e 
 - [x] T001-046 [Backlog] Clicar em convidado durante a checagem de sessão reabria o login
 
 - [x] T001-047 [Backlog] Ajustes pedidos pelo usuário: número do Top 10 centrado (regressão de T001-038), fonte de texto sem zero cortado, ícones de tipo e de conquista redesenhados como uma família, conquistas bloqueadas sem filtro cinza no card
+
+- [x] T001-048 [Backlog] Bugs da revisão geral: roleta para na fatia do vencedor; série sorteada traz temporadas; doramas aparecem na biblioteca (e contam em Maratonista); arrastar o elenco não fecha o modal; convidado recupera ignorados e histórico
+
+- [x] T001-049 [Backlog] "Deletar conta" pela Edge Function `delete-account` (apaga o login; cascata leva os dados) — publicada e testada no real (limpeza da sessão local sem novo teste de ponta a ponta)
 
 Bugs herdados encontrados e corrigidos nessa rodada:
 - Filtro "Até (ano)" era ignorado em séries (o `replace` só trocava o `.gte`).
