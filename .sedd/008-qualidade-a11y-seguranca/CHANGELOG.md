@@ -2,6 +2,12 @@
 
 All notable changes to this feature will be documented in this file.
 
+## [2026-11-03, correção] — site `v22`
+
+### Fixed
+
+- Aviso (toast) e faixa "Instalar App" não ficam mais por cima do botão das indicações do dia; no celular, "voltar ao topo" e conquista também não se cobrem com ele
+
 ## [2026-11-03, segunda entrega] — site `v21`
 
 ### Added

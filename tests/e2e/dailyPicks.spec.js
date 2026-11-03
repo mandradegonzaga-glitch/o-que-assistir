@@ -115,4 +115,58 @@ test.describe('indicações do dia', () => {
     expect(box.y + box.height).toBeLessThanOrEqual(button.y);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });
+
+  // Canto inferior direito: botão das indicações, aviso, faixa "Instalar App", "voltar ao topo" e conquista
+  // não podem se cobrir (achado do usuário em 2026-11-03: aviso e faixa por cima do botão)
+  for (const [label, size] of [['computador', { width: 1280, height: 800 }], ['celular', { width: 390, height: 844 }]]) {
+    test(`no ${label}, os elementos do canto não se cobrem`, async ({ page }) => {
+      await page.setViewportSize(size);
+      await page.clock.install();
+      await enterAsGuest(page);
+
+      // Faixa de instalação de verdade: o navegador oferece instalar e o app espera 30 s
+      await page.evaluate(() => {
+        const event = new Event('beforeinstallprompt');
+        event.prompt = () => {};
+        event.userChoice = Promise.resolve({ outcome: 'dismissed' });
+        window.dispatchEvent(event);
+      });
+      await page.clock.fastForward(30_000);
+      await expect(page.locator('#pwa-install-banner')).toBeVisible();
+
+      await page.evaluate(async () => {
+        const { showToast: toast } = await import('/src/ui/feedback.js');
+        toast('Desafio de hoje: Descubra um título lançado antes de 2000');
+        // Com o relógio falso a animação CSS não anda: mede a posição final
+        const box = document.getElementById('toast');
+        box.style.animation = 'none';
+        box.style.transition = 'none';
+        window.scrollTo(0, 400);
+        document.getElementById('scroll-top').classList.add('visible');
+        const achievement = document.getElementById('achievement');
+        achievement.hidden = false;
+        achievement.classList.add('show');
+        achievement.style.transition = 'none';
+      });
+
+      const overlaps = await page.evaluate(() => {
+        const parts = { botao: '#daily-launcher', aviso: '#toast', faixa: '#pwa-install-banner', topo: '#scroll-top', conquista: '#achievement' };
+        const boxes = Object.entries(parts).map(([name, sel]) => [name, document.querySelector(sel).getBoundingClientRect()]);
+        const hit = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+        const found = [];
+        boxes.forEach(([a, ra], i) => boxes.slice(i + 1).forEach(([b, rb]) => { if (hit(ra, rb)) found.push(`${a} × ${b}`); }));
+        return found;
+      });
+      expect(overlaps).toEqual([]);
+      await expect(page.locator('.install-banner__dismiss')).toBeInViewport();
+
+      // Dispensar a faixa devolve o botão para o canto
+      const lifted = (await page.locator('#daily-launcher').boundingBox()).y;
+      await page.locator('.install-banner__dismiss').click();
+      await expect(page.locator('#pwa-install-banner')).toHaveCount(0);
+      const settled = (await page.locator('#daily-launcher').boundingBox()).y;
+      if (label === 'celular') expect(settled).toBeGreaterThan(lifted);
+      else expect(settled).toBe(lifted);
+    });
+  }
 });

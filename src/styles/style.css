@@ -4455,3 +4455,80 @@ select.input-dark:hover {
     font-variant-numeric: lining-nums;
     line-height: 1;
 }
+
+/* ==================== CANTO INFERIOR DIREITO ==================== */
+/* O botão das indicações do dia ocupa o canto; avisos, faixa "Instalar App", "voltar ao topo" e conquista
+   se arrumam em volta dele, sem se cobrir. Fica no fim para vencer as regras acima.
+   --banner-lift: quanto avisos e conquista sobem enquanto a faixa de instalação aparece (altura vem do pwa.js). */
+:root {
+    --fab-edge: var(--space-lg);                         /* distância do botão até a borda */
+    --fab-room: calc(var(--fab-edge) + 56px + 12px);     /* espaço que o botão ocupa, com folga */
+    --banner-lift: 0px;
+}
+
+body:has(#pwa-install-banner) {
+    --banner-lift: calc(var(--install-banner-h, 90px) + 12px);
+}
+
+.daily-launcher {
+    right: calc(var(--fab-edge) + env(safe-area-inset-right));
+    bottom: calc(var(--fab-edge) + env(safe-area-inset-bottom));
+}
+
+.daily-panel {
+    right: calc(var(--fab-edge) + env(safe-area-inset-right));
+    bottom: calc(var(--fab-room) + env(safe-area-inset-bottom));
+}
+
+/* Avisos à esquerda do botão; acima da faixa de instalação quando ela aparece */
+.toast {
+    right: calc(var(--fab-room) + env(safe-area-inset-right));
+    bottom: calc(var(--fab-edge) + var(--banner-lift) + env(safe-area-inset-bottom));
+}
+
+.undo-toast {
+    bottom: calc(var(--fab-edge) + 72px + var(--banner-lift) + env(safe-area-inset-bottom));
+}
+
+/* Conquista acima da fileira dos avisos e do "voltar ao topo" */
+.achievement {
+    bottom: calc(var(--fab-room) + 44px + 12px + var(--banner-lift) + env(safe-area-inset-bottom));
+}
+
+/* Computador: a faixa termina antes do botão */
+.install-banner {
+    right: calc(var(--fab-room) + env(safe-area-inset-right));
+}
+
+@media (max-width: 640px) {
+    :root {
+        --fab-edge: var(--space-md);
+    }
+
+    /* Celular: a faixa fica embaixo, na largura toda, e o canto inteiro sobe acima dela */
+    .install-banner {
+        left: calc(var(--fab-edge) + env(safe-area-inset-left));
+        right: calc(var(--fab-edge) + env(safe-area-inset-right));
+        bottom: calc(var(--fab-edge) + env(safe-area-inset-bottom));
+    }
+
+    .daily-launcher {
+        bottom: calc(var(--fab-edge) + var(--banner-lift) + env(safe-area-inset-bottom));
+    }
+
+    .daily-panel {
+        left: calc(var(--fab-edge) + env(safe-area-inset-left));
+        bottom: calc(var(--fab-room) + var(--banner-lift) + env(safe-area-inset-bottom));
+    }
+
+    .toast,
+    .undo-toast {
+        bottom: calc(var(--fab-edge) + var(--banner-lift) + env(safe-area-inset-bottom));
+    }
+
+    /* "Voltar ao topo" (44px) acima do botão, centralizado com ele */
+    .scroll-top-btn {
+        right: calc(var(--fab-edge) + 6px + env(safe-area-inset-right));
+        bottom: calc(var(--fab-room) + var(--banner-lift) + env(safe-area-inset-bottom));
+    }
+}

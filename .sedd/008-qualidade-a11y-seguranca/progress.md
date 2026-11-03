@@ -146,6 +146,9 @@ Testes: Jest 268, banco 17, e2e 126. Service worker em `v20`.
 ### Progresso nas conquistas (2026-11-03, T001-089, publicado no site `v21`)
 Conquistas bloqueadas com meta maior que 1 mostram quanto falta ("4 de 10") e uma barrinha. Cada conquista agora tem `goal` e `count` em `src/domain/badges.js`; `check` sai disso, então o desbloqueio não mudou. Só no app, sem SQL. Fecha o último item aberto da spec 007. Testes: Jest 275, e2e 127. Service worker em `v21`.
 
+### Canto inferior direito sem sobreposição (2026-11-03, T001-097, site `v22`)
+O usuário viu o aviso e a faixa "Instalar App" por cima do botão ✨. Agora os avisos ficam à esquerda do botão; a faixa termina antes dele no computador; no celular a faixa fica embaixo e o canto inteiro sobe (o `pwa.js` publica a altura em `--install-banner-h`). "Voltar ao topo" e conquista ficam acima do botão. Regras no fim do `style.css` ("CANTO INFERIOR DIREITO"). Teste que mede cada par de elementos em `dailyPicks.spec.js`.
+
 ### Indicações do dia (2026-11-03, T001-091, publicado no site `v21`)
 Um filme, uma série e um dorama bem avaliados, iguais para todo mundo no mesmo dia, escolhidos pela data num grupo fixo do TMDB (D001-031). Trocam à meia-noite, mesmo com a aba aberta. Tocar abre o título como qualquer resultado (e conta nos desafios de abrir títulos). Se o TMDB falhar, a seção some. Depois de dois ajustes a pedido do usuário, ficou num painel flutuante com botão no canto (como chat de ajuda), aberto sozinho só na primeira entrada do dia (D001-032). Sem SQL. Testes: Jest 306, e2e 137.
 

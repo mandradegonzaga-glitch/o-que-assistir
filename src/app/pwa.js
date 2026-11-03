@@ -33,7 +33,23 @@ function showInstallPrompt() {
     <button type="button" class="install-banner__dismiss" data-action="dismissInstall" aria-label="Dispensar instalação do app"><svg aria-hidden="true" class="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
   `;
   document.body.appendChild(installBanner);
+  syncInstallBannerHeight();
 }
+
+// No celular, o canto inferior direito (botão das indicações, avisos, "voltar ao topo") sobe acima da faixa:
+// o CSS precisa saber a altura dela, que muda com a quebra de linha do texto
+function syncInstallBannerHeight() {
+  const banner = document.getElementById('pwa-install-banner');
+  if (banner) document.documentElement.style.setProperty('--install-banner-h', `${banner.offsetHeight}px`);
+  else document.documentElement.style.removeProperty('--install-banner-h');
+}
+
+function removeInstallBanner() {
+  document.getElementById('pwa-install-banner')?.remove();
+  syncInstallBannerHeight();
+}
+
+window.addEventListener('resize', syncInstallBannerHeight);
 
 export async function installPWA() {
   if (!deferredPrompt) return;
@@ -46,12 +62,12 @@ export async function installPWA() {
   }
 
   deferredPrompt = null;
-  document.getElementById('pwa-install-banner')?.remove();
+  removeInstallBanner();
 }
 
 export function dismissInstall() {
   localStorage.setItem('pwa_install_dismissed', 'true');
-  document.getElementById('pwa-install-banner')?.remove();
+  removeInstallBanner();
 }
 
 export function initPwa() {
@@ -88,6 +104,6 @@ export function initPwa() {
   window.addEventListener('appinstalled', () => {
     deferredPrompt = null;
     showToast('App instalado! Acesse pela tela inicial.');
-    document.getElementById('pwa-install-banner')?.remove();
+    removeInstallBanner();
   });
 }

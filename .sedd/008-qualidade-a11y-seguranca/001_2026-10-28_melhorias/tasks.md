@@ -7,7 +7,7 @@
 
 ## Summary
 
-Total: 80 | Completed: 74 | Pending: 0 (restam só FR-035 e FR-040, adiados por D001-010)
+Total: 81 | Completed: 75 | Pending: 0 (restam só FR-035 e FR-040, adiados por D001-010)
 
 Regra de trabalho (pedido do usuário): **um item por vez, testar, evidenciar e perguntar antes do próximo.** Os 18 itens de T001-026 em diante foram feitos em sequência a pedido do usuário em 2026-10-30.
 
@@ -203,6 +203,7 @@ Regra de trabalho (pedido do usuário): **um item por vez, testar, evidenciar e 
   - Ajuste pedido pelo usuário: no computador, pôsteres de 170px; mouse ou foco do teclado mostravam gêneros e sinopse por cima do pôster (`src/domain/genres.js`)
   - Segundo ajuste, ideia do usuário: a seção saiu de Descobrir e virou um painel flutuante com botão no canto, como chat de ajuda (D001-032). Abre sozinho só na primeira entrada do dia; bolinha rosa quando há indicações não vistas; cada indicação em linha com pôster, tipo, título, ano, nota, 2 gêneros e sinopse curta. "Voltar ao topo" subiu para ficar acima do botão
   - Ícone do botão trocado de claquete para brilhos (✨), a pedido: a claquete parecia "só filmes"
+- [x] T001-097 [2026-11-03] Correção (achado do usuário): aviso e faixa "Instalar App" ficavam por cima do botão das indicações. Canto inferior direito reorganizado: avisos à esquerda do botão; faixa termina antes dele no computador; no celular a faixa fica embaixo e o canto sobe (altura publicada pelo `pwa.js` em `--install-banner-h`); "voltar ao topo" e conquista acima do botão. Site `v22`
 - [ ] T001-092 [Próximo] Comparar gostos: compatibilidade com um amigo pelo que os dois já assistiram
 - [ ] T001-093 Reações rápidas (🔥😢😂🤯) em títulos assistidos, visíveis para amigos (precisa de SQL)
 - [ ] T001-094 ⏸️ [Em espera, pedido do usuário em 2026-11-03] Ranking entre amigos por XP do mês (precisa guardar o XP no servidor)
