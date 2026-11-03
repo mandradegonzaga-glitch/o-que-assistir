@@ -301,6 +301,7 @@ Use este documento para verificar se todas as funcionalidades estão funcionando
   - [ ] Madrugador (marcou algo como visto entre 0h e 4h59)
   - [ ] Social: Turma (1 amigo), Popular (5 amigos), Indicador (1 indicação), Curador (10 indicações), Bilheteiro (compartilhou um ingresso), Par Perfeito (primeiro match)
   - [ ] O leitor de tela diz se cada conquista está desbloqueada ou bloqueada
+  - [ ] Bloqueada com meta maior que 1 mostra quanto falta ("4 de 10") e uma barrinha; desbloqueadas e as de meta 1 não mostram contagem
 
 ### 8.4 Salvar Perfil
 - [ ] Botão "💾 Salvar"
@@ -355,6 +356,8 @@ Use este documento para verificar se todas as funcionalidades estão funcionando
 - [ ] Banner de instalação nunca cobre o FECHAR
 - [ ] Convidado: lista, vistos e roleta continuam depois de recarregar; ao criar conta, o app oferece trazer tudo
 - [ ] Perfil mostra sequência, recorde, nível, XP e 26 conquistas em 4 categorias (Jornada, Gêneros, Hábitos, Social)
+- [ ] Indicações do dia (Filme, Série e Dorama, iguais para todos no mesmo dia, trocam à meia-noite) num painel com botão no canto inferior direito; abre sozinho só na primeira entrada do dia, nunca sobre login, boas-vindas ou link; bolinha quando há novas; Esc fecha; tocar abre o título
+- [ ] Desafio do dia (muda à meia-noite, nunca repete o de ontem, +25 XP) e meta da semana (assistir 3 títulos de segunda a domingo, +50 XP) no perfil; o desafio aparece no aviso ao entrar
 - [ ] Match: duas pessoas votam nos mesmos títulos; só aparece o que coincidiu; swipe, botões e setas funcionam
 - [ ] Amigos (botão ao lado do perfil): convidar por link, adicionar por usuário exato, aceitar, recusar; contador de pedidos na aba
 - [ ] Perfil do amigo: assistidos, lista, conquistas e o que os dois querem ver; só entre amigos aceitos
@@ -552,6 +555,7 @@ Use este documento para verificar se todas as funcionalidades estão funcionando
 
 | Data | Versão | Mudanças |
 |------|--------|----------|
+| 2026-11-03 | 2.10 | Conquistas mostram quanto falta, desafio do dia e meta da semana, indicações do dia (filme, série e dorama) num painel flutuante |
 | 2026-11-03 | 2.9 | Ingresso na cor do tipo e compartilhar completo, indicações entre amigos, conquistas sociais, Match ao vivo (que sobrevive a recarregar), lista do Match, avisos de Amigos |
 | 2026-10-28 | 2.8 | Escape contra XSS, zoom liberado, modais acessíveis, buscas com `&`/`#`, ano atual nos filtros, links IMDb/RT, conquista Madrugador, avisos de falha no modal (SEDD 008) |
 | 2026-01-30 | 2.7 | Top 10 agora filtra por streaming (além de gênero e ano) |
@@ -628,12 +632,12 @@ Funcionalidades para fazer o usuário voltar todo dia.
 
 | # | Funcionalidade | Prioridade | Descrição |
 |---|----------------|------------|-----------|
-| 1 | 🎬 **Filme do Dia** | Alta | Recomendação curada que muda a cada 24h. Seção especial na home com countdown |
+| 1 | 🎬 **Filme do Dia** ✅ (filme, série e dorama) | Alta | Recomendação curada que muda a cada 24h. Seção especial na home com countdown |
 | 2 | 🔥 **Streak de Filmes** | Alta | Contador de dias consecutivos marcando filmes como vistos. Perde se ficar 1 dia sem marcar |
-| 3 | 🎯 **Desafio Diário** | Alta | Mini-missão diária: "Avalie 3 filmes", "Descubra um terror", "Adicione algo à lista". Recompensa: XP/pontos |
+| 3 | 🎯 **Desafio Diário** ✅ | Alta | Mini-missão diária: "Avalie 3 filmes", "Descubra um terror", "Adicione algo à lista". Recompensa: XP/pontos |
 | 4 | 📦 **Caixa Mistério** | Média | Abrir 1x por dia para ganhar: badge raro, boost de XP, tema exclusivo, ou recomendação especial |
 | 5 | 🧠 **Quiz Diário** | Média | Pergunta sobre cinema/séries. Acertar dá pontos. Ranking semanal dos mais acertadores |
-| 6 | 📅 **Meta Semanal** | Média | "Assistir 3 filmes esta semana" com barra de progresso. Recompensa ao completar |
+| 6 | 📅 **Meta Semanal** ✅ | Média | "Assistir 3 filmes esta semana" com barra de progresso. Recompensa ao completar |
 | 7 | 🎁 **Bônus de Login** | Média | Recompensas crescentes por dias consecutivos (dia 1: 10pts, dia 7: 100pts, dia 30: badge especial) |
 | 8 | ⏰ **Oferta Relâmpago** | Baixa | Recomendação especial que expira em 6h. Cria urgência para abrir o app |
 

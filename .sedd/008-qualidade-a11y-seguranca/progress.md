@@ -1,7 +1,7 @@
 # Implementation Progress
 
 > Feature: 008-qualidade-a11y-seguranca
-> Last Updated: 2026-10-30 (amigos e marca)
+> Last Updated: 2026-11-03 (conquistas com progresso, desafios, indicações do dia)
 > Branch: `004-series-tracking` (D001-001). Todo push nesta branch publica o site na Vercel.
 
 ## Summary
@@ -20,17 +20,18 @@
 
 ## Para retomar
 
-**Próxima sessão (anotado em 2026-11-03):**
-1. **Vercel:** o plugin oficial (`vercel-plugin`) foi instalado no Claude Code com `npx plugins add vercel/vercel-plugin --target claude-code --yes`. Ele carrega ao reiniciar. Na sessão nova, o usuário faz o login da Vercel quando o plugin pedir (nunca passar senha ou token no chat). Depois, trocar a **branch de produção** do projeto de `004-series-tracking` para `main`. Se o plugin não tiver essa opção, usar a linha de comando da Vercel. Hoje as duas branches estão iguais (`2a72f05`), então a troca não muda o site.
+**Próxima sessão (anotado no fim de 2026-11-03):**
+1. **Ordem combinada para as próximas funcionalidades** (recomendação aceita para conversar; confirmar com o usuário): DNA do usuário + estatísticas no perfil (FUNCIONALIDADES #27 e #63) → comparar gostos (T001-092, que compara o DNA de dois perfis) → indicações do dia pelo DNA de cada perfil (T001-096) → reações rápidas (T001-093, SQL). O usuário ainda vai escolher quais destas entram na fila: Surpreenda-me (#19), Sessão às escuras (#43), filtro por país (#21), Cine-batalha (#55), lançamentos e estreias (#20, #84), listas personalizadas (#25, SQL), efeito 3D nos pôsteres (#45). Em espera (servidor): T001-094 e T001-095. Descartado: compartilhar conquista.
 2. **Teste real com dois celulares e duas contas** (só o usuário faz): amizade, indicação (deve chegar em segundos com `realtime_inbox.sql`), aviso no aparelho, Match ao vivo (inclusive recarregando no meio), lista do Match e WhatsApp com o ingresso no celular. Corrigir o que aparecer antes de abrir funcionalidade nova.
 3. Restante em "Com o usuário" e "Validações pendentes".
+4. **Vercel:** a produção sai da `main` (conferido pelo plugin em 2026-11-03; projeto `o-que-assistir`).
 
 **Regras combinadas com o usuário (pedido em 2026-10-28):**
 1. Um item por vez; perguntar "podemos continuar?" antes do próximo (exceção em 2026-10-30: 18 itens em sequência, a pedido).
 2. Testar de verdade (Jest + Chrome em `http://localhost:5173`), limpando service worker/caches no início, e mostrar evidência.
 3. Registrar cada item em `tasks.md`, `acceptance.md` (+ `evidence/`), `decisions.md` quando houver escolha, `spec.md`, `CHANGELOG.md`, `_meta.json` e `docs/FUNCIONALIDADES.md` (CRLF).
 4. Mudança no banco: entregar SQL para o usuário rodar no SQL Editor; o CLI não tem permissão para alterar o banco.
-5. Commit e push só quando o usuário pedir: push é publicação. Enquanto a Vercel não estiver configurada para `main`, enviar para as duas branches (`git push origin 004-series-tracking` e `git push origin 004-series-tracking:main`).
+5. Commit e push só quando o usuário pedir: push é publicação. A Vercel publica a partir da `main`; manter as duas branches iguais (`git push origin 004-series-tracking` e `git push origin 004-series-tracking:main`). Só o envio para a `main` muda o site.
 
 **Armadilhas já conhecidas:**
 - O site não funciona por `file://` (módulos ES): usar `INICIAR_SITE.bat`, e testar também o que muda ao abrir assim.
@@ -142,6 +143,17 @@ Precisa ser conferido com o Supabase real: o Realtime precisa estar ligado no pr
 
 Testes: Jest 268, banco 17, e2e 126. Service worker em `v20`.
 
+### Progresso nas conquistas (2026-11-03, T001-089, publicado no site `v21`)
+Conquistas bloqueadas com meta maior que 1 mostram quanto falta ("4 de 10") e uma barrinha. Cada conquista agora tem `goal` e `count` em `src/domain/badges.js`; `check` sai disso, então o desbloqueio não mudou. Só no app, sem SQL. Fecha o último item aberto da spec 007. Testes: Jest 275, e2e 127. Service worker em `v21`.
+
+### Indicações do dia (2026-11-03, T001-091, publicado no site `v21`)
+Um filme, uma série e um dorama bem avaliados, iguais para todo mundo no mesmo dia, escolhidos pela data num grupo fixo do TMDB (D001-031). Trocam à meia-noite, mesmo com a aba aberta. Tocar abre o título como qualquer resultado (e conta nos desafios de abrir títulos). Se o TMDB falhar, a seção some. Depois de dois ajustes a pedido do usuário, ficou num painel flutuante com botão no canto (como chat de ajuda), aberto sozinho só na primeira entrada do dia (D001-032). Sem SQL. Testes: Jest 306, e2e 137.
+
+### Desafio do dia e meta da semana (2026-11-03, T001-090, publicado no site `v21`)
+Um desafio por dia, escolhido pela data entre 10 (9 para convidado, sem o de indicar a amigo): assistir, salvar 2, abrir 3, descobrir terror, comédia ou título antes de 2000, girar a roleta, dar match, compartilhar ingresso, indicar a amigo. Vale 25 XP. Meta da semana: assistir 3 títulos de segunda a domingo, 50 XP. Aparecem no perfil com barra de andamento; o desafio vem no aviso ao entrar; a conclusão usa o mesmo aviso das conquistas. Andamento em `progress.challenges` (D001-030). Sem SQL. Os pontos do app avisam `trackChallenge(evento, título)`. Testes: Jest 291, e2e 131.
+
+**Próximas funcionalidades pedidas (2026-11-03), uma por vez:** filme do dia (T001-091), comparar gostos (T001-092), reações rápidas (T001-093, SQL), Compartilhar conquista foi descartado pelo usuário. **Em espera** (usuário, 2026-11-03: o que precisa de servidor fica para depois): ranking entre amigos (T001-094) e aviso de sequência com app fechado (T001-095, push).
+
 ### Antes de publicar
 | Item | Estado |
 |---|---|
@@ -149,12 +161,11 @@ Testes: Jest 268, banco 17, e2e 126. Service worker em `v20`.
 | Rodar `database/title_shares.sql` no Supabase (depois de `friends.sql`) | ✅ rodado em 2026-11-03 (função e tabela conferidas pela API) |
 | Commit e push | ✅ `2a72f05` publicado em 2026-11-03 (site em `v20`); `main` avançada até o mesmo commit |
 | Rodar `database/realtime_inbox.sql` | ✅ rodado pelo usuário em 2026-11-03 (confirmar no teste com dois celulares) |
-| Branch de produção na Vercel → `main` | Pendente: usar o plugin da Vercel na próxima sessão (ver "Para retomar") |
+| Branch de produção na Vercel → `main` | ✅ conferido em 2026-11-03: já era a `main` |
 | Revogar a chave TMDB antiga | ✅ revogada pelo usuário; proxy conferido funcionando com a chave nova |
 
 ### Com o usuário
 - Ligar a confirmação de email e conferir a Site URL no Supabase.
-- Trocar a branch de produção na Vercel para `main`, pelo plugin, na próxima sessão.
 - Passar os links certos do rodapé. Hoje "Apoiar" leva para a página inicial do Buy Me a Coffee.
 - Limpar os dados de teste da conta real.
 

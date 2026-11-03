@@ -7,7 +7,7 @@
 
 ## Summary
 
-Total: 71 | Completed: 70 | Pending: 0 (restam só FR-035 e FR-040, adiados por D001-010)
+Total: 80 | Completed: 74 | Pending: 0 (restam só FR-035 e FR-040, adiados por D001-010)
 
 Regra de trabalho (pedido do usuário): **um item por vez, testar, evidenciar e perguntar antes do próximo.** Os 18 itens de T001-026 em diante foram feitos em sequência a pedido do usuário em 2026-10-30.
 
@@ -196,7 +196,18 @@ Regra de trabalho (pedido do usuário): **um item por vez, testar, evidenciar e 
 - [x] T001-085 [2026-11-03] Sala do Match ao vivo sobrevive a recarregar (sessionStorage + `resync`)
 - [x] T001-086 [2026-11-03] Lista do Match ("Seus matches"), com salvar em Quero Assistir e apagar com desfazer
 - [x] T001-087 [2026-11-03] Avisos de Amigos: tempo real (`database/realtime_inbox.sql`), conferência ao voltar e a cada 2 min, notificação no aparelho
-- [ ] T001-088 [Próxima sessão] Vercel: trocar a branch de produção para `main` pelo plugin da Vercel (já instalado; reiniciar o Claude Code e fazer login)
+- [x] T001-088 [2026-11-03] Vercel: conferido pelo plugin que a branch de produção já é a `main` (nada a trocar)
+- [x] T001-089 [2026-11-03] Progresso nas conquistas: bloqueadas com meta maior que 1 mostram "4 de 10" e uma barrinha (`goal`/`count` em `src/domain/badges.js`)
+- [x] T001-090 [2026-11-03] Desafio do dia (+25 XP, rodízio de 10 missões, nunca repete o de ontem) e meta da semana (assistir 3, +50 XP), no perfil e no aviso ao entrar (`src/domain/challenges.js`)
+- [x] T001-091 [2026-11-03] Indicações do dia no topo de Descobrir: um filme, uma série e um dorama, iguais para todos no mesmo dia, trocam à meia-noite (`src/domain/dailyPicks.js`, `src/app/dailyPicks.js`)
+  - Ajuste pedido pelo usuário: no computador, pôsteres de 170px; mouse ou foco do teclado mostravam gêneros e sinopse por cima do pôster (`src/domain/genres.js`)
+  - Segundo ajuste, ideia do usuário: a seção saiu de Descobrir e virou um painel flutuante com botão no canto, como chat de ajuda (D001-032). Abre sozinho só na primeira entrada do dia; bolinha rosa quando há indicações não vistas; cada indicação em linha com pôster, tipo, título, ano, nota, 2 gêneros e sinopse curta. "Voltar ao topo" subiu para ficar acima do botão
+  - Ícone do botão trocado de claquete para brilhos (✨), a pedido: a claquete parecia "só filmes"
+- [ ] T001-092 [Próximo] Comparar gostos: compatibilidade com um amigo pelo que os dois já assistiram
+- [ ] T001-093 Reações rápidas (🔥😢😂🤯) em títulos assistidos, visíveis para amigos (precisa de SQL)
+- [ ] T001-094 ⏸️ [Em espera, pedido do usuário em 2026-11-03] Ranking entre amigos por XP do mês (precisa guardar o XP no servidor)
+- [ ] T001-095 ⏸️ [Em espera, pedido do usuário em 2026-11-03] Aviso "sua sequência vai acabar" com o app fechado (precisa de push pelo servidor)
+- [ ] T001-096 [Futuro, ideia do usuário] Indicações do dia pelo DNA de cada perfil (gêneros e tipos que a pessoa mais assiste), em vez de iguais para todos
 
 Bugs herdados encontrados e corrigidos nessa rodada:
 - Filtro "Até (ano)" era ignorado em séries (o `replace` só trocava o `.gte`).

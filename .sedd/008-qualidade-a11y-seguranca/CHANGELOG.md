@@ -2,6 +2,14 @@
 
 All notable changes to this feature will be documented in this file.
 
+## [2026-11-03, segunda entrega] — site `v21`
+
+### Added
+
+- Indicações do dia: um filme, uma série e um dorama bem avaliados, iguais para todos no mesmo dia, num painel flutuante aberto por um botão no canto; o painel abre sozinho só na primeira entrada do dia, mostra gêneros e sinopse, e some se o TMDB não responder
+- Desafio do dia (+25 XP) e meta da semana (assistir 3 títulos, +50 XP): aparecem no perfil com barra de andamento, o desafio é avisado ao entrar e a conclusão é comemorada
+- Conquistas bloqueadas mostram quanto falta ("4 de 10", "12 de 30") com uma barrinha; as de "fez ou não fez" (meta 1) seguem só com a descrição
+
 ## [2026-11-03] — publicado em `8b09a23` e `2a72f05` (site `v20`)
 
 ### Added (ingresso e compartilhar)

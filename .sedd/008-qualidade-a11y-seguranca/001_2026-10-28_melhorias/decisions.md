@@ -74,6 +74,40 @@
 
 ---
 
+## D001-032 — Indicações do dia em painel flutuante, aberto sozinho uma vez por dia
+
+**Decisão:** As indicações saem do topo de Descobrir e vão para um painel no canto inferior direito, aberto por um botão redondo (ideia do usuário, "como um chatbot de ajuda"). O painel abre sozinho só na primeira entrada do dia, 1,2 s depois de entrar, e nunca por cima de login, boas-vindas, título aberto ou link de título, Match ou amigo. Depois, só pelo botão. Uma bolinha rosa marca indicações ainda não vistas no dia. O painel não é modal: aberto sozinho, não tira o foco; aberto pelo botão, o foco vai para o fechar; Esc fecha e devolve o foco ao botão.
+
+**Por que essa:** na tela, a seção ficava grande demais ou desproporcional, e empurrava a busca para baixo. Abrir toda vez que o app abre cansaria rápido, já que as indicações são as mesmas o dia inteiro.
+
+**Alternativas consideradas:** abrir a cada visita → rejeitado pelo motivo acima. Botão no canto esquerdo → rejeitado: o direito é onde as pessoas esperam o "chat"; o "voltar ao topo" subiu para 96px.
+
+**Testes:** a fixture marca as indicações como vistas hoje (opção `dailySeen`), para o pop-up não cobrir o que os outros testes clicam.
+
+---
+
+## D001-031 — Indicações do dia escolhidas pela data, sem servidor
+
+**Decisão:** Um filme, uma série e um dorama por dia (pedido do usuário: "um de cada"). Cada um sai de um grupo fixo de títulos bem avaliados do TMDB, ordenado por número de votos: filmes com nota 7,3+ e 3.000+ votos (200 títulos), séries com 7,8+ e 800+ votos sem animação, reality e talk show (200), doramas coreanos com 7,8+ e 100+ votos (120). A data escolhe página e posição com passo 37, então o rodízio passa pelo grupo inteiro antes de repetir. A série pula coreanas, que ficam no cartão Dorama.
+
+**Por que essa:** todo mundo vê as mesmas três no mesmo dia, sem tabela nem rotina no servidor. Ordenar por votos (e não por popularidade) quase não muda de um dia para o outro, então recarregar não troca a indicação. Conferido no TMDB real em 2026-11-03: os grupos têm 707, 336 e 194 títulos, mais que o necessário.
+
+**Alternativas consideradas:** curadoria à mão → rejeitado: exigiria manter uma lista. Popularidade do dia → rejeitado: a ordem muda várias vezes por dia. Tirar o que a pessoa já assistiu → adiado: faria cada um ver indicações diferentes.
+
+---
+
+## D001-030 — Desafio do dia por rodízio, sem servidor
+
+**Decisão:** Um desafio por dia, escolhido pela data (`dia × 7` dentro da lista), mais uma meta semanal fixa (assistir 3 títulos, segunda a domingo). O andamento fica em `progress.challenges`, junto com o XP: metadados da conta ou aparelho do convidado. Desafio do dia vale 25 XP; a meta, 50.
+
+**Por que essa:** o passo 7 nunca repete o desafio de ontem e passa por todos (7 não divide 9 nem 10). A mesma data dá o mesmo desafio em todos os aparelhos da pessoa. Sem tabela nova, como o XP (D001-025).
+
+**Alternativas consideradas:** 3 desafios por dia com bônus (ideia original em FUNCIONALIDADES.md) → adiado: um só é mais fácil de entender e cabe no perfil sem poluir. Sorteio aleatório → rejeitado: poderia repetir e daria desafios diferentes em cada aparelho.
+
+**Limitação:** como o XP, a própria pessoa consegue alterar o andamento. Não importa enquanto não houver ranking (T001-094).
+
+---
+
 ## D001-029 — Amigos no cabeçalho; privacidade no servidor
 
 **Decisão:** Amigos abre por um botão ao lado do perfil, sem aba própria. Quem desliga o compartilhamento não tem histórico, lista e conquistas enviados nem para amigos: a regra está em `get_friend_profile`, não na tela.

@@ -23,7 +23,7 @@ O usuário sente progressão constante ao usar o app. Cada ação significativa 
 - [x] Exibir badges desbloqueadas no perfil do usuário
 - [x] Notificação/celebração visual ao desbloquear nova badge
 - [x] Definir e implementar ao menos 20 badges prioritárias (P1) — 26 em 2026-11-03
-- [ ] Exibir badges bloqueadas com dica do que fazer para desbloquear (P2)
+- [x] Exibir badges bloqueadas com dica do que fazer para desbloquear (P2) — descrição + "4 de 10" e barrinha (008 T001-089)
 - [x] Categorizar badges por tipo — Jornada, Gêneros, Hábitos e Social (Social em 2026-11-03: Turma, Popular, Indicador, Curador, Bilheteiro, Par Perfeito)
 
 ## NÃO DEVE (MUST NOT)

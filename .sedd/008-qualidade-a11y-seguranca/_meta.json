@@ -98,7 +98,15 @@
         "T001-085",
         "T001-086",
         "T001-087",
-        "T001-088"
+        "T001-088",
+        "T001-089",
+        "T001-090",
+        "T001-091",
+        "T001-092",
+        "T001-093",
+        "T001-094",
+        "T001-095",
+        "T001-096"
       ],
       "tasksCompleted": [
         "T001-001",
@@ -186,7 +194,11 @@
         "T001-084",
         "T001-085",
         "T001-086",
-        "T001-087"
+        "T001-087",
+        "T001-088",
+        "T001-089",
+        "T001-090",
+        "T001-091"
       ],
       "files": {
         "tasks": "001_2026-10-28_melhorias/tasks.md",
@@ -254,23 +266,17 @@
   },
   "lastSession": {
     "completed": [
-      "T001-077",
-      "T001-078",
-      "T001-079",
-      "T001-080",
-      "T001-081",
-      "T001-082",
-      "T001-083",
-      "T001-084",
-      "T001-085",
-      "T001-086",
-      "T001-087"
+      "T001-088",
+      "T001-089",
+      "T001-090",
+      "T001-091"
     ],
     "inProgress": null,
     "nextSteps": [
-      "T001-088: reiniciar o Claude Code (plugin da Vercel instalado), fazer login e trocar a branch de produção para main",
+      "Confirmar com o usuário a ordem: DNA do usuário + estatísticas → comparar gostos (T001-092) → indicações pelo DNA (T001-096) → reações rápidas (T001-093); ele escolhe quais ideias extras do FUNCIONALIDADES.md entram",
       "Teste real com dois celulares e duas contas: amizade, indicação com aviso, Match ao vivo (recarregando no meio), lista do Match, WhatsApp com ingresso",
-      "Com o usuário: confirmação de email, Site URL, links do rodapé, limpar dados de teste"
+      "Com o usuário: confirmação de email, Site URL, links do rodapé, limpar dados de teste",
+      "Em espera (precisam de servidor): T001-094 ranking, T001-095 aviso de sequência"
     ],
     "filesModified": [
       "index.html",
