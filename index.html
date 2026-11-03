@@ -793,6 +793,25 @@
                 </div>
             </div>
             <ul id="xp-log" class="xp-log" aria-label="Últimos pontos ganhos" hidden></ul>
+            <!-- Desafio do dia e meta da semana -->
+            <div class="challenges" role="group" aria-label="Desafios">
+                <div class="challenge" id="challenge-daily">
+                    <p class="challenge__label">Desafio do dia</p>
+                    <p class="challenge__text"></p>
+                    <p class="challenge__status"></p>
+                    <div class="badges-progress__track" role="progressbar" aria-label="Andamento: desafio do dia" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0">
+                        <div class="badges-progress__fill"></div>
+                    </div>
+                </div>
+                <div class="challenge" id="challenge-weekly">
+                    <p class="challenge__label">Meta da semana</p>
+                    <p class="challenge__text"></p>
+                    <p class="challenge__status"></p>
+                    <div class="badges-progress__track" role="progressbar" aria-label="Andamento: meta da semana" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0">
+                        <div class="badges-progress__fill"></div>
+                    </div>
+                </div>
+            </div>
 
 
             <h3 class="subsection-title">
@@ -927,6 +946,24 @@
         <span class="sr-only">Pressione Ctrl+Z para desfazer.</span>
         <button type="button" id="undo-toast-btn" class="undo-toast__btn" data-action="undoLast">Desfazer</button>
     </div>
+
+    <!-- Indicações do dia: botão flutuante e painel (src/app/dailyPicks.js) -->
+    <section id="daily-panel" class="daily-panel" role="dialog" aria-modal="false" aria-labelledby="daily-picks-title" hidden>
+        <div class="daily-panel__header">
+            <div>
+                <h2 id="daily-picks-title" class="daily-panel__title">Indicações do dia</h2>
+                <p class="daily-panel__note">Um de cada, novos à meia-noite</p>
+            </div>
+            <button type="button" class="daily-panel__close" data-action="closeDailyPicks" aria-label="Fechar indicações do dia">
+                <svg aria-hidden="true" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+            </button>
+        </div>
+        <ul id="daily-picks-list" class="daily-panel__list"></ul>
+    </section>
+    <button type="button" id="daily-launcher" class="daily-launcher" data-action="toggleDailyPicks" aria-label="Indicações do dia" aria-expanded="false" aria-controls="daily-panel" title="Indicações do dia" hidden>
+        <svg aria-hidden="true" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path fill="currentColor" fill-opacity="0.25" d="M11 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/><path d="M18.5 3.5v3M17 5h3M19 17v3M17.5 18.5h3"/></svg>
+        <span class="daily-launcher__dot" aria-hidden="true" hidden></span>
+    </button>
 
     <!-- SCROLL TO TOP BUTTON -->
     <button id="scroll-top" class="scroll-top-btn" data-action="scrollToTop" aria-label="Voltar ao topo" title="Voltar ao topo">

@@ -18,6 +18,7 @@ import { abrirPerfil, alterarSenha, deletarConta, salvarPerfil } from './profile
 import { addCurrentToRoulette, addRoletaItem, girarRoleta, limparRoleta, removeRoletaItem } from './roulette.js';
 import { abrirDoHistorico, abrirHistoricoSorteios, limparHistoricoSorteios, navigateSorteio } from './sorteioHistory.js';
 import { abrirEpisodios, carregarDetalhes, fecharModal, marcarVistoAtual, toggleSalvarAtual } from './titleModal.js';
+import { closeDailyPicks, toggleDailyPicks } from './dailyPicks.js';
 import { dismissInstall, installPWA } from './pwa.js';
 import { undoLast } from '../ui/feedback.js';
 import { clearInput, scrollToTop, selecionarTipo, switchMode, switchTab } from '../ui/navigation.js';
@@ -36,6 +37,7 @@ const clickActions = {
   buscarDireto,
   carregarDetalhes: el => carregarDetalhes(Number(el.dataset.id), el.dataset.media),
   clearInput: el => clearInput(el.dataset.arg),
+  closeDailyPicks: () => closeDailyPicks(),
   closeModal: el => { document.getElementById(el.dataset.arg).style.display = 'none'; },
   compartilhar,
   compartilharApps,
@@ -47,6 +49,7 @@ const clickActions = {
   dismissInstall,
   esqueceuSenha,
   fecharModal,
+  toggleDailyPicks: () => toggleDailyPicks(),
   friendAccept: el => friendAccept(el.dataset.arg),
   friendAdd,
   friendRemove: el => friendRemove(el.dataset.arg),

@@ -2,6 +2,7 @@
 // então a inicialização pode usar qualquer função ou constante sem risco de TDZ.
 import { supabaseOnAuthStateChange } from './api/supabase.js';
 import { initActions } from './app/actions.js';
+import { initDailyPicks } from './app/dailyPicks.js';
 import { checkAuth, loadUserData, loginAsGuest } from './app/auth.js';
 import { offerLegacyImport, removeLegacyPasswords, showLegacyHint } from './app/legacyImport.js';
 import { renderLibrary } from './app/library.js';
@@ -37,6 +38,7 @@ showLegacyHint();
   initScrollButton();
   initRoulette();
   initMatch();
+  initDailyPicks();
   openMatchFromUrl();
   // Sem sessão, o título do link abre depois do login (ver auth.js)
   if (session.currentUser) {

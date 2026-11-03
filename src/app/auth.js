@@ -6,6 +6,7 @@ import { getGuestData } from './guestLibrary.js';
 import { renderLibrary } from './library.js';
 import { syncProvidersWithAccount } from './myProviders.js';
 import { registerDailyVisit } from './progress.js';
+import { dailyPicksAfterLogin } from './dailyPicks.js';
 import { updateHistoryButton } from './sorteioHistory.js';
 import { openTitleFromUrl } from './urlSync.js';
 import { scorePassword } from '../domain/passwordStrength.js';
@@ -84,6 +85,7 @@ export async function loadUserData() {
     updateHeader();
     syncProvidersWithAccount();
     registerDailyVisit();
+    dailyPicksAfterLogin();
     refreshFriends();
 }
 
@@ -284,6 +286,7 @@ export function loginAsGuest() {
     showToast(legacyDataAvailable() ? 'Crie uma conta para recuperar sua lista antiga.' : 'Bem-vindo(a), Convidado!');
     renderLibrary();
     registerDailyVisit();
+    dailyPicksAfterLogin();
     openTitleFromUrl();
     openFriendLinkFromUrl();
 }

@@ -8,7 +8,7 @@ import { state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { formatRating } from '../utils/format.js';
 import { refreshFriends } from './friends.js';
-import { recordSocial } from './progress.js';
+import { recordSocial, trackChallenge } from './progress.js';
 
 const WIDTH = 1080;
 const HEIGHT = 1350;
@@ -375,6 +375,7 @@ export function compartilharApps() {
         try {
           await navigator.share({ files: [file], title: `Hoje é dia de: ${title}`, text });
           recordSocial('ticketsShared');
+          trackChallenge('ticket');
         } catch (e) {
           if (e.name === 'AbortError') return;
           download(blob, name);
@@ -387,6 +388,7 @@ export function compartilharApps() {
       const copied = await copyText(text);
       showToast(copied ? 'Ingresso baixado e texto copiado! Cole na conversa.' : 'Ingresso baixado!');
       recordSocial('ticketsShared');
+      trackChallenge('ticket');
     } catch (e) {
       console.error('Erro ao compartilhar:', e);
       showToast('Não foi possível compartilhar. Tente de novo.', 'error');
@@ -431,5 +433,6 @@ export function compartilharWhatsapp() {
       ? `Ingresso copiado! Na conversa do WhatsApp, cole com ${PASTE_KEYS}.`
       : 'Ingresso baixado. Anexe a imagem na conversa do WhatsApp pelo clipe.');
     recordSocial('ticketsShared');
+    trackChallenge('ticket');
   });
 }

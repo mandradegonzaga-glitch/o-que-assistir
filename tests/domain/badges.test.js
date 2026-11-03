@@ -1,6 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
 import {
-  isBadgeEarned, computeBadgeStatuses, BADGE_DEFINITIONS, isNightOwlWatch
+  isBadgeEarned, computeBadgeStatuses, BADGE_DEFINITIONS, isNightOwlWatch, badgeProgress
 } from '../../src/domain/badges.js';
 
 const makeHistory = (n) => Array.from({ length: n }, (_, i) => ({ id: i, genres: [], type: 'movie' }));
@@ -157,6 +157,51 @@ describe('social badges', () => {
     const socials = BADGE_DEFINITIONS.filter(b => b.category === 'Social');
     expect(socials.map(b => b.name)).toEqual(['Turma', 'Popular', 'Indicador', 'Curador', 'Bilheteiro', 'Par Perfeito']);
     BADGE_DEFINITIONS.forEach(b => expect(BADGE_ICONS[b.icon]).toContain('<svg'));
+  });
+});
+
+describe('badgeProgress', () => {
+  const byName = name => BADGE_DEFINITIONS.find(b => b.name === name);
+
+  it('counts how far a locked badge is', () => {
+    expect(badgeProgress(byName('Cinéfilo'), makeHistory(4), 0)).toEqual({ current: 4, goal: 10, counted: true });
+  });
+
+  it('never goes past the goal', () => {
+    expect(badgeProgress(byName('Cinéfilo'), makeHistory(25), 0).current).toBe(10);
+  });
+
+  it('reads wins, best streak and social counters', () => {
+    expect(badgeProgress(byName('Apostador'), [], 3).current).toBe(3);
+    expect(badgeProgress(byName('Constante'), [], 0, { bestStreak: 12 }).current).toBe(12);
+    expect(badgeProgress(byName('Curador'), [], 0, { social: { sharesSent: 6 } }).current).toBe(6);
+    expect(badgeProgress(byName('Rei do Terror'), [{ id: 1, genres: [27] }], 0).current).toBe(1);
+  });
+
+  it('done-or-not badges (goal 1) are not counted', () => {
+    ['Iniciante', 'Old School', 'Madrugador', 'Turma', 'Indicador', 'Bilheteiro', 'Par Perfeito'].forEach(name => {
+      expect(badgeProgress(byName(name), [], 0).counted).toBe(false);
+    });
+    expect(badgeProgress(byName('Old School'), [{ id: 1, year: '1990' }, { id: 2, year: '1985' }], 0).current).toBe(1);
+  });
+
+  it('survives missing data', () => {
+    expect(badgeProgress(byName('Apostador'), undefined, undefined)).toEqual({ current: 0, goal: 5, counted: true });
+    expect(badgeProgress(byName('Popular'), [], 0, null).current).toBe(0);
+  });
+
+  it('every badge has a positive whole goal', () => {
+    BADGE_DEFINITIONS.forEach(b => expect(Number.isInteger(b.goal) && b.goal > 0).toBe(true));
+  });
+
+  it('computeBadgeStatuses carries current and goal, and unlocked matches check', () => {
+    const history = makeHistory(12);
+    computeBadgeStatuses(history, 2, { bestStreak: 8 }).forEach(s => {
+      expect(s.unlocked).toBe(s.badge.check(history, 2, { bestStreak: 8 }));
+      expect(s.current).toBeLessThanOrEqual(s.goal);
+    });
+    const cinefilo = computeBadgeStatuses(makeHistory(4), 0).find(s => s.badge.name === 'Cinéfilo');
+    expect(cinefilo).toMatchObject({ unlocked: false, current: 4, goal: 10, counted: true });
   });
 });
 

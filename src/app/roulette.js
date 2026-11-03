@@ -2,7 +2,7 @@
 import { supabaseIncrementRouletteWins } from '../api/supabase.js';
 import { saveGuestWins } from './guestLibrary.js';
 import { checkAllBadges } from './profile.js';
-import { grantXp } from './progress.js';
+import { grantXp, trackChallenge } from './progress.js';
 import { fecharModal } from './titleModal.js';
 import { computeSpinRotation } from '../domain/roulette.js';
 import { session, state } from '../state/appState.js';
@@ -157,6 +157,7 @@ export function girarRoleta() {
         createConfetti();
 
         grantXp('roulette');
+        trackChallenge('roulette');
         if (session.currentUser === 'guest') {
             session.user.rouletteWins = (session.user.rouletteWins || 0) + 1;
             saveGuestWins(session.user.rouletteWins);

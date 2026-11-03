@@ -4,7 +4,7 @@ import { tmdbGet } from '../api/tmdb.js';
 import { fetchAllSeasonsLocal } from './episodes.js';
 import { saveGuestHistory, saveGuestWatchlist } from './guestLibrary.js';
 import { checkAllBadges } from './profile.js';
-import { grantXp } from './progress.js';
+import { grantXp, trackChallenge } from './progress.js';
 import { calcProgressPercent, getNextEpisode } from '../domain/seriesProgress.js';
 import { session, state } from '../state/appState.js';
 import { pendingRemovals, scheduleUndoable, showToast } from '../ui/feedback.js';
@@ -69,6 +69,7 @@ export async function salvarHistorico(f) {
         showToast("Marcado como visto!");
         await renderLibrary();
         grantXp('watched');
+        trackChallenge('watched', entry);
         await checkAllBadges();
     } else {
         showToast("Erro ao salvar!", "error");
@@ -86,6 +87,7 @@ export async function toggleWatchlist(f) {
             : [...list, { id: f.id, poster: f.poster_path, title: f.title || f.name, type: f.media_type || state.type }];
         saveGuestWatchlist(session.user.watchlist);
         showToast(exists ? "Removido da lista!" : "Adicionado a Quero Assistir!");
+        if (!exists) trackChallenge('saved', f);
         renderLibrary();
         return;
     }
@@ -113,6 +115,7 @@ export async function toggleWatchlist(f) {
         if (result.success) {
             session.user.watchlist = [...(session.user.watchlist || []), item];
             showToast("Adicionado a Quero Assistir!");
+            trackChallenge('saved', f);
         }
     }
 

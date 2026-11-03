@@ -1,7 +1,9 @@
 // Sequência de dias e XP. Lógica pura: quem grava é src/app/progress.js.
-export const XP_REWARDS = { open: 5, watched: 20, roulette: 10, match: 15 };
+import { CHALLENGE_XP, normalizeChallenges } from './challenges.js';
 
-export const XP_LABELS = { open: 'Visita do dia', watched: 'Título assistido', roulette: 'Giro da roleta', match: 'Match' };
+export const XP_REWARDS = { open: 5, watched: 20, roulette: 10, match: 15, daily: CHALLENGE_XP.daily, weekly: CHALLENGE_XP.weekly };
+
+export const XP_LABELS = { open: 'Visita do dia', watched: 'Título assistido', roulette: 'Giro da roleta', match: 'Match', daily: 'Desafio do dia', weekly: 'Meta da semana' };
 
 export const LEVELS = [
   { name: 'Calouro', minXp: 0 },
@@ -19,7 +21,7 @@ const LOG_SIZE = 5;
 export const SOCIAL_KEYS = ['friends', 'sharesSent', 'ticketsShared', 'matches'];
 export const EMPTY_SOCIAL = Object.freeze(Object.fromEntries(SOCIAL_KEYS.map(key => [key, 0])));
 
-export const EMPTY_PROGRESS = { xp: 0, streak: 0, bestStreak: 0, lastVisit: null, log: [], social: EMPTY_SOCIAL };
+export const EMPTY_PROGRESS = { xp: 0, streak: 0, bestStreak: 0, lastVisit: null, log: [], social: EMPTY_SOCIAL, challenges: normalizeChallenges() };
 
 export function normalizeProgress(raw) {
   const p = raw && typeof raw === 'object' ? raw : {};
@@ -31,6 +33,7 @@ export function normalizeProgress(raw) {
     lastVisit: typeof p.lastVisit === 'string' ? p.lastVisit : null,
     log: Array.isArray(p.log) ? p.log.slice(0, LOG_SIZE) : [],
     social: Object.fromEntries(SOCIAL_KEYS.map(key => [key, count(p.social?.[key])])),
+    challenges: normalizeChallenges(p.challenges),
   };
 }
 

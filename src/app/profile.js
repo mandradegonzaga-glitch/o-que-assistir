@@ -170,13 +170,17 @@ export function renderBadges() {
     document.getElementById('badges-progress-fill').style.width = `${(unlockedCount / statuses.length) * 100}%`;
     BADGE_CATEGORIES.forEach(category => {
       container.insertAdjacentHTML('beforeend', `<h4 class="badge-category">${category}</h4>`);
-      statuses.filter(s => s.badge.category === category).forEach(({ badge: b, unlocked }) => {
+      statuses.filter(s => s.badge.category === category).forEach(({ badge: b, unlocked, current, goal, counted }) => {
+        // Bloqueada com meta maior que 1: mostra quanto falta ("4 de 10" e barrinha)
+        const meter = !unlocked && counted ? `
+                    <p class="badge-count">${formatCount(current)} de ${formatCount(goal)}</p>
+                    <div class="badge-meter" aria-hidden="true"><div class="badge-meter__fill" style="width: ${(current / goal) * 100}%"></div></div>` : '';
         container.innerHTML += `
             <div class="badge-item ${unlocked ? 'unlocked' : ''}" data-color="${b.color}">
                 <div class="badge-icon">${BADGE_ICONS[b.icon]}</div>
                 <div class="badge-info">
                     <h4>${b.name}<span class="sr-only">, ${unlocked ? 'desbloqueada' : 'bloqueada'}</span></h4>
-                    <p>${b.desc}</p>
+                    <p>${b.desc}</p>${meter}
                 </div>
             </div>`;
       });

@@ -15,7 +15,7 @@ import { formatRating } from '../utils/format.js';
 import { getFilterOptions } from './discover.js';
 import { sendInviteToFriend } from './friends.js';
 import { recordMatch, renderMatchHistory } from './matchHistory.js';
-import { grantXp, recordSocial } from './progress.js';
+import { grantXp, recordSocial, trackChallenge } from './progress.js';
 import { carregarDetalhes } from './titleModal.js';
 import { selecionarTipo, switchMode } from '../ui/navigation.js';
 
@@ -157,6 +157,7 @@ function showResult() {
     createConfetti();
     grantXp('match');
     recordSocial('matches');
+    trackChallenge('match');
     recordMatch({ partner: partnerLabel(), type: game.type, ids: matches.map(t => t.id) });
   }
   // Quem respondeu a um convite devolve o resultado para quem chamou

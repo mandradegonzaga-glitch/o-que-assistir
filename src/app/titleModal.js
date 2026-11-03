@@ -5,6 +5,7 @@ import { loadEpisodesSection } from './episodes.js';
 import { salvarHistorico, toggleWatchlist } from './library.js';
 import { updateHistoryNav } from './sorteioHistory.js';
 import { setUrlTitle } from './urlSync.js';
+import { trackChallenge } from './progress.js';
 import { session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
@@ -142,6 +143,7 @@ async function loadProviders(f, type, signal) {
 
 export async function abrirModal(f, { fromDraw = false } = {}) {
     state.currentMovie = f;
+    trackChallenge('opened', f);
     const signal = latestSignal('title');
     setUrlTitle({ type: f.media_type === 'dorama' ? 'dorama' : (f.media_type || state.type), id: f.id });
     const mediaType = f.media_type || state.type;

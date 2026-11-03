@@ -33,11 +33,14 @@ function tmdbResponse(pathname) {
 export const test = base.extend({
   // Opções: test.use({ logged: true }) simula a sessão
   logged: [false, { option: true }],
+  // Último dia em que as indicações do dia foram vistas. 'today' (padrão): o pop-up não abre sozinho
+  // e não cobre o que os testes clicam. null: nunca vistas. Outro valor ('2026-11-02'): vistas nesse dia.
+  dailySeen: ['today', { option: true }],
   errors: async ({}, use) => use([]),
   tmdbUrls: async ({}, use) => use([]),
 
-  page: async ({ page, logged, errors, tmdbUrls }, use) => {
-    await prepare(page, { logged, errors, tmdbUrls });
+  page: async ({ page, logged, dailySeen, errors, tmdbUrls }, use) => {
+    await prepare(page, { logged, dailySeen, errors, tmdbUrls });
     await use(page);
     expect(errors, 'erros não tratados na página').toEqual([]);
   },
@@ -52,11 +55,21 @@ export const test = base.extend({
   },
 });
 
-async function prepare(page, { logged, errors, tmdbUrls }) {
-  await page.addInitScript(value => {
-    window.__TEST = { logged: value };
+async function prepare(page, { logged, dailySeen = 'today', errors, tmdbUrls }) {
+  await page.addInitScript(({ logged, dailySeen }) => {
+    window.__TEST = { logged };
     localStorage.setItem('has_visited', 'true');
-  }, logged);
+    if (dailySeen === 'today') {
+      const d = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      localStorage.setItem('daily_picks_seen', JSON.stringify(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`));
+    } else if (!sessionStorage.getItem('__dailySeenSet')) {
+      // Só na primeira carga: ao recarregar vale o que o app gravou
+      sessionStorage.setItem('__dailySeenSet', '1');
+      if (dailySeen) localStorage.setItem('daily_picks_seen', JSON.stringify(dailySeen));
+      else localStorage.removeItem('daily_picks_seen');
+    }
+  }, { logged, dailySeen });
 
   await page.route('**/cdn.jsdelivr.net/**', route => route.fulfill({ contentType: 'text/javascript', body: FAKE_SDK }));
   await page.route('**/fonts.googleapis.com/**', route => route.fulfill({ contentType: 'text/css', body: '' }));

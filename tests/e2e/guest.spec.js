@@ -73,6 +73,30 @@ test.describe('convidado', () => {
     await expect(page.locator('.badge-item.unlocked h4', { hasText: 'Foguinho' })).toBeVisible();
     await expect(page.locator('#badges-progress-label')).toHaveText('1 de 26 conquistas');
   });
+
+  test('conquista bloqueada mostra quanto falta', async ({ page }) => {
+    await page.addInitScript(() => {
+      const yesterday = new Date(Date.now() - 86_400_000);
+      const pad = n => String(n).padStart(2, '0');
+      const day = `${yesterday.getFullYear()}-${pad(yesterday.getMonth() + 1)}-${pad(yesterday.getDate())}`;
+      if (!localStorage.getItem('guest_progress')) localStorage.setItem('guest_progress', JSON.stringify({ xp: 97, streak: 6, bestStreak: 6, lastVisit: day, log: [] }));
+    });
+    await enterAsGuest(page);
+    await page.locator('.user-pill').click();
+    const badge = name => page.locator('.badge-item').filter({ has: page.locator('h4', { hasText: name }) });
+
+    // Sequência de 7 dias: Constante (30) mostra 7 de 30 e a barra em 23%
+    await expect(badge('Constante').locator('.badge-count')).toHaveText('7 de 30');
+    const width = await badge('Constante').locator('.badge-meter__fill').evaluate(el => el.style.width);
+    expect(parseFloat(width)).toBeCloseTo(23.33, 1);
+    await expect(badge('Constante').locator('.badge-meter')).toHaveAttribute('aria-hidden', 'true');
+    await expect(badge('Cinéfilo').locator('.badge-count')).toHaveText('0 de 10');
+
+    // Desbloqueada e "fez ou não fez" não mostram contagem
+    await expect(badge('Foguinho').locator('.badge-count')).toHaveCount(0);
+    await expect(badge('Iniciante').locator('.badge-count')).toHaveCount(0);
+    await expect(badge('Madrugador').locator('.badge-meter')).toHaveCount(0);
+  });
 });
 
 test.describe('de convidado para conta', () => {

@@ -18,7 +18,7 @@ import { showToast } from '../ui/feedback.js';
 import { pendingRemovals, scheduleUndoable } from '../ui/feedback.js';
 import { confirmDialog } from '../ui/modals.js';
 import { notifyDevice, renderDeviceNotify } from './notifications.js';
-import { recordSocial } from './progress.js';
+import { recordSocial, trackChallenge } from './progress.js';
 import { carregarDetalhes } from './titleModal.js';
 
 const FRIEND_PARAM = 'amigo';
@@ -286,7 +286,10 @@ export async function friendSendTitle(el) {
     el.textContent = `${nameOf(friend)} ✓`;
     el.setAttribute('aria-label', `Enviado para ${nameOf(friend)}`);
     showToast(result.success ? `Enviado para ${nameOf(friend)}!` : `${nameOf(friend)} já recebeu este título.`);
-    if (result.success) recordSocial('sharesSent');
+    if (result.success) {
+      recordSocial('sharesSent');
+      trackChallenge('shared');
+    }
     return;
   }
   el.removeAttribute('aria-disabled');

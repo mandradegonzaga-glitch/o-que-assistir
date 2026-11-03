@@ -1,7 +1,8 @@
 // Sequência e XP. Conta: metadados do usuário (sincroniza entre aparelhos, sem mudar o banco).
 // Convidado: neste aparelho.
 import { supabaseUpdateUserData } from '../api/supabase.js';
-import { EMPTY_PROGRESS, XP_LABELS, addXp, applyDailyVisit, bumpSocial, getLevel, normalizeProgress } from '../domain/progress.js';
+import { applyChallengeEvent, currentChallenges } from '../domain/challenges.js';
+import { EMPTY_PROGRESS, XP_LABELS, addXp, applyDailyVisit, bumpSocial, getLevel, localDay, normalizeProgress } from '../domain/progress.js';
 import { session } from '../state/appState.js';
 import { showAchievement, showToast } from '../ui/feedback.js';
 import { formatCount, pluralize } from '../utils/format.js';
@@ -52,8 +53,35 @@ export async function registerDailyVisit() {
   session.progress = updated;
   save();
   celebrateLevel(before);
-  if (updated.streak > 1) showToast(`Sequência de ${formatCount(updated.streak)} dias! +5 XP`);
+  const { daily } = currentChallenges(updated.challenges, localDay(), { guest: !isAccount() });
+  const streakNote = updated.streak > 1 ? `Sequência de ${formatCount(updated.streak)} dias! +5 XP · ` : '';
+  showToast(`${streakNote}Desafio de hoje: ${daily.text}`);
   await checkAllBadges();
+}
+
+// Avisos do app para o desafio do dia e a meta da semana. Grava só quando o andamento muda.
+// event: watched, saved, opened, roulette, match, ticket, shared. detail: o título, quando houver.
+export function trackChallenge(event, detail) {
+  if (!session.currentUser) return;
+  loadProgress();
+  const guest = !isAccount();
+  const result = applyChallengeEvent(session.progress.challenges, event, detail, localDay(), { guest });
+  if (!result) return;
+  const before = session.progress.xp;
+  let next = { ...session.progress, challenges: result.challenges };
+  result.completed.forEach(kind => { next = addXp(next, kind); });
+  session.progress = next;
+  save();
+  const view = currentChallenges(next.challenges, localDay(), { guest });
+  // Um aviso só, mesmo quando o desafio e a meta terminam juntos
+  if (result.completed.length) {
+    const done = result.completed.map(kind => view[kind]);
+    const xp = done.reduce((sum, c) => sum + c.xp, 0);
+    const kicker = done.length === 2 ? 'Desafio do dia e meta da semana' : (result.completed[0] === 'daily' ? 'Desafio do dia concluído' : 'Meta da semana concluída');
+    showAchievement({ name: done.map(c => c.text).join(' · '), desc: `+${formatCount(xp)} XP`, icon: done[0].icon, kicker });
+  }
+  celebrateLevel(before);
+  if (document.getElementById('modal-profile')?.style.display === 'flex') renderProgress();
 }
 
 // Contadores das conquistas sociais (amigos, indicações, ingressos, matches). Grava só se mudou.
@@ -98,4 +126,24 @@ export function renderProgress() {
     return item;
   }));
   logBox.hidden = log.length === 0;
+
+  renderChallenges();
+}
+
+function renderChallenges() {
+  const view = currentChallenges(session.progress.challenges, localDay(), { guest: !isAccount() });
+  ['daily', 'weekly'].forEach(kind => {
+    const c = view[kind];
+    const box = document.getElementById(`challenge-${kind}`);
+    if (!box) return;
+    box.classList.toggle('done', c.done);
+    box.querySelector('.challenge__text').textContent = c.text;
+    box.querySelector('.challenge__status').textContent = c.done
+      ? `Concluído · +${formatCount(c.xp)} XP`
+      : `${formatCount(c.count)} de ${formatCount(c.goal)} · vale ${formatCount(c.xp)} XP`;
+    const bar = box.querySelector('[role="progressbar"]');
+    bar.setAttribute('aria-valuemax', c.goal);
+    bar.setAttribute('aria-valuenow', c.count);
+    box.querySelector('.badges-progress__fill').style.width = `${(c.count / c.goal) * 100}%`;
+  });
 }

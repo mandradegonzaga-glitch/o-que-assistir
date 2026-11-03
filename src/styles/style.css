@@ -442,6 +442,239 @@ header {
     color: var(--text-secondary);
 }
 
+/* ==================== INDICAÇÕES DO DIA ==================== */
+/* Botão no canto, como um chat de ajuda; o painel abre acima dele */
+.daily-launcher {
+    position: fixed;
+    right: calc(var(--space-lg) + env(safe-area-inset-right));
+    bottom: calc(var(--space-lg) + env(safe-area-inset-bottom));
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    background: var(--accent-primary);
+    border: none;
+    border-radius: var(--radius-full);
+    color: var(--accent-on);
+    box-shadow: var(--shadow-lg);
+    cursor: pointer;
+    transition: transform var(--duration-fast) var(--ease-smooth),
+                box-shadow var(--duration-fast) var(--ease-smooth);
+}
+
+.daily-launcher[hidden] {
+    display: none;
+}
+
+.daily-launcher:hover {
+    transform: scale(1.06);
+    box-shadow: var(--shadow-xl), var(--shadow-glow);
+}
+
+.daily-launcher .icon {
+    width: 26px;
+    height: 26px;
+}
+
+/* Indicações novas que a pessoa ainda não abriu hoje */
+.daily-launcher__dot {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 14px;
+    height: 14px;
+    background: #ff8fb8;
+    border: 2px solid var(--bg-primary, #17121f);
+    border-radius: var(--radius-full);
+}
+
+.daily-panel {
+    position: fixed;
+    right: calc(var(--space-lg) + env(safe-area-inset-right));
+    bottom: calc(var(--space-lg) + 56px + 12px + env(safe-area-inset-bottom));
+    z-index: 1002;
+    /* Cabeçalho fixo; só a lista rola, para o fechar nunca sumir */
+    display: flex;
+    flex-direction: column;
+    width: min(380px, calc(100vw - 32px));
+    max-height: min(72vh, 600px);
+    overflow: hidden;
+    padding: var(--space-md);
+    background: rgba(35, 29, 51, 0.98);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    transform-origin: bottom right;
+    animation: daily-panel-in var(--duration-normal) var(--ease-out);
+}
+
+.daily-panel[hidden] {
+    display: none;
+}
+
+@keyframes daily-panel-in {
+    from { opacity: 0; transform: translateY(12px) scale(0.97); }
+    to { opacity: 1; transform: none; }
+}
+
+.daily-panel__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+}
+
+.daily-panel__title {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    line-height: 1.1;
+}
+
+.daily-panel__note {
+    margin-top: 2px;
+    color: var(--text-tertiary);
+    font-size: 0.8rem;
+}
+
+.daily-panel__close {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin: -8px -8px 0 0;
+    background: none;
+    border: none;
+    border-radius: var(--radius-full);
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.daily-panel__close:hover {
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+}
+
+.daily-panel__list {
+    display: grid;
+    gap: var(--space-sm);
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    list-style: none;
+}
+
+.daily-pick {
+    --kind-color: #ffc94d;
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: var(--space-md);
+    width: 100%;
+    padding: var(--space-sm);
+    background: var(--bg-secondary);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color var(--duration-fast) var(--ease-smooth),
+                background var(--duration-fast) var(--ease-smooth);
+}
+
+.daily-pick[data-kind="tv"] { --kind-color: #3dd6c6; }
+.daily-pick[data-kind="dorama"] { --kind-color: #ff8fb8; }
+
+.daily-pick:hover,
+.daily-pick:focus-visible {
+    border-color: var(--kind-color);
+    background: var(--bg-elevated);
+}
+
+.daily-pick img {
+    width: 72px;
+    height: auto;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+}
+
+.daily-pick__body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.daily-pick__kind {
+    color: var(--kind-color);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.daily-pick__title {
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.daily-pick__meta {
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.daily-pick__overview {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    margin-top: 2px;
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+
+/* Celular: o painel ocupa a largura toda, acima do botão */
+@media (max-width: 640px) {
+    .daily-panel {
+        right: calc(12px + env(safe-area-inset-right));
+        left: calc(12px + env(safe-area-inset-left));
+        width: auto;
+        max-height: min(70vh, 560px);
+    }
+
+    .daily-pick {
+        grid-template-columns: 56px minmax(0, 1fr);
+        gap: var(--space-sm);
+    }
+
+    .daily-pick img {
+        width: 56px;
+    }
+
+    .daily-pick__overview {
+        -webkit-line-clamp: 2;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .daily-panel {
+        animation: none;
+    }
+
+    .daily-launcher:hover {
+        transform: none;
+    }
+}
+
 /* ==================== OPTIONS GRID (Content Type Selection) ==================== */
 .options-grid {
     display: grid;
@@ -1984,6 +2217,31 @@ header {
     line-height: 1.3;
 }
 
+/* Conquista bloqueada: quanto falta ("4 de 10") */
+.badge-item .badge-info {
+    flex: 1;
+}
+
+.badge-info .badge-count {
+    margin-top: var(--space-xs);
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.badge-meter {
+    height: 4px;
+    margin-top: 4px;
+    overflow: hidden;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-full);
+}
+
+.badge-meter__fill {
+    height: 100%;
+    background: var(--text-secondary);
+    border-radius: inherit;
+}
+
 /* Badge Unlock Animation */
 @keyframes badge-unlock {
     0% { transform: scale(1); }
@@ -2261,7 +2519,7 @@ header {
 /* ==================== SCROLL TO TOP ==================== */
 .scroll-top-btn {
     position: fixed;
-    bottom: calc(80px + env(safe-area-inset-bottom));
+    bottom: calc(96px + env(safe-area-inset-bottom)); /* acima do botão das indicações do dia */
     right: calc(var(--space-lg) + env(safe-area-inset-right));
     width: 48px;
     height: 48px;
@@ -3694,6 +3952,52 @@ select.input-dark:hover {
     line-height: 1.7;
 }
 
+/* Desafio do dia e meta da semana */
+.challenges {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: var(--space-lg);
+}
+
+.challenge {
+    padding: var(--space-md);
+    background: var(--bg-secondary);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+}
+
+.challenge.done {
+    border-color: rgba(var(--accent-gold-rgb), 0.4);
+}
+
+.challenge__label {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.challenge__text {
+    margin: var(--space-xs) 0;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.challenge__status {
+    margin-bottom: var(--space-sm);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.challenge.done .challenge__status {
+    color: var(--accent-gold);
+}
+
 .badge-category {
     grid-column: 1 / -1;
     margin-top: var(--space-sm);
@@ -3702,7 +4006,8 @@ select.input-dark:hover {
 }
 
 @media (max-width: 640px) {
-    .progress-cards {
+    .progress-cards,
+    .challenges {
         grid-template-columns: 1fr;
     }
 }
