@@ -53,6 +53,16 @@ test.describe('match', () => {
     await expect(page.locator('#m-title')).toHaveText('Filme Dois');
   });
 
+  test('o primeiro match desbloqueia Par Perfeito, e sem match não', async ({ page }) => {
+    await start(page);
+    await voteAll(page, t => t === 'Filme Um');
+    await page.locator('#btn-match-continue').click();
+    await voteAll(page, t => t === 'Filme Um');
+    await expect(page.locator('#achievement-name')).toHaveText('Par Perfeito');
+    const social = await page.evaluate(() => JSON.parse(localStorage.getItem('guest_progress')).social);
+    expect(social.matches).toBe(1);
+  });
+
   test('sem coincidência explica e permite recomeçar', async ({ page }) => {
     await start(page);
     await voteAll(page, t => t === 'Filme Um');
@@ -201,65 +211,5 @@ test.describe('match por link', () => {
     await page.locator('#match-result [data-action="matchRestart"]').click();
     await expect(page).not.toHaveURL(/match=/);
     await expect(page.locator('#match-setup')).toBeVisible();
-  });
-});
-
-test.describe('compartilhar', () => {
-  const share = page => page.locator('#btn-compartilhar');
-
-  test('no computador baixa o ingresso e copia o texto com o link', async ({ page, context }) => {
-    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-    await enterAsGuest(page);
-    await page.locator('#btn-sortear').click();
-    await expect(modal(page)).toBeVisible();
-
-    const [download] = await Promise.all([page.waitForEvent('download'), share(page).click()]);
-    expect(download.suggestedFilename()).toMatch(/^ingresso-filme-[a-z-]+\.png$/);
-    await expect(page.locator('#toast')).toHaveText('Ingresso baixado e link copiado!');
-
-    const copied = await page.evaluate(() => navigator.clipboard.readText());
-    expect(copied).toContain('Hoje é dia de: Filme');
-    expect(copied).toMatch(/titulo=movie-\d+/);
-  });
-
-  test('no celular envia imagem, texto e link juntos', async ({ page }) => {
-    await page.addInitScript(() => {
-      const original = window.matchMedia.bind(window);
-      window.matchMedia = query => (query === '(pointer: coarse)' ? { matches: true } : original(query));
-      navigator.canShare = () => true;
-      navigator.share = async data => { window.__shared = { text: data.text, files: data.files.map(f => [f.name, f.type, f.size > 0]) }; };
-    });
-    await enterAsGuest(page);
-    await page.locator('#btn-sortear').click();
-    await expect(modal(page)).toBeVisible();
-    await share(page).click();
-
-    await expect.poll(() => page.evaluate(() => window.__shared?.files?.[0]?.[1])).toBe('image/png');
-    const shared = await page.evaluate(() => window.__shared);
-    expect(shared.text).toMatch(/titulo=movie-\d+/);
-    expect(shared.files[0][2]).toBe(true);
-  });
-
-  test('cancelar no celular não baixa nem mostra erro', async ({ page }) => {
-    await page.addInitScript(() => {
-      const original = window.matchMedia.bind(window);
-      window.matchMedia = query => (query === '(pointer: coarse)' ? { matches: true } : original(query));
-      navigator.canShare = () => true;
-      navigator.share = async () => { throw new DOMException('cancelado', 'AbortError'); };
-    });
-    await enterAsGuest(page);
-    await page.locator('#btn-sortear').click();
-    await expect(modal(page)).toBeVisible();
-    await share(page).click();
-    await expect(share(page)).toBeEnabled();
-    await expect(page.locator('#toast')).not.toHaveText(/Não foi possível|baixado/);
-  });
-
-  test('sem pôster disponível, ainda gera', async ({ page }) => {
-    await page.route('**/image.tmdb.org/**', route => route.abort());
-    await enterAsGuest(page);
-    await page.locator('#btn-sortear').click();
-    const [download] = await Promise.all([page.waitForEvent('download'), share(page).click()]);
-    expect(download.suggestedFilename()).toMatch(/\.png$/);
   });
 });

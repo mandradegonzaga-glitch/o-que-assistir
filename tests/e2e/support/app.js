@@ -37,25 +37,38 @@ export const test = base.extend({
   tmdbUrls: async ({}, use) => use([]),
 
   page: async ({ page, logged, errors, tmdbUrls }, use) => {
-    await page.addInitScript(value => {
-      window.__TEST = { logged: value };
-      localStorage.setItem('has_visited', 'true');
-    }, logged);
-
-    await page.route('**/cdn.jsdelivr.net/**', route => route.fulfill({ contentType: 'text/javascript', body: FAKE_SDK }));
-    await page.route('**/fonts.googleapis.com/**', route => route.fulfill({ contentType: 'text/css', body: '' }));
-    await page.route('**/image.tmdb.org/**', route => route.fulfill({ contentType: 'image/png', body: PIXEL, headers: { 'Access-Control-Allow-Origin': '*' } }));
-    await page.route('**/functions/v1/tmdb/**', route => {
-      const url = new URL(route.request().url());
-      tmdbUrls.push(url);
-      return route.fulfill({ contentType: 'application/json', json: tmdbResponse(url.pathname) });
-    });
-
-    page.on('pageerror', error => errors.push(error.message));
+    await prepare(page, { logged, errors, tmdbUrls });
     await use(page);
     expect(errors, 'erros não tratados na página').toEqual([]);
   },
+
+  // Segunda aba no mesmo navegador (Match ao vivo): mesmas simulações, como convidado
+  openPage: async ({ context, errors, tmdbUrls }, use) => {
+    await use(async () => {
+      const other = await context.newPage();
+      await prepare(other, { logged: false, errors, tmdbUrls });
+      return other;
+    });
+  },
 });
+
+async function prepare(page, { logged, errors, tmdbUrls }) {
+  await page.addInitScript(value => {
+    window.__TEST = { logged: value };
+    localStorage.setItem('has_visited', 'true');
+  }, logged);
+
+  await page.route('**/cdn.jsdelivr.net/**', route => route.fulfill({ contentType: 'text/javascript', body: FAKE_SDK }));
+  await page.route('**/fonts.googleapis.com/**', route => route.fulfill({ contentType: 'text/css', body: '' }));
+  await page.route('**/image.tmdb.org/**', route => route.fulfill({ contentType: 'image/png', body: PIXEL, headers: { 'Access-Control-Allow-Origin': '*' } }));
+  await page.route('**/functions/v1/tmdb/**', route => {
+    const url = new URL(route.request().url());
+    tmdbUrls.push(url);
+    return route.fulfill({ contentType: 'application/json', json: tmdbResponse(url.pathname) });
+  });
+
+  page.on('pageerror', error => errors.push(error.message));
+}
 
 export { expect };
 

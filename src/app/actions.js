@@ -4,12 +4,12 @@ import { debounce } from '../utils/debounce.js';
 import { checkPasswordStrength, esqueceuSenha, loginAsGuest, loginUser, logout, registerUser, switchLoginTab } from './auth.js';
 import { adicionarBlacklist, limparBlacklist, removerBlacklist } from './blacklist.js';
 import { buscarDireto, buscarPessoa, limparPessoa, mostrarTop10, selectPerson, sortearFilme, sortearOutro } from './discover.js';
-import { matchSendToFriend, matchContinue, matchDraw, matchEmailInvite, matchInvite, matchJoin, matchRestart, matchSendAnswer, matchSendInvite, matchStart, matchVote } from './match.js';
+import { matchCodeJoin, matchSendToFriend, matchContinue, matchDraw, matchEmailInvite, matchInvite, matchJoin, matchLive, matchLiveJoin, matchLiveSend, matchRestart, matchSendAnswer, matchSendInvite, matchStart, matchVote } from './match.js';
 import { filterProviders, onProviderChange, toggleMyProvider } from './myProviders.js';
-import { compartilhar } from './ticket.js';
+import { compartilhar, compartilharApps, compartilharWhatsapp, gerarIngresso } from './ticket.js';
 import { syncUrl } from './urlSync.js';
 import { desmarcarTemporadaAtual, desmarcarTodosEpisodios, marcarTemporadaAtual, marcarTodosEpisodios, onSeasonChange, toggleEpisode } from './episodes.js';
-import { friendAccept, friendAdd, friendInvite, friendMatchCurrent, friendOpen, friendRemove, friendUnfriendCurrent, matchInboxDelete, matchInboxOpen, openFriends, toggleShareWithFriends } from './friends.js';
+import { friendAccept, friendAdd, friendInvite, friendMatchCurrent, friendOpen, friendRemove, friendSendTitle, friendShareDelete, friendShareOpen, friendUnfriendCurrent, matchInboxDelete, matchInboxOpen, openFriends, toggleShareWithFriends } from './friends.js';
 import { removeLibItem } from './library.js';
 import { nextOnboarding } from './onboarding.js';
 import { abrirPerfil, alterarSenha, deletarConta, salvarPerfil } from './profile.js';
@@ -36,6 +36,9 @@ const clickActions = {
   clearInput: el => clearInput(el.dataset.arg),
   closeModal: el => { document.getElementById(el.dataset.arg).style.display = 'none'; },
   compartilhar,
+  compartilharApps,
+  compartilharWhatsapp,
+  gerarIngresso,
   deletarConta,
   desmarcarTemporadaAtual,
   desmarcarTodosEpisodios,
@@ -46,6 +49,9 @@ const clickActions = {
   friendAdd,
   friendRemove: el => friendRemove(el.dataset.arg),
   friendSendMatch: el => matchSendToFriend(el.dataset.arg),
+  friendSendTitle,
+  friendShareDelete: el => friendShareDelete(el.dataset.arg),
+  friendShareOpen: el => friendShareOpen(el.dataset.arg),
   friendInvite,
   openFriends,
   friendMatchCurrent,
@@ -61,6 +67,10 @@ const clickActions = {
   matchEmailInvite,
   matchInvite,
   matchJoin,
+  matchCodeJoin,
+  matchLive,
+  matchLiveJoin,
+  matchLiveSend,
   matchSendAnswer,
   matchSendInvite,
   matchNo: () => matchVote(false),
@@ -129,7 +139,7 @@ const changeActions = {
   toggleEpisode: el => toggleEpisode(Number(el.dataset.series), Number(el.dataset.season), Number(el.dataset.episode), el.checked),
 };
 
-const enterActions = { addRoletaItem, buscarDireto, friendAdd };
+const enterActions = { addRoletaItem, buscarDireto, friendAdd, matchCodeJoin, matchLiveJoin };
 
 export function initActions() {
   document.addEventListener('click', (e) => {

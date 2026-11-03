@@ -48,6 +48,9 @@ before(async () => {
   const sql = readFileSync(new URL('../../database/friends.sql', import.meta.url), 'utf8');
   await db.exec(sql);
   await db.exec(sql); // o arquivo pode rodar de novo sem erro
+  const shares = readFileSync(new URL('../../database/title_shares.sql', import.meta.url), 'utf8');
+  await db.exec(shares);
+  await db.exec(shares);
 });
 
 after(() => db.close());
@@ -173,6 +176,42 @@ test('convites: só entre amigos, em nome próprio, e só para quem envolve', as
   });
 });
 
+const share = (from, to, extra = {}) => {
+  const row = { media_type: 'movie', tmdb_id: 603, title: 'Matrix', poster_path: '/abc.jpg', ...extra };
+  return rows('INSERT INTO title_shares (from_user, to_user, media_type, tmdb_id, title, poster_path) VALUES ($1, $2, $3, $4, $5, $6)',
+    [from, to, row.media_type, row.tmdb_id, row.title, row.poster_path]);
+};
+
+test('indicações: só entre amigos, em nome próprio, dados válidos, uma vez por título', async () => {
+  await denied(as(CAU, () => share(CAU, ANA)), 'desconhecido');
+  await denied(as(ANA, () => share(BIA, ANA)), 'em nome da amiga');
+  await denied(as(null, () => share(ANA, BIA)), 'sem login');
+  await denied(as(ANA, () => share(ANA, BIA, { media_type: 'anime' })), 'tipo inválido');
+  await denied(as(ANA, () => share(ANA, BIA, { tmdb_id: 0 })), 'id inválido');
+  await denied(as(ANA, () => share(ANA, BIA, { title: '' })), 'sem título');
+  await denied(as(ANA, () => share(ANA, BIA, { poster_path: 'https://mal.dev/x.jpg' })), 'pôster de fora');
+  await denied(as(ANA, () => share(ANA, BIA, { poster_path: '/../x.jpg' })), 'pôster com caminho');
+
+  await as(ANA, () => share(ANA, BIA));
+  await assert.rejects(as(ANA, () => share(ANA, BIA)), /duplicate key|unique/, 'mesmo título de novo');
+  await as(ANA, () => share(ANA, BIA, { media_type: 'dorama', tmdb_id: 1, title: 'Dorama', poster_path: null }));
+
+  const inbox = await as(BIA, () => rows('SELECT from_name, media_type, tmdb_id, title, poster_path FROM list_title_shares()'));
+  assert.equal(inbox.length, 2);
+  assert.deepEqual(inbox.find(i => i.tmdb_id === 603), { from_name: 'Ana', media_type: 'movie', tmdb_id: 603, title: 'Matrix', poster_path: '/abc.jpg' });
+  assert.equal((await as(ANA, () => rows('SELECT * FROM list_title_shares()'))).length, 0, 'quem enviou não vê na caixa');
+  assert.equal((await as(CAU, () => rows('SELECT * FROM title_shares'))).length, 0, 'terceiros não veem');
+  await denied(as(null, () => rows('SELECT * FROM list_title_shares()')), 'sem login não lista');
+
+  await as(CAU, async () => {
+    assert.equal((await db.query('DELETE FROM title_shares')).affectedRows, 0, 'terceiros não apagam');
+  });
+  await as(BIA, async () => {
+    assert.equal((await db.query('DELETE FROM title_shares WHERE tmdb_id = 1')).affectedRows, 1);
+  });
+  await denied(as(BIA, () => rows(`UPDATE title_shares SET title = 'outro'`)), 'ninguém edita');
+});
+
 test('desfazer amizade: só os envolvidos, e o convite e o perfil deixam de ser possíveis', async () => {
   await as(CAU, async () => {
     assert.equal((await db.query('DELETE FROM friendships')).affectedRows, 0);
@@ -181,15 +220,18 @@ test('desfazer amizade: só os envolvidos, e o convite e o perfil deixam de ser 
     assert.equal((await db.query('DELETE FROM friendships')).affectedRows, 1);
   });
   await denied(as(ANA, () => rows('INSERT INTO match_invites (from_user, to_user, payload) VALUES ($1, $2, $3)', [ANA, BIA, 'x'])));
+  await denied(as(ANA, () => share(ANA, BIA, { tmdb_id: 2 })), 'indicação depois de desfazer');
   assert.equal(await friendProfile(ANA, BIA), null);
 });
 
-test('apagar um perfil leva amizades e convites junto', async () => {
+test('apagar um perfil leva amizades, convites e indicações junto', async () => {
   await db.exec(`
     INSERT INTO friendships (requester_id, addressee_id, status) VALUES ('${ANA}', '${CAU}', 'accepted');
     INSERT INTO match_invites (from_user, to_user, payload) VALUES ('${ANA}', '${CAU}', 'x');
+    INSERT INTO title_shares (from_user, to_user, media_type, tmdb_id, title) VALUES ('${ANA}', '${CAU}', 'tv', 5, 'Série');
     DELETE FROM profiles WHERE id = '${CAU}';
   `);
   assert.equal((await rows('SELECT * FROM friendships')).length, 0);
   assert.equal((await rows('SELECT * FROM match_invites')).length, 0);
+  assert.equal((await rows(`SELECT * FROM title_shares WHERE to_user = '${CAU}'`)).length, 0);
 });

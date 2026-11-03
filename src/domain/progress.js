@@ -14,7 +14,12 @@ export const LEVELS = [
 
 const LOG_SIZE = 5;
 
-export const EMPTY_PROGRESS = { xp: 0, streak: 0, bestStreak: 0, lastVisit: null, log: [] };
+// Contadores das conquistas sociais. friends guarda o maior número de amigos já visto:
+// desfazer uma amizade não tira a conquista.
+export const SOCIAL_KEYS = ['friends', 'sharesSent', 'ticketsShared', 'matches'];
+export const EMPTY_SOCIAL = Object.freeze(Object.fromEntries(SOCIAL_KEYS.map(key => [key, 0])));
+
+export const EMPTY_PROGRESS = { xp: 0, streak: 0, bestStreak: 0, lastVisit: null, log: [], social: EMPTY_SOCIAL };
 
 export function normalizeProgress(raw) {
   const p = raw && typeof raw === 'object' ? raw : {};
@@ -25,7 +30,18 @@ export function normalizeProgress(raw) {
     bestStreak: count(p.bestStreak),
     lastVisit: typeof p.lastVisit === 'string' ? p.lastVisit : null,
     log: Array.isArray(p.log) ? p.log.slice(0, LOG_SIZE) : [],
+    social: Object.fromEntries(SOCIAL_KEYS.map(key => [key, count(p.social?.[key])])),
   };
+}
+
+// Sem valor, soma 1 (uma indicação, um ingresso, um match). Com valor, guarda o maior (amigos).
+// Devolve null quando nada muda, para não gravar à toa.
+export function bumpSocial(progress, key, value) {
+  if (!SOCIAL_KEYS.includes(key)) return null;
+  const social = { ...EMPTY_SOCIAL, ...progress.social };
+  const next = value === undefined ? social[key] + 1 : Math.max(social[key], Number.isInteger(value) && value > 0 ? value : 0);
+  if (next === social[key]) return null;
+  return { ...progress, social: { ...social, [key]: next } };
 }
 
 // Dia no fuso da pessoa: a virada é à meia-noite dela, não em UTC

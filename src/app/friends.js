@@ -1,23 +1,30 @@
 // Amigos e convites de Match dentro do app. Exige conta e as tabelas de database/friends.sql:
 // sem elas, as seções ficam ocultas e o Match por link continua funcionando.
 import {
-  supabaseAcceptFriend, supabaseDeleteMatchInvite, supabaseFindUser, supabaseGetFriendProfile, supabaseListFriends, supabaseListMatchInvites,
-  supabaseRemoveFriend, supabaseRequestFriend, supabaseSendMatchInvite, supabaseUpdateProfile,
+  supabaseAcceptFriend, supabaseDeleteMatchInvite, supabaseDeleteTitleShare, supabaseFindUser, supabaseGetFriendProfile, supabaseListFriends,
+  supabaseListMatchInvites, supabaseListTitleShares, supabaseRemoveFriend, supabaseRequestFriend, supabaseSendMatchInvite, supabaseSendTitleShare,
+  supabaseUpdateProfile,
 } from '../api/supabase.js';
 import { IMG_URL } from '../config/constants.js';
 import { BADGE_DEFINITIONS } from '../domain/badges.js';
-import { session } from '../state/appState.js';
+import { shareRow, titleKind } from '../domain/titleShare.js';
+import { session, state } from '../state/appState.js';
 import { BADGE_ICONS } from '../ui/badgeIcons.js';
 import { switchMode } from '../ui/navigation.js';
 import { formatCount } from '../utils/format.js';
 import { shareLink } from './match.js';
 import { showToast } from '../ui/feedback.js';
+import { pendingRemovals, scheduleUndoable } from '../ui/feedback.js';
 import { confirmDialog } from '../ui/modals.js';
+import { recordSocial } from './progress.js';
+import { carregarDetalhes } from './titleModal.js';
 
 const FRIEND_PARAM = 'amigo';
 
 let friends = [];
 let available = false;
+let shares = [];
+let sharesAvailable = false; // title_shares.sql pode ainda não ter sido rodado
 let currentFriend = null;
 
 const hasAccount = () => Boolean(session.currentUserId) && session.currentUser !== 'guest';
@@ -64,10 +71,7 @@ function renderFriends() {
   document.getElementById('friends-content').hidden = !account || !available;
 
   const received = friends.filter(f => f.status === 'pending' && f.direction === 'received');
-  const badge = document.getElementById('friends-badge');
-  badge.textContent = received.length;
-  badge.hidden = received.length === 0;
-  badge.setAttribute('aria-label', `${received.length} pedidos de amizade`);
+  renderBadge(received.length);
 
   if (account && available) {
     document.getElementById('my-username').textContent = session.userProfile?.username ? `@${session.userProfile.username}` : '';
@@ -86,13 +90,36 @@ function renderFriends() {
   renderFriendTargets();
 }
 
-// "Enviar para" nas telas de convite e de resultado do Match
+function renderBadge(requests, shareCount = visibleShares().length) {
+  const total = requests + shareCount;
+  const parts = [
+    requests ? `${requests} ${requests === 1 ? 'pedido de amizade' : 'pedidos de amizade'}` : '',
+    shareCount ? `${shareCount} ${shareCount === 1 ? 'indicação' : 'indicações'}` : '',
+  ].filter(Boolean);
+  const badge = document.getElementById('friends-badge');
+  badge.textContent = total;
+  badge.hidden = total === 0;
+  // O número sozinho não diz nada a quem ouve: o nome do botão leva o que está esperando
+  document.getElementById('btn-friends').setAttribute('aria-label', parts.length ? `Amigos: ${parts.join(' e ')}` : 'Amigos');
+}
+
+// "Enviar para" nas telas de convite e de resultado do Match, e no compartilhar do título
 function renderFriendTargets() {
   document.querySelectorAll('[data-friend-targets]').forEach(box => {
     const list = box.querySelector('.friend-targets');
     list.replaceChildren(...accepted().map(f => button(nameOf(f), 'friendSendMatch', f.other_id, 'btn-outline friend-target')));
     box.hidden = !hasAccount() || !available || accepted().length === 0;
   });
+
+  const ready = hasAccount() && available && sharesAvailable;
+  const box = document.getElementById('share-friends');
+  box.querySelector('.friend-targets').replaceChildren(...accepted().map(f => button(nameOf(f), 'friendSendTitle', f.other_id, 'btn-outline friend-target')));
+  box.hidden = !ready || accepted().length === 0;
+  const hint = document.getElementById('share-friends-hint');
+  hint.hidden = ready && accepted().length > 0;
+  if (!hasAccount()) hint.textContent = 'Com uma conta, você também envia para amigos aqui do app.';
+  else if (!ready) hint.textContent = 'Envio para amigos indisponível no momento.';
+  else hint.textContent = 'Adicione amigos para enviar títulos para eles aqui do app.';
 }
 
 export function openFriends() {
@@ -116,15 +143,124 @@ export async function refreshFriends() {
   if (!hasAccount()) {
     friends = [];
     available = false;
+    shares = [];
+    sharesAvailable = false;
     renderFriends();
+    renderShares();
     renderInbox([]);
     return;
   }
-  const result = await supabaseListFriends(session.currentUserId);
+  const [result, shareResult] = await Promise.all([supabaseListFriends(session.currentUserId), supabaseListTitleShares()]);
   available = result.success;
   friends = result.friends || [];
+  sharesAvailable = shareResult.success;
+  shares = shareResult.shares || [];
   renderFriends();
+  renderShares();
+  if (available) recordSocial('friends', accepted().length);
   await refreshInbox();
+}
+
+// Indicações recebidas: pôster, quem mandou, abrir e apagar
+function shareItem(item) {
+  const row = document.createElement('li');
+  row.className = 'friend-row share-row';
+  const image = document.createElement('img');
+  image.className = 'share-row__poster';
+  image.alt = '';
+  image.width = 40;
+  image.height = 60;
+  image.loading = 'lazy';
+  if (item.poster_path) image.src = IMG_URL + item.poster_path;
+  const name = document.createElement('span');
+  name.className = 'friend-row__name';
+  name.textContent = item.title;
+  const from = document.createElement('small');
+  from.textContent = `Indicado por ${item.from_name}`;
+  name.append(from);
+  const open = button('Abrir', 'friendShareOpen', item.id, 'btn-outline friend-action');
+  open.setAttribute('aria-label', `Abrir ${item.title}`);
+  const remove = button('Apagar', 'friendShareDelete', item.id);
+  remove.setAttribute('aria-label', `Apagar indicação de ${item.title}`);
+  row.append(image, name, open, remove);
+  return row;
+}
+
+const visibleShares = () => shares.filter(s => !pendingRemovals.has(`share:${s.id}`));
+
+function renderShares() {
+  const visible = visibleShares();
+  renderList('title-shares', visible.map(shareItem));
+  renderBadge(friends.filter(f => f.status === 'pending' && f.direction === 'received').length, visible.length);
+}
+
+// Depois de tirar um item da caixa, o foco vai para o próximo, ou para o título da seção
+function focusAfterShares() {
+  const next = document.querySelector('#title-shares [data-action="friendShareOpen"]');
+  if (next) return next;
+  const heading = document.getElementById('title-shares-heading');
+  return heading.closest('[hidden]') ? document.querySelector('#modal-friends [role="dialog"]') : heading;
+}
+
+export async function friendSendTitle(el) {
+  const friendId = el.dataset.arg;
+  const friend = friends.find(f => f.other_id === friendId);
+  const movie = state.currentMovie;
+  const row = movie && shareRow(movie, titleKind(movie, state.type));
+  // aria-disabled em vez de disabled: o botão continua com o foco depois de enviar
+  if (!row || !friend || el.getAttribute('aria-disabled') === 'true') return;
+  el.setAttribute('aria-disabled', 'true');
+  const result = await supabaseSendTitleShare(session.currentUserId, friendId, row);
+  if (result.success || result.duplicate) {
+    el.textContent = `${nameOf(friend)} ✓`;
+    el.setAttribute('aria-label', `Enviado para ${nameOf(friend)}`);
+    showToast(result.success ? `Enviado para ${nameOf(friend)}!` : `${nameOf(friend)} já recebeu este título.`);
+    if (result.success) recordSocial('sharesSent');
+    return;
+  }
+  el.removeAttribute('aria-disabled');
+  showToast('Não foi possível enviar. Tente de novo.', 'error');
+}
+
+// Abrir tira da caixa: o título abre por cima da lista (fechar volta para ela),
+// e de lá a pessoa salva na lista dela se quiser
+export async function friendShareOpen(id) {
+  const item = shares.find(s => s.id === id);
+  if (!item) return;
+  shares = shares.filter(s => s.id !== id);
+  renderShares();
+  focusAfterShares()?.focus(); // o botão clicado sumiu: o modal do título devolve o foco para cá
+  supabaseDeleteTitleShare(id);
+  await carregarDetalhes(item.tmdb_id, item.media_type);
+}
+
+// Apagar tem "Desfazer" (e Ctrl+Z), como as outras remoções do app
+export function friendShareDelete(id) {
+  const item = shares.find(s => s.id === id);
+  if (!item) return;
+  const key = `share:${id}`;
+  scheduleUndoable({
+    message: `Indicação de ${item.title} apagada.`,
+    apply: () => {
+      const hadFocus = document.getElementById('title-shares').contains(document.activeElement);
+      pendingRemovals.add(key);
+      renderShares();
+      return hadFocus;
+    },
+    undo: (refocus) => {
+      pendingRemovals.delete(key);
+      renderShares();
+      if (refocus) document.querySelector(`#title-shares [data-action="friendShareOpen"][data-arg="${CSS.escape(id)}"]`)?.focus();
+    },
+    commit: async () => {
+      const result = await supabaseDeleteTitleShare(id);
+      pendingRemovals.delete(key);
+      if (result.success) shares = shares.filter(s => s.id !== id);
+      else showToast('Não foi possível apagar a indicação. Tente de novo.', 'error');
+      renderShares();
+    },
+    focusAfter: focusAfterShares,
+  });
 }
 
 export async function friendAdd() {
@@ -326,7 +462,7 @@ function renderInbox(invites) {
     item.className = 'friend-row';
     const text = document.createElement('span');
     text.className = 'friend-row__name';
-    text.textContent = invite.from_name;
+    text.textContent = invite.payload.startsWith('ao-vivo:') ? `${invite.from_name} · ao vivo` : invite.from_name;
     const open = button('Abrir', 'matchInboxOpen', invite.id);
     open.dataset.payload = invite.payload;
     item.append(text, open, button('Apagar', 'matchInboxDelete', invite.id));
@@ -346,7 +482,8 @@ export async function refreshInbox() {
 export async function matchInboxOpen(el) {
   await supabaseDeleteMatchInvite(el.dataset.arg);
   const url = new URL(location.href);
-  url.search = `?match=${el.dataset.payload}`;
+  const payload = el.dataset.payload;
+  url.search = payload.startsWith('ao-vivo:') ? `?ao-vivo=${encodeURIComponent(payload.slice(8))}` : `?match=${payload}`;
   location.href = url.toString();
 }
 

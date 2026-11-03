@@ -1,7 +1,7 @@
 // Sequência e XP. Conta: metadados do usuário (sincroniza entre aparelhos, sem mudar o banco).
 // Convidado: neste aparelho.
 import { supabaseUpdateUserData } from '../api/supabase.js';
-import { EMPTY_PROGRESS, XP_LABELS, addXp, applyDailyVisit, getLevel, normalizeProgress } from '../domain/progress.js';
+import { EMPTY_PROGRESS, XP_LABELS, addXp, applyDailyVisit, bumpSocial, getLevel, normalizeProgress } from '../domain/progress.js';
 import { session } from '../state/appState.js';
 import { showAchievement, showToast } from '../ui/feedback.js';
 import { formatCount, pluralize } from '../utils/format.js';
@@ -53,6 +53,17 @@ export async function registerDailyVisit() {
   save();
   celebrateLevel(before);
   if (updated.streak > 1) showToast(`Sequência de ${formatCount(updated.streak)} dias! +5 XP`);
+  await checkAllBadges();
+}
+
+// Contadores das conquistas sociais (amigos, indicações, ingressos, matches). Grava só se mudou.
+export async function recordSocial(key, value) {
+  if (!session.currentUser) return;
+  loadProgress();
+  const updated = bumpSocial(session.progress, key, value);
+  if (!updated) return;
+  session.progress = updated;
+  save();
   await checkAllBadges();
 }
 

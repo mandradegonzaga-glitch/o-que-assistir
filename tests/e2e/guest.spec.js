@@ -71,7 +71,7 @@ test.describe('convidado', () => {
     await expect(page.locator('#streak-current')).toHaveText('7 dias');
     await expect(page.locator('#level-name')).toHaveText('Aprendiz');
     await expect(page.locator('.badge-item.unlocked h4', { hasText: 'Foguinho' })).toBeVisible();
-    await expect(page.locator('#badges-progress-label')).toHaveText('1 de 20 conquistas');
+    await expect(page.locator('#badges-progress-label')).toHaveText('1 de 26 conquistas');
   });
 });
 

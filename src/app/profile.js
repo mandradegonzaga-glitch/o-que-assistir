@@ -175,7 +175,7 @@ export function renderBadges() {
             <div class="badge-item ${unlocked ? 'unlocked' : ''}" data-color="${b.color}">
                 <div class="badge-icon">${BADGE_ICONS[b.icon]}</div>
                 <div class="badge-info">
-                    <h4>${b.name}</h4>
+                    <h4>${b.name}<span class="sr-only">, ${unlocked ? 'desbloqueada' : 'bloqueada'}</span></h4>
                     <p>${b.desc}</p>
                 </div>
             </div>`;

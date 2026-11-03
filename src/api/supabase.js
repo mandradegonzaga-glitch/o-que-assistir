@@ -645,6 +645,49 @@ export async function supabaseDeleteMatchInvite(inviteId) {
     return { success: !error };
 }
 
+// Sala do Match ao vivo: broadcast entre os aparelhos, sem gravar nada no banco.
+// onStatus recebe 'ready' quando o canal conecta, ou 'error' se não conectar.
+export function openLiveRoom(code, clientId, { onMessage, onLeave, onStatus }) {
+    const channel = supabase.channel(`match-ao-vivo:${code}`, {
+        config: { broadcast: { self: false }, presence: { key: clientId } },
+    });
+    let ready = false;
+    channel
+        .on('broadcast', { event: 'msg' }, ({ payload }) => onMessage(payload))
+        .on('presence', { event: 'leave' }, ({ key }) => onLeave(key))
+        .subscribe(status => {
+            if (status === 'SUBSCRIBED' && !ready) {
+                ready = true;
+                channel.track({ id: clientId });
+                onStatus('ready');
+            } else if (['CHANNEL_ERROR', 'TIMED_OUT'].includes(status) && !ready) {
+                onStatus('error');
+            }
+        });
+    return {
+        send: payload => channel.send({ type: 'broadcast', event: 'msg', payload: { ...payload, from: clientId } }),
+        close: () => supabase.removeChannel(channel),
+    };
+}
+
+// Indicações de títulos (database/title_shares.sql). Sem a tabela, a caixa fica oculta.
+export async function supabaseSendTitleShare(userId, friendId, row) {
+    const { error } = await supabase.from('title_shares').insert({ from_user: userId, to_user: friendId, ...row });
+    if (error?.code === '23505') return { success: false, duplicate: true };
+    return { success: !error };
+}
+
+export async function supabaseListTitleShares() {
+    const { data, error } = await supabase.rpc('list_title_shares');
+    if (error) return { success: false, shares: [] };
+    return { success: true, shares: data || [] };
+}
+
+export async function supabaseDeleteTitleShare(shareId) {
+    const { error } = await supabase.from('title_shares').delete().eq('id', shareId);
+    return { success: !error };
+}
+
 /**
  * Guardar dados do usuário nos metadados da conta (sincroniza entre aparelhos sem tabela nova)
  * @param {Object} data - Campos a gravar

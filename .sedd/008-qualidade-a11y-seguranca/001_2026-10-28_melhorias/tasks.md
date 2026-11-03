@@ -185,11 +185,11 @@ Regra de trabalho (pedido do usuário): **um item por vez, testar, evidenciar e 
 - [x] T001-074 [Backlog] Perfil do amigo: assistidos, lista, conquistas e o que os dois querem ver (`get_friend_profile`, só amizade aceita)
 - [x] T001-075 [Backlog] Opção de ocultar a atividade dos amigos, aplicada no servidor (D001-029)
 - [x] T001-076 [Backlog] Mesmo bilhete âmbar com play em todo o app; números das etapas mais legíveis
-- [ ] T001-077 [Próxima sessão] Separar "Gerar ingresso" de "Compartilhar" no modal do título
-- [ ] T001-078 [Próxima sessão] "Compartilhar" envia as informações do título, o link e o ingresso
-- [ ] T001-079 [Próxima sessão] Compartilhar com amigos do app, além do WhatsApp (deve exigir SQL novo, no modelo de `match_invites`)
-- [ ] T001-080 [Próxima sessão] Ingresso na cor do tipo: âmbar Filme, teal Série, rosa Dorama
-- [ ] T001-081 [Próxima sessão] Ingresso com sinopse cortada, 3 ou 4 nomes do elenco e onde assistir (logos só se o canvas puder exportá-los; senão, o nome da plataforma)
+- [x] T001-077 [2026-11-03] Separar "Gerar ingresso" de "Compartilhar" no modal do título
+- [x] T001-078 [2026-11-03] "Compartilhar" envia as informações do título, o link e o ingresso
+- [x] T001-079 [2026-11-03] Compartilhar com amigos do app, além do WhatsApp (deve exigir SQL novo, no modelo de `match_invites`)
+- [x] T001-080 [2026-11-03] Ingresso na cor do tipo: âmbar Filme, teal Série, rosa Dorama
+- [x] T001-081 [2026-11-03] Ingresso com sinopse cortada, 3 ou 4 nomes do elenco e onde assistir (logos só se o canvas puder exportá-los; senão, o nome da plataforma)
 
 Bugs herdados encontrados e corrigidos nessa rodada:
 - Filtro "Até (ano)" era ignorado em séries (o `replace` só trocava o `.gte`).

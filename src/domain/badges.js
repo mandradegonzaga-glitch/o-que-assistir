@@ -1,6 +1,6 @@
 // Lista única de conquistas: a tela de perfil e o aviso de desbloqueio leem daqui.
 // `icon` é a chave em src/ui/badgeIcons.js; `color` vai para o atributo data-color.
-// `check(history, wins, progress)`: progress traz bestStreak (src/domain/progress.js).
+// `check(history, wins, progress)`: progress traz bestStreak e os contadores sociais (src/domain/progress.js).
 
 // Madrugada = 0h às 4h59 no horário local
 export function isNightOwlWatch(entry) {
@@ -11,8 +11,9 @@ export function isNightOwlWatch(entry) {
 
 const countGenre = (history, ...genres) => history.filter(h => genres.some(g => h.genres?.includes(g))).length;
 const isSeries = i => i.type === 'tv' || i.type === 'dorama';
+const social = (p, key) => p?.social?.[key] || 0;
 
-export const BADGE_CATEGORIES = ['Jornada', 'Gêneros', 'Hábitos'];
+export const BADGE_CATEGORIES = ['Jornada', 'Gêneros', 'Hábitos', 'Social'];
 
 export const BADGE_DEFINITIONS = [
   { name: 'Iniciante', category: 'Jornada', desc: 'Assistiu 1 filme/série', icon: 'popcorn', color: 'gold', check: h => h.length >= 1 },
@@ -35,6 +36,12 @@ export const BADGE_DEFINITIONS = [
   { name: 'Foguinho', category: 'Hábitos', desc: '7 dias seguidos no app', icon: 'flame', color: 'orange', check: (_h, _w, p) => (p?.bestStreak || 0) >= 7 },
   { name: 'Constante', category: 'Hábitos', desc: '30 dias seguidos no app', icon: 'flame', color: 'red', check: (_h, _w, p) => (p?.bestStreak || 0) >= 30 },
   { name: 'Imparável', category: 'Hábitos', desc: '100 dias seguidos no app', icon: 'flame', color: 'gold', check: (_h, _w, p) => (p?.bestStreak || 0) >= 100 },
+  { name: 'Turma', category: 'Social', desc: 'Fez o primeiro amigo no app', icon: 'friends', color: 'blue', check: (_h, _w, p) => social(p, 'friends') >= 1 },
+  { name: 'Popular', category: 'Social', desc: '5 amigos no app', icon: 'friends', color: 'gold', check: (_h, _w, p) => social(p, 'friends') >= 5 },
+  { name: 'Indicador', category: 'Social', desc: 'Indicou um título a um amigo', icon: 'send', color: 'cyan', check: (_h, _w, p) => social(p, 'sharesSent') >= 1 },
+  { name: 'Curador', category: 'Social', desc: 'Indicou 10 títulos a amigos', icon: 'send', color: 'purple', check: (_h, _w, p) => social(p, 'sharesSent') >= 10 },
+  { name: 'Bilheteiro', category: 'Social', desc: 'Compartilhou um ingresso', icon: 'ticket', color: 'orange', check: (_h, _w, p) => social(p, 'ticketsShared') >= 1 },
+  { name: 'Par Perfeito', category: 'Social', desc: 'Deu match com alguém no Match', icon: 'heart', color: 'red', check: (_h, _w, p) => social(p, 'matches') >= 1 },
 ];
 
 export function isBadgeEarned(badgeName, history, rouletteWins, progress) {

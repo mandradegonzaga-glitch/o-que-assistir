@@ -29,6 +29,14 @@
       const matched = rows.filter(row => this.filters.every(f => f(row)));
       let out = matched;
 
+      if (this.table === 'title_shares' && this.op === 'insert') {
+        if (window.__TEST_NO_SHARES) return { data: null, error: { code: '42P01', message: 'tabela não existe' } };
+        const row = this.value;
+        if (rows.some(r => r.to_user === row.to_user && r.media_type === row.media_type && r.tmdb_id === row.tmdb_id)) {
+          return { data: null, error: { code: '23505', message: 'duplicate key' } };
+        }
+      }
+
       if (this.op === 'insert' || this.op === 'upsert') {
         const isNew = row => !(row.tmdb_id && rows.some(r => r.user_id === row.user_id && r.tmdb_id === row.tmdb_id));
         out = [].concat(this.value).filter(row => this.op === 'insert' || isNew(row))
@@ -40,7 +48,7 @@
         store[this.table] = rows.filter(row => !matched.includes(row));
       }
 
-      if (['friendships', 'match_invites'].includes(this.table) && (this.op === 'update' || this.op === 'delete')) {
+      if (['friendships', 'match_invites', 'title_shares'].includes(this.table) && (this.op === 'update' || this.op === 'delete')) {
         const id = this.ids?.[0];
         if (id && this.op === 'delete') store.removed = [...(store.removed || []), id];
         if (id && this.op === 'update') store.accepted = [...(store.accepted || []), id];
@@ -61,6 +69,39 @@
   window.supabase = {
     createClient: () => ({
       from: table => new Query(table),
+      // Realtime: abas do mesmo navegador conversam por BroadcastChannel.
+      // window.__TEST_NO_REALTIME simula canal fora do ar; window.__liveSent registra o que esta aba mandou.
+      channel: (name, opts) => {
+        const key = opts?.config?.presence?.key;
+        const handlers = [];
+        let bc = null;
+        const ch = {
+          on(type, filter, cb) { handlers.push({ type, event: filter.event, cb }); return ch; },
+          subscribe(cb) {
+            if (window.__TEST_NO_REALTIME) { setTimeout(() => cb('CHANNEL_ERROR'), 0); return ch; }
+            bc = new BroadcastChannel(`rt:${name}`);
+            bc.onmessage = ({ data }) => handlers
+              .filter(h => h.type === data.type && h.event === data.event)
+              .forEach(h => h.cb(data.body));
+            setTimeout(() => cb('SUBSCRIBED'), 0);
+            return ch;
+          },
+          send({ event, payload }) {
+            window.__liveSent = [...(window.__liveSent || []), payload];
+            bc?.postMessage({ type: 'broadcast', event, body: { payload } });
+            return Promise.resolve('ok');
+          },
+          track() { return Promise.resolve('ok'); },
+          unsubscribe() {
+            bc?.postMessage({ type: 'presence', event: 'leave', body: { key, leftPresences: [{ id: key }] } });
+            bc?.close();
+            bc = null;
+            return Promise.resolve('ok');
+          },
+        };
+        return ch;
+      },
+      removeChannel: ch => ch.unsubscribe(),
       rpc: async (name, args) => {
         const seed = window.__seed || {};
         const friendsMissing = window.__TEST_NO_FRIENDS;
@@ -83,6 +124,10 @@
         if (name === 'get_friend_profile') {
           if (window.__TEST_NO_PROFILE) return { data: null, error: { code: 'PGRST202', message: 'função não existe' } };
           return { data: seed.profiles?.[args.p_friend] || null, error: null };
+        }
+        if (name === 'list_title_shares') {
+          if (friendsMissing || window.__TEST_NO_SHARES) return { data: null, error: { code: 'PGRST202', message: 'função não existe' } };
+          return { data: (seed.shares || []).filter(s => !store.removed?.includes(s.id)), error: null };
         }
         if (name === 'list_match_invites') {
           return { data: (seed.invites || []).filter(i => !store.removed?.includes(i.id)), error: null };

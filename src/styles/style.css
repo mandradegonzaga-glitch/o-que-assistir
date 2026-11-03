@@ -3300,6 +3300,8 @@ h1, h2, h3,
 .header-actions { display: flex; align-items: center; gap: 10px; }
 .actor-field { position: relative; margin-bottom: 15px; }
 .input-row { display: flex; gap: 10px; margin-bottom: 20px; }
+/* O campo encolhe para o botão caber: sem min-width 0, a largura natural do input empurra o botão para fora */
+.input-row > input { flex: 1; min-width: 0; }
 .btn-compact { width: auto; padding: 0 20px; white-space: nowrap; flex-shrink: 0; }
 .btn-spin { width: 100%; padding: 18px; margin-bottom: 10px; font-size: 1.3rem; }
 
@@ -3770,6 +3772,29 @@ select.input-dark:hover {
     margin: var(--space-sm) 0 0;
 }
 
+.match-live-code {
+    font-family: var(--font-display, 'Big Shoulders Display', sans-serif);
+    font-size: clamp(2.5rem, 12vw, 3.5rem);
+    font-weight: 900;
+    letter-spacing: 0.18em;
+    color: var(--accent-text);
+    margin: 0 0 var(--space-md);
+    font-variant-numeric: tabular-nums;
+    user-select: all;
+}
+
+.match-live-code--small {
+    font-size: inherit;
+    letter-spacing: 0.1em;
+    margin: 0;
+}
+
+.match-partner {
+    margin: var(--space-xs) 0 0;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
 .match-pass__title {
     margin-bottom: var(--space-md);
     font-size: 2.2rem;
@@ -3861,7 +3886,35 @@ select.input-dark:hover {
 
 .friend-target {
     width: auto;
+    max-width: 100%;
+    min-height: 44px;
     padding: var(--space-sm) var(--space-md);
+    overflow-wrap: anywhere;
+}
+
+/* Ocupado ou já enviado: aria-disabled mantém o foco no botão (disabled tiraria) */
+[aria-disabled="true"] {
+    opacity: 0.7;
+    cursor: default;
+}
+
+[aria-busy="true"] {
+    cursor: progress;
+}
+
+.share-row__poster {
+    flex: none;
+    width: 40px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 6px;
+    background: var(--border-subtle);
+}
+
+.share-friends {
+    margin-top: var(--space-lg);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--border-subtle);
 }
 
 .match-inbox {

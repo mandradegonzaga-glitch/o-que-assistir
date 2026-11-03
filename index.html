@@ -133,7 +133,7 @@
                 </button>
                 <button type="button" id="btn-friends" class="header-friends" data-action="openFriends" aria-label="Amigos">
                     <svg aria-hidden="true" class="icon icon-24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle fill="currentColor" fill-opacity="0.2" cx="9" cy="8" r="3.5"/><path fill="currentColor" fill-opacity="0.2" d="M2.5 20a6.5 6.5 0 0 1 13 0z"/><path d="M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.2a6.5 6.5 0 0 1 3.5 5.8"/></svg>
-                    <span id="friends-badge" class="mode-tab__badge" hidden></span>
+                    <span id="friends-badge" class="mode-tab__badge" aria-hidden="true" hidden></span>
                 </button>
                 <button class="logout-btn is-hidden" id="logout-btn" data-action="logout">Sair</button>
             </div>
@@ -353,7 +353,7 @@
                         <ul id="match-inbox-list" class="friend-list"></ul>
                     </div>
                     <h2 class="panel-title panel-title--large"><svg aria-hidden="true" class="icon icon-28 text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path fill="currentColor" fill-opacity="0.2" d="M9 19s-6.5-4-6.5-8.8A3.7 3.7 0 0 1 9 8a3.7 3.7 0 0 1 6.5 2.2C15.5 15 9 19 9 19z"/><path d="M14.5 5.8A3.3 3.3 0 0 1 21.5 7.5c0 2.7-1.8 5-3.8 6.8"/></svg> Match</h2>
-                    <p class="panel-hint text-center">Duas pessoas, um celular. Cada uma vota sem ver a outra, e só aparece o que as duas quiseram.</p>
+                    <p class="panel-hint text-center">Duas pessoas votam nos mesmos títulos sem ver o voto da outra, e só aparece o que as duas quiseram.</p>
                     <div class="grid-two match-names">
                         <div>
                             <label for="match-name-1" class="field-label">Primeira pessoa</label>
@@ -366,8 +366,48 @@
                     </div>
                     <p class="section-note text-center">Usa o tipo e os filtros escolhidos em Descobrir.</p>
                     <button type="button" id="btn-match-start" class="btn-main ripple w-full mb-10" data-action="matchStart">Jogar no mesmo celular</button>
+                    <button type="button" id="btn-match-live" class="btn-outline ripple w-full mb-10" data-action="matchLive">Ao vivo, cada um no seu celular</button>
                     <button type="button" id="btn-match-invite" class="btn-outline ripple w-full" data-action="matchInvite">Convidar por link ou email</button>
-                    <p class="section-note text-center mt-10">No convite, você vota primeiro e envia o link. A outra pessoa não precisa de conta.</p>
+                    <p class="section-note text-center mt-10">Ao vivo, vocês votam ao mesmo tempo. No convite, você vota primeiro e envia o link. A outra pessoa não precisa de conta.</p>
+                    <label for="match-code-input" class="field-label mt-20">Recebeu um código de Match ao vivo?</label>
+                    <div class="input-row">
+                        <input type="text" id="match-code-input" class="input-dark m-0" placeholder="Ex.: K7P2QX" maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false" data-enter="matchCodeJoin">
+                        <button type="button" class="btn-outline ripple btn-compact" data-action="matchCodeJoin">Entrar</button>
+                    </div>
+                </div>
+
+                <div id="match-live-lobby" class="text-center" hidden>
+                    <h2 class="match-pass__title">Match ao vivo</h2>
+                    <p class="panel-hint">Mande o link ou dite o código. Quando a outra pessoa entrar, vocês votam ao mesmo tempo, cada um no seu celular.</p>
+                    <p class="field-label">Código da sala</p>
+                    <p id="match-live-code" class="match-live-code" aria-hidden="true"></p>
+                    <p id="match-live-code-sr" class="sr-only"></p>
+                    <label for="match-live-link" class="field-label">Link</label>
+                    <input type="text" id="match-live-link" class="input-dark mb-10" readonly>
+                    <button type="button" id="btn-match-live-send" class="btn-main ripple w-full mb-15" data-action="matchLiveSend">Enviar convite</button>
+                    <div data-friend-targets class="mb-15" hidden>
+                        <p class="field-label">Enviar para um amigo</p>
+                        <div class="friend-targets"></div>
+                    </div>
+                    <p id="match-live-status" class="section-note" role="status"></p>
+                    <button type="button" class="btn-outline ripple w-full" data-action="matchRestart">Cancelar</button>
+                </div>
+
+                <div id="match-live-join" class="text-center" hidden>
+                    <h2 class="match-pass__title">Match ao vivo <span class="match-live-code match-live-code--small" id="match-live-join-code"></span></h2>
+                    <p class="panel-hint">Vocês votam ao mesmo tempo, cada um no seu celular, sem ver o voto do outro. No fim, aparece só o que os dois quiseram.</p>
+                    <label for="match-live-name" class="field-label">Seu nome (opcional)</label>
+                    <input type="text" id="match-live-name" class="input-dark mb-15" placeholder="Pessoa 2" maxlength="20" autocomplete="off" data-enter="matchLiveJoin">
+                    <button type="button" id="btn-match-live-join" class="btn-main ripple w-full mb-10" data-action="matchLiveJoin">Entrar no Match</button>
+                    <p id="match-live-join-status" class="section-note" role="status"></p>
+                    <button type="button" class="btn-outline ripple w-full" data-action="matchRestart">Voltar</button>
+                </div>
+
+                <div id="match-live-wait" class="text-center" hidden>
+                    <h2 id="match-live-wait-title" class="match-pass__title" tabindex="-1"></h2>
+                    <p class="panel-hint">Seus votos continuam guardados aqui até o outro terminar.</p>
+                    <p id="match-live-wait-progress" class="section-note" role="status"></p>
+                    <button type="button" class="btn-outline ripple w-full" data-action="matchRestart">Sair do Match</button>
                 </div>
 
                 <div id="match-voting" hidden>
@@ -376,6 +416,7 @@
                         <span id="match-counter" class="text-small text-secondary" role="status"></span>
                     </div>
                     <div class="badges-progress__track"><div class="badges-progress__fill" id="match-fill"></div></div>
+                    <p id="match-partner" class="match-partner text-small" hidden></p>
                     <div id="match-card" class="match-card"></div>
                     <div class="grid-two">
                         <button type="button" class="btn-outline ripple" data-action="matchNo">Não quero</button>
@@ -470,6 +511,10 @@
                     <div data-friends-group hidden>
                         <h3 class="subsection-title">Pedidos para você</h3>
                         <ul id="friends-received" class="friend-list"></ul>
+                    </div>
+                    <div data-friends-group hidden>
+                        <h3 class="subsection-title" id="title-shares-heading" tabindex="-1">Indicações para você</h3>
+                        <ul id="title-shares" class="friend-list"></ul>
                     </div>
                     <div data-friends-group hidden>
                         <h3 class="subsection-title">Seus amigos</h3>
@@ -637,7 +682,14 @@
                         </svg>
                         Adicionar à Roleta
                     </button>
-                    <button type="button" id="btn-compartilhar" class="btn-modal btn-full-width ripple" data-action="compartilhar">
+                    <button type="button" id="btn-ingresso" class="btn-modal ripple tooltip" data-action="gerarIngresso" data-tooltip="Baixar a imagem do ingresso">
+                        <svg aria-hidden="true" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"/>
+                            <line x1="14" y1="5" x2="14" y2="19" stroke-dasharray="2 2.5"/>
+                        </svg>
+                        <span class="btn-label">Gerar ingresso</span>
+                    </button>
+                    <button type="button" id="btn-compartilhar" class="btn-modal ripple" data-action="compartilhar" aria-haspopup="dialog">
                         <svg aria-hidden="true" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="18" cy="5" r="3"/>
                             <circle cx="6" cy="12" r="3"/>
@@ -657,6 +709,26 @@
                 </div>
             </div>
             <button class="close-btn" data-action="fecharModal" aria-label="Fechar detalhes">FECHAR</button>
+        </div>
+    </div>
+
+    <div id="modal-share" class="modal-overlay">
+        <div class="modal-content modal-content--panel" role="dialog" aria-modal="true" aria-labelledby="share-title" aria-describedby="share-subtitle" tabindex="-1">
+            <h2 class="panel-title" id="share-title">Compartilhar</h2>
+            <p id="share-subtitle" class="panel-hint text-center"></p>
+            <button type="button" id="btn-share-apps" class="btn-main ripple w-full mb-10" data-action="compartilharApps"><span id="share-apps-label" class="btn-label">WhatsApp e outros apps</span></button>
+            <div id="share-whatsapp" hidden>
+                <button type="button" id="btn-share-whatsapp" class="btn-outline ripple w-full" data-action="compartilharWhatsapp" aria-describedby="share-whatsapp-note"><span class="btn-label">WhatsApp</span></button>
+                <p id="share-whatsapp-note" class="section-note text-center mb-10"></p>
+            </div>
+            <p class="section-note text-center">Vai com o ingresso, a sinopse, o elenco, onde assistir e o link do título.</p>
+            <div id="share-friends" class="share-friends" hidden>
+                <h3 class="subsection-title">Enviar para amigos do app</h3>
+                <div class="friend-targets"></div>
+                <p class="section-note">Aparece na caixa de indicações de quem recebe.</p>
+            </div>
+            <p id="share-friends-hint" class="section-note text-center" hidden></p>
+            <button type="button" class="btn-outline ripple w-full mt-20" data-action="closeModal" data-arg="modal-share">Fechar</button>
         </div>
     </div>
 

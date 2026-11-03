@@ -127,8 +127,36 @@ describe('streak badges', () => {
     expect(isBadgeEarned('Constante', [], 0)).toBe(false);
   });
 
-  it('has the 20 badges of the spec', () => {
-    expect(computeBadgeStatuses([], 0)).toHaveLength(20);
+  it('has the 20 original badges plus 6 social ones', () => {
+    expect(computeBadgeStatuses([], 0)).toHaveLength(26);
+  });
+});
+
+describe('social badges', () => {
+  const withSocial = social => ({ bestStreak: 0, social });
+
+  it('count friends, shares, tickets and matches at their thresholds', () => {
+    const cases = [
+      ['Turma', 'friends', 1], ['Popular', 'friends', 5],
+      ['Indicador', 'sharesSent', 1], ['Curador', 'sharesSent', 10],
+      ['Bilheteiro', 'ticketsShared', 1], ['Par Perfeito', 'matches', 1],
+    ];
+    cases.forEach(([name, key, needed]) => {
+      expect(isBadgeEarned(name, [], 0, withSocial({ [key]: needed }))).toBe(true);
+      expect(isBadgeEarned(name, [], 0, withSocial({ [key]: needed - 1 }))).toBe(false);
+    });
+  });
+
+  it('do not break with progress saved before the social counters', () => {
+    expect(isBadgeEarned('Turma', [], 0, { bestStreak: 3 })).toBe(false);
+    expect(isBadgeEarned('Par Perfeito', [], 0)).toBe(false);
+  });
+
+  it('all live in the Social category and have an icon', async () => {
+    const { BADGE_ICONS } = await import('../../src/ui/badgeIcons.js');
+    const socials = BADGE_DEFINITIONS.filter(b => b.category === 'Social');
+    expect(socials.map(b => b.name)).toEqual(['Turma', 'Popular', 'Indicador', 'Curador', 'Bilheteiro', 'Par Perfeito']);
+    BADGE_DEFINITIONS.forEach(b => expect(BADGE_ICONS[b.icon]).toContain('<svg'));
   });
 });
 

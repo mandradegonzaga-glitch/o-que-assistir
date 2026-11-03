@@ -5,6 +5,12 @@ const TONE = 'fill="currentColor" fill-opacity="0.2"';
 const SOLID = 'fill="currentColor" stroke="none"';
 
 export const BADGE_ICONS = {
+  // Duas pessoas (mesmo desenho da aba Amigos)
+  friends: svg(`<circle ${TONE} cx="9" cy="8" r="3.5"/><path ${TONE} d="M2.5 20a6.5 6.5 0 0 1 13 0z"/><path d="M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.2a6.5 6.5 0 0 1 3.5 5.8"/>`),
+  // Avião de papel
+  send: svg(`<path ${TONE} d="M21.5 2.5 2.5 10l7 3.5 3.5 7z"/><path d="M21.5 2.5 9.5 13.5"/>`),
+  // Ingresso com picote
+  ticket: svg(`<path ${TONE} d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"/><path d="M14 5v2M14 11v2M14 17v2"/>`),
   // Balde de pipoca
   popcorn: svg(`<path ${TONE} d="M6 10h12l-1.5 11h-9z"/><path d="M10 10l.7 11M14 10l-.7 11"/><path d="M6 10a2.5 2.5 0 0 1 1-4.8 3 3 0 0 1 5-1.7 3 3 0 0 1 5 1.7 2.5 2.5 0 0 1 1 4.8"/>`),
   // Claquete

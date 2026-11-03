@@ -18,21 +18,21 @@ Dois usuários abrem uma sessão de Match, votam em sequência nos mesmos títul
 
 ## DEVE (MUST)
 
-- [ ] Criar sessão de Match com link/código compartilhável
-- [ ] Ambos os usuários veem os mesmos títulos na mesma ordem
-- [ ] Votação simultânea via swipe (❤️ / ✕) com Supabase Realtime
-- [ ] Detectar match mútuo em tempo real e exibir celebração
-- [ ] Salvar título matched em lista compartilhada dos dois usuários
-- [ ] Funcionar em mobile via PWA (touch/swipe gestures)
-- [ ] Sessão expira após X minutos de inatividade
+- [x] Criar sessão de Match com link/código compartilhável (`?ao-vivo=CÓDIGO`, código de 6 caracteres sem ambíguos)
+- [x] Ambos os usuários veem os mesmos títulos na mesma ordem
+- [x] Votação simultânea via swipe/botões/setas com Supabase Realtime (broadcast, sem tabela)
+- [x] Detectar match mútuo em tempo real e exibir celebração (quando os dois terminam)
+- [ ] Salvar título matched em lista compartilhada dos dois usuários — não feito: o resultado abre o título e cada um salva na própria lista
+- [x] Funcionar em mobile via PWA (touch/swipe gestures)
+- [x] Sessão termina quando alguém sai (presença do Realtime); quem entra desiste após 15 s sem resposta
 
 ## NÃO DEVE (MUST NOT)
 
-- [ ] Revelar o voto de um usuário para o outro antes do match
-- [ ] Requerer conta premium (feature core do app gratuito)
-- [ ] Funcionar apenas com usuários já "amigos" (link direto suficiente)
-- [ ] Usar polling — deve usar Supabase Realtime subscriptions
-- [ ] Perder votos se um usuário ficar offline momentaneamente
+- [x] Revelar o voto de um usuário para o outro antes do match — os votos só saem do aparelho depois que os dois terminam
+- [x] Requerer conta premium — funciona até como convidado
+- [x] Funcionar apenas com usuários já "amigos" — link, código ou convite para amigo
+- [x] Usar polling — usa canal Realtime (o "oi" de quem entra se repete a cada 2 s só até a sala responder)
+- [ ] Perder votos se um usuário ficar offline momentaneamente — parcial: recarregar a página de quem entrou recomeça a votação dessa pessoa (mesmo id na sessão); a sala de quem criou não sobrevive a recarregar
 
 ---
 

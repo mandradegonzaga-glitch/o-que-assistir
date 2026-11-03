@@ -103,20 +103,41 @@ Testes: Jest 125 → **145** (12 suítes, todos passando).
 
 ## O que falta
 
-### Próxima sessão: ingresso e compartilhar
-| ID | Item |
-|---|---|
-| T001-077 | Separar "Gerar ingresso" de "Compartilhar" no modal do título |
-| T001-078 | "Compartilhar" envia as informações do título, o link e o ingresso |
-| T001-079 | Compartilhar com amigos do app, além do WhatsApp (deve exigir SQL novo, no modelo de `match_invites`) |
-| T001-080 | Ingresso na cor do tipo: âmbar Filme, teal Série, rosa Dorama |
-| T001-081 | Ingresso com sinopse cortada, 3 ou 4 nomes do elenco e onde assistir (logos só se o canvas puder exportá-los; senão, o nome da plataforma) |
+### Ingresso e compartilhar (feito em 2026-11-03, sem commit)
+| ID | Item | Estado |
+|---|---|---|
+| T001-077 | Botão "Gerar ingresso" separado: baixa só a imagem | ✅ |
+| T001-078 | "Compartilhar" abre opções. Celular: compartilhar do sistema com ingresso, texto e link. Computador: baixa o ingresso e copia o texto, ou abre o WhatsApp Web com o texto | ✅ |
+| T001-079 | Enviar para amigos do app (`database/title_shares.sql`) e caixa "Indicações para você" no modal de amigos, que também conta no contador da aba | ✅ código e testes; **falta o usuário rodar o SQL** |
+| T001-080 | Ingresso na cor do tipo: âmbar, teal, rosa. Série coreana conta como dorama (`origin_country` KR) | ✅ |
+| T001-081 | Sinopse cortada para caber, até 4 nomes do elenco e logos de onde assistir. Os logos do TMDB exportam com CORS; se algum falhar, o ingresso mostra os nomes | ✅ |
+
+Depois do teste do usuário: o WhatsApp não recebe imagem pelo link `wa.me`. No computador, o botão copia o ingresso para colar com Ctrl+V (ou baixa, se o navegador não deixar copiar). No celular sem o compartilhar do sistema (fora de HTTPS), baixa o ingresso para anexar pelo clipe.
+
+### Conquistas sociais (feito em 2026-11-03, sem commit)
+6 conquistas na categoria Social: Turma (1 amigo), Popular (5), Indicador (1 indicação), Curador (10), Bilheteiro (compartilhou um ingresso), Par Perfeito (primeiro match). Os contadores ficam em `progress.social`, nos metadados da conta (convidado: neste aparelho). Não precisa de SQL. Amigos guarda o maior número já visto, então desfazer amizade não tira a conquista.
+
+### Revisão de UX e acessibilidade das telas novas (2026-11-03, sem commit)
+- O botão Amigos agora diz em voz alta quantos pedidos e indicações estão esperando. Antes, o `aria-label` fixo escondia o número.
+- Apagar uma indicação tem "Desfazer" e Ctrl+Z, como as outras remoções. O foco vai para o próximo item ou volta ao lugar certo.
+- Os botões de gerar, compartilhar e enviar para amigo usam `aria-disabled` e `aria-busy` em vez de `disabled`, para não perder o foco do teclado. Mostram "Gerando…" ou "Preparando…" enquanto trabalham. O enviado é anunciado como "Enviado para Bia".
+- Abrir uma indicação mostra o título por cima da lista de amigos. Ao fechar, o foco volta para a lista.
+- As conquistas dizem "desbloqueada" ou "bloqueada" em texto para o leitor de tela, e não só pela cor.
+- O atalho de colar aparece como Cmd+V no Mac e Ctrl+V nos outros sistemas. "Compartilhar" tem `aria-haspopup="dialog"`. Nomes longos nos botões de amigo quebram a linha, e esses botões têm 44px de altura.
+
+### Match ao vivo (spec 006, 2026-11-03)
+Cada pessoa vota no seu aparelho, ao mesmo tempo, por um canal de broadcast do Supabase Realtime (`openLiveRoom` em `src/api/supabase.js`). Não precisa de SQL nem de conta. O protocolo puro está em `src/domain/liveMatch.js`, com testes. A sala é aberta por link `?ao-vivo=CÓDIGO`, pelo código digitado ou por convite na caixa de um amigo (`ao-vivo:CÓDIGO`). Cada um vê até onde o outro chegou. Os votos só são trocados depois que os dois terminam. Uma terceira pessoa recebe "cheio", e a saída de alguém é avisada pela presença do Realtime. Nos testes, o falso Supabase usa `BroadcastChannel` entre duas abas (fixture `openPage`).
+
+Precisa ser conferido com o Supabase real: o Realtime precisa estar ligado no projeto, com acesso público a canais de broadcast (é o padrão).
+
+Testes: Jest 250, banco 16, e2e 111. Service worker em `v19`.
 
 ### Antes de publicar
 | Item | Estado |
 |---|---|
 | Teste real de amizade entre duas contas (T001-071) | SQL rodado pelo usuário; falta a segunda conta e informar o username dela |
-| Push do commit local | Aguardando pedido do usuário |
+| Rodar `database/title_shares.sql` no Supabase (depois de `friends.sql`) | Com o usuário |
+| Commit e push | Aguardando pedido do usuário (há 1 commit local, mais as mudanças do ingresso) |
 | Revogar a chave TMDB antiga | Só depois do push e de conferir o site; confirmar antes que o segredo é a chave nova |
 
 ### Com o usuário
