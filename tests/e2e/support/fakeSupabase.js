@@ -75,10 +75,18 @@
         const key = opts?.config?.presence?.key;
         const handlers = [];
         let bc = null;
+        window.__rtChannels = window.__rtChannels || new Set();
+        // window.__realtimeEmit('postgres_changes', 'INSERT', 'title_shares') simula uma mudança no banco
+        window.__realtimeEmit = window.__realtimeEmit || ((type, event, table) => window.__rtChannels.forEach(c => c.emit(type, event, table)));
         const ch = {
-          on(type, filter, cb) { handlers.push({ type, event: filter.event, cb }); return ch; },
-          subscribe(cb) {
+          name,
+          emit(type, event, table) {
+            handlers.filter(h => h.type === type && h.event === event && (!table || h.table === table)).forEach(h => h.cb({}));
+          },
+          on(type, filter, cb) { handlers.push({ type, event: filter.event, table: filter.table, cb }); return ch; },
+          subscribe(cb = () => {}) {
             if (window.__TEST_NO_REALTIME) { setTimeout(() => cb('CHANNEL_ERROR'), 0); return ch; }
+            window.__rtChannels.add(ch);
             bc = new BroadcastChannel(`rt:${name}`);
             bc.onmessage = ({ data }) => handlers
               .filter(h => h.type === data.type && h.event === data.event)
@@ -93,6 +101,7 @@
           },
           track() { return Promise.resolve('ok'); },
           unsubscribe() {
+            window.__rtChannels.delete(ch);
             bc?.postMessage({ type: 'presence', event: 'leave', body: { key, leftPresences: [{ id: key }] } });
             bc?.close();
             bc = null;

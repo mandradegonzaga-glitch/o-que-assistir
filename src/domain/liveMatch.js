@@ -44,6 +44,7 @@ export function parseLiveMessage(raw, size) {
       return isIndex(raw.index, size) ? { event, from, index: raw.index } : null;
     case 'done':
     case 'bye':
+    case 'resync':
       return { event, from };
     case 'votes': {
       const votes = raw.votes;
@@ -73,8 +74,9 @@ export function createLiveState(role, selfId) {
 }
 
 // Recebe uma mensagem (ou 'self-done') e devolve o novo estado e o que o app precisa fazer:
-// { send: 'start' | 'full' | 'done' | 'votes', to? } ou um aviso ('partner-joined', 'start', 'full',
-// 'progress', 'finish', 'partner-left').
+// { send: 'start' | 'full' | 'progress' | 'done' | 'votes', to? } ou um aviso ('partner-joined', 'start',
+// 'full', 'progress', 'finish', 'partner-left', 'partner-back').
+// 'resync' é o pedido de quem recarregou a página: o outro responde com até onde chegou.
 export function liveReduce(state, msg) {
   const next = { ...state };
   const actions = [];
@@ -106,7 +108,17 @@ export function liveReduce(state, msg) {
     return { state, actions };
   } else {
     if (!state.partnerId || msg.from !== state.partnerId) return { state, actions };
-    if (msg.event === 'progress') {
+    // Qualquer mensagem do par mostra que ele voltou
+    if (state.left && msg.event !== 'bye') {
+      next.left = false;
+      actions.push('partner-back');
+    }
+    if (msg.event === 'resync') {
+      actions.push({ send: 'progress' });
+      if (state.selfDone) actions.push({ send: 'done' });
+      // Votos que o outro perdeu ao recarregar: manda de novo se ele já tinha terminado
+      if (state.selfDone && state.partnerDone) actions.push({ send: 'votes' });
+    } else if (msg.event === 'progress') {
       next.partnerProgress = Math.max(state.partnerProgress, msg.index);
       actions.push('progress');
     } else if (msg.event === 'done') {

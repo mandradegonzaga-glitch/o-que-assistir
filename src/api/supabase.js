@@ -645,6 +645,22 @@ export async function supabaseDeleteMatchInvite(inviteId) {
     return { success: !error };
 }
 
+// Avisos: o Supabase manda um sinal quando chega algo para esta pessoa (database/realtime_inbox.sql).
+// O sinal só diz "mudou"; os dados vêm das mesmas funções de sempre, que respeitam as regras de acesso.
+export function subscribeInbox(userId, onChange) {
+    const channel = supabase.channel(`caixa:${userId}`);
+    [
+        ['INSERT', 'title_shares', `to_user=eq.${userId}`],
+        ['INSERT', 'match_invites', `to_user=eq.${userId}`],
+        ['INSERT', 'friendships', `addressee_id=eq.${userId}`],
+        ['UPDATE', 'friendships', `requester_id=eq.${userId}`],
+    ].forEach(([event, table, filter]) => {
+        channel.on('postgres_changes', { event, schema: 'public', table, filter }, () => onChange(table));
+    });
+    channel.subscribe();
+    return () => supabase.removeChannel(channel);
+}
+
 // Sala do Match ao vivo: broadcast entre os aparelhos, sem gravar nada no banco.
 // onStatus recebe 'ready' quando o canal conecta, ou 'error' se não conectar.
 export function openLiveRoom(code, clientId, { onMessage, onLeave, onStatus }) {

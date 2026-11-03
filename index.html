@@ -374,6 +374,11 @@
                         <input type="text" id="match-code-input" class="input-dark m-0" placeholder="Ex.: K7P2QX" maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false" data-enter="matchCodeJoin">
                         <button type="button" class="btn-outline ripple btn-compact" data-action="matchCodeJoin">Entrar</button>
                     </div>
+                    <div id="match-history" class="match-history" hidden>
+                        <h3 class="subsection-title">Seus matches</h3>
+                        <p class="section-note">O que deu match em cada partida. Quem jogou com você também guarda a lista.</p>
+                        <ul id="match-history-list" class="match-history__list"></ul>
+                    </div>
                 </div>
 
                 <div id="match-live-lobby" class="text-center" hidden>
@@ -531,6 +536,11 @@
                         <span>Amigos podem ver o que assisti, minha lista e minhas conquistas</span>
                     </label>
                     <p class="section-note">Quem não é amigo nunca vê. Desligado, nem amigos veem.</p>
+                    <label class="provider-choice friends-share">
+                        <input type="checkbox" id="friends-notify" data-change="toggleDeviceNotify" aria-describedby="friends-notify-note">
+                        <span>Avisar neste aparelho quando chegar pedido, indicação ou convite</span>
+                    </label>
+                    <p id="friends-notify-note" class="section-note">Vale com o app aberto, mesmo em outra aba ou minimizado. Dentro do app os avisos aparecem sempre.</p>
                 </div>
                 </div>
             

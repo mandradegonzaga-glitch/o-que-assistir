@@ -156,6 +156,37 @@ describe('liveReduce', () => {
     });
   });
 
+  it('quem volta depois de recarregar pede o estado e o outro responde', () => {
+    play(s => {
+      const { run } = s;
+      run('host', hello);
+      run('host', { event: 'progress', from: GUEST, index: 4 });
+      expect(run('host', { event: 'bye', from: GUEST })).toEqual(['partner-left']);
+      // Quem entrou recarregou: o "resync" tira o aviso de saída e a sala responde até onde chegou
+      expect(run('host', { event: 'resync', from: GUEST })).toEqual(['partner-back', { send: 'progress' }]);
+      expect(s.host.left).toBe(false);
+      run('host', { event: 'self-done' });
+      expect(sends(run('host', { event: 'resync', from: GUEST }))).toEqual(['progress', 'done']);
+    });
+  });
+
+  it('resync depois que os dois terminaram reenvia os votos', () => {
+    play(s => {
+      const { run } = s;
+      run('host', hello);
+      run('host', { event: 'done', from: GUEST });
+      run('host', { event: 'self-done' });
+      expect(sends(run('host', { event: 'resync', from: GUEST }))).toEqual(['progress', 'done', 'votes']);
+    });
+  });
+
+  it('resync de quem não é o par é ignorado', () => {
+    play(s => {
+      s.run('host', hello);
+      expect(s.run('host', { event: 'resync', from: OTHER })).toEqual([]);
+    });
+  });
+
   it('saída do par antes do fim avisa; depois do resultado, não', () => {
     play(({ run }) => {
       run('host', hello);

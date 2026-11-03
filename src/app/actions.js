@@ -11,6 +11,8 @@ import { syncUrl } from './urlSync.js';
 import { desmarcarTemporadaAtual, desmarcarTodosEpisodios, marcarTemporadaAtual, marcarTodosEpisodios, onSeasonChange, toggleEpisode } from './episodes.js';
 import { friendAccept, friendAdd, friendInvite, friendMatchCurrent, friendOpen, friendRemove, friendSendTitle, friendShareDelete, friendShareOpen, friendUnfriendCurrent, matchInboxDelete, matchInboxOpen, openFriends, toggleShareWithFriends } from './friends.js';
 import { removeLibItem } from './library.js';
+import { toggleDeviceNotify } from './notifications.js';
+import { matchHistoryRemove, matchHistorySave } from './matchHistory.js';
 import { nextOnboarding } from './onboarding.js';
 import { abrirPerfil, alterarSenha, deletarConta, salvarPerfil } from './profile.js';
 import { addCurrentToRoulette, addRoletaItem, girarRoleta, limparRoleta, removeRoletaItem } from './roulette.js';
@@ -68,6 +70,8 @@ const clickActions = {
   matchInvite,
   matchJoin,
   matchCodeJoin,
+  matchHistoryRemove: el => matchHistoryRemove(el.dataset.arg),
+  matchHistorySave: el => matchHistorySave(el.dataset.arg),
   matchLive,
   matchLiveJoin,
   matchLiveSend,
@@ -136,6 +140,7 @@ const changeActions = {
   toggleMyProvider,
   onSeasonChange: el => onSeasonChange(el.value),
   toggleShareWithFriends,
+  toggleDeviceNotify,
   toggleEpisode: el => toggleEpisode(Number(el.dataset.series), Number(el.dataset.season), Number(el.dataset.episode), el.checked),
 };
 

@@ -22,7 +22,7 @@ Dois usuários abrem uma sessão de Match, votam em sequência nos mesmos títul
 - [x] Ambos os usuários veem os mesmos títulos na mesma ordem
 - [x] Votação simultânea via swipe/botões/setas com Supabase Realtime (broadcast, sem tabela)
 - [x] Detectar match mútuo em tempo real e exibir celebração (quando os dois terminam)
-- [ ] Salvar título matched em lista compartilhada dos dois usuários — não feito: o resultado abre o título e cada um salva na própria lista
+- [x] Salvar título matched em lista dos dois usuários — "Seus matches" na tela do Match: cada pessoa da partida guarda a sua cópia (conta: metadados; convidado: aparelho), com botão para salvar em Quero Assistir
 - [x] Funcionar em mobile via PWA (touch/swipe gestures)
 - [x] Sessão termina quando alguém sai (presença do Realtime); quem entra desiste após 15 s sem resposta
 
@@ -32,7 +32,7 @@ Dois usuários abrem uma sessão de Match, votam em sequência nos mesmos títul
 - [x] Requerer conta premium — funciona até como convidado
 - [x] Funcionar apenas com usuários já "amigos" — link, código ou convite para amigo
 - [x] Usar polling — usa canal Realtime (o "oi" de quem entra se repete a cada 2 s só até a sala responder)
-- [ ] Perder votos se um usuário ficar offline momentaneamente — parcial: recarregar a página de quem entrou recomeça a votação dessa pessoa (mesmo id na sessão); a sala de quem criou não sobrevive a recarregar
+- [x] Perder votos se um usuário ficar offline momentaneamente — a partida fica salva na aba (sessionStorage): quem recarrega volta ao mesmo cartão e pede ao outro o estado (`resync`); votos já trocados são reenviados
 
 ---
 

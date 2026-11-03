@@ -1,5 +1,6 @@
 // Abas, tipo de conteúdo, atalhos, gestos e utilitários de campo
 import { renderLibrary } from '../app/library.js';
+import { renderMatchHistory } from '../app/matchHistory.js';
 import { syncUrl } from '../app/urlSync.js';
 import { state } from '../state/appState.js';
 import { isHorizontalSwipe } from '../domain/gestures.js';
@@ -55,6 +56,8 @@ export function switchMode(mode) {
     ['discover', 'roulette', 'match'].forEach(view => {
         document.getElementById(`view-${view}`).style.display = mode === view ? 'block' : 'none';
     });
+
+    if (mode === 'match') renderMatchHistory();
 
     // Salvar preferência
     localStorage.setItem('last_mode', mode);

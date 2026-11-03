@@ -130,15 +130,22 @@ Cada pessoa vota no seu aparelho, ao mesmo tempo, por um canal de broadcast do S
 
 Precisa ser conferido com o Supabase real: o Realtime precisa estar ligado no projeto, com acesso público a canais de broadcast (é o padrão).
 
-Testes: Jest 250, banco 16, e2e 111. Service worker em `v19`.
+### Lista do Match, sala que sobrevive a recarregar, avisos (2026-11-03)
+- **Sala que sobrevive a recarregar:** cada voto e cada mensagem salvam a partida na aba. Ao recarregar, a pessoa volta ao mesmo cartão, o outro vê "voltou!" e os votos perdidos são reenviados. Ao terminar, a sala salva e o código no endereço são apagados.
+- **Lista do Match ("Seus matches"):** cada partida com match fica guardada para quem jogou, com quem foi e quando (até 15 partidas, só com os ids dos títulos). A conta guarda nos metadados e o convidado no aparelho. Os títulos abrem, dá para salvar todos em Quero Assistir e apagar tem desfazer.
+- **Avisos:** indicação, convite de Match (inclusive ao vivo), pedido de amizade e aceite viram aviso dentro do app e atualizam o contador. Chegam na hora com `database/realtime_inbox.sql` (publicação do Realtime). Sem esse SQL, aparecem ao voltar para a aba ou a cada 2 minutos. A opção "Avisar neste aparelho" mostra notificação do sistema com o app em segundo plano; não funciona com o app fechado, porque isso exigiria push pelo servidor.
+
+**Com o usuário:** rodar `database/realtime_inbox.sql`.
+
+Testes: Jest 268, banco 17, e2e 126. Service worker em `v20`.
 
 ### Antes de publicar
 | Item | Estado |
 |---|---|
 | Teste real de amizade entre duas contas (T001-071) | SQL rodado pelo usuário; falta a segunda conta e informar o username dela |
-| Rodar `database/title_shares.sql` no Supabase (depois de `friends.sql`) | Com o usuário |
-| Commit e push | Aguardando pedido do usuário (há 1 commit local, mais as mudanças do ingresso) |
-| Revogar a chave TMDB antiga | Só depois do push e de conferir o site; confirmar antes que o segredo é a chave nova |
+| Rodar `database/title_shares.sql` no Supabase (depois de `friends.sql`) | ✅ rodado em 2026-11-03 (função e tabela conferidas pela API) |
+| Commit e push | ✅ `8b09a23` publicado em 2026-11-03 (site em `v19`) |
+| Revogar a chave TMDB antiga | ✅ revogada pelo usuário; proxy conferido funcionando com a chave nova |
 
 ### Com o usuário
 Ligar confirmação de email, conferir Site URL no Supabase e branch de produção na Vercel, links do rodapé (Apoiar/Feedback), limpar dados de teste da conta real.

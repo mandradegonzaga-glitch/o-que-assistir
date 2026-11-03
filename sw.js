@@ -1,6 +1,6 @@
 // Service Worker - O Que Assistir? PWA
 // Trocar CACHE_VERSION a cada deploy: o activate apaga os caches de versões anteriores.
-const CACHE_VERSION = 'v19';
+const CACHE_VERSION = 'v20';
 const STATIC_CACHE = `oqueassistir-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `oqueassistir-dynamic-${CACHE_VERSION}`;
 
@@ -21,7 +21,9 @@ const STATIC_ASSETS = [
     '/src/app/guestLibrary.js',
     '/src/app/library.js',
     '/src/app/match.js',
+    '/src/app/matchHistory.js',
     '/src/app/myProviders.js',
+    '/src/app/notifications.js',
     '/src/app/onboarding.js',
     '/src/app/profile.js',
     '/src/app/progress.js',
@@ -36,7 +38,9 @@ const STATIC_ASSETS = [
     '/src/domain/filters.js',
     '/src/domain/gestures.js',
     '/src/domain/history.js',
+    '/src/domain/inbox.js',
     '/src/domain/legacyData.js',
+    '/src/domain/matchHistory.js',
     '/src/domain/liveMatch.js',
     '/src/domain/match.js',
     '/src/domain/mediaItem.js',
@@ -224,7 +228,12 @@ self.addEventListener('push', (event) => {
 // Abrir app ao clicar na notificação
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
+    const url = event.notification.data?.url || '/';
     event.waitUntil(
-        clients.openWindow(event.notification.data.url || '/')
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windows => {
+            // App já aberto: traz a aba para a frente em vez de abrir outra
+            const open = windows.find(w => new URL(w.url).origin === self.location.origin);
+            return open ? open.focus() : clients.openWindow(url);
+        })
     );
 });

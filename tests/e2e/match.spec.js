@@ -1,4 +1,4 @@
-import { test, expect, enterAsGuest, modal, LIST } from './support/app.js';
+import { test, expect, enterAsGuest, modal, openApp, LIST } from './support/app.js';
 
 const voteAll = async (page, wanted) => {
   for (let i = 0; i < LIST.length; i++) {
@@ -211,5 +211,81 @@ test.describe('match por link', () => {
     await page.locator('#match-result [data-action="matchRestart"]').click();
     await expect(page).not.toHaveURL(/match=/);
     await expect(page.locator('#match-setup')).toBeVisible();
+  });
+});
+
+test.describe('lista do Match', () => {
+  async function playLocal(page, wanted) {
+    await start(page);
+    await voteAll(page, wanted);
+    await page.locator('#btn-match-continue').click();
+    await voteAll(page, wanted);
+    await expect(page.locator('#match-result')).toBeVisible();
+    await page.locator('#match-result [data-action="matchRestart"]').click();
+  }
+
+  test('guarda o que deu match, com quem, e abre o título', async ({ page }) => {
+    await playLocal(page, t => ['Filme Um', 'Filme Dois'].includes(t));
+    const history = page.locator('#match-history');
+    await expect(history).toBeVisible();
+    await expect(history.locator('.match-history__meta')).toHaveText(/^Com Ana e Bia · \d{1,2} de \w+/);
+    await expect(history.locator('.match-history__title')).toHaveCount(2);
+    await history.locator('.match-history__title', { hasText: 'Filme Dois' }).click();
+    await expect(modal(page)).toBeVisible();
+    await expect(page.locator('#m-title')).toHaveText('Filme Dois');
+  });
+
+  test('sem match, nada entra na lista', async ({ page }) => {
+    await start(page);
+    await voteAll(page, t => t === 'Filme Um');
+    await page.locator('#btn-match-continue').click();
+    await voteAll(page, t => t === 'Filme Dois');
+    await page.locator('#match-result [data-action="matchRestart"]').click();
+    await expect(page.locator('#match-history')).toBeHidden();
+  });
+
+  test('salva todos em Quero Assistir, sem repetir', async ({ page }) => {
+    await playLocal(page, t => ['Filme Um', 'Filme Dois'].includes(t));
+    await page.locator('[data-action="matchHistorySave"]').click();
+    await expect(page.locator('#toast')).toHaveText('2 títulos salvos em Quero Assistir!');
+    await page.locator('[data-action="matchHistorySave"]').click();
+    await expect(page.locator('#toast')).toHaveText('Esses títulos já estão em Quero Assistir.');
+  });
+
+  test('apagar tem desfazer', async ({ page }) => {
+    await playLocal(page, t => t === 'Filme Um');
+    await page.locator('[data-action="matchHistoryRemove"]').click();
+    await expect(page.locator('#match-history')).toBeHidden();
+    await page.locator('#undo-toast-btn').click();
+    await expect(page.locator('#match-history .match-history__title')).toHaveText(['Filme Um']);
+  });
+
+  test('a lista continua depois de recarregar', async ({ page }) => {
+    await playLocal(page, t => t === 'Filme Três');
+    await page.reload();
+    await page.locator('#login-form [data-action="loginAsGuest"]').click(); // convidado entra de novo; a lista fica no aparelho
+    await page.locator('#tab-mode-match').click();
+    await expect(page.locator('#match-history .match-history__title')).toHaveText(['Filme Três']);
+  });
+});
+
+test.describe('lista do Match com conta', () => {
+  test.use({ logged: true });
+
+  test('grava nos dados da conta, não no aparelho', async ({ page }) => {
+    await openApp(page);
+    await page.locator('#tab-mode-match').click();
+    await page.locator('#btn-match-start').click();
+    await voteAll(page, t => t === 'Filme Um');
+    await page.locator('#btn-match-continue').click();
+    await voteAll(page, t => t === 'Filme Um');
+    await expect(page.locator('#match-result')).toBeVisible();
+    const saved = await page.evaluate(() => ({
+      account: window.__db.user_metadata.matchHistory,
+      device: localStorage.getItem('guest_match_history'),
+    }));
+    expect(saved.account).toHaveLength(1);
+    expect(saved.account[0]).toMatchObject({ with: 'Pessoa 1 e Pessoa 2', type: 'movie' });
+    expect(saved.device).toBeNull();
   });
 });

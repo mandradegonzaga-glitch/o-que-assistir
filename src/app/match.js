@@ -14,6 +14,7 @@ import { escapeHtml } from '../utils/escapeHtml.js';
 import { formatRating } from '../utils/format.js';
 import { getFilterOptions } from './discover.js';
 import { sendInviteToFriend } from './friends.js';
+import { recordMatch, renderMatchHistory } from './matchHistory.js';
 import { grantXp, recordSocial } from './progress.js';
 import { carregarDetalhes } from './titleModal.js';
 import { selecionarTipo, switchMode } from '../ui/navigation.js';
@@ -97,7 +98,10 @@ export function matchVote(wanted) {
   if (!game || document.getElementById('match-voting').hidden) return;
   if (wanted) game.votes[game.player].add(game.titles[game.index].id);
   game.index++;
-  if (game.mode === 'live') live?.room.send({ event: 'progress', index: game.index });
+  if (game.mode === 'live') {
+    live?.room.send({ event: 'progress', index: game.index });
+    saveLive();
+  }
 
   if (game.index < game.titles.length) {
     renderCard();
@@ -153,6 +157,7 @@ function showResult() {
     createConfetti();
     grantXp('match');
     recordSocial('matches');
+    recordMatch({ partner: partnerLabel(), type: game.type, ids: matches.map(t => t.id) });
   }
   // Quem respondeu a um convite devolve o resultado para quem chamou
   const answer = document.getElementById('match-answer');
@@ -162,6 +167,13 @@ function showResult() {
     document.getElementById('match-answer-link').value = inviteLink();
   }
   heading.focus();
+}
+
+// Com quem foi a partida, do ponto de vista de quem está neste aparelho
+function partnerLabel() {
+  if (game.mode === 'local') return `${game.names[0]} e ${game.names[1]}`;
+  if (game.mode === 'live') return game.names[partnerIndex()];
+  return game.mode === 'guest' ? game.names[0] : game.names[1];
 }
 
 function votedIndexes(player) {
@@ -296,6 +308,7 @@ export function matchDraw() {
 }
 
 export function matchRestart() {
+  if (live) clearLiveSession(live.code);
   closeLive();
   game = null;
   // O convite já cumpriu seu papel: sair do link evita abrir o mesmo jogo ao recarregar
@@ -304,6 +317,7 @@ export function matchRestart() {
   url.searchParams.delete(LIVE_PARAM);
   history.replaceState(null, '', url);
   showStep('match-setup');
+  renderMatchHistory();
 }
 
 // ================================================
@@ -336,9 +350,67 @@ function setText(id, text) {
   document.getElementById(id).textContent = text;
 }
 
+// Sala salva na aba: recarregar a página (ou o celular descartar a aba em segundo plano) retoma
+// a partida em vez de acabar com ela. Fechar a aba apaga, como todo sessionStorage.
+const sessionKey = code => `match-ao-vivo-sala:${code}`;
+const TITLE_FIELDS = ['id', 'title', 'name', 'poster_path', 'overview', 'vote_average', 'release_date', 'first_air_date'];
+const pickTitle = title => Object.fromEntries(TITLE_FIELDS.map(key => [key, title[key]]));
+
+function saveLive() {
+  if (!live || game?.mode !== 'live') return;
+  const snapshot = {
+    role: live.state.role,
+    name: live.name,
+    state: live.state,
+    game: { type: game.type, names: game.names, index: game.index, titles: game.titles.map(pickTitle), selfVotes: votedIndexes(selfIndex()) },
+  };
+  try { sessionStorage.setItem(sessionKey(live.code), JSON.stringify(snapshot)); } catch { /* sem espaço: segue sem retomar */ }
+}
+
+function loadLive(code) {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(sessionKey(code)));
+    const titles = saved?.game?.titles;
+    const valid = ['host', 'guest'].includes(saved?.role) && saved.state && Array.isArray(titles) && titles.length >= 2
+      && titles.every(t => Number.isInteger(t?.id)) && Number.isInteger(saved.game.index)
+      && Array.isArray(saved.game.selfVotes) && saved.game.selfVotes.every(i => Number.isInteger(i) && i >= 0 && i < titles.length);
+    return valid ? saved : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearLiveSession(code) {
+  try {
+    sessionStorage.removeItem(sessionKey(code));
+    sessionStorage.removeItem(`match-ao-vivo:${code}`);
+  } catch { /* nada a apagar */ }
+}
+
+function resumeLive(code, saved) {
+  const { titles, names, type, index, selfVotes } = saved.game;
+  const self = saved.role === 'guest' ? 1 : 0;
+  game = { mode: 'live', type, titles, names, votes: [new Set(), new Set()], player: self, index: Math.min(index, titles.length) };
+  game.votes[self] = new Set(selfVotes.map(i => titles[i].id));
+  if (saved.role === 'guest') selecionarTipo(type);
+  connectLive(code, saved.role, saved.name, saved.state);
+
+  if (!live.state.partnerId) {
+    showLobby(code);
+  } else if (live.state.selfDone) {
+    showLiveWait();
+  } else {
+    showStep('match-voting');
+    renderCard();
+    document.querySelector('[data-action="matchYes"]').focus();
+  }
+  showToast('Match ao vivo retomado.');
+}
+
 function stopJoinTimers() {
   if (!live) return;
   clearInterval(live.retry);
+  clearTimeout(live.retry);
   clearTimeout(live.giveUp);
 }
 
@@ -351,10 +423,11 @@ function closeLive() {
   room.close();
 }
 
-function connectLive(code, role, name) {
+function connectLive(code, role, name, savedState) {
   closeLive();
   const clientId = clientIdFor(code);
-  live = { code, clientId, name, state: createLiveState(role, clientId) };
+  const state = savedState ? { ...createLiveState(role, clientId), ...savedState, role, selfId: clientId } : createLiveState(role, clientId);
+  live = { code, clientId, name, state };
   const current = live;
   live.room = openLiveRoom(code, clientId, {
     onMessage: raw => { if (live === current) handleLive(parseLiveMessage(raw, game?.titles.length || 0)); },
@@ -371,6 +444,13 @@ function onLiveStatus(status) {
     if (host) showStep('match-setup');
     else setText('match-live-join-status', '');
     setJoinBusy(false);
+    return;
+  }
+  if (live.state.partnerId) {
+    // Voltou depois de recarregar: pede ao outro até onde ele chegou (uma segunda vez, se a primeira se perder)
+    const resync = () => live?.room.send({ event: 'resync' });
+    resync();
+    live.retry = setTimeout(resync, HELLO_RETRY_MS);
     return;
   }
   if (host) {
@@ -394,6 +474,7 @@ function handleLive(msg) {
   const { state, actions } = liveReduce(live.state, msg);
   live.state = state;
   actions.forEach(action => runLiveAction(action, msg));
+  saveLive();
 }
 
 function runLiveAction(action, msg) {
@@ -402,6 +483,8 @@ function runLiveAction(action, msg) {
     live.room.send({ event: 'start', to: action.to, type: game.type, ids: game.titles.map(t => t.id), names: [game.names[0], live.state.partnerName] });
   } else if (action.send === 'full') {
     live.room.send({ event: 'full', to: action.to });
+  } else if (action.send === 'progress') {
+    live.room.send({ event: 'progress', index: game?.index || 0 });
   } else if (action.send === 'done') {
     live.room.send({ event: 'done' });
   } else if (action.send === 'votes') {
@@ -424,6 +507,10 @@ function runLiveAction(action, msg) {
     renderPartnerProgress();
   } else if (action === 'finish') {
     finishLive();
+  } else if (action === 'partner-back') {
+    showToast(`${partnerName()} voltou!`);
+    if (!document.getElementById('match-live-wait').hidden) setText('match-live-wait-progress', '');
+    renderPartnerProgress();
   } else if (action === 'partner-left') {
     const text = `${partnerName()} saiu do Match.`;
     showToast(text, 'warning');
@@ -448,16 +535,25 @@ function renderPartnerProgress() {
   }
 }
 
-function startHosting() {
-  const code = makeRoomCode();
-  game.names[1] = 'Pessoa 2';
-  connectLive(code, 'host', game.names[0]);
+function showLobby(code) {
   setText('match-live-code', code);
   setText('match-live-code-sr', `Código ${code.split('').join(' ')}`); // letra por letra para quem ouve
   document.getElementById('match-live-link').value = liveLink(code);
   setText('match-live-status', 'Abrindo a sala…');
   showStep('match-live-lobby');
   document.getElementById('btn-match-live-send').focus();
+}
+
+function startHosting() {
+  const code = makeRoomCode();
+  game.names[1] = 'Pessoa 2';
+  connectLive(code, 'host', game.names[0]);
+  // O código no endereço é o que permite retomar a sala depois de recarregar
+  const url = new URL(location.href);
+  url.searchParams.set(LIVE_PARAM, code);
+  history.replaceState(null, '', url);
+  saveLive();
+  showLobby(code);
 }
 
 const liveInviteText = () => `${game.names[0]} quer escolher com você o que assistir, ao vivo. Entre e vote junto (código ${live.code}):`;
@@ -471,6 +567,11 @@ function openLiveJoin(rawCode) {
   const code = normalizeRoomCode(rawCode);
   if (!code) {
     showToast('Este link de Match ao vivo não é válido. Peça um novo.', 'error');
+    return;
+  }
+  const saved = loadLive(code);
+  if (saved) {
+    resumeLive(code, saved);
     return;
   }
   closeLive();
@@ -531,6 +632,7 @@ async function guestStart(msg) {
     if (!live) return; // saiu enquanto carregava
     selecionarTipo(msg.type);
     game = { mode: 'live', type: msg.type, titles, names: [msg.names[0], live.name], votes: [new Set(), new Set()], player: 1, index: 0 };
+    saveLive();
     setJoinBusy(false);
     showStep('match-voting');
     renderCard();
@@ -555,6 +657,10 @@ function finishLive() {
   const ids = live.state.partnerVotes.map(i => game.titles[i].id);
   game.votes[partnerIndex()] = new Set(ids);
   game.names[partnerIndex()] = partnerName();
+  clearLiveSession(live.code); // acabou: recarregar não reabre esta partida
+  const url = new URL(location.href);
+  url.searchParams.delete(LIVE_PARAM);
+  history.replaceState(null, '', url);
   showResult();
   // Fecha depois de um respiro: a outra pessoa ainda pode estar recebendo os votos daqui
   const done = live;

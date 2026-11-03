@@ -18,6 +18,33 @@ import { TV_ICON } from '../ui/icons.js';
 
 const isGuest = () => session.currentUser === 'guest';
 
+// Só adiciona (nunca tira) e devolve quantos entraram. Usado pela lista do Match.
+export async function addManyToWatchlist(titles) {
+    if (!session.currentUser) return 0;
+    const known = new Set((session.user.watchlist || []).map(i => i.id));
+    const fresh = titles.filter(t => !known.has(t.id))
+        .map(t => ({ id: t.id, poster: t.poster_path, title: t.title || t.name, type: t.media_type || state.type }));
+    if (fresh.length === 0) return 0;
+
+    if (isGuest()) {
+        session.user.watchlist = [...(session.user.watchlist || []), ...fresh];
+        saveGuestWatchlist(session.user.watchlist);
+        renderLibrary();
+        return fresh.length;
+    }
+
+    let added = 0;
+    for (const item of fresh) {
+        const result = await supabaseAddToWatchlist(session.currentUserId, item);
+        if (result.success) {
+            session.user.watchlist = [...(session.user.watchlist || []), item];
+            added++;
+        }
+    }
+    renderLibrary();
+    return added;
+}
+
 export async function salvarHistorico(f) {
     if (!session.currentUser) return;
 

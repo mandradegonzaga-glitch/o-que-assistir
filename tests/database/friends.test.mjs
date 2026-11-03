@@ -51,6 +51,16 @@ before(async () => {
   const shares = readFileSync(new URL('../../database/title_shares.sql', import.meta.url), 'utf8');
   await db.exec(shares);
   await db.exec(shares);
+  // O Supabase já cria a publicação; aqui ela começa vazia
+  await db.exec('CREATE PUBLICATION supabase_realtime;');
+  const realtime = readFileSync(new URL('../../database/realtime_inbox.sql', import.meta.url), 'utf8');
+  await db.exec(realtime);
+  await db.exec(realtime); // pode rodar de novo sem erro
+});
+
+test('avisos em tempo real: as três tabelas entram na publicação, uma vez só', async () => {
+  const tables = await rows(`SELECT tablename FROM pg_publication_tables WHERE pubname = 'supabase_realtime' ORDER BY tablename`);
+  assert.deepEqual(tables.map(t => t.tablename), ['friendships', 'match_invites', 'title_shares']);
 });
 
 after(() => db.close());

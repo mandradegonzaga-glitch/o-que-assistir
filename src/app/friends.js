@@ -3,10 +3,11 @@
 import {
   supabaseAcceptFriend, supabaseDeleteMatchInvite, supabaseDeleteTitleShare, supabaseFindUser, supabaseGetFriendProfile, supabaseListFriends,
   supabaseListMatchInvites, supabaseListTitleShares, supabaseRemoveFriend, supabaseRequestFriend, supabaseSendMatchInvite, supabaseSendTitleShare,
-  supabaseUpdateProfile,
+  supabaseUpdateProfile, subscribeInbox,
 } from '../api/supabase.js';
 import { IMG_URL } from '../config/constants.js';
 import { BADGE_DEFINITIONS } from '../domain/badges.js';
+import { diffInbox, inboxSnapshot, summarizeNews } from '../domain/inbox.js';
 import { shareRow, titleKind } from '../domain/titleShare.js';
 import { session, state } from '../state/appState.js';
 import { BADGE_ICONS } from '../ui/badgeIcons.js';
@@ -16,6 +17,7 @@ import { shareLink } from './match.js';
 import { showToast } from '../ui/feedback.js';
 import { pendingRemovals, scheduleUndoable } from '../ui/feedback.js';
 import { confirmDialog } from '../ui/modals.js';
+import { notifyDevice, renderDeviceNotify } from './notifications.js';
 import { recordSocial } from './progress.js';
 import { carregarDetalhes } from './titleModal.js';
 
@@ -25,6 +27,11 @@ let friends = [];
 let available = false;
 let shares = [];
 let sharesAvailable = false; // title_shares.sql pode ainda não ter sido rodado
+let invites = [];
+let lastSnapshot = null; // a caixa na última leitura: o que aparecer de novo vira aviso
+let stopInbox = null;
+let watchedUser = null;
+const INBOX_POLL_MS = 120000;
 let currentFriend = null;
 
 const hasAccount = () => Boolean(session.currentUserId) && session.currentUser !== 'guest';
@@ -77,6 +84,7 @@ function renderFriends() {
     document.getElementById('my-username').textContent = session.userProfile?.username ? `@${session.userProfile.username}` : '';
 
     document.getElementById('friends-share').checked = session.userProfile?.share_with_friends !== false;
+    renderDeviceNotify();
 
     renderList('friends-received', received
       .map(f => friendRow(f, button('Aceitar', 'friendAccept', f.friendship_id, 'btn-main friend-action'), button('Recusar', 'friendRemove', f.friendship_id))));
@@ -139,12 +147,33 @@ export async function toggleShareWithFriends(input) {
   showToast(share ? 'Seus amigos voltam a ver sua atividade.' : 'Sua atividade está oculta para os amigos.');
 }
 
-export async function refreshFriends() {
+// Uma atualização por vez: chamadas no meio de outra pedem mais uma rodada no fim
+let running = null;
+let queued = false;
+export function refreshFriends() {
+  if (running) {
+    queued = true;
+    return running;
+  }
+  running = loadFriends().finally(() => {
+    running = null;
+    if (queued) {
+      queued = false;
+      refreshFriends();
+    }
+  });
+  return running;
+}
+
+async function loadFriends() {
   if (!hasAccount()) {
     friends = [];
     available = false;
     shares = [];
     sharesAvailable = false;
+    invites = [];
+    lastSnapshot = null;
+    stopWatching();
     renderFriends();
     renderShares();
     renderInbox([]);
@@ -159,7 +188,49 @@ export async function refreshFriends() {
   renderShares();
   if (available) recordSocial('friends', accepted().length);
   await refreshInbox();
+  if (available) {
+    announce();
+    watchInbox();
+  }
 }
+
+// O que chegou desde a última leitura: um aviso dentro do app e, com o app em segundo plano, no aparelho
+function announce() {
+  const snapshot = inboxSnapshot({ friends, shares, invites });
+  const text = summarizeNews(diffInbox(lastSnapshot, snapshot));
+  lastSnapshot = snapshot;
+  if (!text) return;
+  showToast(text);
+  notifyDevice(text);
+}
+
+let refreshTimer;
+function scheduleRefresh() {
+  clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(refreshFriends, 400); // várias mudanças juntas viram uma leitura só
+}
+
+function watchInbox() {
+  if (stopInbox && watchedUser === session.currentUserId) return;
+  stopWatching();
+  watchedUser = session.currentUserId;
+  stopInbox = subscribeInbox(watchedUser, scheduleRefresh);
+}
+
+function stopWatching() {
+  stopInbox?.();
+  stopInbox = null;
+  watchedUser = null;
+}
+
+// Sem o SQL do tempo real (ou com a conexão caindo), as novidades aparecem ao voltar para o app
+// e numa conferência a cada 2 minutos
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && hasAccount() && available) refreshFriends();
+});
+setInterval(() => {
+  if (hasAccount() && available) refreshFriends();
+}, INBOX_POLL_MS);
 
 // Indicações recebidas: pôster, quem mandou, abrir e apagar
 function shareItem(item) {
@@ -476,7 +547,8 @@ export async function refreshInbox() {
     return;
   }
   const result = await supabaseListMatchInvites();
-  renderInbox(result.success ? result.invites : []);
+  invites = result.success ? result.invites : [];
+  renderInbox(invites);
 }
 
 export async function matchInboxOpen(el) {

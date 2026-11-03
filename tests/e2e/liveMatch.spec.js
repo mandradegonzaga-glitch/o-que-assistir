@@ -66,6 +66,11 @@ test.describe('Match ao vivo', () => {
       await expect(p.locator('.match-result-item')).toHaveText(['Filme Dois']);
       await expect(p.locator('#achievement-name')).toHaveText('Par Perfeito');
     }
+    // A partida entra na lista com o nome da outra pessoa. (As duas abas dividem o mesmo localStorage
+    // e gravam juntas; em dois aparelhos, cada uma tem a sua lista.)
+    await page.locator('#match-result [data-action="matchRestart"]').click();
+    await expect(page.locator('#match-history .match-history__meta').first()).toHaveText(/^Com (Bia|Ana) ·/);
+    await expect(page.locator('#match-history .match-history__title').first()).toHaveText('Filme Dois');
     await bia.close();
   });
 
@@ -183,5 +188,82 @@ test.describe('Match ao vivo com amigos', () => {
     await expect(page).toHaveURL(/ao-vivo=K7P2QX/);
     await expect(page.locator('#match-live-join')).toBeVisible();
     await expect(page.locator('#match-live-join-code')).toHaveText('K7P2QX');
+  });
+});
+
+test.describe('Match ao vivo: recarregar a página', () => {
+  // Ana cria, Bia entra; as duas começam a votar
+  async function startPair(page, openPage) {
+    const { link } = await host(page);
+    const bia = await openPage();
+    await join(bia, link);
+    await expect(page.locator('#match-voting')).toBeVisible();
+    await expect(bia.locator('#match-voting')).toBeVisible();
+    return bia;
+  }
+
+  // Vota a partir do cartão atual até o fim
+  async function voteRest(p, wanted) {
+    while (await p.locator('#match-voting').isVisible()) {
+      const counter = await p.locator('#match-counter').textContent();
+      const title = await p.locator('.match-card__title').textContent();
+      await p.locator(wanted(title) ? '[data-action="matchYes"]' : '[data-action="matchNo"]').click();
+      if (counter === `${LIST.length} de ${LIST.length}`) break;
+      await expect(p.locator('#match-counter')).not.toHaveText(counter);
+    }
+  }
+
+  test('quem entrou recarrega no meio e continua do mesmo cartão', async ({ page, openPage }) => {
+    const bia = await startPair(page, openPage);
+    const first = await bia.locator('.match-card__title').textContent();
+    await bia.locator('[data-action="matchYes"]').click();
+    await bia.locator('[data-action="matchNo"]').click();
+    await expect(bia.locator('#match-counter')).toHaveText(`3 de ${LIST.length}`);
+
+    await bia.reload();
+    await expect(bia.locator('#toast')).toHaveText('Match ao vivo retomado.');
+    await expect(bia.locator('#match-counter')).toHaveText(`3 de ${LIST.length}`);
+    await expect(page.locator('#toast')).toHaveText('Bia voltou!');
+    await expect(page.locator('#match-partner')).toHaveText(`Bia está no 3 de ${LIST.length}`);
+
+    await voteAll(page, t => t === first);
+    await voteRest(bia, () => false);
+    // O voto dado antes de recarregar continua valendo
+    for (const p of [page, bia]) await expect(p.locator('.match-result-item')).toHaveText([first]);
+    await bia.close();
+  });
+
+  test('quem criou recarrega depois de terminar e recebe o resultado', async ({ page, openPage }) => {
+    const bia = await startPair(page, openPage);
+    await voteAll(page, t => t === 'Filme Três');
+    await expect(page.locator('#match-live-wait')).toBeVisible();
+    await expect(page).toHaveURL(/ao-vivo=/);
+
+    await page.reload();
+    await expect(page.locator('#match-live-wait')).toBeVisible();
+    await expect(page.locator('#toast')).toHaveText('Match ao vivo retomado.');
+
+    await voteAll(bia, t => t === 'Filme Três');
+    for (const p of [page, bia]) {
+      await expect(p.locator('#match-result-title')).toHaveText('Deu match!');
+      await expect(p.locator('.match-result-item')).toHaveText(['Filme Três']);
+    }
+    // Acabou: o código sai do endereço e recarregar não reabre a partida
+    await expect(page).not.toHaveURL(/ao-vivo=/);
+    await page.reload();
+    await expect(page.locator('#match-live-join')).toBeHidden();
+    await bia.close();
+  });
+
+  test('quem criou recarrega com a sala vazia e a sala continua aberta', async ({ page, openPage }) => {
+    const { link, code } = await host(page);
+    await page.reload();
+    await expect(page.locator('#match-live-lobby')).toBeVisible();
+    await expect(page.locator('#match-live-code')).toHaveText(code);
+    await expect(page.locator('#match-live-status')).toHaveText('Esperando alguém entrar…');
+    const bia = await openPage();
+    await join(bia, link);
+    await expect(page.locator('#match-voting')).toBeVisible();
+    await bia.close();
   });
 });
