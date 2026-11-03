@@ -81,7 +81,24 @@
         "T001-068",
         "T001-069",
         "T001-070",
-        "T001-071"
+        "T001-071",
+        "T001-072",
+        "T001-073",
+        "T001-074",
+        "T001-075",
+        "T001-076",
+        "T001-077",
+        "T001-078",
+        "T001-079",
+        "T001-080",
+        "T001-081",
+        "T001-082",
+        "T001-083",
+        "T001-084",
+        "T001-085",
+        "T001-086",
+        "T001-087",
+        "T001-088"
       ],
       "tasksCompleted": [
         "T001-001",
@@ -153,7 +170,23 @@
         "T001-068",
         "T001-069",
         "T001-070",
-        "T001-061"
+        "T001-061",
+        "T001-072",
+        "T001-073",
+        "T001-074",
+        "T001-075",
+        "T001-076",
+        "T001-077",
+        "T001-078",
+        "T001-079",
+        "T001-080",
+        "T001-081",
+        "T001-082",
+        "T001-083",
+        "T001-084",
+        "T001-085",
+        "T001-086",
+        "T001-087"
       ],
       "files": {
         "tasks": "001_2026-10-28_melhorias/tasks.md",
@@ -165,7 +198,10 @@
     }
   },
   "splits": [],
-  "commits": [],
+  "commits": [
+    "2a72f05",
+    "8b09a23"
+  ],
   "expectation": {
     "summary": "O app fica seguro contra XSS, utilizável por teclado e leitor de tela (WCAG 2.2) e sem bugs visíveis, sem mudar as funcionalidades existentes",
     "must": [
@@ -218,41 +254,34 @@
   },
   "lastSession": {
     "completed": [
-      "T001-026",
-      "T001-027",
-      "T001-028",
-      "T001-029",
-      "T001-030",
-      "T001-031",
-      "T001-032",
-      "T001-033",
-      "T001-034",
-      "T001-035",
-      "T001-036",
-      "T001-037",
-      "T001-038",
-      "T001-039",
-      "T001-040",
-      "T001-041",
-      "T001-042",
-      "T001-043"
+      "T001-077",
+      "T001-078",
+      "T001-079",
+      "T001-080",
+      "T001-081",
+      "T001-082",
+      "T001-083",
+      "T001-084",
+      "T001-085",
+      "T001-086",
+      "T001-087"
     ],
     "inProgress": null,
     "nextSteps": [
-      "T001-077 a T001-081: ingresso e compartilhar",
-      "Teste real de amizade entre duas contas (T001-071)",
-      "Push quando o usuário pedir; depois revogar a chave TMDB antiga"
+      "T001-088: reiniciar o Claude Code (plugin da Vercel instalado), fazer login e trocar a branch de produção para main",
+      "Teste real com dois celulares e duas contas: amizade, indicação com aviso, Match ao vivo (recarregando no meio), lista do Match, WhatsApp com ingresso",
+      "Com o usuário: confirmação de email, Site URL, links do rodapé, limpar dados de teste"
     ],
     "filesModified": [
       "index.html",
       "src/",
       "sw.js",
-      "manifest.json",
-      "icons/icon.svg",
+      "database/",
       "tests/",
-      ".gitignore"
+      ".sedd/",
+      "docs/FUNCIONALIDADES.md"
     ],
-    "timestamp": "2026-10-30T14:49:48.991Z",
+    "timestamp": "2026-11-03T18:30:00.000Z",
     "status": "paused"
   }
 }

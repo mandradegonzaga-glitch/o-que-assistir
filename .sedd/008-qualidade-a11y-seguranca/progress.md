@@ -20,14 +20,17 @@
 
 ## Para retomar
 
-**Próxima sessão:** começar pelas tarefas T001-077 a T001-081 (ingresso e compartilhar), em "O que falta".
+**Próxima sessão (anotado em 2026-11-03):**
+1. **Vercel:** o plugin oficial (`vercel-plugin`) foi instalado no Claude Code com `npx plugins add vercel/vercel-plugin --target claude-code --yes`. Ele carrega ao reiniciar. Na sessão nova, o usuário faz o login da Vercel quando o plugin pedir (nunca passar senha ou token no chat). Depois, trocar a **branch de produção** do projeto de `004-series-tracking` para `main`. Se o plugin não tiver essa opção, usar a linha de comando da Vercel. Hoje as duas branches estão iguais (`2a72f05`), então a troca não muda o site.
+2. **Teste real com dois celulares e duas contas** (só o usuário faz): amizade, indicação (deve chegar em segundos com `realtime_inbox.sql`), aviso no aparelho, Match ao vivo (inclusive recarregando no meio), lista do Match e WhatsApp com o ingresso no celular. Corrigir o que aparecer antes de abrir funcionalidade nova.
+3. Restante em "Com o usuário" e "Validações pendentes".
 
 **Regras combinadas com o usuário (pedido em 2026-10-28):**
 1. Um item por vez; perguntar "podemos continuar?" antes do próximo (exceção em 2026-10-30: 18 itens em sequência, a pedido).
 2. Testar de verdade (Jest + Chrome em `http://localhost:5173`), limpando service worker/caches no início, e mostrar evidência.
 3. Registrar cada item em `tasks.md`, `acceptance.md` (+ `evidence/`), `decisions.md` quando houver escolha, `spec.md`, `CHANGELOG.md`, `_meta.json` e `docs/FUNCIONALIDADES.md` (CRLF).
 4. Mudança no banco: entregar SQL para o usuário rodar no SQL Editor; o CLI não tem permissão para alterar o banco.
-5. Commit e push só quando o usuário pedir: push nesta branch é publicação.
+5. Commit e push só quando o usuário pedir: push é publicação. Enquanto a Vercel não estiver configurada para `main`, enviar para as duas branches (`git push origin 004-series-tracking` e `git push origin 004-series-tracking:main`).
 
 **Armadilhas já conhecidas:**
 - O site não funciona por `file://` (módulos ES): usar `INICIAR_SITE.bat`, e testar também o que muda ao abrir assim.
@@ -103,7 +106,7 @@ Testes: Jest 125 → **145** (12 suítes, todos passando).
 
 ## O que falta
 
-### Ingresso e compartilhar (feito em 2026-11-03, sem commit)
+### Ingresso e compartilhar (2026-11-03, publicado em `8b09a23`)
 | ID | Item | Estado |
 |---|---|---|
 | T001-077 | Botão "Gerar ingresso" separado: baixa só a imagem | ✅ |
@@ -114,10 +117,10 @@ Testes: Jest 125 → **145** (12 suítes, todos passando).
 
 Depois do teste do usuário: o WhatsApp não recebe imagem pelo link `wa.me`. No computador, o botão copia o ingresso para colar com Ctrl+V (ou baixa, se o navegador não deixar copiar). No celular sem o compartilhar do sistema (fora de HTTPS), baixa o ingresso para anexar pelo clipe.
 
-### Conquistas sociais (feito em 2026-11-03, sem commit)
+### Conquistas sociais (2026-11-03, publicado em `8b09a23`)
 6 conquistas na categoria Social: Turma (1 amigo), Popular (5), Indicador (1 indicação), Curador (10), Bilheteiro (compartilhou um ingresso), Par Perfeito (primeiro match). Os contadores ficam em `progress.social`, nos metadados da conta (convidado: neste aparelho). Não precisa de SQL. Amigos guarda o maior número já visto, então desfazer amizade não tira a conquista.
 
-### Revisão de UX e acessibilidade das telas novas (2026-11-03, sem commit)
+### Revisão de UX e acessibilidade das telas novas (2026-11-03, publicado em `8b09a23`)
 - O botão Amigos agora diz em voz alta quantos pedidos e indicações estão esperando. Antes, o `aria-label` fixo escondia o número.
 - Apagar uma indicação tem "Desfazer" e Ctrl+Z, como as outras remoções. O foco vai para o próximo item ou volta ao lugar certo.
 - Os botões de gerar, compartilhar e enviar para amigo usam `aria-disabled` e `aria-busy` em vez de `disabled`, para não perder o foco do teclado. Mostram "Gerando…" ou "Preparando…" enquanto trabalham. O enviado é anunciado como "Enviado para Bia".
@@ -125,17 +128,17 @@ Depois do teste do usuário: o WhatsApp não recebe imagem pelo link `wa.me`. No
 - As conquistas dizem "desbloqueada" ou "bloqueada" em texto para o leitor de tela, e não só pela cor.
 - O atalho de colar aparece como Cmd+V no Mac e Ctrl+V nos outros sistemas. "Compartilhar" tem `aria-haspopup="dialog"`. Nomes longos nos botões de amigo quebram a linha, e esses botões têm 44px de altura.
 
-### Match ao vivo (spec 006, 2026-11-03)
+### Match ao vivo (spec 006, 2026-11-03, publicado em `8b09a23`)
 Cada pessoa vota no seu aparelho, ao mesmo tempo, por um canal de broadcast do Supabase Realtime (`openLiveRoom` em `src/api/supabase.js`). Não precisa de SQL nem de conta. O protocolo puro está em `src/domain/liveMatch.js`, com testes. A sala é aberta por link `?ao-vivo=CÓDIGO`, pelo código digitado ou por convite na caixa de um amigo (`ao-vivo:CÓDIGO`). Cada um vê até onde o outro chegou. Os votos só são trocados depois que os dois terminam. Uma terceira pessoa recebe "cheio", e a saída de alguém é avisada pela presença do Realtime. Nos testes, o falso Supabase usa `BroadcastChannel` entre duas abas (fixture `openPage`).
 
 Precisa ser conferido com o Supabase real: o Realtime precisa estar ligado no projeto, com acesso público a canais de broadcast (é o padrão).
 
-### Lista do Match, sala que sobrevive a recarregar, avisos (2026-11-03)
+### Lista do Match, sala que sobrevive a recarregar, avisos (2026-11-03, publicado em `2a72f05`)
 - **Sala que sobrevive a recarregar:** cada voto e cada mensagem salvam a partida na aba. Ao recarregar, a pessoa volta ao mesmo cartão, o outro vê "voltou!" e os votos perdidos são reenviados. Ao terminar, a sala salva e o código no endereço são apagados.
 - **Lista do Match ("Seus matches"):** cada partida com match fica guardada para quem jogou, com quem foi e quando (até 15 partidas, só com os ids dos títulos). A conta guarda nos metadados e o convidado no aparelho. Os títulos abrem, dá para salvar todos em Quero Assistir e apagar tem desfazer.
 - **Avisos:** indicação, convite de Match (inclusive ao vivo), pedido de amizade e aceite viram aviso dentro do app e atualizam o contador. Chegam na hora com `database/realtime_inbox.sql` (publicação do Realtime). Sem esse SQL, aparecem ao voltar para a aba ou a cada 2 minutos. A opção "Avisar neste aparelho" mostra notificação do sistema com o app em segundo plano; não funciona com o app fechado, porque isso exigiria push pelo servidor.
 
-**Com o usuário:** rodar `database/realtime_inbox.sql`.
+`database/realtime_inbox.sql` rodado pelo usuário em 2026-11-03. Não dá para conferir de fora com a chave pública; a confirmação vem no teste com dois celulares.
 
 Testes: Jest 268, banco 17, e2e 126. Service worker em `v20`.
 
@@ -144,11 +147,16 @@ Testes: Jest 268, banco 17, e2e 126. Service worker em `v20`.
 |---|---|
 | Teste real de amizade entre duas contas (T001-071) | SQL rodado pelo usuário; falta a segunda conta e informar o username dela |
 | Rodar `database/title_shares.sql` no Supabase (depois de `friends.sql`) | ✅ rodado em 2026-11-03 (função e tabela conferidas pela API) |
-| Commit e push | ✅ `8b09a23` publicado em 2026-11-03 (site em `v19`) |
+| Commit e push | ✅ `2a72f05` publicado em 2026-11-03 (site em `v20`); `main` avançada até o mesmo commit |
+| Rodar `database/realtime_inbox.sql` | ✅ rodado pelo usuário em 2026-11-03 (confirmar no teste com dois celulares) |
+| Branch de produção na Vercel → `main` | Pendente: usar o plugin da Vercel na próxima sessão (ver "Para retomar") |
 | Revogar a chave TMDB antiga | ✅ revogada pelo usuário; proxy conferido funcionando com a chave nova |
 
 ### Com o usuário
-Ligar confirmação de email, conferir Site URL no Supabase e branch de produção na Vercel, links do rodapé (Apoiar/Feedback), limpar dados de teste da conta real.
+- Ligar a confirmação de email e conferir a Site URL no Supabase.
+- Trocar a branch de produção na Vercel para `main`, pelo plugin, na próxima sessão.
+- Passar os links certos do rodapé. Hoje "Apoiar" leva para a página inicial do Buy Me a Coffee.
+- Limpar os dados de teste da conta real.
 
 ---
 
@@ -168,7 +176,8 @@ Ligar confirmação de email, conferir Site URL no Supabase e branch de produç�
 | Migration | Unit (Jest) | Navegador (Chrome) |
 |-----------|-------------|--------------------|
 | 001 | 145/145 ✅ | critérios AC-001…AC-043 ✅, com as ressalvas acima |
+| 001 (2026-11-03) | 268/268 ✅ + banco 17/17 ✅ | Playwright 126/126 ✅ (Realtime simulado entre duas abas) |
 
 ## Publicação
 
-O site `https://o-que-assistir-watch.vercel.app/` publicou o commit 42c4d1b da branch `004-series-tracking` após o push, embora a `main` esteja em ee53316. Tratar todo push nessa branch como publicação até conferir a configuração da Vercel.
+O site `https://o-que-assistir-watch.vercel.app/` é publicado a partir da branch `004-series-tracking`. Em 2026-11-03 estava no commit `2a72f05` (cache `v20`), e a `main` foi avançada até o mesmo commit. Até a Vercel ser configurada para `main`, tratar todo push como publicação e manter as duas branches iguais. Para conferir uma publicação: `curl -s https://o-que-assistir-watch.vercel.app/sw.js | grep CACHE_VERSION`.

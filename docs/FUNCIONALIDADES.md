@@ -204,7 +204,8 @@ Use este documento para verificar se todas as funcionalidades estão funcionando
 - [ ] Botão "✅ Já Vi" - marca como assistido
 - [ ] Botão "⭐ Salvar" - adiciona à watchlist
 - [ ] Botão "🎰 Adicionar à Roleta"
-- [ ] Botão "📤 Compartilhar"
+- [ ] Botão "Gerar ingresso": baixa só a imagem do ingresso
+- [ ] Botão "Compartilhar": abre as opções (outros apps, WhatsApp, amigos do app)
 - [ ] Fechar modal (X ou clique fora)
 - [ ] Tecla ESC fecha modal
 - [ ] Ao abrir, foco vai para o modal; Tab/Shift+Tab ficam presos dentro
@@ -298,6 +299,8 @@ Use este documento para verificar se todas as funcionalidades estão funcionando
   - [ ] Apostador (5 vitórias roleta)
   - [ ] Old School (filme antes de 2000)
   - [ ] Madrugador (marcou algo como visto entre 0h e 4h59)
+  - [ ] Social: Turma (1 amigo), Popular (5 amigos), Indicador (1 indicação), Curador (10 indicações), Bilheteiro (compartilhou um ingresso), Par Perfeito (primeiro match)
+  - [ ] O leitor de tela diz se cada conquista está desbloqueada ou bloqueada
 
 ### 8.4 Salvar Perfil
 - [ ] Botão "💾 Salvar"
@@ -351,12 +354,16 @@ Use este documento para verificar se todas as funcionalidades estão funcionando
 - [ ] Link com filtros e `titulo=` restaura a tela e abre o título (convidado: depois de entrar)
 - [ ] Banner de instalação nunca cobre o FECHAR
 - [ ] Convidado: lista, vistos e roleta continuam depois de recarregar; ao criar conta, o app oferece trazer tudo
-- [ ] Perfil mostra sequência, recorde, nível, XP e 20 conquistas em 3 categorias
+- [ ] Perfil mostra sequência, recorde, nível, XP e 26 conquistas em 4 categorias (Jornada, Gêneros, Hábitos, Social)
 - [ ] Match: duas pessoas votam nos mesmos títulos; só aparece o que coincidiu; swipe, botões e setas funcionam
 - [ ] Amigos (botão ao lado do perfil): convidar por link, adicionar por usuário exato, aceitar, recusar; contador de pedidos na aba
 - [ ] Perfil do amigo: assistidos, lista, conquistas e o que os dois querem ver; só entre amigos aceitos
 - [ ] Enviar Match para amigo; convites aparecem na aba Match
 - [ ] Match por link: votar, enviar por link ou email; quem abre vota sem conta, vê o resultado e pode devolvê-lo
+- [ ] Match ao vivo: cada um no seu celular, ao mesmo tempo; entrar por link `?ao-vivo=CÓDIGO`, pelo código digitado ou pelo convite de amigo; cada um vê até onde o outro chegou; votos só são trocados quando os dois terminam; terceira pessoa não entra
+- [ ] Match ao vivo: recarregar a página no meio volta ao mesmo cartão, e o outro vê "voltou!"
+- [ ] "Seus matches" na tela do Match: partidas com match, com quem e quando; abrir título, salvar todos em Quero Assistir, apagar com desfazer
+- [ ] Avisos de Amigos: pedido, aceite, indicação e convite de Match viram aviso no app e no contador; opção "Avisar neste aparelho" (notificação do sistema com o app em segundo plano)
 - [ ] Ingresso tem QR code que abre o título pela câmera
 - [ ] "Compartilhar": no celular envia ingresso, texto e link juntos; no computador baixa o ingresso e copia o texto com o link
 - [ ] "Sortear outro" aparece em título sorteado e não repete os últimos sorteios
@@ -453,10 +460,20 @@ Use este documento para verificar se todas as funcionalidades estão funcionando
 ## 13. COMPARTILHAMENTO
 
 ### 13.1 Compartilhar Filme
-- [ ] Botão "📤 Compartilhar" no modal
-- [ ] Web Share API (mobile)
-- [ ] Fallback: copiar para clipboard
-- [ ] Texto formatado com título e nota
+- [ ] Botão "Compartilhar" no modal abre as opções
+- [ ] Celular: compartilhar do sistema (WhatsApp e outros) com ingresso, texto e link juntos
+- [ ] Computador: "Baixar ingresso e copiar texto"; "WhatsApp" abre o WhatsApp Web com o texto e copia o ingresso para colar (Ctrl/Cmd+V)
+- [ ] Celular sem compartilhar do sistema (ex.: fora de HTTPS): baixa o ingresso para anexar pelo clipe
+- [ ] Texto: título, tipo, ano, nota, sinopse, elenco, onde assistir e link
+
+### 13.2 Ingresso
+- [ ] Cor do tipo: âmbar Filme, teal Série, rosa Dorama (série coreana conta como dorama)
+- [ ] Pôster, título, sinopse cortada para caber, até 4 nomes do elenco, logos de onde assistir (nomes, se algum logo falhar) e QR code que abre o título
+
+### 13.3 Indicar para amigos
+- [ ] No "Compartilhar", botões com os amigos; cada título vai uma vez só para cada amigo
+- [ ] Quem recebe vê em Amigos > "Indicações para você", com quem indicou; abrir mostra o título; apagar tem desfazer
+- [ ] Exige `database/title_shares.sql`; sem ele, aparece "Envio para amigos indisponível"
 
 ---
 
@@ -535,6 +552,7 @@ Use este documento para verificar se todas as funcionalidades estão funcionando
 
 | Data | Versão | Mudanças |
 |------|--------|----------|
+| 2026-11-03 | 2.9 | Ingresso na cor do tipo e compartilhar completo, indicações entre amigos, conquistas sociais, Match ao vivo (que sobrevive a recarregar), lista do Match, avisos de Amigos |
 | 2026-10-28 | 2.8 | Escape contra XSS, zoom liberado, modais acessíveis, buscas com `&`/`#`, ano atual nos filtros, links IMDb/RT, conquista Madrugador, avisos de falha no modal (SEDD 008) |
 | 2026-01-30 | 2.7 | Top 10 agora filtra por streaming (além de gênero e ano) |
 | 2026-01-30 | 2.6 | PWA (instalável como app), Service Worker, cache offline |

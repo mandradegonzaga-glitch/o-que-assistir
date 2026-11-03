@@ -2,6 +2,32 @@
 
 All notable changes to this feature will be documented in this file.
 
+## [2026-11-03] — publicado em `8b09a23` e `2a72f05` (site `v20`)
+
+### Added (ingresso e compartilhar)
+
+- "Gerar ingresso" separado de "Compartilhar", que abre um modal com as opções
+- Ingresso na cor do tipo (âmbar Filme, teal Série, rosa Dorama), com sinopse, elenco e logos de onde assistir
+- Celular: compartilhar do sistema com ingresso, texto e link; computador: baixa o ingresso e copia o texto, ou abre o WhatsApp Web com o ingresso copiado para colar (Ctrl/Cmd+V)
+- Indicar título para amigos do app (`database/title_shares.sql`) e caixa "Indicações para você"
+
+### Added (social e Match)
+
+- 6 conquistas na categoria Social (Turma, Popular, Indicador, Curador, Bilheteiro, Par Perfeito)
+- Match ao vivo: cada um no seu celular, ao mesmo tempo, pelo Supabase Realtime; link, código ou convite de amigo; votos só trocados quando os dois terminam
+- A sala ao vivo sobrevive a recarregar a página
+- Lista do Match ("Seus matches") com salvar em Quero Assistir
+- Avisos de pedido, aceite, indicação e convite (dentro do app e, opcionalmente, no aparelho); `database/realtime_inbox.sql` para chegarem na hora
+
+### Fixed / Changed
+
+- Contador da aba Amigos anunciado ao leitor de tela; apagar indicação tem desfazer; botões ocupados não perdem o foco; conquistas dizem "desbloqueada/bloqueada"
+- Linhas de campo + botão não estouram a largura no celular
+
+### Tests
+
+- Jest 268, banco 17, Playwright 126; Realtime simulado com `BroadcastChannel` entre duas abas (fixture `openPage`)
+
 ## [Unreleased] - 2026-10-30
 
 ### Added (amigos)

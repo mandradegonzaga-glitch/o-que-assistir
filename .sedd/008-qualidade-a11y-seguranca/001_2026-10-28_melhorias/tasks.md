@@ -190,6 +190,13 @@ Regra de trabalho (pedido do usuário): **um item por vez, testar, evidenciar e 
 - [x] T001-079 [2026-11-03] Compartilhar com amigos do app, além do WhatsApp (deve exigir SQL novo, no modelo de `match_invites`)
 - [x] T001-080 [2026-11-03] Ingresso na cor do tipo: âmbar Filme, teal Série, rosa Dorama
 - [x] T001-081 [2026-11-03] Ingresso com sinopse cortada, 3 ou 4 nomes do elenco e onde assistir (logos só se o canvas puder exportá-los; senão, o nome da plataforma)
+- [x] T001-082 [2026-11-03] Conquistas sociais: Turma, Popular, Indicador, Curador, Bilheteiro, Par Perfeito (contadores em `progress.social`)
+- [x] T001-083 [2026-11-03] Revisão de UX e acessibilidade das telas novas (contador de Amigos anunciado, desfazer em indicações, foco preservado, estado das conquistas em texto)
+- [x] T001-084 [2026-11-03] Match ao vivo: cada um no seu celular, por Supabase Realtime (broadcast), entrada por link, código ou amigo; votos trocados só no fim
+- [x] T001-085 [2026-11-03] Sala do Match ao vivo sobrevive a recarregar (sessionStorage + `resync`)
+- [x] T001-086 [2026-11-03] Lista do Match ("Seus matches"), com salvar em Quero Assistir e apagar com desfazer
+- [x] T001-087 [2026-11-03] Avisos de Amigos: tempo real (`database/realtime_inbox.sql`), conferência ao voltar e a cada 2 min, notificação no aparelho
+- [ ] T001-088 [Próxima sessão] Vercel: trocar a branch de produção para `main` pelo plugin da Vercel (já instalado; reiniciar o Claude Code e fazer login)
 
 Bugs herdados encontrados e corrigidos nessa rodada:
 - Filtro "Até (ano)" era ignorado em séries (o `replace` só trocava o `.gte`).
