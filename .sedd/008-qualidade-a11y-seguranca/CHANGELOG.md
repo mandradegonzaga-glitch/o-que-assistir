@@ -2,6 +2,23 @@
 
 All notable changes to this feature will be documented in this file.
 
+## [2026-11-06] — site `v24` (ainda não publicado)
+
+### Fixed
+
+- Séries: o "Já Vi" funciona mesmo sem marcar episódios, e o "Como foi?" aparece (antes ficava travado em "Assistindo" até o último episódio)
+- Convidado agora vê temporadas e episódios, marca o que assistiu (salvo no aparelho) e tem a aba Em Andamento, igual a quem tem conta
+- Desmarcar uma série tira o "Como foi?" da tela e atualiza "Já assistidos"
+- "Já Vi" numa série ou dorama marca todas as temporadas; marcar temporada ou série grava tudo de uma vez
+- Dorama aberto pela biblioteca ou por link continua dorama (antes ia para Séries ao marcar "Já Vi")
+- Nomes dos episódios não somem mais depois de "Marcar série"
+
+### Changed
+
+- "Vi até aqui" em cada episódio: marca ele e todos os anteriores, inclusive de temporadas passadas
+- Saiu o botão "Marcar série": o "Já Vi" faz o mesmo
+- Ao entrar numa conta, os episódios marcados como convidado vão junto com a lista (na mesma pergunta)
+
 ## [2026-11-05] — site `v23` (ainda não publicado)
 
 ### Added

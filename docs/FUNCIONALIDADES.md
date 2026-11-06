@@ -352,9 +352,10 @@ Use este documento para verificar se todas as funcionalidades estão funcionando
 - [ ] Gestos de swipe para fechar modal
 - [ ] Nada sob o notch/barra de gestos; alvos de toque com 44px; ✕ da biblioteca visível no toque
 - [ ] Controles de episódios em 2 colunas no celular; textos longos não estouram a tela
+- [ ] Série: temporadas e episódios aparecem com conta e como convidado (convidado salva no aparelho e tem Em Andamento); "Já Vi" sempre ativo, marca todas as temporadas, abre o "Como foi?" e tira de Quero Assistir e Em Andamento; "Vi até aqui" em cada episódio marca ele e os anteriores (também de temporadas passadas); desmarcar a série esconde o "Como foi?"
 - [ ] Link com filtros e `titulo=` restaura a tela e abre o título (convidado: depois de entrar)
 - [ ] Banner de instalação nunca cobre o FECHAR
-- [ ] Convidado: lista, vistos e roleta continuam depois de recarregar; ao criar conta, o app oferece trazer tudo
+- [ ] Convidado: lista, vistos, roleta e episódios continuam depois de recarregar; ao criar conta, o app oferece trazer tudo (episódios inclusive)
 - [ ] Perfil mostra sequência, recorde, nível, XP e 26 conquistas em 4 categorias (Jornada, Gêneros, Hábitos, Social)
 - [ ] Indicações do dia (Filme, Série e Dorama, trocam à meia-noite; com 5+ títulos assistidos, pelos gêneros que a pessoa mais assiste, com "Porque você curte X"; com menos, iguais para todos) num painel com botão no canto inferior direito; abre sozinho só na primeira entrada do dia, nunca sobre login, boas-vindas ou link; bolinha quando há novas; Esc fecha; tocar abre o título
 - [ ] Desafio do dia (muda à meia-noite, nunca repete o de ontem, +25 XP) e meta da semana (assistir 3 títulos de segunda a domingo, +50 XP) no perfil; o desafio aparece no aviso ao entrar
