@@ -2,7 +2,13 @@
 
 All notable changes to this feature will be documented in this file.
 
-## [2026-11-06] — site `v24` (ainda não publicado)
+## [2026-11-06, CI] — sem mudança no site
+
+### Fixed
+
+- GitHub Actions voltou a passar: dois testes de navegador falhavam às vezes na máquina mais lenta do GitHub (Match ao vivo adiantava o relógio antes de a sala conectar; painel de indicações era medido no meio da animação de entrada). Só os testes mudaram.
+
+## [2026-11-06] — site `v24` (publicado em `c60db74`)
 
 ### Fixed
 

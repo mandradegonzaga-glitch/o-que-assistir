@@ -74,6 +74,21 @@
 
 ---
 
+## D001-040 — Séries: "Já Vi" marca tudo, "Vi até aqui" no lugar de "Marcar série"
+
+**Decisão:** em série e dorama, "Já Vi" fica sempre ativo e marca todas as temporadas de uma vez (um pedido só, com upsert que ignora repetidos). O botão "Marcar série" saiu e cada episódio ganhou "Vi até aqui" (marca ele e todos os anteriores). O convidado acompanha episódios igual à conta, guardados no aparelho (`guest_episodes`, via `src/app/episodeStore.js`), e esses episódios vão para a conta na mesma pergunta de importação do histórico.
+
+**Alternativas consideradas:**
+- Manter "Já Vi" travado até marcar todos os episódios → era o bug: o "Como foi?" nunca aparecia.
+- Manter "Marcar série" ao lado do "Já Vi" → redundante; recomendado tirar e aprovado pelo usuário ("sim").
+- Esconder episódios do convidado → o usuário pediu que o convidado se comporte igual à conta.
+
+**Por que essa:** pedidos do usuário em 2026-11-06 (T001-115 a T001-118).
+
+**Impacto:** service worker `v24`; `episodeStore.js` entrou no cache; testes em `tests/e2e/series.spec.js`. Publicado em `c60db74` + `0b7bdba`.
+
+---
+
 ## D001-039 — Extras: batalha em mata-mata, efeito 3D sem biblioteca
 
 **Decisão:** Pedido do usuário em 2026-11-06: todos os extras, menos listas personalizadas, com SQL liberado (nenhum precisou). A Cine-batalha é um mata-mata de 8 títulos, sem pontuação ELO guardada: serve para escolher o que ver agora, e o gosto já é aprendido pelo DNA. O efeito 3D é código próprio (cerca de 60 linhas), não o vanilla-tilt.js. Lançamentos de filme são o que chegou ao digital no Brasil, não ao cinema.

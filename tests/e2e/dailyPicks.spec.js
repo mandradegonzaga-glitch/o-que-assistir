@@ -108,6 +108,8 @@ test.describe('indicações do dia', () => {
     await enterAsGuest(page);
     await launcher(page).click();
     await expect(panel(page)).toBeVisible();
+    // Mede depois da animação de entrada (ela desce o painel 12px); no GitHub, mais lento, media no meio dela
+    await panel(page).evaluate(el => Promise.all(el.getAnimations().map(a => a.finished)));
     const box = await panel(page).boundingBox();
     const button = await launcher(page).boundingBox();
     expect(box.x).toBeGreaterThanOrEqual(0);

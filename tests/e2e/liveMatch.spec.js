@@ -150,6 +150,12 @@ test.describe('Match ao vivo', () => {
     await expect(page.locator('#match-live-join')).toBeVisible();
     await page.locator('#btn-match-live-join').click();
     await expect(page.locator('#match-live-join-status')).toHaveText('Entrando…');
+    // Só adianta os 15 s depois que a sala conectou e mandou o "oi" (é aí que o prazo começa);
+    // adiantar antes disso falhava às vezes na máquina mais lenta do GitHub
+    await expect.poll(async () => {
+      await page.clock.runFor(100);
+      return page.evaluate(() => (window.__liveSent || []).length);
+    }).toBeGreaterThan(0);
     await page.clock.fastForward(16000);
     await expect(page.locator('#toast')).toHaveText(/Não encontramos esse Match/);
     await expect(page.locator('#btn-match-live-join')).not.toHaveAttribute('aria-disabled');
