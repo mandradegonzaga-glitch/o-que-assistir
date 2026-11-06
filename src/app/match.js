@@ -198,11 +198,11 @@ function showInviteStep() {
   document.getElementById('btn-match-send').focus();
 }
 
-export async function shareLink(url, text) {
+export async function shareLink(url, text, title = 'Match no O Que Assistir?') {
   const isTouch = window.matchMedia('(pointer: coarse)').matches;
   if (isTouch && navigator.share) {
     try {
-      await navigator.share({ title: 'Match no O Que Assistir?', text, url });
+      await navigator.share({ title, text, url });
     } catch (e) {
       if (e.name !== 'AbortError') showToast('Não foi possível abrir o compartilhar. Copie o link.', 'error');
     }

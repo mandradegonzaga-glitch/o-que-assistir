@@ -402,8 +402,8 @@ const listItemRow = (userId, listId, item) => ({
 export async function supabaseGetLists(userId) {
     try {
         const [lists, items] = await Promise.all([
-            supabase.from('user_lists').select('id, name, emoji').eq('user_id', userId).order('created_at', { ascending: true }),
-            supabase.from('user_list_items').select('list_id, tmdb_id, title, poster_path, media_type').eq('user_id', userId).order('added_at', { ascending: true }),
+            supabase.from('user_lists').select('id, name, emoji, share_token').eq('user_id', userId).order('created_at', { ascending: true }),
+            supabase.from('user_list_items').select('list_id, tmdb_id, title, poster_path, media_type, position').eq('user_id', userId).order('added_at', { ascending: true }),
         ]);
         const error = lists.error || items.error;
         if (error) throw error;
@@ -473,6 +473,43 @@ export async function supabaseAddListItems(userId, listId, items) {
         return { success: true };
     } catch (error) {
         console.error('Erro ao pôr títulos na lista:', error);
+        return { success: false };
+    }
+}
+
+/** Grava a ordem inteira da lista (ids na ordem nova) */
+export async function supabaseReorderList(listId, tmdbIds) {
+    try {
+        const { error } = await supabase.rpc('reorder_list_items', { p_list_id: listId, p_tmdb_ids: tmdbIds });
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        console.error('Erro ao ordenar lista:', error);
+        return { success: false };
+    }
+}
+
+/** Liga (devolve o token do link) ou desliga o link público da lista */
+export async function supabaseSetListSharing(listId, on) {
+    try {
+        const { data, error } = await supabase.rpc('set_list_sharing', { p_list_id: listId, p_on: on });
+        if (error) throw error;
+        if (on && !data) throw new Error('lista não encontrada');
+        return { success: true, token: data || null };
+    } catch (error) {
+        console.error('Erro ao mudar o compartilhamento da lista:', error);
+        return { success: false };
+    }
+}
+
+/** Lista aberta pelo link público; funciona sem login */
+export async function supabaseGetSharedList(token) {
+    try {
+        const { data, error } = await supabase.rpc('get_shared_list', { p_token: token });
+        if (error) throw error;
+        return { success: true, list: data };
+    } catch (error) {
+        console.error('Erro ao abrir lista compartilhada:', error);
         return { success: false };
     }
 }

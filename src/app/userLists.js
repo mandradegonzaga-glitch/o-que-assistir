@@ -1,36 +1,42 @@
 // Listas personalizadas: aba "Minhas Listas", "Salvar em uma lista" no título e a janela de criar/renomear.
 // Regras em src/domain/userLists.js; banco em database/user_lists.sql. O convidado guarda no aparelho.
 import { isAbortError, latestSignal, tmdbGet } from '../api/tmdb.js';
-import { supabaseAddListItem, supabaseAddListItems, supabaseCreateList, supabaseDeleteList, supabaseGetLists, supabaseRemoveListItem, supabaseUpdateList } from '../api/supabase.js';
+import { supabaseAddListItem, supabaseAddListItems, supabaseCreateList, supabaseDeleteList, supabaseGetLists, supabaseRemoveListItem, supabaseReorderList, supabaseUpdateList } from '../api/supabase.js';
 import {
     DEFAULT_EMOJI, LIST_EMOJIS, MAX_ITEMS, MAX_LISTS, buildLists, cleanListName, hasItem, listNameError,
-    availableTemplates, findListByName, normalizeGuestLists, pickEmoji, toListItem, withItem, withoutItem,
+    availableTemplates, findListByName, moveItem, normalizeGuestLists, pickEmoji, toListItem, withItem, withoutItem,
 } from '../domain/userLists.js';
 import { COLLECTIONS, collectionById, collectionItems, collectionKind, collectionPath } from '../domain/collections.js';
 import { session, state } from '../state/appState.js';
 import { pendingRemovals, scheduleUndoable, showToast } from '../ui/feedback.js';
 import { confirmDialog } from '../ui/modals.js';
+import { setDragReorder } from '../ui/dragReorder.js';
 import { CLOSE_ICON } from '../ui/icons.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { formatCount, pluralize } from '../utils/format.js';
 import { IMG_URL } from '../config/constants.js';
 import { saveGuestLists } from './guestLibrary.js';
 import { renderLibrary } from './library.js';
+import { switchTab } from '../ui/navigation.js';
 
 let openListId = null;   // lista aberta na aba; null mostra todas
 let openCollectionId = null; // coleção pronta aberta (src/domain/collections.js)
 const collectionCache = new Map(); // id → títulos já buscados no TMDB (null: falhou)
 const COLLECTION_TTL_MS = 24 * 60 * 60 * 1000;
+let reorderMode = false; // "Ordenar" ligado na lista aberta
+const pendingOrder = new Map(); // listId → { timer, before }: a ordem é gravada um instante depois do último movimento
+const ORDER_SAVE_MS = 600;
 let unavailable = false; // a conta não conseguiu ler as listas (ou o SQL ainda não foi rodado)
 const editor = { listId: null, fromSave: false, emoji: DEFAULT_EMOJI };
 
 const isGuest = () => session.currentUser === 'guest';
 const allLists = () => session.user?.lists || [];
-const findList = id => allLists().find(l => l.id === id);
+export const findList = id => allLists().find(l => l.id === id);
+export const getOpenListId = () => openListId;
 const countLabel = n => (n === 0 ? 'Nenhum título' : `${formatCount(n)} ${pluralize(n, 'título', 'títulos')}`);
 const removalKey = (listId, titleId) => `list:${listId}:${titleId}`;
 
-function setLists(next) {
+export function setLists(next) {
     session.user.lists = next;
     if (isGuest()) saveGuestLists(next);
 }
@@ -198,52 +204,67 @@ export async function openCollection(id) {
     if (hadFocus) document.getElementById('list-view-title')?.focus();
 }
 
-// Copia a coleção como lista da pessoa. Já existe uma com o mesmo nome? Os títulos que faltam entram nela.
+// Copia títulos como uma lista da pessoa (coleção pronta ou lista compartilhada por link).
+// Já existe uma com o mesmo nome? Os títulos que faltam entram nela. Devolve o id da lista, ou null.
+export async function copyAsList({ name, emoji, items }) {
+    let list = findListByName(allLists(), name);
+    if (!list && allLists().length >= MAX_LISTS) {
+        showToast(`Você chegou ao limite de ${MAX_LISTS} listas.`, 'error');
+        return null;
+    }
+    const isNew = !list;
+    if (!list) {
+        const created = isGuest() ? { success: true, id: newGuestId() } : await supabaseCreateList(session.currentUserId, { name, emoji: pickEmoji(emoji) });
+        if (!created.success) {
+            showToast(created.duplicate ? 'Você já tem uma lista com esse nome.' : 'Não foi possível copiar a lista. Tente de novo.', 'error');
+            return null;
+        }
+        list = { id: created.id, name, emoji: pickEmoji(emoji), items: [] };
+        setLists([...allLists(), list]);
+    }
+    const missing = items.filter(i => !hasItem(list, i.id)).slice(0, Math.max(0, MAX_ITEMS - list.items.length));
+    if (missing.length > 0 && !isGuest()) {
+        const added = await supabaseAddListItems(session.currentUserId, list.id, missing);
+        if (!added.success) {
+            showToast('A lista foi criada, mas os títulos não entraram. Tente copiar de novo.', 'error');
+            return null;
+        }
+    }
+    const listId = list.id;
+    setLists(allLists().map(l => (l.id === listId ? { ...l, items: [...l.items, ...missing] } : l)));
+    let message;
+    if (missing.length === 0) message = `Todos já estavam em "${list.name}".`;
+    else if (isNew) message = `Copiada para as suas listas como "${list.name}".`;
+    else message = `${countLabel(missing.length)} ${pluralize(missing.length, 'entrou', 'entraram')} em "${list.name}".`;
+    showToast(message);
+    return listId;
+}
+
 export async function copyCollection() {
     const c = collectionById(openCollectionId);
     const items = c && collectionCache.get(c.id);
     if (!Array.isArray(items) || items.length === 0) return;
     const btn = document.querySelector('[data-action="copyCollection"]');
     if (btn?.disabled) return;
-    let list = findListByName(allLists(), c.name);
-    if (!list && allLists().length >= MAX_LISTS) {
-        showToast(`Você chegou ao limite de ${MAX_LISTS} listas.`, 'error');
-        return;
-    }
     if (btn) btn.disabled = true;
     try {
-        const isNew = !list;
-        if (!list) {
-            const created = isGuest() ? { success: true, id: newGuestId() } : await supabaseCreateList(session.currentUserId, { name: c.name, emoji: c.emoji });
-            if (!created.success) {
-                showToast('Não foi possível copiar a coleção. Tente de novo.', 'error');
-                return;
-            }
-            list = { id: created.id, name: c.name, emoji: pickEmoji(c.emoji), items: [] };
-            setLists([...allLists(), list]);
-        }
-        const missing = items.filter(i => !hasItem(list, i.id)).slice(0, Math.max(0, MAX_ITEMS - list.items.length));
-        if (missing.length > 0 && !isGuest()) {
-            const added = await supabaseAddListItems(session.currentUserId, list.id, missing);
-            if (!added.success) {
-                showToast('A lista foi criada, mas os títulos não entraram. Tente copiar de novo.', 'error');
-                return;
-            }
-        }
-        const listId = list.id;
-        setLists(allLists().map(l => (l.id === listId ? { ...l, items: [...l.items, ...missing] } : l)));
-        let message;
-        if (missing.length === 0) message = `Todos já estavam em "${list.name}".`;
-        else if (isNew) message = `Coleção copiada para "${list.name}".`;
-        else message = `${countLabel(missing.length)} ${pluralize(missing.length, 'entrou', 'entraram')} em "${list.name}".`;
-        showToast(message);
-        openCollectionId = null;
-        openListId = listId;
-        await renderLibrary();
-        document.getElementById('list-view-title')?.focus();
+        const listId = await copyAsList({ name: c.name, emoji: c.emoji, items });
+        if (listId) await showUserList(listId);
     } finally {
         if (btn?.isConnected) btn.disabled = false;
     }
+}
+
+// Mostra uma lista da pessoa na aba "Minhas Listas" (vindo de outra tela ou de um link)
+export async function showUserList(listId) {
+    openCollectionId = null;
+    openListId = listId;
+    reorderMode = false;
+    if (state.tab !== 'listas') switchTab('listas'); // troca a aba e já desenha
+    await renderLibrary();
+    const title = document.getElementById('list-view-title');
+    title?.scrollIntoView({ block: 'center' });
+    title?.focus({ preventScroll: true });
 }
 
 export async function createFromTemplate(name) {
@@ -271,27 +292,105 @@ export function useListTemplate(name) {
 
 function renderOpenList(div, list) {
     const items = list.items.filter(i => !pendingRemovals.has(removalKey(list.id, i.id)));
-    const cards = items.map(i => `<div class="library-item">
+    const ordering = reorderMode && items.length > 1;
+    const cards = items.map((i, index) => (ordering ? `<div class="library-item is-reorderable" data-reorder-id="${i.id}">
+            ${posterImg(i)}
+            <span class="reorder__handle" aria-hidden="true" title="Arraste para mudar a ordem">⠿ Arrastar</span>
+            <span class="reorder__buttons">
+                <button type="button" class="reorder__btn" data-action="moveUserListItem" data-id="${i.id}" data-arg="-1" aria-label="Mover ${escapeHtml(i.title)} para antes" ${index === 0 ? 'disabled' : ''}>◀</button>
+                <span class="reorder__pos" aria-hidden="true">${index + 1}</span>
+                <button type="button" class="reorder__btn" data-action="moveUserListItem" data-id="${i.id}" data-arg="1" aria-label="Mover ${escapeHtml(i.title)} para depois" ${index === items.length - 1 ? 'disabled' : ''}>▶</button>
+            </span>
+        </div>` : `<div class="library-item">
             <button type="button" class="library-item__open" data-action="carregarDetalhes" data-id="${i.id}" data-media="${i.type}" aria-label="${escapeHtml(i.title)}">${posterImg(i)}</button>
             <button type="button" class="remove-btn" data-action="removeFromUserList" data-id="${i.id}" aria-label="Tirar ${escapeHtml(i.title)} da lista">${CLOSE_ICON}</button>
-        </div>`).join('');
+        </div>`)).join('');
+    const shared = !isGuest() && list.shareToken;
     div.innerHTML = `
         <div class="list-view__head grid-full">
             <button type="button" class="btn-clear-small" data-action="closeUserList"><span aria-hidden="true">←</span> Todas as listas</button>
             <h3 id="list-view-title" class="list-view__title" tabindex="-1"><span aria-hidden="true">${list.emoji}</span> ${escapeHtml(list.name)}</h3>
-            <p class="list-view__count">${countLabel(items.length)}</p>
+            <p class="list-view__count">${countLabel(items.length)}${shared ? ' · <span class="list-view__shared">🔗 Compartilhada por link</span>' : ''}</p>
             <div class="list-view__actions">
+                ${items.length > 1 ? `<button type="button" class="btn-clear-small${ordering ? ' is-on' : ''}" data-action="toggleListReorder" aria-pressed="${ordering}">${ordering ? 'Pronto' : 'Ordenar'}</button>` : ''}
+                <button type="button" class="btn-clear-small" data-action="shareUserList">Compartilhar</button>
+                ${shared ? '<button type="button" class="btn-clear-small" data-action="stopSharingUserList">Parar de compartilhar</button>' : ''}
                 <button type="button" class="btn-clear-small" data-action="openListEditor" data-arg="rename">Renomear</button>
                 <button type="button" class="btn-clear-small" data-action="deleteUserList">Apagar lista</button>
             </div>
+            ${ordering ? '<p class="list-view__hint">Arraste pela alça ⠿ ou use ◀ ▶. A ordem é salva sozinha.</p>' : ''}
+            <p id="list-order-status" class="sr-only" aria-live="polite"></p>
         </div>
         ${cards || '<p class="library-note grid-full">Lista vazia. Abra um título e toque em "Salvar em uma lista".</p>'}`;
+    setDragReorder(div, ordering ? {
+        itemSelector: '.library-item[data-reorder-id]',
+        handleSelector: '.reorder__handle',
+        onDrop: (from, to) => applyOrder(list.id, from, to),
+    } : null);
+}
+
+// ORDEM
+
+export async function toggleListReorder() {
+    reorderMode = !reorderMode;
+    await renderLibrary();
+    document.querySelector('#library-content [data-action="toggleListReorder"]')?.focus();
+}
+
+export function moveUserListItem(titleId, delta) {
+    const list = findList(openListId);
+    const from = list ? list.items.findIndex(i => i.id === titleId) : -1;
+    if (from === -1) return;
+    applyOrder(list.id, from, from + delta, { refocus: delta < 0 ? -1 : 1 });
+}
+
+async function applyOrder(listId, from, to, { refocus = 0 } = {}) {
+    const list = findList(listId);
+    if (!list) return;
+    const moved = moveItem(list, from, to);
+    if (moved === list) return;
+    if (!pendingOrder.has(listId)) pendingOrder.set(listId, { before: list.items });
+    setLists(allLists().map(l => (l.id === listId ? moved : l)));
+    const item = moved.items[to];
+    await renderLibrary();
+    const status = document.getElementById('list-order-status');
+    if (status) status.textContent = `${item.title} agora é o ${to + 1}º de ${moved.items.length}.`;
+    if (refocus) {
+        // O foco fica no mesmo botão do título que andou; na ponta, passa para o outro
+        const pick = dir => document.querySelector(`#library-content .reorder__btn[data-id="${item.id}"][data-arg="${dir}"]:not([disabled])`);
+        (pick(refocus) || pick(-refocus))?.focus();
+    }
+    scheduleOrderSave(listId);
+}
+
+function scheduleOrderSave(listId) {
+    const entry = pendingOrder.get(listId);
+    clearTimeout(entry.timer);
+    entry.timer = setTimeout(() => saveOrder(listId), ORDER_SAVE_MS);
+}
+
+async function saveOrder(listId) {
+    const entry = pendingOrder.get(listId);
+    pendingOrder.delete(listId);
+    const list = findList(listId);
+    if (!entry || !list || isGuest()) return; // o convidado já gravou no aparelho (setLists)
+    const result = await supabaseReorderList(listId, list.items.map(i => i.id));
+    if (result.success) return;
+    showToast('Não foi possível salvar a ordem. Verifique a conexão e tente de novo.', 'error');
+    // Volta para a ordem que estava no banco, mantendo títulos que entraram ou saíram nesse meio-tempo
+    const now = findList(listId);
+    if (!now) return;
+    const ids = new Set(now.items.map(i => i.id));
+    const restored = [...entry.before.filter(i => ids.has(i.id)), ...now.items.filter(i => !entry.before.some(b => b.id === i.id))];
+    setLists(allLists().map(l => (l.id === listId ? { ...l, items: restored } : l)));
+    if (state.tab === 'listas' && openListId === listId) renderLibrary();
 }
 
 export async function openUserList(id) {
     if (!findList(id)) return;
     openListId = id;
     openCollectionId = null;
+    reorderMode = false;
     await renderLibrary();
     document.getElementById('list-view-title')?.focus();
 }
@@ -300,6 +399,7 @@ export async function closeUserList() {
     const id = openListId || openCollectionId;
     openListId = null;
     openCollectionId = null;
+    reorderMode = false;
     await renderLibrary();
     focusListCard(id);
 }

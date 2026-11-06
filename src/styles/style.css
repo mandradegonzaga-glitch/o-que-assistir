@@ -5802,3 +5802,77 @@ button.site-footer__link {
 
 /* Copiar coleção: altura de toque, como os outros botões principais */
 .list-view__copy { min-height: 44px; }
+
+/* Listas, parte 2: ordenar (src/ui/dragReorder.js) e link público */
+.list-view__actions { flex-wrap: wrap; }
+
+.btn-clear-small.is-on {
+    border-color: var(--accent-primary);
+    color: var(--accent-text);
+}
+
+.list-view__hint { flex: 1 1 100%; margin: 0; color: var(--text-muted); font-size: 0.8rem; }
+
+.list-view__shared { color: var(--accent-text); }
+
+.library-item.is-reorderable { cursor: default; }
+
+.library-item.is-reorderable:hover { transform: none; }
+
+.library-item.is-reorderable img { display: block; width: 100%; height: auto; }
+
+/* A alça é o único lugar que arrasta: no resto do pôster o dedo rola a página */
+.reorder__handle {
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.75);
+    border-radius: 999px;
+    color: #fff;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+}
+
+.reorder__buttons {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.85));
+}
+
+.reorder__btn {
+    min-width: 36px;
+    min-height: 36px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.reorder__btn:disabled { opacity: 0.35; cursor: default; }
+
+.reorder__pos { color: #fff; font-weight: 700; }
+
+.library-item.is-dragging {
+    z-index: 10;
+    opacity: 0.9;
+    box-shadow: var(--shadow-lg);
+    transition: none;
+}
+
+.library-item.is-dragging .reorder__handle { cursor: grabbing; }
+
+.library-item.is-drop-target { outline: 3px dashed var(--accent-primary); outline-offset: 2px; }
+
+.shared-list__grid { max-height: 55vh; overflow-y: auto; }

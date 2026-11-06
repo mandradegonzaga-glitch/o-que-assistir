@@ -178,7 +178,7 @@ test.describe('listas personalizadas', () => {
     expect(url.searchParams.get('sort_by')).toBe('vote_average.desc');
 
     await page.getByRole('button', { name: 'Copiar para minhas listas' }).click();
-    await expect(page.locator('#toast')).toContainText('Coleção copiada para "Clássicos do terror".');
+    await expect(page.locator('#toast')).toContainText('Copiada para as suas listas como "Clássicos do terror".');
     await expect(page.getByRole('button', { name: 'Renomear' })).toBeVisible(); // agora é a lista da pessoa
     await expect(page.locator('#library-content .remove-btn')).toHaveCount(5);
 
@@ -198,7 +198,7 @@ test.describe('listas personalizadas', () => {
       await page.locator('#tab-listas').click();
       await page.locator('#library-content .list-card--collection', { hasText: 'Doramas queridinhos' }).click();
       await page.getByRole('button', { name: 'Copiar para minhas listas' }).click();
-      await expect(page.locator('#toast')).toContainText('Coleção copiada');
+      await expect(page.locator('#toast')).toContainText('Copiada para as suas listas');
       const db = await page.evaluate(() => ({
         lists: window.__db.user_lists.map(l => `${l.emoji} ${l.name}`),
         types: [...new Set(window.__db.user_list_items.map(i => i.media_type))],

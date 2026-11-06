@@ -12,7 +12,8 @@ import { desmarcarTemporadaAtual, desmarcarTodosEpisodios, marcarAteAqui, marcar
 import { friendAccept, friendAdd, friendInvite, friendMatchCurrent, friendOpen, friendRemove, friendSendTitle, friendShareDelete, friendShareOpen, friendUnfriendCurrent, matchInboxDelete, matchInboxOpen, openFriends, toggleShareWithFriends } from './friends.js';
 import { removeLibItem } from './library.js';
 import { reactTitle } from './reactions.js';
-import { closeUserList, copyCollection, createFromTemplate, deleteUserList, openCollection, useListTemplate, openListEditor, openSaveToList, openUserList, pickListEmoji, removeFromUserList, saveListEditor, toggleTitleInList } from './userLists.js';
+import { copySharedList, shareUserList, stopSharingUserList } from './listShare.js';
+import { closeUserList, copyCollection, createFromTemplate, deleteUserList, moveUserListItem, openCollection, toggleListReorder, useListTemplate, openListEditor, openSaveToList, openUserList, pickListEmoji, removeFromUserList, saveListEditor, toggleTitleInList } from './userLists.js';
 import { blindReveal, sessaoEscuras } from './blindSession.js';
 import { abrirBatalha, battleChoose, battleOpenChampion, battleSynopsis, battleUndo } from './battle.js';
 import { openHelp } from './help.js';
@@ -140,6 +141,11 @@ const clickActions = {
   closeUserList,
   deleteUserList,
   openCollection: el => openCollection(el.dataset.arg),
+  toggleListReorder,
+  moveUserListItem: el => moveUserListItem(Number(el.dataset.id), Number(el.dataset.arg)),
+  shareUserList,
+  stopSharingUserList,
+  copySharedList,
   copyCollection,
   createFromTemplate: el => createFromTemplate(el.dataset.arg),
   useListTemplate: el => useListTemplate(el.dataset.arg),

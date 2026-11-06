@@ -154,6 +154,34 @@
           if (row) { row.reaction = args.p_reaction; save(); }
           return { data: Boolean(row), error: null };
         }
+        // Listas, parte 2 (database/user_lists.sql)
+        if (name === 'reorder_list_items') {
+          if (window.__TEST?.failReorder) return { data: null, error: { code: 'PGRST202', message: 'função não existe' } };
+          store.user_list_items.filter(i => i.list_id === args.p_list_id).forEach(i => {
+            const pos = args.p_tmdb_ids.indexOf(i.tmdb_id);
+            i.position = pos === -1 ? i.position : pos + 1;
+          });
+          save();
+          return { data: null, error: null };
+        }
+        if (name === 'set_list_sharing') {
+          const list = (store.user_lists || []).find(l => l.id === args.p_list_id && l.user_id === 'u1');
+          if (!list) return { data: null, error: null };
+          list.share_token = args.p_on ? (list.share_token || crypto.randomUUID()) : null;
+          save();
+          return { data: list.share_token, error: null };
+        }
+        if (name === 'get_shared_list') {
+          // Listas de outras pessoas vêm de window.__seed.sharedLists[token]; as próprias, do banco simulado
+          const fromSeed = seed.sharedLists?.[args.p_token];
+          if (fromSeed) return { data: fromSeed, error: null };
+          const list = (store.user_lists || []).find(l => l.share_token && l.share_token === args.p_token);
+          if (!list) return { data: null, error: null };
+          const mine = logged() && list.user_id === 'u1';
+          const items = (store.user_list_items || []).filter(i => i.list_id === list.id)
+            .sort((x, y) => (x.position ?? Infinity) - (y.position ?? Infinity));
+          return { data: { name: list.name, emoji: list.emoji, owner: 'Pessoa Teste', is_mine: mine, list_id: mine ? list.id : null, items }, error: null };
+        }
         if (name === 'list_match_invites') {
           return { data: (seed.invites || []).filter(i => !store.removed?.includes(i.id)), error: null };
         }

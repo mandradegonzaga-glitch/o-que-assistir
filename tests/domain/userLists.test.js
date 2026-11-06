@@ -1,7 +1,7 @@
 import { describe, it, expect } from '@jest/globals';
 import {
   DEFAULT_EMOJI, MAX_ITEMS, MAX_LISTS, buildLists, cleanListName, hasItem, listNameError,
-  normalizeGuestLists, pickEmoji, toListItem, withItem, withoutItem,
+  isShareToken, moveItem, normalizeGuestLists, pickEmoji, sharedListFrom, toListItem, withItem, withoutItem,
 } from '../../src/domain/userLists.js';
 
 const list = (id, name, items = []) => ({ id, name, emoji: '🎃', items });
@@ -86,8 +86,45 @@ describe('userLists', () => {
       ],
     );
     expect(lists).toEqual([
-      { id: 'l1', name: 'Terror', emoji: '👻', items: [{ id: 694, title: 'O Iluminado', poster: '/i.jpg', type: 'movie' }] },
-      { id: 'l2', name: 'Vazia', emoji: DEFAULT_EMOJI, items: [] },
+      { id: 'l1', name: 'Terror', emoji: '👻', shareToken: null, items: [{ id: 694, title: 'O Iluminado', poster: '/i.jpg', type: 'movie' }] },
+      { id: 'l2', name: 'Vazia', emoji: DEFAULT_EMOJI, shareToken: null, items: [] },
     ]);
+  });
+
+  it('orders by the chosen position; titles without one go last, in arrival order', () => {
+    const row = (id, position) => ({ list_id: 'l', tmdb_id: id, title: `T${id}`, poster_path: null, media_type: 'movie', position });
+    const [l] = buildLists([{ id: 'l', name: 'L', emoji: '🎬', share_token: 'tok' }], [row(1, 3), row(2, null), row(3, 1), row(4, 2), row(5, null)]);
+    expect(l.items.map(i => i.id)).toEqual([3, 4, 1, 2, 5]);
+    expect(l.shareToken).toBe('tok');
+  });
+
+  it('moves a title, ignoring positions outside the list', () => {
+    const l = list('a', 'L', [{ id: 1 }, { id: 2 }, { id: 3 }]);
+    expect(moveItem(l, 0, 2).items.map(i => i.id)).toEqual([2, 3, 1]);
+    expect(moveItem(l, 2, 0).items.map(i => i.id)).toEqual([3, 1, 2]);
+    expect(l.items.map(i => i.id)).toEqual([1, 2, 3]);
+    expect(moveItem(l, 0, -1)).toBe(l);
+    expect(moveItem(l, 1, 3)).toBe(l);
+    expect(moveItem(l, 1, 1)).toBe(l);
+  });
+
+  it('only accepts a UUID as share token', () => {
+    expect(isShareToken('3f2a6c1e-8b7d-4e2f-9a1b-0c3d4e5f6a7b')).toBe(true);
+    expect(isShareToken('abc')).toBe(false);
+    expect(isShareToken('<script>')).toBe(false);
+    expect(isShareToken(null)).toBe(false);
+  });
+
+  it('reads the shared list from the server, cleaning what comes in', () => {
+    expect(sharedListFrom(null)).toBeNull();
+    expect(sharedListFrom({ name: 'x' })).toBeNull();
+    const l = sharedListFrom({
+      name: ' Para a Bia ', emoji: '<b>', owner: 'Ana', is_mine: false, list_id: null,
+      items: [{ tmdb_id: 3, title: 'Três', poster_path: '/3.jpg', media_type: 'tv' }, { tmdb_id: 1, title: 'Um', poster_path: 'http://x/a.jpg', media_type: 'movie' }],
+    });
+    expect(l).toEqual({
+      name: 'Para a Bia', emoji: DEFAULT_EMOJI, owner: 'Ana', isMine: false, listId: null,
+      items: [{ id: 3, title: 'Três', poster: '/3.jpg', type: 'tv' }, { id: 1, title: 'Um', poster: null, type: 'movie' }],
+    });
   });
 });

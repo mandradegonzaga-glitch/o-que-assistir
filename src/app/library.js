@@ -126,8 +126,13 @@ export async function toggleWatchlist(f) {
     renderLibrary();
 }
 
+// Cada chamada ganha um número: se outra começou enquanto esta esperava o banco, esta desiste
+// (senão a resposta atrasada de uma aba antiga desenha por cima da aba atual)
+let renderSeq = 0;
+
 export async function renderLibrary() {
     if (!session.currentUser) return;
+    const seq = ++renderSeq;
     // O histórico mudou (marcou, desmarcou, terminou a série): o "Como foi?" do título aberto acompanha
     renderReactions();
     updateSaveListButton();
@@ -141,7 +146,7 @@ export async function renderLibrary() {
 
     // Aba Em Andamento
     if (state.tab === 'andando') {
-        await renderAndando(div);
+        await renderAndando(div, () => seq !== renderSeq);
         return;
     }
 
@@ -151,6 +156,7 @@ export async function renderLibrary() {
             list = session.user.watchlist || [];
         } else {
             const result = await supabaseGetWatchlist(session.currentUserId);
+            if (seq !== renderSeq) return;
             list = result.success ? result.watchlist : [];
         }
     } else {
@@ -196,10 +202,11 @@ function libraryGroup(title, items, media, key) {
     return `<div class="library-group-title">${title} (${items.length})</div>${cards.join('')}`;
 }
 
-export async function renderAndando(div) {
+export async function renderAndando(div, isStale = () => false) {
     div.innerHTML = '<div class="library-note">Carregando...</div>';
 
     const result = await getAllSeriesInProgress();
+    if (isStale()) return;
     // Série marcada como vista sai de Em Andamento, mesmo sem todos os episódios marcados
     const seen = new Set((session.user.history || []).map(h => h.id));
     if (result.success) result.series = result.series.filter(s => !seen.has(s.id));
@@ -250,6 +257,7 @@ export async function renderAndando(div) {
         } catch { return null; }
     }));
 
+    if (isStale()) return;
     const activeCards = cards.filter(Boolean);
     if (activeCards.length === 0) {
         div.innerHTML = '<div class="library-note">Todas as séries foram concluídas!</div>';

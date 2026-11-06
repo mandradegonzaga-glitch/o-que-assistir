@@ -77,13 +77,45 @@ export function normalizeGuestLists(raw) {
   }).filter(Boolean).slice(0, MAX_LISTS);
 }
 
-// Junta as linhas do banco: listas na ordem de criação, títulos na ordem em que entraram
+// Junta as linhas do banco: listas na ordem de criação; títulos na ordem escolhida pela pessoa,
+// e os que ainda não têm posição (entraram depois) no fim, na ordem em que entraram
 export function buildLists(listRows, itemRows) {
-  const byId = new Map(listRows.map(l => [l.id, { id: l.id, name: l.name, emoji: pickEmoji(l.emoji), items: [] }]));
-  itemRows.forEach(row => {
-    byId.get(row.list_id)?.items.push({ id: row.tmdb_id, title: row.title, poster: row.poster_path, type: row.media_type });
-  });
+  const byId = new Map(listRows.map(l => [l.id, { id: l.id, name: l.name, emoji: pickEmoji(l.emoji), shareToken: l.share_token || null, items: [] }]));
+  const rank = row => (Number.isInteger(row.position) ? row.position : Infinity);
+  itemRows
+    .map((row, index) => ({ row, index }))
+    .sort((a, b) => rank(a.row) - rank(b.row) || a.index - b.index)
+    .forEach(({ row }) => {
+      byId.get(row.list_id)?.items.push({ id: row.tmdb_id, title: row.title, poster: row.poster_path, type: row.media_type });
+    });
   return [...byId.values()];
+}
+
+// Move um título de posição (arrastar ou os botões ◀ ▶). Posições fora da lista não mudam nada.
+export function moveItem(list, from, to) {
+  const n = list.items.length;
+  if (from === to || from < 0 || to < 0 || from >= n || to >= n) return list;
+  const items = [...list.items];
+  const [moved] = items.splice(from, 1);
+  items.splice(to, 0, moved);
+  return { ...list, items };
+}
+
+// Token do link público (?lista=...): um UUID, nada além disso
+const TOKEN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const isShareToken = value => TOKEN.test(String(value ?? ''));
+
+// Resposta do get_shared_list → { name, emoji, owner, isMine, listId, items }; null se o link não vale
+export function sharedListFrom(data) {
+  if (!data || typeof data !== 'object' || !Array.isArray(data.items)) return null;
+  return {
+    name: cleanListName(data.name) || 'Lista',
+    emoji: pickEmoji(data.emoji),
+    owner: String(data.owner || '').slice(0, 60),
+    isMine: data.is_mine === true,
+    listId: data.list_id || null,
+    items: normalizeGuestLists([{ name: 'x', items: data.items.map(i => ({ id: i.tmdb_id, title: i.title, poster: i.poster_path, type: i.media_type })) }])[0]?.items || [],
+  };
 }
 
 export const findListByName = (lists, name) => {

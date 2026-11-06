@@ -34,8 +34,8 @@ before(async () => {
     CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT NULLIF(current_setting('app.uid', true), '')::uuid $$;
     GRANT USAGE ON SCHEMA auth TO anon, authenticated;
     GRANT USAGE ON SCHEMA public TO anon, authenticated;
-    CREATE TABLE profiles (id uuid PRIMARY KEY, username text UNIQUE NOT NULL);
-    INSERT INTO profiles VALUES ('${ANA}', 'ana'), ('${BIA}', 'bia');
+    CREATE TABLE profiles (id uuid PRIMARY KEY, username text UNIQUE NOT NULL, display_name text, email text);
+    INSERT INTO profiles VALUES ('${ANA}', 'ana', 'Ana', 'ana@x.dev'), ('${BIA}', 'bia', NULL, 'bia@x.dev');
   `);
   const sql = readFileSync(new URL('../../database/user_lists.sql', import.meta.url), 'utf8');
   await db.exec(sql);
@@ -103,4 +103,49 @@ test('limite de 50 listas por pessoa', async () => {
   const have = Number((await rows('SELECT count(*) FROM user_lists WHERE user_id = $1', [BIA]))[0].count);
   for (let i = have; i < 50; i++) await as(BIA, () => newList(`Lista ${i}`));
   await assert.rejects(as(BIA, () => newList('Uma a mais')), /limite de 50 listas/);
+});
+
+test('ordem: a pessoa reordena só as próprias listas', async () => {
+  const lista = await as(ANA, () => newList('Ordem'));
+  for (const id of [10, 20, 30]) await as(ANA, () => addItem(lista, id));
+  await as(ANA, () => rows('SELECT reorder_list_items($1, $2)', [lista, [30, 10, 20]]));
+  const order = async () => (await rows('SELECT tmdb_id FROM user_list_items WHERE list_id = $1 ORDER BY position', [lista])).map(r => r.tmdb_id);
+  assert.deepEqual(await order(), [30, 10, 20]);
+
+  await as(BIA, () => rows('SELECT reorder_list_items($1, $2)', [lista, [20, 30, 10]]));
+  assert.deepEqual(await order(), [30, 10, 20], 'Bia não muda a ordem da lista da Ana');
+  await denied(as(ANA, () => rows('UPDATE user_list_items SET title = $1 WHERE list_id = $2', ['Trocado', lista])), 'só a posição pode mudar');
+  await denied(as(null, () => rows('SELECT reorder_list_items($1, $2)', [lista, [10]])), 'sem login não reordena');
+});
+
+test('link público: liga, abre sem login na ordem certa, desliga', async () => {
+  const lista = await as(ANA, () => newList('Para a Bia'));
+  for (const id of [1, 2, 3]) await as(ANA, () => addItem(lista, id, `Filme ${id}`));
+  await as(ANA, () => rows('SELECT reorder_list_items($1, $2)', [lista, [3, 1, 2]]));
+
+  const [{ set_list_sharing: none }] = await as(BIA, () => rows('SELECT set_list_sharing($1, true)', [lista]));
+  assert.equal(none, null, 'Bia não liga o link da lista da Ana');
+  const [{ set_list_sharing: token }] = await as(ANA, () => rows('SELECT set_list_sharing($1, true)', [lista]));
+  assert.match(token, /^[0-9a-f-]{36}$/);
+  const [{ set_list_sharing: same }] = await as(ANA, () => rows('SELECT set_list_sharing($1, true)', [lista]));
+  assert.equal(same, token, 'ligar de novo mantém o mesmo link');
+
+  const [{ get_shared_list: seen }] = await as(null, () => rows('SELECT get_shared_list($1)', [token]));
+  assert.deepEqual(
+    { name: seen.name, owner: seen.owner, mine: seen.is_mine, listId: seen.list_id, ids: seen.items.map(i => i.tmdb_id) },
+    { name: 'Para a Bia', owner: 'Ana', mine: false, listId: null, ids: [3, 1, 2] },
+    'sem login vê a lista, na ordem, com o nome (sem email) de quem fez',
+  );
+  assert.equal(JSON.stringify(seen).includes('ana@x.dev'), false);
+  const [{ get_shared_list: own }] = await as(ANA, () => rows('SELECT get_shared_list($1)', [token]));
+  assert.deepEqual({ mine: own.is_mine, listId: own.list_id }, { mine: true, listId: lista });
+
+  const [{ get_shared_list: wrong }] = await as(null, () => rows('SELECT get_shared_list($1)', ['00000000-0000-4000-8000-000000000999']));
+  assert.equal(wrong, null, 'token errado não acha nada');
+  await denied(as(null, () => rows('SELECT share_token FROM user_lists')), 'sem login não lista os tokens');
+  await denied(as(null, () => rows('SELECT set_list_sharing($1, true)', [lista])));
+
+  await as(ANA, () => rows('SELECT set_list_sharing($1, false)', [lista]));
+  const [{ get_shared_list: off }] = await as(null, () => rows('SELECT get_shared_list($1)', [token]));
+  assert.equal(off, null, 'desligado, o link antigo para de funcionar');
 });

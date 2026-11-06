@@ -99,3 +99,73 @@ CREATE POLICY "Pôr títulos nas próprias listas" ON user_list_items
 DROP POLICY IF EXISTS "Tirar títulos das próprias listas" ON user_list_items;
 CREATE POLICY "Tirar títulos das próprias listas" ON user_list_items
     FOR DELETE TO authenticated USING (auth.uid() = user_id);
+
+-- ================================================
+-- PARTE 2: ordem dos títulos e link público
+-- ================================================
+
+-- Ordem escolhida pela pessoa (1, 2, 3...). Sem ordem (NULL) vem depois, pela data em que entrou.
+ALTER TABLE user_list_items ADD COLUMN IF NOT EXISTS position INTEGER;
+
+GRANT UPDATE (position) ON user_list_items TO authenticated;
+
+DROP POLICY IF EXISTS "Ordenar os títulos das próprias listas" ON user_list_items;
+CREATE POLICY "Ordenar os títulos das próprias listas" ON user_list_items
+    FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- Grava a ordem inteira de uma vez. Roda com as permissões de quem chama: só mexe nas próprias listas.
+CREATE OR REPLACE FUNCTION reorder_list_items(p_list_id UUID, p_tmdb_ids INTEGER[])
+RETURNS VOID
+LANGUAGE sql VOLATILE SECURITY INVOKER SET search_path = public
+AS $$
+    UPDATE user_list_items i SET position = o.ord::INTEGER
+    FROM unnest(p_tmdb_ids) WITH ORDINALITY AS o(tmdb_id, ord)
+    WHERE i.list_id = p_list_id AND i.tmdb_id = o.tmdb_id;
+$$;
+
+REVOKE ALL ON FUNCTION reorder_list_items(UUID, INTEGER[]) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION reorder_list_items(UUID, INTEGER[]) TO authenticated;
+
+-- Link público: quem tem o token vê a lista. NULL = não compartilhada.
+ALTER TABLE user_lists ADD COLUMN IF NOT EXISTS share_token UUID;
+CREATE UNIQUE INDEX IF NOT EXISTS user_lists_share_token ON user_lists (share_token) WHERE share_token IS NOT NULL;
+
+-- Liga (gera o token, ou mantém o que já existe) e desliga (o link antigo para de funcionar)
+CREATE OR REPLACE FUNCTION set_list_sharing(p_list_id UUID, p_on BOOLEAN)
+RETURNS UUID
+LANGUAGE sql VOLATILE SECURITY DEFINER SET search_path = public
+AS $$
+    UPDATE user_lists
+    SET share_token = CASE WHEN p_on THEN COALESCE(share_token, gen_random_uuid()) END
+    WHERE id = p_list_id AND user_id = auth.uid()
+    RETURNING share_token;
+$$;
+
+REVOKE ALL ON FUNCTION set_list_sharing(UUID, BOOLEAN) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION set_list_sharing(UUID, BOOLEAN) TO authenticated;
+
+-- Aberta a todos (inclusive sem login), mas só devolve a lista cujo token foi informado:
+-- não há como listar ou adivinhar as outras. Mostra o nome de quem fez, nunca o email.
+CREATE OR REPLACE FUNCTION get_shared_list(p_token UUID)
+RETURNS JSON
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
+AS $$
+    SELECT json_build_object(
+        'name', l.name,
+        'emoji', l.emoji,
+        'owner', COALESCE(p.display_name, p.username),
+        'is_mine', COALESCE(l.user_id = auth.uid(), false),
+        'list_id', CASE WHEN l.user_id = auth.uid() THEN l.id END,
+        'items', COALESCE((
+            SELECT json_agg(json_build_object('tmdb_id', i.tmdb_id, 'title', i.title, 'poster_path', i.poster_path, 'media_type', i.media_type)
+                            ORDER BY i.position NULLS LAST, i.added_at)
+            FROM user_list_items i WHERE i.list_id = l.id
+        ), '[]'::json)
+    )
+    FROM user_lists l
+    JOIN profiles p ON p.id = l.user_id
+    WHERE p_token IS NOT NULL AND l.share_token = p_token;
+$$;
+
+REVOKE ALL ON FUNCTION get_shared_list(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION get_shared_list(UUID) TO anon, authenticated;

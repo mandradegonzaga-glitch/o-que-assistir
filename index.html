@@ -668,6 +668,17 @@
         </div>
     </div>
 
+    <!-- Lista aberta por link (?lista=...): antes do modal de título, que abre por cima dela -->
+    <div id="modal-shared-list" class="modal-overlay">
+        <div class="modal-content modal-content--panel modal-content--wide" role="dialog" aria-modal="true" aria-labelledby="shared-list-title" aria-describedby="shared-list-owner" tabindex="-1">
+            <h2 id="shared-list-title" class="panel-title"></h2>
+            <p id="shared-list-owner" class="panel-hint text-center"></p>
+            <div id="shared-list-items" class="results-grid shared-list__grid"></div>
+            <button type="button" id="shared-list-copy" class="btn-main ripple w-full mt-20" data-action="copySharedList">Copiar para minhas listas</button>
+            <button type="button" class="btn-outline ripple w-full mt-20" data-action="closeModal" data-arg="modal-shared-list">Fechar</button>
+        </div>
+    </div>
+
     <div id="modal-resultado" class="modal-overlay">
         <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="m-title" tabindex="-1">
             <div class="modal-poster-container">
@@ -1195,7 +1206,7 @@
                     <li>Para ver, abra a aba <strong>Minhas Listas</strong>, embaixo da busca, e toque na lista.</li>
                 </ol>
                 <p><strong>Coleções prontas</strong>, no fim da aba: o app junta os mais bem avaliados de um tema (terror, comédias, doramas…). Abra uma e toque em <strong>Copiar para minhas listas</strong>.</p>
-                <p>Dentro da lista: <strong>Renomear</strong> (nome e emoji), <strong>Apagar lista</strong> e o ✕ em cada pôster para tirar o título. Um título pode estar em várias listas, e isso não muda "Quero Assistir" nem "Já assistidos". Sem conta, as listas ficam no aparelho e vão para a conta quando você criar uma.</p>
+                <p>Dentro da lista: <strong>Ordenar</strong> (arraste pela alça ⠿ ou use ◀ ▶), <strong>Compartilhar</strong> (um link que qualquer pessoa abre, mesmo sem conta, e pode copiar; <strong>Parar de compartilhar</strong> desliga o link), <strong>Renomear</strong> (nome e emoji), <strong>Apagar lista</strong> e o ✕ em cada pôster para tirar o título. Um título pode estar em várias listas, e isso não muda "Quero Assistir" nem "Já assistidos". Sem conta, as listas ficam no aparelho e vão para a conta quando você criar uma; o link de compartilhar precisa de conta.</p>
             </details>
 
             <details class="help__topic" id="guia-series">

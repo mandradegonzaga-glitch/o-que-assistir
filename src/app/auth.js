@@ -2,6 +2,7 @@
 import { supabaseGetBlacklist, supabaseGetCurrentUser, supabaseGetPreferences, supabaseGetProfile, supabaseGetSorteioHistory, supabaseGetWatchHistory, supabaseGetWatchlist, supabaseLogin, supabaseLogout, supabaseRegister, supabaseResetPassword, supabaseUpdatePreferences, supabaseUpdateProfile } from '../api/supabase.js';
 import { legacyDataAvailable, offerLegacyImport } from './legacyImport.js';
 import { openFriendLinkFromUrl, refreshFriends } from './friends.js';
+import { openSharedListFromUrl } from './listShare.js';
 import { getGuestData } from './guestLibrary.js';
 import { loadAccountLists, loadGuestLists } from './userLists.js';
 import { renderLibrary } from './library.js';
@@ -220,6 +221,7 @@ export async function registerUser() {
     showToast('Conta criada com sucesso!');
     openTitleFromUrl();
     openFriendLinkFromUrl();
+    openSharedListFromUrl();
 
     // Fazer login automático
     session.currentUser = result.user;
@@ -257,6 +259,7 @@ export async function loginUser() {
     showToast(`Bem-vindo(a), ${session.user.name || 'Usuário'}!`);
     openTitleFromUrl();
     openFriendLinkFromUrl();
+    openSharedListFromUrl();
     offerLegacyImport();
 }
 
@@ -294,6 +297,7 @@ export function loginAsGuest() {
     dailyPicksAfterLogin();
     openTitleFromUrl();
     openFriendLinkFromUrl();
+    openSharedListFromUrl();
 }
 
 // ESQUECI MINHA SENHA

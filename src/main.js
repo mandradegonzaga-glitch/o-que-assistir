@@ -7,6 +7,7 @@ import { checkAuth, loadUserData, loginAsGuest } from './app/auth.js';
 import { offerLegacyImport, removeLegacyPasswords, showLegacyHint } from './app/legacyImport.js';
 import { renderLibrary } from './app/library.js';
 import { openFriendLinkFromUrl } from './app/friends.js';
+import { openSharedListFromUrl } from './app/listShare.js';
 import { hasMatchInvite, initMatch, openMatchFromUrl } from './app/match.js';
 import { initMyProviders } from './app/myProviders.js';
 import { checkFirstVisit } from './app/onboarding.js';
@@ -46,6 +47,7 @@ showLegacyHint();
   if (session.currentUser) {
     openTitleFromUrl();
     await openFriendLinkFromUrl();
+    await openSharedListFromUrl();
     offerLegacyImport();
   }
 })();
