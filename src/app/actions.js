@@ -8,7 +8,7 @@ import { matchCodeJoin, matchSendToFriend, matchContinue, matchDraw, matchEmailI
 import { filterProviders, onProviderChange, toggleMyProvider } from './myProviders.js';
 import { compartilhar, compartilharApps, compartilharWhatsapp, gerarIngresso } from './ticket.js';
 import { syncUrl } from './urlSync.js';
-import { desmarcarTemporadaAtual, desmarcarTodosEpisodios, marcarTemporadaAtual, marcarTodosEpisodios, onSeasonChange, toggleEpisode } from './episodes.js';
+import { desmarcarTemporadaAtual, desmarcarTodosEpisodios, marcarAteAqui, marcarTemporadaAtual, onSeasonChange, toggleEpisode } from './episodes.js';
 import { friendAccept, friendAdd, friendInvite, friendMatchCurrent, friendOpen, friendRemove, friendSendTitle, friendShareDelete, friendShareOpen, friendUnfriendCurrent, matchInboxDelete, matchInboxOpen, openFriends, toggleShareWithFriends } from './friends.js';
 import { removeLibItem } from './library.js';
 import { reactTitle } from './reactions.js';
@@ -97,7 +97,7 @@ const clickActions = {
   loginUser,
   logout,
   marcarTemporadaAtual,
-  marcarTodosEpisodios,
+  marcarAteAqui: el => marcarAteAqui(Number(el.dataset.season), Number(el.dataset.episode)),
   marcarVistoAtual,
   mostrarTop10,
   mostrarLancamentos,

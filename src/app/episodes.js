@@ -1,5 +1,7 @@
 // Rastreamento de episódios (004-series-tracking)
-import { supabaseGetSeriesProgress, supabaseMarkEpisodeWatched, supabaseRemoveFromHistory, supabaseRemoveFromWatchlist, supabaseUnmarkEpisodeWatched } from '../api/supabase.js';
+import { supabaseRemoveFromHistory, supabaseRemoveFromWatchlist } from '../api/supabase.js';
+import { canTrackEpisodes, getSeriesProgress, markEpisode, markEpisodes, unmarkEpisode } from './episodeStore.js';
+import { saveGuestHistory, saveGuestWatchlist } from './guestLibrary.js';
 import { tmdbGet } from '../api/tmdb.js';
 import { renderLibrary, salvarHistorico } from './library.js';
 import { session, state } from '../state/appState.js';
@@ -29,9 +31,11 @@ export async function fetchAllSeasonsLocal(seriesId, numberOfSeasons) {
             }
             data = {
                 season_number: json.season_number,
+                // Mesmo formato da lista de episódios: a lista reaproveita este cache e precisa dos nomes
                 episodes: (json.episodes || []).map(ep => ({
                     season_number: ep.season_number,
                     episode_number: ep.episode_number,
+                    name: ep.name || `Episódio ${ep.episode_number}`,
                 })),
             };
             cache.set(key, data, 3_600_000); // 1h
@@ -56,7 +60,7 @@ export async function loadEpisodesSection(seriesData) {
     const list = document.getElementById('episodes-list');
     if (!section || !select || !list) return;
 
-    if (!session.currentUserId || session.currentUser === 'guest') {
+    if (!canTrackEpisodes()) {
         section.hidden = true;
         return;
     }
@@ -75,7 +79,7 @@ export async function loadEpisodesSection(seriesData) {
     session.episodes.seriesId = seriesId;
 
     // Buscar chaves assistidas do Supabase
-    const progressResult = await supabaseGetSeriesProgress(session.currentUserId, seriesId);
+    const progressResult = await getSeriesProgress(seriesId);
     session.episodes.watchedKeys = progressResult.watchedKeys || new Set();
     session.episodes.totalEpisodes = seriesData.number_of_episodes || 0;
 
@@ -145,17 +149,21 @@ export async function renderEpisodeList(seriesId, seasonNumber) {
         const key = `${seriesId}-s${ep.season_number}-e${ep.episode_number}`;
         const watched = session.episodes.watchedKeys.has(key);
         const code = `T${String(ep.season_number).padStart(2,'0')}E${String(ep.episode_number).padStart(2,'0')}`;
+        const name = ep.name || `Episódio ${ep.episode_number}`; // cache antigo sem nome
         return `
-            <label class="episode-item ${watched ? 'is-watched' : ''}" role="listitem">
-                <input
-                    type="checkbox"
-                    class="episode-checkbox"
-                    ${watched ? 'checked' : ''}
-                    data-change="toggleEpisode" data-series="${seriesId}" data-season="${ep.season_number}" data-episode="${ep.episode_number}"
-                    aria-label="${code} — ${escapeHtml(ep.name)}">
-                <span class="episode-item__code">${code}</span>
-                <span class="episode-item__label">${escapeHtml(ep.name)}</span>
-            </label>`;
+            <div class="episode-item ${watched ? 'is-watched' : ''}" role="listitem">
+                <label class="episode-item__main">
+                    <input
+                        type="checkbox"
+                        class="episode-checkbox"
+                        ${watched ? 'checked' : ''}
+                        data-change="toggleEpisode" data-series="${seriesId}" data-season="${ep.season_number}" data-episode="${ep.episode_number}"
+                        aria-label="${code} — ${escapeHtml(name)}">
+                    <span class="episode-item__code">${code}</span>
+                    <span class="episode-item__label">${escapeHtml(name)}</span>
+                </label>
+                <button type="button" class="episode-item__upto" data-action="marcarAteAqui" data-season="${ep.season_number}" data-episode="${ep.episode_number}" aria-label="Vi até ${code}: marca este e todos os anteriores">Vi até aqui</button>
+            </div>`;
     }).join('');
 }
 
@@ -165,7 +173,7 @@ export async function onSeasonChange(seasonNumber) {
 }
 
 export async function toggleEpisode(seriesId, seasonNumber, episodeNumber, checked) {
-    if (!session.currentUserId) return;
+    if (!canTrackEpisodes()) return;
 
     const key = `${seriesId}-s${seasonNumber}-e${episodeNumber}`;
 
@@ -187,14 +195,14 @@ export async function toggleEpisode(seriesId, seasonNumber, episodeNumber, check
     let result;
     if (checked) {
         const seriesData = state.currentMovie;
-        result = await supabaseMarkEpisodeWatched(session.currentUserId, {
+        result = await markEpisode({
             id: seriesId,
             title: seriesData?.name || seriesData?.title || '',
             poster: seriesData?.poster_path || null,
             type: seriesData?.media_type || 'tv',
         }, seasonNumber, episodeNumber);
     } else {
-        result = await supabaseUnmarkEpisodeWatched(session.currentUserId, seriesId, seasonNumber, episodeNumber);
+        result = await unmarkEpisode(seriesId, seasonNumber, episodeNumber);
     }
 
     if (!result.success) {
@@ -223,12 +231,26 @@ export async function toggleEpisode(seriesId, seasonNumber, episodeNumber, check
 }
 
 export async function _moveFromWatchlistIfNeeded(seriesId) {
-    if (!session.currentUserId) return;
+    if (!canTrackEpisodes()) return;
     const inWatchlist = (session.user.watchlist || []).find(i => i.id === seriesId);
     if (inWatchlist) {
-        await supabaseRemoveFromWatchlist(session.currentUserId, seriesId);
+        if (session.currentUser !== 'guest') await supabaseRemoveFromWatchlist(session.currentUserId, seriesId);
         session.user.watchlist = (session.user.watchlist || []).filter(i => i.id !== seriesId);
+        if (session.currentUser === 'guest') saveGuestWatchlist(session.user.watchlist);
     }
+}
+
+// Desmarcar episódios tira a série de "Já assistidos" (conta e convidado)
+async function removeSeriesFromHistory(seriesId) {
+    if (!session.user.history.find(h => h.id === seriesId)) return;
+    if (session.currentUser === 'guest') {
+        session.user.history = session.user.history.filter(h => h.id !== seriesId);
+        saveGuestHistory(session.user.history);
+    } else {
+        await supabaseRemoveFromHistory(session.currentUserId, seriesId);
+        session.user.history = session.user.history.filter(h => h.id !== seriesId);
+    }
+    renderLibrary(); // "Já assistidos" e o "Como foi?" do título aberto acompanham
 }
 
 export function _updateSeasonCounter(seriesId, seasonNumber) {
@@ -259,42 +281,43 @@ export function updateSeriesWatchButton(seriesData, watchedKeys) {
     const isCompleted = totalEps > 0 && watchedCount >= totalEps;
     const isStarted = watchedCount > 0;
 
-    const checkIcon = '<svg aria-hidden="true" class="icon icon-16 icon-lead-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
+    // "Já vi" fica sempre disponível: dá para marcar a série inteira sem passar episódio por episódio
+    const inHistory = !!(session.user.history || []).find(h => h.id === seriesData.id);
+    setSeriesSeenButton(btnV, inHistory || isCompleted);
 
     if (isCompleted) {
-        btnV.innerHTML = checkIcon + 'JÁ VISTO';
-        btnV.disabled = true;
-        btnV.classList.add('btn-green');
         if (badge) {
             badge.textContent = 'Concluído';
             badge.className = 'episodes-status-badge status-completed';
             badge.hidden = false;
         }
         // Auto-adicionar ao histórico se ainda não estiver
-        if (session.currentUserId && !session.user.history.find(h => h.id === seriesData.id)) {
+        if (session.currentUser && !inHistory) {
             salvarHistorico(seriesData);
         }
         // Remover do Quero Assistir se ainda estiver lá
         _moveFromWatchlistIfNeeded(seriesData.id);
     } else if (isStarted) {
-        btnV.innerHTML = checkIcon + 'Assistindo';
-        btnV.disabled = true;
-        btnV.classList.remove('btn-green');
         if (badge) {
             badge.textContent = 'Assistindo';
             badge.className = 'episodes-status-badge status-watching';
             badge.hidden = false;
         }
-    } else {
-        btnV.innerHTML = checkIcon + 'Assistindo';
-        btnV.disabled = true;
-        btnV.classList.remove('btn-green');
-        if (badge) badge.hidden = true;
+    } else if (badge) {
+        badge.hidden = true;
     }
 }
 
+const CHECK_ICON = '<svg aria-hidden="true" class="icon icon-16 icon-lead-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
+
+// Mesmo botão dos filmes: "Já Vi" (ativo) ou "JÁ VISTO" (desativado)
+export function setSeriesSeenButton(btnV, seen) {
+    btnV.innerHTML = CHECK_ICON + (seen ? 'JÁ VISTO' : 'Já Vi');
+    btnV.disabled = seen;
+}
+
 export async function desmarcarTemporadaAtual() {
-    if (!session.currentUserId || !state.currentMovie) return;
+    if (!canTrackEpisodes() || !state.currentMovie) return;
 
     const seriesId = state.currentMovie.id;
     const currentSeason = Number(document.getElementById('episodes-season-select')?.value || 1);
@@ -310,15 +333,12 @@ export async function desmarcarTemporadaAtual() {
     for (const key of toUnmark) {
         const parts = key.split('-');
         const epNum = Number(parts[parts.length - 1].replace('e', ''));
-        await supabaseUnmarkEpisodeWatched(session.currentUserId, seriesId, currentSeason, epNum);
+        await unmarkEpisode(seriesId, currentSeason, epNum);
         session.episodes.watchedKeys.delete(key);
     }
 
     // Se série estava concluída, remove do histórico também
-    if (session.user.history.find(h => h.id === seriesId)) {
-        await supabaseRemoveFromHistory(session.currentUserId, seriesId);
-        session.user.history = session.user.history.filter(h => h.id !== seriesId);
-    }
+    await removeSeriesFromHistory(seriesId);
 
     await renderEpisodeList(seriesId, currentSeason);
     updateSeriesWatchButton(state.currentMovie, session.episodes.watchedKeys);
@@ -329,7 +349,7 @@ export async function desmarcarTemporadaAtual() {
 }
 
 export async function desmarcarTodosEpisodios() {
-    if (!session.currentUserId || !state.currentMovie) return;
+    if (!canTrackEpisodes() || !state.currentMovie) return;
 
     const seriesData = state.currentMovie;
     const seriesId = seriesData.id;
@@ -343,15 +363,12 @@ export async function desmarcarTodosEpisodios() {
         const parts = key.split('-');
         const seasonNum = Number(parts[1].replace('s', ''));
         const epNum = Number(parts[2].replace('e', ''));
-        await supabaseUnmarkEpisodeWatched(session.currentUserId, seriesId, seasonNum, epNum);
+        await unmarkEpisode(seriesId, seasonNum, epNum);
     }
     session.episodes.watchedKeys.clear();
 
     // Remover do histórico também
-    if (session.user.history.find(h => h.id === seriesId)) {
-        await supabaseRemoveFromHistory(session.currentUserId, seriesId);
-        session.user.history = session.user.history.filter(h => h.id !== seriesId);
-    }
+    await removeSeriesFromHistory(seriesId);
 
     const currentSeason = Number(document.getElementById('episodes-season-select')?.value || 1);
     await renderEpisodeList(seriesId, currentSeason);
@@ -362,20 +379,32 @@ export async function desmarcarTodosEpisodios() {
     showToast('Série desmarcada');
 }
 
-export async function marcarTemporadaAtual() {
-    if (!session.currentUserId || !state.currentMovie) return;
+const seriesRef = seriesData => ({
+    id: seriesData.id,
+    title: seriesData.name || seriesData.title || '',
+    poster: seriesData.poster_path || null,
+    type: seriesData.media_type || 'tv',
+});
 
-    const seriesData = state.currentMovie;
-    const seriesId = seriesData.id;
-    const currentSeason = Number(document.getElementById('episodes-season-select')?.value || 1);
+// Marca de uma vez os episódios que faltam; devolve false se não gravou
+async function markMissing(seriesData, episodes) {
+    const missing = episodes.filter(ep =>
+        !session.episodes.watchedKeys.has(`${seriesData.id}-s${ep.season_number}-e${ep.episode_number}`));
+    if (missing.length === 0) return true;
+    const result = await markEpisodes(seriesRef(seriesData), missing);
+    if (!result.success) {
+        showToast('Erro ao salvar episódios', 'error');
+        return false;
+    }
+    missing.forEach(ep => session.episodes.watchedKeys.add(`${seriesData.id}-s${ep.season_number}-e${ep.episode_number}`));
+    return true;
+}
 
-    const btns = document.querySelectorAll('.episodes-mark-all-btn');
-    btns.forEach(b => { b.disabled = true; });
-
-    const cacheKey = `season-${seriesId}-${currentSeason}`;
+async function seasonEpisodes(seriesId, seasonNumber) {
+    const cacheKey = `season-${seriesId}-${seasonNumber}`;
     let seasonData = cache.get(cacheKey);
     if (!seasonData) {
-        const json = await tmdbGet(`/tv/${seriesId}/season/${currentSeason}`);
+        const json = await tmdbGet(`/tv/${seriesId}/season/${seasonNumber}`);
         seasonData = {
             season_number: json.season_number,
             episodes: (json.episodes || []).map(ep => ({
@@ -386,66 +415,80 @@ export async function marcarTemporadaAtual() {
         };
         cache.set(cacheKey, seasonData, 3_600_000);
     }
-
-    const series = {
-        id: seriesId,
-        title: seriesData.name || seriesData.title || '',
-        poster: seriesData.poster_path || null,
-        type: seriesData.media_type || 'tv',
-    };
-
-    for (const ep of seasonData.episodes) {
-        const key = `${seriesId}-s${ep.season_number}-e${ep.episode_number}`;
-        if (session.episodes.watchedKeys.has(key)) continue;
-        await supabaseMarkEpisodeWatched(session.currentUserId, series, ep.season_number, ep.episode_number);
-        session.episodes.watchedKeys.add(key);
-    }
-
-    await _moveFromWatchlistIfNeeded(seriesId);
-    await renderEpisodeList(seriesId, currentSeason);
-    updateSeriesWatchButton(seriesData, session.episodes.watchedKeys);
-    refreshUpNextWidget();
-
-    btns.forEach(b => { b.disabled = false; });
-    showToast(`Temporada ${currentSeason} marcada!`);
+    return seasonData.episodes || [];
 }
 
-export async function marcarTodosEpisodios() {
-    if (!session.currentUserId || !state.currentMovie) return;
+const markButtons = disabled => document.querySelectorAll('.episodes-mark-all-btn').forEach(b => { b.disabled = disabled; });
+
+export async function marcarTemporadaAtual() {
+    if (!canTrackEpisodes() || !state.currentMovie) return;
 
     const seriesData = state.currentMovie;
     const seriesId = seriesData.id;
-    const numberOfSeasons = seriesData.number_of_seasons || 0;
-    if (numberOfSeasons === 0) return;
-
-    const btn = document.querySelector('[data-action="marcarTodosEpisodios"]');
-    if (btn) { btn.disabled = true; btn.textContent = 'Marcando...'; }
-
-    // Buscar todas as seasons e marcar todos os episódios
-    const allSeasons = await fetchAllSeasonsLocal(seriesId, numberOfSeasons);
-    const series = {
-        id: seriesId,
-        title: seriesData.name || seriesData.title || '',
-        poster: seriesData.poster_path || null,
-        type: seriesData.media_type || 'tv',
-    };
-
-    for (const season of allSeasons) {
-        for (const ep of season.episodes) {
-            const key = `${seriesId}-s${ep.season_number}-e${ep.episode_number}`;
-            if (session.episodes.watchedKeys.has(key)) continue; // já marcado
-            await supabaseMarkEpisodeWatched(session.currentUserId, series, ep.season_number, ep.episode_number);
-            session.episodes.watchedKeys.add(key);
-        }
-    }
-
-    await _moveFromWatchlistIfNeeded(seriesId);
-    // Re-renderizar a season atual com todos marcados
     const currentSeason = Number(document.getElementById('episodes-season-select')?.value || 1);
+
+    markButtons(true);
+    let ok = false;
+    try {
+        ok = await markMissing(seriesData, await seasonEpisodes(seriesId, currentSeason));
+    } catch {
+        showToast('Erro ao carregar episódios', 'error');
+    }
+    if (ok) await _moveFromWatchlistIfNeeded(seriesId);
     await renderEpisodeList(seriesId, currentSeason);
     updateSeriesWatchButton(seriesData, session.episodes.watchedKeys);
     refreshUpNextWidget();
+    markButtons(false);
+    if (ok) showToast(`Temporada ${currentSeason} marcada!`);
+}
 
-    if (btn) { btn.disabled = false; btn.textContent = 'Marcar série'; }
-    showToast('Todos os episódios marcados!');
+// Todas as temporadas (sem a 0, de especiais). Usado pelo "Marcar série" e pelo "Já Vi" da série.
+export async function markWholeSeries(seriesData) {
+    if (!canTrackEpisodes() || !seriesData) return false;
+    const numberOfSeasons = seriesData.number_of_seasons || 0;
+    if (numberOfSeasons === 0) return false;
+
+    const allSeasons = await fetchAllSeasonsLocal(seriesData.id, numberOfSeasons);
+    const ok = await markMissing(seriesData, allSeasons.flatMap(season => season.episodes));
+
+    // O título aberto pode ter mudado enquanto gravava: só redesenha se ainda for esta série
+    if (state.currentMovie?.id === seriesData.id && session.episodes.seriesId === seriesData.id) {
+        const currentSeason = Number(document.getElementById('episodes-season-select')?.value || 1);
+        await renderEpisodeList(seriesData.id, currentSeason);
+        updateSeriesWatchButton(state.currentMovie, session.episodes.watchedKeys);
+    }
+    refreshUpNextWidget();
+    return ok;
+}
+
+// "Vi até aqui": marca este episódio e todos os anteriores (temporadas passadas inclusive).
+// Não desmarca nada: o que vem depois continua como estava.
+let markingUpTo = false;
+export async function marcarAteAqui(seasonNumber, episodeNumber) {
+    if (!canTrackEpisodes() || !state.currentMovie || markingUpTo) return;
+    const seriesData = state.currentMovie;
+    const code = `T${String(seasonNumber).padStart(2,'0')}E${String(episodeNumber).padStart(2,'0')}`;
+
+    markingUpTo = true;
+    markButtons(true);
+    let ok = false;
+    try {
+        const seasons = await fetchAllSeasonsLocal(seriesData.id, seasonNumber);
+        const upTo = seasons.flatMap(season => season.episodes)
+            .filter(ep => ep.season_number < seasonNumber || ep.episode_number <= episodeNumber);
+        ok = upTo.length > 0 && await markMissing(seriesData, upTo);
+    } catch {
+        showToast('Erro ao carregar episódios', 'error');
+    }
+    markingUpTo = false;
+    markButtons(false);
+    if (state.currentMovie !== seriesData) return;
+
+    if (ok) await _moveFromWatchlistIfNeeded(seriesData.id);
+    await renderEpisodeList(seriesData.id, seasonNumber);
+    updateSeriesWatchButton(seriesData, session.episodes.watchedKeys);
+    refreshUpNextWidget();
+    // A lista foi redesenhada: o foco volta para o mesmo episódio
+    document.querySelector(`.episode-item__upto[data-season="${seasonNumber}"][data-episode="${episodeNumber}"]`)?.focus();
+    if (ok) showToast(`Marcado até ${code}`);
 }

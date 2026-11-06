@@ -326,7 +326,7 @@ export async function supabaseAddToWatchlist(userId, item) {
  * @param {string} userId - ID do usuário
  * @param {{history: Array, watchlist: Array}} data - Itens normalizados
  */
-export async function supabaseImportLegacyData(userId, { history, watchlist }) {
+export async function supabaseImportLegacyData(userId, { history, watchlist, series = [] }) {
     try {
         const noon = new Date();
         noon.setHours(12, 0, 0, 0);
@@ -343,6 +343,19 @@ export async function supabaseImportLegacyData(userId, { history, watchlist }) {
             const { error } = await supabase.from('watch_history').upsert(
                 history.map(i => ({ user_id: userId, tmdb_id: i.id, title: i.title, poster_path: i.poster, media_type: i.type, release_year: i.year, genres: i.genres, watched_at: noon.toISOString() })),
                 { onConflict: 'user_id,tmdb_id', ignoreDuplicates: true }
+            );
+            if (error) throw error;
+        }
+
+        // Episódios marcados como convidado; os que a conta já tinha ficam como estão
+        const episodes = series.flatMap(s => s.episodes.map(ep => ({
+            user_id: userId, series_id: s.id, series_title: s.title, series_poster: s.poster, media_type: s.type,
+            season_number: ep.season_number, episode_number: ep.episode_number,
+        })));
+        if (episodes.length > 0) {
+            const { error } = await supabase.from('episode_progress').upsert(
+                episodes,
+                { onConflict: 'user_id,series_id,season_number,episode_number', ignoreDuplicates: true }
             );
             if (error) throw error;
         }
@@ -950,6 +963,36 @@ export async function supabaseMarkEpisodeWatched(userId, series, seasonNumber, e
         return { success: true, data };
     } catch (error) {
         console.error('Erro ao marcar episódio:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Marcar vários episódios de uma vez (temporada ou série inteira): um pedido só.
+ * Os que já estavam marcados são ignorados.
+ *
+ * @param {string} userId
+ * @param {Object} series - { id, title, poster, type }
+ * @param {Array<{season_number: number, episode_number: number}>} episodes
+ */
+export async function supabaseMarkEpisodesWatched(userId, series, episodes) {
+    if (!episodes.length) return { success: true };
+    try {
+        const { error } = await supabase
+            .from('episode_progress')
+            .upsert(episodes.map(ep => ({
+                user_id: userId,
+                series_id: series.id,
+                series_title: series.title,
+                series_poster: series.poster || null,
+                media_type: series.type || 'tv',
+                season_number: ep.season_number,
+                episode_number: ep.episode_number,
+            })), { onConflict: 'user_id,series_id,season_number,episode_number', ignoreDuplicates: true });
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        console.error('Erro ao marcar episódios:', error);
         return { success: false, error: error.message };
     }
 }

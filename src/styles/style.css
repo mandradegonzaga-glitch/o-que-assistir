@@ -3577,9 +3577,6 @@ button:focus-visible,
     background: var(--bg-elevated);
 }
 
-.episode-item.is-watched {
-    opacity: 0.6;
-}
 
 .episode-item.is-watched .episode-item__label {
     text-decoration: line-through;
@@ -3634,6 +3631,55 @@ button:focus-visible,
     overflow: hidden;
     text-overflow: ellipsis;
     transition: color var(--duration-fast) var(--ease-smooth);
+}
+
+/* Linha do episódio: a área do check e o "Vi até aqui" */
+.episode-item__main {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+    align-self: stretch;
+}
+
+.episode-item.is-watched .episode-item__main {
+    opacity: 0.6;
+}
+
+.episode-item__upto {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-default);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background var(--duration-fast) var(--ease-smooth),
+                color var(--duration-fast) var(--ease-smooth);
+}
+
+.episode-item__upto:hover,
+.episode-item__upto:focus-visible {
+    background: rgba(var(--accent-primary-rgb), 0.12);
+    color: var(--accent-text);
+    border-color: rgba(var(--accent-primary-rgb), 0.3);
+}
+
+/* Com mouse, aparece ao passar por cima ou com o foco; no toque fica sempre visível */
+@media (hover: hover) and (pointer: fine) {
+    .episode-item__upto {
+        opacity: 0;
+    }
+
+    .episode-item:hover .episode-item__upto,
+    .episode-item:focus-within .episode-item__upto {
+        opacity: 1;
+    }
 }
 
 /* Contador de episódios da temporada */
@@ -3832,6 +3878,11 @@ button:focus-visible,
 
     .episodes-mark-all-btn {
         white-space: normal;
+    }
+
+    /* Marcar e Desmarcar temporada lado a lado; Desmarcar série na linha de baixo */
+    .episodes-mark-all-btn:last-child {
+        grid-column: 1 / -1;
     }
 
     .install-banner {

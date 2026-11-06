@@ -5,8 +5,10 @@ const WATCHLIST_KEY = 'guest_watchlist';
 const HISTORY_KEY = 'guest_history';
 const WINS_KEY = 'guest_wins';
 const BADGES_KEY = 'guest_badges';
+export const GUEST_EPISODES_KEY = 'guest_episodes'; // episódios marcados (src/app/episodeStore.js)
 
-export const GUEST_KEYS = [WATCHLIST_KEY, HISTORY_KEY, WINS_KEY, BADGES_KEY, 'guest_progress'];
+// Apagadas depois de a conta confirmar a importação (src/app/legacyImport.js)
+export const GUEST_KEYS = [WATCHLIST_KEY, HISTORY_KEY, WINS_KEY, BADGES_KEY, 'guest_progress', GUEST_EPISODES_KEY];
 
 const readList = key => {
   const list = storage.get(key, []);
@@ -18,6 +20,7 @@ export function getGuestData() {
     watchlist: readList(WATCHLIST_KEY),
     history: readList(HISTORY_KEY),
     rouletteWins: Number(storage.get(WINS_KEY, 0)) || 0,
+    episodes: storage.get(GUEST_EPISODES_KEY, {}),
   };
 }
 

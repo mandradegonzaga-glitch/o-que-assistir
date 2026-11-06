@@ -1,5 +1,6 @@
 // Biblioteca: Quero Assistir, Em Andamento e Já Assistidos
-import { supabase, supabaseAddToHistory, supabaseAddToWatchlist, supabaseGetAllSeriesInProgress, supabaseGetWatchlist, supabaseRemoveFromHistory, supabaseRemoveFromWatchlist } from '../api/supabase.js';
+import { supabaseAddToHistory, supabaseAddToWatchlist, supabaseGetWatchlist, supabaseRemoveFromHistory, supabaseRemoveFromWatchlist } from '../api/supabase.js';
+import { clearSeries, getAllSeriesInProgress } from './episodeStore.js';
 import { tmdbGet } from '../api/tmdb.js';
 import { fetchAllSeasonsLocal } from './episodes.js';
 import { saveGuestHistory, saveGuestWatchlist } from './guestLibrary.js';
@@ -191,14 +192,17 @@ function libraryGroup(title, items, media, key) {
 export async function renderAndando(div) {
     div.innerHTML = '<div class="library-note">Carregando...</div>';
 
-    const result = isGuest() ? { success: false, series: [] } : await supabaseGetAllSeriesInProgress(session.currentUserId);
+    const result = await getAllSeriesInProgress();
+    // Série marcada como vista sai de Em Andamento, mesmo sem todos os episódios marcados
+    const seen = new Set((session.user.history || []).map(h => h.id));
+    if (result.success) result.series = result.series.filter(s => !seen.has(s.id));
     if (!result.success || result.series.length === 0) {
         const playIcon = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
         div.innerHTML = `
             <div class="empty-state grid-full">
                 <div class="empty-state-icon">${playIcon}</div>
                 <h3 class="empty-state-title">Nenhuma série em andamento</h3>
-                <p class="empty-state-desc">${isGuest() ? 'Crie uma conta para marcar episódios e acompanhar cada série.' : 'Marque episódios como assistidos no modal de uma série para acompanhar seu progresso.'}</p>
+                <p class="empty-state-desc">Marque episódios como assistidos no modal de uma série para acompanhar seu progresso.</p>
             </div>`;
         return;
     }
@@ -277,6 +281,7 @@ export async function commitRemoveLibItem(key, id) {
         if (key === 'vistos_obj') {
             session.user.history = session.user.history.filter(i => i.id !== id);
             saveGuestHistory(session.user.history);
+            await clearSeries(id); // igual à conta: série removida volta do zero
         } else {
             session.user.watchlist = (session.user.watchlist || []).filter(i => i.id !== id);
             saveGuestWatchlist(session.user.watchlist);
@@ -290,9 +295,7 @@ export async function commitRemoveLibItem(key, id) {
         if (result.success) {
             session.user.history = session.user.history.filter(i => i.id !== id);
             // Limpar progresso de episódios junto — série removida = clean slate
-            await supabase.from('episode_progress').delete()
-                .eq('user_id', session.currentUserId)
-                .eq('series_id', id);
+            await clearSeries(id);
         }
     } else {
         await supabaseRemoveFromWatchlist(session.currentUserId, id);

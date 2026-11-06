@@ -1,7 +1,7 @@
 // Modal de detalhes do título
 import { isAbortError, latestSignal, tmdbGet } from '../api/tmdb.js';
 import { PERSON_PLACEHOLDER } from './discover.js';
-import { loadEpisodesSection } from './episodes.js';
+import { _moveFromWatchlistIfNeeded, loadEpisodesSection, markWholeSeries, setSeriesSeenButton } from './episodes.js';
 import { salvarHistorico, toggleWatchlist } from './library.js';
 import { renderReactions } from './reactions.js';
 import { updateHistoryNav } from './sorteioHistory.js';
@@ -36,7 +36,8 @@ export async function carregarDetalhes(id, type) {
     try {
         // Dois cliques seguidos: vale o último, mesmo que a resposta do primeiro chegue depois
         const data = await tmdbGet(`/${endpoint}/${id}`, {}, { signal: latestSignal('details') });
-        const f = { ...data, media_type: endpoint }; // cópia: a resposta fica no cache
+        // cópia: a resposta fica no cache. Dorama continua dorama (vai para o grupo certo em "Já assistidos")
+        const f = { ...data, media_type: type === 'dorama' ? 'dorama' : endpoint };
         await abrirModal(f);
     } catch(e) {
         if (isAbortError(e)) return;
@@ -180,11 +181,9 @@ export async function abrirModal(f, { fromDraw = false } = {}) {
     const isSeries = (f.media_type === 'tv' || f.media_type === 'dorama' || state.type === 'tv' || state.type === 'dorama');
 
     if (isSeries) {
-        // Para séries: btn-visto é controlado pelo progresso de episódios
-        const jaVisto = vistos.find(i => i.id === f.id);
-        btnV.innerHTML = '<svg aria-hidden="true" class="icon icon-16 icon-lead-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' + (jaVisto ? 'JÁ VISTO' : 'Assistindo');
-        btnV.disabled = true;
-                    } else {
+        // Séries também têm "Já Vi"; ao terminar todos os episódios, a série é marcada sozinha
+        setSeriesSeenButton(btnV, !!vistos.find(i => i.id === f.id));
+    } else {
         btnV.innerHTML = vistos.find(i=>i.id===f.id) ? '<svg aria-hidden="true" class="icon icon-16 icon-lead-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>JÁ VISTO' : '<svg aria-hidden="true" class="icon icon-16 icon-lead-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Já Vi';
         btnV.disabled = !!vistos.find(i=>i.id===f.id);
     }
@@ -217,9 +216,20 @@ export async function abrirModal(f, { fromDraw = false } = {}) {
 export async function marcarVistoAtual() {
     const movie = state.currentMovie;
     if (!movie) return;
-    await salvarHistorico(movie);
-    if (state.currentMovie !== movie || !(session.user.history || []).some(h => h.id === movie.id)) return;
+    const isSeries = movie.media_type === 'tv' || movie.media_type === 'dorama';
     const btnV = document.getElementById('btn-visto');
+    if (isSeries) btnV.disabled = true; // marcar a série inteira leva um instante: evita o segundo toque
+    await salvarHistorico(movie);
+    if (!(session.user.history || []).some(h => h.id === movie.id)) {
+        if (isSeries && state.currentMovie === movie) btnV.disabled = false;
+        return;
+    }
+    if (isSeries) {
+        // "Já Vi" numa série marca todas as temporadas e sai do "Quero Assistir"
+        await markWholeSeries(movie);
+        await _moveFromWatchlistIfNeeded(movie.id);
+    }
+    if (state.currentMovie !== movie) return;
     btnV.innerHTML = '<svg aria-hidden="true" class="icon icon-16 icon-lead-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>JÁ VISTO';
     btnV.disabled = true;
     renderReactions();
