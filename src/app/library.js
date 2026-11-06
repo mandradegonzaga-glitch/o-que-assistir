@@ -1,4 +1,4 @@
-// Biblioteca: Quero Assistir, Em Andamento e Já Assistidos
+// Biblioteca: Quero Assistir, Em Andamento, Já Assistidos e Minhas Listas (src/app/userLists.js)
 import { supabaseAddToHistory, supabaseAddToWatchlist, supabaseGetWatchlist, supabaseRemoveFromHistory, supabaseRemoveFromWatchlist } from '../api/supabase.js';
 import { clearSeries, getAllSeriesInProgress } from './episodeStore.js';
 import { tmdbGet } from '../api/tmdb.js';
@@ -7,6 +7,7 @@ import { saveGuestHistory, saveGuestWatchlist } from './guestLibrary.js';
 import { checkAllBadges } from './profile.js';
 import { grantXp, trackChallenge } from './progress.js';
 import { renderReactions } from './reactions.js';
+import { renderListsTab, updateSaveListButton } from './userLists.js';
 import { reactionOf } from '../domain/reactions.js';
 import { calcProgressPercent, getNextEpisode } from '../domain/seriesProgress.js';
 import { session, state } from '../state/appState.js';
@@ -129,8 +130,14 @@ export async function renderLibrary() {
     if (!session.currentUser) return;
     // O histórico mudou (marcou, desmarcou, terminou a série): o "Como foi?" do título aberto acompanha
     renderReactions();
+    updateSaveListButton();
 
     const div = document.getElementById('library-content');
+
+    if (state.tab === 'listas') {
+        renderListsTab(div);
+        return;
+    }
 
     // Aba Em Andamento
     if (state.tab === 'andando') {

@@ -39,11 +39,12 @@ export function showLegacyHint() {
   document.getElementById('legacy-hint').hidden = !legacyDataAvailable();
 }
 
-function describe({ history, watchlist, series = [] }) {
+function describe({ history, watchlist, series = [], lists = [] }) {
   const parts = [];
   if (watchlist.length) parts.push(`${formatCount(watchlist.length)} em Quero Assistir`);
   if (history.length) parts.push(`${formatCount(history.length)} em Já Assistidos`);
   if (series.length) parts.push(`o progresso de ${formatCount(series.length)} ${pluralize(series.length, 'série', 'séries')}`);
+  if (lists.length) parts.push(`${formatCount(lists.length)} ${pluralize(lists.length, 'lista sua', 'listas suas')}`);
   return parts.length > 1 ? `${parts.slice(0, -1).join(', ')} e ${parts.at(-1)}` : parts.join('');
 }
 
@@ -53,7 +54,7 @@ export async function offerLegacyImport() {
   if (!hasLegacyData(data)) return;
   if (Date.now() - Number(localStorage.getItem(LATER_KEY) || 0) < ASK_AGAIN_MS) return;
 
-  const total = data.history.length + data.watchlist.length + data.series.length;
+  const total = data.history.length + data.watchlist.length + data.series.length + data.lists.length;
   const accepted = await confirmDialog({
     title: 'Trazer sua lista para a conta?',
     message: `Encontramos neste navegador ${describe(data)}. Quer ${pluralize(total, 'adicionar esse título', 'adicionar esses títulos')} à sua conta?`,

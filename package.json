@@ -11,7 +11,7 @@
     "test:e2e": "playwright test --config config/playwright.config.js",
     "lint": "eslint .",
     "check": "npm run lint && npm test && npm run test:db && npm run test:e2e",
-    "test:db": "node --test tests/database/friends.test.mjs"
+    "test:db": "node --test tests/database/friends.test.mjs tests/database/userLists.test.mjs"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.13",

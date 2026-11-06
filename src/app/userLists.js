@@ -1,0 +1,524 @@
+// Listas personalizadas: aba "Minhas Listas", "Salvar em uma lista" no título e a janela de criar/renomear.
+// Regras em src/domain/userLists.js; banco em database/user_lists.sql. O convidado guarda no aparelho.
+import { isAbortError, latestSignal, tmdbGet } from '../api/tmdb.js';
+import { supabaseAddListItem, supabaseAddListItems, supabaseCreateList, supabaseDeleteList, supabaseGetLists, supabaseRemoveListItem, supabaseUpdateList } from '../api/supabase.js';
+import {
+    DEFAULT_EMOJI, LIST_EMOJIS, MAX_ITEMS, MAX_LISTS, buildLists, cleanListName, hasItem, listNameError,
+    availableTemplates, findListByName, normalizeGuestLists, pickEmoji, toListItem, withItem, withoutItem,
+} from '../domain/userLists.js';
+import { COLLECTIONS, collectionById, collectionItems, collectionKind, collectionPath } from '../domain/collections.js';
+import { session, state } from '../state/appState.js';
+import { pendingRemovals, scheduleUndoable, showToast } from '../ui/feedback.js';
+import { confirmDialog } from '../ui/modals.js';
+import { CLOSE_ICON } from '../ui/icons.js';
+import { escapeHtml } from '../utils/escapeHtml.js';
+import { formatCount, pluralize } from '../utils/format.js';
+import { IMG_URL } from '../config/constants.js';
+import { saveGuestLists } from './guestLibrary.js';
+import { renderLibrary } from './library.js';
+
+let openListId = null;   // lista aberta na aba; null mostra todas
+let openCollectionId = null; // coleção pronta aberta (src/domain/collections.js)
+const collectionCache = new Map(); // id → títulos já buscados no TMDB (null: falhou)
+const COLLECTION_TTL_MS = 24 * 60 * 60 * 1000;
+let unavailable = false; // a conta não conseguiu ler as listas (ou o SQL ainda não foi rodado)
+const editor = { listId: null, fromSave: false, emoji: DEFAULT_EMOJI };
+
+const isGuest = () => session.currentUser === 'guest';
+const allLists = () => session.user?.lists || [];
+const findList = id => allLists().find(l => l.id === id);
+const countLabel = n => (n === 0 ? 'Nenhum título' : `${formatCount(n)} ${pluralize(n, 'título', 'títulos')}`);
+const removalKey = (listId, titleId) => `list:${listId}:${titleId}`;
+
+function setLists(next) {
+    session.user.lists = next;
+    if (isGuest()) saveGuestLists(next);
+}
+
+// CARREGAR
+
+export async function loadAccountLists() {
+    const result = await supabaseGetLists(session.currentUserId);
+    unavailable = !result.success;
+    session.user.lists = result.success ? buildLists(result.lists, result.items) : [];
+}
+
+export function loadGuestLists(saved) {
+    unavailable = false;
+    session.user.lists = normalizeGuestLists(saved);
+}
+
+// GRAVAR (a conta só muda o estado local depois de o banco confirmar)
+
+async function setTitleInList(listId, item, include) {
+    const list = findList(listId);
+    if (!list) return false;
+    if (include === hasItem(list, item.id)) return true;
+    if (include && list.items.length >= MAX_ITEMS) {
+        showToast(`Essa lista já tem ${MAX_ITEMS} títulos, o máximo.`, 'error');
+        return false;
+    }
+    if (!isGuest()) {
+        const result = include
+            ? await supabaseAddListItem(session.currentUserId, listId, item)
+            : await supabaseRemoveListItem(listId, item.id);
+        if (!result.success) {
+            showToast('Não foi possível mudar a lista. Verifique a conexão e tente de novo.', 'error');
+            return false;
+        }
+    }
+    setLists(allLists().map(l => {
+        if (l.id !== listId) return l;
+        return include ? withItem(l, item) : withoutItem(l, item.id);
+    }));
+    return true;
+}
+
+const newGuestId = () => (crypto.randomUUID ? crypto.randomUUID() : `g${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`);
+
+// ABA "MINHAS LISTAS"
+
+const posterImg = item => (item.poster
+    ? `<img src="${IMG_URL + item.poster}" alt="" width="500" height="750" loading="lazy">`
+    : `<span class="library-item__noposter">${escapeHtml(item.title)}</span>`);
+
+export function renderListsTab(div) {
+    if (unavailable) {
+        div.innerHTML = '<p class="library-note grid-full">Não foi possível carregar suas listas agora. Tente de novo mais tarde.</p>';
+        return;
+    }
+    const collection = openCollectionId ? collectionById(openCollectionId) : null;
+    if (collection) {
+        renderCollection(div, collection);
+        return;
+    }
+    const open = openListId ? findList(openListId) : null;
+    if (open) {
+        renderOpenList(div, open);
+        return;
+    }
+    openListId = null;
+
+    const lists = allLists();
+    if (lists.length === 0) {
+        div.innerHTML = `
+            <div class="empty-state grid-full">
+                <div class="empty-state-icon"><span class="empty-state-emoji" aria-hidden="true">📂</span></div>
+                <h3 class="empty-state-title">Nenhuma lista ainda</h3>
+                <p class="empty-state-desc">Junte títulos do seu jeito, como "Maratona de Halloween" ou "Filmes com a namorada". Abra um título e toque em "Salvar em uma lista", ou crie uma agora.</p>
+                ${templateChips('createFromTemplate', 'Comece com uma:')}
+                <button type="button" class="empty-state-cta ripple" data-action="openListEditor" data-arg="library">+ Criar a minha</button>
+            </div>
+            ${collectionsSection()}`;
+        return;
+    }
+
+    const cards = lists.map(l => {
+        const posters = l.items.filter(i => i.poster).slice(-3).reverse()
+            .map(i => `<img src="${IMG_URL + i.poster}" alt="" width="500" height="750" loading="lazy">`).join('');
+        return `<li><button type="button" class="list-card" data-action="openUserList" data-arg="${escapeHtml(l.id)}">
+                <span class="list-card__emoji" aria-hidden="true">${l.emoji}</span>
+                <span class="list-card__text"><span class="list-card__name">${escapeHtml(l.name)}</span>
+                <span class="list-card__count">${countLabel(l.items.length)}</span></span>
+                <span class="list-card__posters" aria-hidden="true">${posters}</span>
+            </button></li>`;
+    }).join('');
+    const canCreate = lists.length < MAX_LISTS;
+    div.innerHTML = `<ul class="list-cards grid-full" aria-label="Suas listas">${cards}</ul>
+        ${canCreate ? '<button type="button" class="btn-outline ripple list-new grid-full" data-action="openListEditor" data-arg="library">+ Nova lista</button>' : ''}
+        ${collectionsSection()}`;
+}
+
+// Modelos com um toque (aba vazia: cria a lista; janela "Nova lista": preenche nome e emoji)
+function templateChips(action, label) {
+    const templates = availableTemplates(allLists());
+    if (templates.length === 0) return '';
+    const chips = templates.map(t => `<li><button type="button" class="list-template" data-action="${action}" data-arg="${escapeHtml(t.name)}"><span aria-hidden="true">${t.emoji}</span> ${escapeHtml(t.name)}</button></li>`).join('');
+    return `<p class="list-templates__label" id="templates-${action}">${label}</p><ul class="list-templates" aria-labelledby="templates-${action}">${chips}</ul>`;
+}
+
+function collectionsSection() {
+    const cards = COLLECTIONS.map(c => `<li><button type="button" class="list-card list-card--collection" data-action="openCollection" data-arg="${c.id}">
+            <span class="list-card__emoji" aria-hidden="true">${c.emoji}</span>
+            <span class="list-card__text"><span class="list-card__name">${escapeHtml(c.name)}</span>
+            <span class="list-card__count">${collectionKind(c)}</span></span>
+        </button></li>`).join('');
+    return `<section class="collections grid-full" aria-labelledby="collections-title">
+            <h3 id="collections-title" class="collections__title">Coleções prontas</h3>
+            <p class="collections__hint">Escolhidas pelo app entre os títulos mais bem avaliados. Abra uma e copie para as suas listas.</p>
+            <ul class="list-cards">${cards}</ul>
+        </section>`;
+}
+
+function renderCollection(div, c) {
+    const items = collectionCache.get(c.id);
+    let body;
+    if (items === undefined) body = '<p class="library-note grid-full">Carregando...</p>';
+    else if (items === null) body = '<p class="library-note grid-full">Não foi possível carregar esta coleção. Verifique a conexão e tente de novo.</p>';
+    else body = items.map(i => `<div class="library-item">
+                <button type="button" class="library-item__open" data-action="carregarDetalhes" data-id="${i.id}" data-media="${i.type}" aria-label="${escapeHtml(i.title)}">${posterImg(i)}</button>
+            </div>`).join('');
+    const ready = Array.isArray(items) && items.length > 0;
+    div.innerHTML = `
+        <div class="list-view__head grid-full">
+            <button type="button" class="btn-clear-small" data-action="closeUserList"><span aria-hidden="true">←</span> Todas as listas</button>
+            <h3 id="list-view-title" class="list-view__title" tabindex="-1"><span aria-hidden="true">${c.emoji}</span> ${escapeHtml(c.name)}</h3>
+            <p class="list-view__count">${ready ? `Coleção pronta · ${countLabel(items.length)}` : 'Coleção pronta'}</p>
+            <div class="list-view__actions">
+                ${ready ? '<button type="button" class="btn-main btn-compact ripple list-view__copy" data-action="copyCollection">Copiar para minhas listas</button>' : ''}
+            </div>
+        </div>
+        ${body}`;
+}
+
+async function loadCollection(c) {
+    if (collectionCache.get(c.id)) return;
+    collectionCache.delete(c.id); // falhou antes: tenta de novo
+    try {
+        const data = await tmdbGet(collectionPath(c), c.params, { ttl: COLLECTION_TTL_MS, signal: latestSignal('collection') });
+        collectionCache.set(c.id, collectionItems(c, data.results));
+    } catch (e) {
+        if (isAbortError(e)) return;
+        console.error('Erro ao carregar coleção:', e);
+        collectionCache.set(c.id, null);
+    }
+}
+
+export async function openCollection(id) {
+    const c = collectionById(id);
+    if (!c) return;
+    openCollectionId = id;
+    openListId = null;
+    await renderLibrary();
+    document.getElementById('list-view-title')?.focus();
+    await loadCollection(c);
+    if (openCollectionId !== id || state.tab !== 'listas') return;
+    const hadFocus = document.activeElement?.id === 'list-view-title';
+    await renderLibrary();
+    if (hadFocus) document.getElementById('list-view-title')?.focus();
+}
+
+// Copia a coleção como lista da pessoa. Já existe uma com o mesmo nome? Os títulos que faltam entram nela.
+export async function copyCollection() {
+    const c = collectionById(openCollectionId);
+    const items = c && collectionCache.get(c.id);
+    if (!Array.isArray(items) || items.length === 0) return;
+    const btn = document.querySelector('[data-action="copyCollection"]');
+    if (btn?.disabled) return;
+    let list = findListByName(allLists(), c.name);
+    if (!list && allLists().length >= MAX_LISTS) {
+        showToast(`Você chegou ao limite de ${MAX_LISTS} listas.`, 'error');
+        return;
+    }
+    if (btn) btn.disabled = true;
+    try {
+        const isNew = !list;
+        if (!list) {
+            const created = isGuest() ? { success: true, id: newGuestId() } : await supabaseCreateList(session.currentUserId, { name: c.name, emoji: c.emoji });
+            if (!created.success) {
+                showToast('Não foi possível copiar a coleção. Tente de novo.', 'error');
+                return;
+            }
+            list = { id: created.id, name: c.name, emoji: pickEmoji(c.emoji), items: [] };
+            setLists([...allLists(), list]);
+        }
+        const missing = items.filter(i => !hasItem(list, i.id)).slice(0, Math.max(0, MAX_ITEMS - list.items.length));
+        if (missing.length > 0 && !isGuest()) {
+            const added = await supabaseAddListItems(session.currentUserId, list.id, missing);
+            if (!added.success) {
+                showToast('A lista foi criada, mas os títulos não entraram. Tente copiar de novo.', 'error');
+                return;
+            }
+        }
+        const listId = list.id;
+        setLists(allLists().map(l => (l.id === listId ? { ...l, items: [...l.items, ...missing] } : l)));
+        let message;
+        if (missing.length === 0) message = `Todos já estavam em "${list.name}".`;
+        else if (isNew) message = `Coleção copiada para "${list.name}".`;
+        else message = `${countLabel(missing.length)} ${pluralize(missing.length, 'entrou', 'entraram')} em "${list.name}".`;
+        showToast(message);
+        openCollectionId = null;
+        openListId = listId;
+        await renderLibrary();
+        document.getElementById('list-view-title')?.focus();
+    } finally {
+        if (btn?.isConnected) btn.disabled = false;
+    }
+}
+
+export async function createFromTemplate(name) {
+    const t = availableTemplates(allLists()).find(x => x.name === name);
+    if (!t || allLists().length >= MAX_LISTS) return;
+    const result = isGuest() ? { success: true, id: newGuestId() } : await supabaseCreateList(session.currentUserId, t);
+    if (!result.success) {
+        showToast('Não foi possível criar a lista. Tente de novo.', 'error');
+        return;
+    }
+    setLists([...allLists(), { id: result.id, name: t.name, emoji: t.emoji, items: [] }]);
+    showToast(`Lista "${t.name}" criada.`);
+    await renderLibrary();
+    focusListCard(result.id);
+}
+
+export function useListTemplate(name) {
+    const t = availableTemplates(allLists()).find(x => x.name === name);
+    if (!t) return;
+    document.getElementById('list-name').value = t.name;
+    pickListEmoji(t.emoji);
+    showNameError(null);
+    document.getElementById('list-edit-save').focus();
+}
+
+function renderOpenList(div, list) {
+    const items = list.items.filter(i => !pendingRemovals.has(removalKey(list.id, i.id)));
+    const cards = items.map(i => `<div class="library-item">
+            <button type="button" class="library-item__open" data-action="carregarDetalhes" data-id="${i.id}" data-media="${i.type}" aria-label="${escapeHtml(i.title)}">${posterImg(i)}</button>
+            <button type="button" class="remove-btn" data-action="removeFromUserList" data-id="${i.id}" aria-label="Tirar ${escapeHtml(i.title)} da lista">${CLOSE_ICON}</button>
+        </div>`).join('');
+    div.innerHTML = `
+        <div class="list-view__head grid-full">
+            <button type="button" class="btn-clear-small" data-action="closeUserList"><span aria-hidden="true">←</span> Todas as listas</button>
+            <h3 id="list-view-title" class="list-view__title" tabindex="-1"><span aria-hidden="true">${list.emoji}</span> ${escapeHtml(list.name)}</h3>
+            <p class="list-view__count">${countLabel(items.length)}</p>
+            <div class="list-view__actions">
+                <button type="button" class="btn-clear-small" data-action="openListEditor" data-arg="rename">Renomear</button>
+                <button type="button" class="btn-clear-small" data-action="deleteUserList">Apagar lista</button>
+            </div>
+        </div>
+        ${cards || '<p class="library-note grid-full">Lista vazia. Abra um título e toque em "Salvar em uma lista".</p>'}`;
+}
+
+export async function openUserList(id) {
+    if (!findList(id)) return;
+    openListId = id;
+    openCollectionId = null;
+    await renderLibrary();
+    document.getElementById('list-view-title')?.focus();
+}
+
+export async function closeUserList() {
+    const id = openListId || openCollectionId;
+    openListId = null;
+    openCollectionId = null;
+    await renderLibrary();
+    focusListCard(id);
+}
+
+function focusListCard(id) {
+    const card = [...document.querySelectorAll('#library-content .list-card')].find(el => el.dataset.arg === id);
+    (card || document.querySelector('#library-content .list-card:not(.list-card--collection)') || document.getElementById('tab-listas'))?.focus();
+}
+
+export function removeFromUserList(titleId, btn) {
+    const listId = openListId;
+    const item = findList(listId)?.items.find(i => i.id === titleId);
+    if (!item) return;
+    const key = removalKey(listId, titleId);
+    scheduleUndoable({
+        message: 'Tirado da lista.',
+        apply: () => {
+            const hadFocus = !!btn?.closest('.library-item')?.contains(document.activeElement);
+            pendingRemovals.add(key);
+            renderLibrary();
+            return hadFocus;
+        },
+        undo: async (refocus) => {
+            pendingRemovals.delete(key);
+            await renderLibrary();
+            if (refocus) document.querySelector(`#library-content .library-item__open[data-id="${titleId}"]`)?.focus();
+        },
+        commit: async () => {
+            await setTitleInList(listId, item, false);
+            pendingRemovals.delete(key);
+            if (state.tab === 'listas') renderLibrary();
+        },
+        focusAfter: () => document.querySelector('#library-content .library-item__open') || document.getElementById('list-view-title'),
+    });
+}
+
+export async function deleteUserList() {
+    const list = findList(openListId);
+    if (!list) return;
+    const n = list.items.length;
+    const ok = await confirmDialog({
+        title: `Apagar "${list.name}"?`,
+        message: n > 0
+            ? `${n === 1 ? 'O título sai' : `Os ${formatCount(n)} títulos saem`} só desta lista: ${n === 1 ? 'continua' : 'continuam'} em "Quero Assistir", "Já assistidos" e nas outras listas.`
+            : 'A lista está vazia.',
+        confirmLabel: 'Apagar lista',
+        danger: true,
+    });
+    if (!ok) return;
+    if (!isGuest()) {
+        const result = await supabaseDeleteList(list.id);
+        if (!result.success) {
+            showToast('Não foi possível apagar a lista. Tente de novo.', 'error');
+            return;
+        }
+    }
+    setLists(allLists().filter(l => l.id !== list.id));
+    openListId = null;
+    showToast(`Lista "${list.name}" apagada.`);
+    await renderLibrary();
+    focusListCard(null);
+}
+
+// "SALVAR EM UMA LISTA" (tela do título)
+
+export function updateSaveListButton() {
+    const label = document.getElementById('btn-salvar-lista-label');
+    const movie = state.currentMovie;
+    if (!label || !movie) return;
+    const n = allLists().filter(l => hasItem(l, movie.id)).length;
+    label.textContent = n > 0 ? `Em ${formatCount(n)} ${pluralize(n, 'lista', 'listas')}` : 'Salvar em uma lista';
+}
+
+function renderSaveOptions() {
+    const movie = state.currentMovie;
+    const lists = allLists();
+    document.getElementById('save-list-subtitle').textContent = `Onde guardar "${movie.title || movie.name}"? Pode marcar mais de uma.`;
+    document.getElementById('save-list-options').innerHTML = lists.map(l => `
+        <label class="provider-choice save-lists__option">
+            <input type="checkbox" data-change="toggleTitleInList" value="${escapeHtml(l.id)}" ${hasItem(l, movie.id) ? 'checked' : ''}>
+            <span class="save-lists__emoji" aria-hidden="true">${l.emoji}</span>
+            <span class="save-lists__name">${escapeHtml(l.name)}</span>
+            <span class="save-lists__count">${countLabel(l.items.length)}</span>
+        </label>`).join('');
+    document.getElementById('save-list-empty').hidden = lists.length > 0;
+}
+
+export function openSaveToList() {
+    if (!state.currentMovie || !session.currentUser) return;
+    if (unavailable) {
+        showToast('As listas não estão disponíveis agora. Tente de novo mais tarde.', 'error');
+        return;
+    }
+    document.getElementById('save-list-status').textContent = '';
+    renderSaveOptions();
+    document.getElementById('modal-save-list').style.display = 'flex';
+}
+
+export async function toggleTitleInList(input) {
+    const movie = state.currentMovie;
+    const list = findList(input.value);
+    if (!movie || !list) return;
+    const include = input.checked;
+    const ok = await setTitleInList(list.id, toListItem(movie, state.type), include);
+    const now = findList(list.id);
+    // Vale o que ficou guardado: dois toques rápidos ou uma falha não deixam a caixa mentindo
+    input.checked = !!now && hasItem(now, movie.id);
+    if (ok) {
+        document.getElementById('save-list-status').textContent = include ? `Salvo em ${list.name}.` : `Tirado de ${list.name}.`;
+        const count = input.closest('label')?.querySelector('.save-lists__count');
+        if (count && now) count.textContent = countLabel(now.items.length);
+    }
+    updateSaveListButton();
+    if (state.tab === 'listas') renderLibrary();
+}
+
+// CRIAR E RENOMEAR
+
+function renderEmojiPicker() {
+    document.getElementById('list-emoji').innerHTML = LIST_EMOJIS.map(e => {
+        const on = e === editor.emoji;
+        return `<button type="button" class="emoji-picker__option" role="radio" aria-checked="${on}" tabindex="${on ? 0 : -1}" data-action="pickListEmoji" data-arg="${e}">${e}</button>`;
+    }).join('');
+}
+
+export function pickListEmoji(emoji) {
+    editor.emoji = pickEmoji(emoji);
+    document.querySelectorAll('#list-emoji .emoji-picker__option').forEach(el => {
+        const on = el.dataset.arg === editor.emoji;
+        el.setAttribute('aria-checked', String(on));
+        el.tabIndex = on ? 0 : -1;
+    });
+}
+
+function showNameError(message) {
+    const input = document.getElementById('list-name');
+    const error = document.getElementById('list-name-error');
+    error.textContent = message || '';
+    error.hidden = !message;
+    if (message) {
+        input.setAttribute('aria-invalid', 'true');
+        input.focus();
+    } else {
+        input.removeAttribute('aria-invalid');
+    }
+}
+
+// mode: 'library' (aba), 'save' (janela "Salvar em lista": já guarda o título na lista nova) ou 'rename'
+export function openListEditor(mode) {
+    const list = mode === 'rename' ? findList(openListId) : null;
+    if (mode === 'rename' && !list) return;
+    if (!list && allLists().length >= MAX_LISTS) {
+        showToast(`Você chegou ao limite de ${MAX_LISTS} listas.`, 'error');
+        return;
+    }
+    editor.listId = list?.id ?? null;
+    editor.fromSave = mode === 'save';
+    editor.emoji = list?.emoji || DEFAULT_EMOJI;
+
+    document.getElementById('list-edit-title').textContent = list ? 'Renomear lista' : 'Nova lista';
+    document.getElementById('list-edit-save').textContent = list ? 'Salvar' : (editor.fromSave ? 'Criar e salvar' : 'Criar lista');
+    const input = document.getElementById('list-name');
+    input.value = list?.name || '';
+    showNameError(null);
+    renderEmojiPicker();
+    document.getElementById('list-templates').innerHTML = list ? '' : templateChips('useListTemplate', 'Ou use um modelo:');
+    document.getElementById('modal-list-edit').style.display = 'flex';
+    setTimeout(() => input.focus(), 0);
+}
+
+export async function saveListEditor() {
+    const saveBtn = document.getElementById('list-edit-save');
+    if (saveBtn.disabled) return;
+    const name = cleanListName(document.getElementById('list-name').value);
+    const error = listNameError(name, allLists(), editor.listId);
+    if (error) {
+        showNameError(error);
+        return;
+    }
+    const { listId, fromSave, emoji } = editor;
+    saveBtn.disabled = true;
+    let id = listId;
+    try {
+        if (listId) {
+            const result = isGuest() ? { success: true } : await supabaseUpdateList(listId, { name, emoji });
+            if (!result.success) {
+                if (result.duplicate) showNameError('Você já tem uma lista com esse nome.');
+                else showToast('Não foi possível renomear a lista. Tente de novo.', 'error');
+                return;
+            }
+            setLists(allLists().map(l => (l.id === listId ? { ...l, name, emoji } : l)));
+        } else {
+            const result = isGuest() ? { success: true, id: newGuestId() } : await supabaseCreateList(session.currentUserId, { name, emoji });
+            if (!result.success) {
+                if (result.duplicate) showNameError('Você já tem uma lista com esse nome.');
+                else showToast('Não foi possível criar a lista. Tente de novo.', 'error');
+                return;
+            }
+            id = result.id;
+            setLists([...allLists(), { id, name, emoji, items: [] }]);
+            if (fromSave && state.currentMovie) await setTitleInList(id, toListItem(state.currentMovie, state.type), true);
+        }
+    } finally {
+        saveBtn.disabled = false;
+    }
+
+    document.getElementById('modal-list-edit').style.display = 'none';
+    if (fromSave) {
+        renderSaveOptions();
+        updateSaveListButton();
+        const saved = findList(id) && state.currentMovie && hasItem(findList(id), state.currentMovie.id);
+        document.getElementById('save-list-status').textContent = saved ? `Salvo em ${name}.` : '';
+        showToast(saved ? `Lista "${name}" criada, com o título.` : `Lista "${name}" criada.`);
+    } else {
+        showToast(listId ? 'Lista renomeada.' : `Lista "${name}" criada.`);
+    }
+    if (state.tab !== 'listas') return;
+    await renderLibrary();
+    if (fromSave) return;
+    if (listId) document.getElementById('list-view-title')?.focus();
+    else focusListCard(id);
+}

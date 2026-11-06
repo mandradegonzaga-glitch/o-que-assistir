@@ -3,6 +3,7 @@ import { supabaseGetBlacklist, supabaseGetCurrentUser, supabaseGetPreferences, s
 import { legacyDataAvailable, offerLegacyImport } from './legacyImport.js';
 import { openFriendLinkFromUrl, refreshFriends } from './friends.js';
 import { getGuestData } from './guestLibrary.js';
+import { loadAccountLists, loadGuestLists } from './userLists.js';
 import { renderLibrary } from './library.js';
 import { clearLifeStatsCache } from './lifeStats.js';
 import { syncProvidersWithAccount } from './myProviders.js';
@@ -53,6 +54,8 @@ export async function loadUserData() {
     if (watchlistResult.success) {
         session.user.watchlist = watchlistResult.watchlist;
     }
+
+    await loadAccountLists();
 
     // Carregar preferências do Supabase
     const prefsResult = await supabaseGetPreferences(session.currentUserId);
@@ -262,6 +265,7 @@ function loadGuestData() {
     session.user.history = saved.history;
     session.user.watchlist = saved.watchlist;
     session.user.rouletteWins = saved.rouletteWins;
+    loadGuestLists(saved.lists);
     const history = storage.get('sorteio_history', []);
     const ignored = storage.get('blacklist', []);
     session.sorteioHistory = Array.isArray(history) ? history : [];

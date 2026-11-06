@@ -326,7 +326,7 @@ export async function supabaseAddToWatchlist(userId, item) {
  * @param {string} userId - ID do usuário
  * @param {{history: Array, watchlist: Array}} data - Itens normalizados
  */
-export async function supabaseImportLegacyData(userId, { history, watchlist, series = [] }) {
+export async function supabaseImportLegacyData(userId, { history, watchlist, series = [], lists = [] }) {
     try {
         const noon = new Date();
         noon.setHours(12, 0, 0, 0);
@@ -360,6 +360,8 @@ export async function supabaseImportLegacyData(userId, { history, watchlist, ser
             if (error) throw error;
         }
 
+        await importLists(userId, lists);
+
         return { success: true };
     } catch (error) {
         console.error('Erro ao importar dados antigos:', error);
@@ -385,6 +387,122 @@ export async function supabaseRemoveFromWatchlist(userId, tmdbId) {
     } catch (error) {
         console.error('Erro ao remover da watchlist:', error);
         return { success: false, error: error.message };
+    }
+}
+
+// ================================================
+// LISTAS PERSONALIZADAS (database/user_lists.sql)
+// ================================================
+
+const listItemRow = (userId, listId, item) => ({
+    list_id: listId, user_id: userId, tmdb_id: item.id, media_type: item.type, title: item.title, poster_path: item.poster,
+});
+
+/** Listas e títulos de uma vez; `missing` quando o SQL ainda não foi rodado no projeto */
+export async function supabaseGetLists(userId) {
+    try {
+        const [lists, items] = await Promise.all([
+            supabase.from('user_lists').select('id, name, emoji').eq('user_id', userId).order('created_at', { ascending: true }),
+            supabase.from('user_list_items').select('list_id, tmdb_id, title, poster_path, media_type').eq('user_id', userId).order('added_at', { ascending: true }),
+        ]);
+        const error = lists.error || items.error;
+        if (error) throw error;
+        return { success: true, lists: lists.data, items: items.data };
+    } catch (error) {
+        console.error('Erro ao obter listas:', error);
+        return { success: false, missing: error.code === '42P01' || error.code === 'PGRST205', lists: [], items: [] };
+    }
+}
+
+/** Cria a lista e devolve o id; `duplicate` quando já existe uma com o mesmo nome */
+export async function supabaseCreateList(userId, { name, emoji }) {
+    try {
+        const { data, error } = await supabase.from('user_lists')
+            .insert({ user_id: userId, name, emoji }).select('id').single();
+        if (error) throw error;
+        return { success: true, id: data.id };
+    } catch (error) {
+        console.error('Erro ao criar lista:', error);
+        return { success: false, duplicate: error.code === '23505' };
+    }
+}
+
+export async function supabaseUpdateList(listId, { name, emoji }) {
+    try {
+        const { error } = await supabase.from('user_lists').update({ name, emoji }).eq('id', listId);
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        console.error('Erro ao renomear lista:', error);
+        return { success: false, duplicate: error.code === '23505' };
+    }
+}
+
+/** Os títulos da lista saem junto (ON DELETE CASCADE) */
+export async function supabaseDeleteList(listId) {
+    try {
+        const { error } = await supabase.from('user_lists').delete().eq('id', listId);
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        console.error('Erro ao apagar lista:', error);
+        return { success: false };
+    }
+}
+
+export async function supabaseAddListItem(userId, listId, item) {
+    try {
+        const { error } = await supabase.from('user_list_items').insert(listItemRow(userId, listId, item));
+        if (error && error.code !== '23505') throw error; // já estava na lista: tudo certo
+        return { success: true };
+    } catch (error) {
+        console.error('Erro ao pôr na lista:', error);
+        return { success: false };
+    }
+}
+
+/** Vários títulos de uma vez (coleção copiada, importação); os que já estavam na lista ficam como estão */
+export async function supabaseAddListItems(userId, listId, items) {
+    try {
+        if (items.length === 0) return { success: true };
+        const { error } = await supabase.from('user_list_items').upsert(
+            items.map(item => listItemRow(userId, listId, item)),
+            { onConflict: 'list_id,tmdb_id', ignoreDuplicates: true }
+        );
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        console.error('Erro ao pôr títulos na lista:', error);
+        return { success: false };
+    }
+}
+
+export async function supabaseRemoveListItem(listId, tmdbId) {
+    try {
+        const { error } = await supabase.from('user_list_items').delete().eq('list_id', listId).eq('tmdb_id', tmdbId);
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        console.error('Erro ao tirar da lista:', error);
+        return { success: false };
+    }
+}
+
+// Listas do convidado indo para a conta: uma com o mesmo nome recebe os títulos, em vez de virar repetida
+async function importLists(userId, lists) {
+    if (lists.length === 0) return;
+    const current = await supabaseGetLists(userId);
+    if (!current.success) throw new Error('listas indisponíveis');
+    const byName = new Map(current.lists.map(l => [l.name.trim().toLocaleLowerCase('pt-BR'), l.id]));
+    for (const list of lists) {
+        let listId = byName.get(list.name.toLocaleLowerCase('pt-BR'));
+        if (!listId) {
+            const created = await supabaseCreateList(userId, list);
+            if (!created.success) throw new Error('não criou a lista');
+            listId = created.id;
+        }
+        const added = await supabaseAddListItems(userId, listId, list.items);
+        if (!added.success) throw new Error('não pôs os títulos');
     }
 }
 

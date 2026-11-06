@@ -356,6 +356,12 @@
                         </svg>
                         Já Assistidos
                     </button>
+                    <button type="button" id="tab-listas" class="library-tab tooltip" role="tab" tabindex="-1" aria-selected="false" aria-controls="library-content" data-action="switchTab" data-arg="listas" data-tooltip="Suas coleções">
+                        <svg aria-hidden="true" class="icon icon-16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        </svg>
+                        Minhas Listas
+                    </button>
                 </div>
                 <div id="library-content" class="results-grid" role="tabpanel" aria-labelledby="tab-watchlist" aria-live="polite"></div>
             </div>
@@ -765,6 +771,14 @@
                         </svg>
                         Salvar
                     </button>
+                    <button type="button" id="btn-salvar-lista" class="btn-modal btn-full-width ripple" data-action="openSaveToList" aria-haspopup="dialog">
+                        <svg aria-hidden="true" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                            <line x1="12" y1="10" x2="12" y2="16"/>
+                            <line x1="9" y1="13" x2="15" y2="13"/>
+                        </svg>
+                        <span id="btn-salvar-lista-label">Salvar em uma lista</span>
+                    </button>
                     <button class="btn-modal btn-roleta btn-full-width ripple tooltip" data-action="addCurrentToRoulette" data-tooltip="Adicionar à roleta personalizada" aria-label="Adicionar à roleta">
                         <svg aria-hidden="true" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"/>
@@ -1167,9 +1181,21 @@
                     <li><strong>Onde assistir</strong>, elenco e trailer.</li>
                     <li><strong>Já Vi</strong>: vai para "Já assistidos" e abre o <strong>Como foi?</strong> (🔥 😢 😂 🤯). Seus amigos veem a reação.</li>
                     <li><strong>Salvar</strong>: guarda em "Quero Assistir".</li>
+                    <li><strong>Salvar em uma lista</strong>: guarda numa lista sua (veja <strong>Minhas Listas</strong>, abaixo).</li>
                     <li><strong>Adicionar à Roleta</strong>, <strong>Gerar ingresso</strong> (uma imagem para postar) e <strong>Compartilhar</strong> (WhatsApp, outros apps ou um amigo).</li>
                     <li><strong>Não tenho interesse</strong>: o título nunca mais aparece nos sorteios.</li>
                 </ul>
+            </details>
+
+            <details class="help__topic" id="guia-minhas-listas">
+                <summary><span aria-hidden="true">📂</span> Minhas Listas</summary>
+                <ol>
+                    <li>Na tela do título, toque em <strong>Salvar em uma lista</strong>.</li>
+                    <li>Marque uma ou mais listas, ou toque em <strong>+ Nova lista</strong>: dê um nome (como "Maratona de Halloween") e escolha um emoji, ou toque num <strong>modelo</strong> pronto (Favoritos, Com o mozão…).</li>
+                    <li>Para ver, abra a aba <strong>Minhas Listas</strong>, embaixo da busca, e toque na lista.</li>
+                </ol>
+                <p><strong>Coleções prontas</strong>, no fim da aba: o app junta os mais bem avaliados de um tema (terror, comédias, doramas…). Abra uma e toque em <strong>Copiar para minhas listas</strong>.</p>
+                <p>Dentro da lista: <strong>Renomear</strong> (nome e emoji), <strong>Apagar lista</strong> e o ✕ em cada pôster para tirar o título. Um título pode estar em várias listas, e isso não muda "Quero Assistir" nem "Já assistidos". Sem conta, as listas ficam no aparelho e vão para a conta quando você criar uma.</p>
             </details>
 
             <details class="help__topic" id="guia-series">
@@ -1268,6 +1294,38 @@
                 <button type="button" id="blind-reveal" class="btn-main ripple" data-action="blindReveal">Arriscar e revelar</button>
                 <button type="button" id="blind-another" class="btn-outline btn-main ripple" data-action="sessaoEscuras">Outro às escuras</button>
                 <button type="button" class="btn-clear-small" data-action="closeModal" data-arg="modal-blind">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LISTAS PERSONALIZADAS: "Salvar em lista" abre por cima do título; "Nova lista" por cima dele -->
+    <div id="modal-save-list" class="modal-overlay">
+        <div class="modal-content modal-content--panel" role="dialog" aria-modal="true" aria-labelledby="save-list-title" aria-describedby="save-list-subtitle" tabindex="-1">
+            <h2 class="panel-title" id="save-list-title">Salvar em lista</h2>
+            <p id="save-list-subtitle" class="panel-hint text-center"></p>
+            <fieldset class="save-lists">
+                <legend class="sr-only">Suas listas</legend>
+                <div id="save-list-options" class="save-lists__options"></div>
+            </fieldset>
+            <p id="save-list-empty" class="section-note text-center" hidden>Você ainda não tem listas. Crie a primeira, como "Maratona de Halloween" ou "Para ver com a família".</p>
+            <p id="save-list-status" class="sr-only" aria-live="polite"></p>
+            <button type="button" class="btn-outline ripple w-full" data-action="openListEditor" data-arg="save">+ Nova lista</button>
+            <button type="button" class="btn-main ripple w-full mt-20" data-action="closeModal" data-arg="modal-save-list">Pronto</button>
+        </div>
+    </div>
+
+    <div id="modal-list-edit" class="modal-overlay">
+        <div class="modal-content modal-content--panel" role="dialog" aria-modal="true" aria-labelledby="list-edit-title" tabindex="-1">
+            <h2 class="panel-title" id="list-edit-title">Nova lista</h2>
+            <label for="list-name" class="field-label">Nome</label>
+            <input type="text" id="list-name" class="input-dark" maxlength="40" autocomplete="off" placeholder="Ex.: Maratona de Halloween" data-enter="saveListEditor" aria-describedby="list-name-error">
+            <p id="list-name-error" class="list-edit__error" hidden></p>
+            <p class="field-label" id="list-emoji-label">Emoji</p>
+            <div id="list-emoji" class="emoji-picker" role="radiogroup" aria-labelledby="list-emoji-label"></div>
+            <div id="list-templates"></div>
+            <div class="confirm-dialog__actions">
+                <button type="button" class="btn-outline" data-action="closeModal" data-arg="modal-list-edit">Cancelar</button>
+                <button type="button" id="list-edit-save" class="btn-main" data-action="saveListEditor">Criar lista</button>
             </div>
         </div>
     </div>

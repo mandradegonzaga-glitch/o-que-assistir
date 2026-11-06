@@ -1,9 +1,10 @@
 // Substitui o SDK do Supabase no navegador: banco em memória, guardado em sessionStorage para sobreviver ao reload.
-// Controlado por window.__TEST = { logged: boolean, failUpsert: boolean, failDelete: boolean }.
+// Controlado por window.__TEST = { logged: boolean, failUpsert: boolean, failDelete: boolean, failListsRead: boolean }.
 (() => {
   const empty = () => ({
     profiles: [{ id: 'u1', username: 'teste', display_name: 'Pessoa Teste', email: 't@t.dev', roulette_wins: 0 }],
     watch_history: [], watchlist: [], user_preferences: [], user_badges: [], sorteio_history: [], blacklist: [], episode_progress: [],
+    user_lists: [], user_list_items: [],
   });
   const store = JSON.parse(sessionStorage.getItem('__db') || 'null') || empty();
   const save = () => sessionStorage.setItem('__db', JSON.stringify(store));
@@ -37,8 +38,17 @@
         }
       }
 
+      if (this.table === 'user_lists' && this.op === 'select' && window.__TEST?.failListsRead) {
+        return { data: null, error: { code: '42P01', message: 'tabela não existe' } };
+      }
+      if (this.table === 'user_lists' && this.op === 'delete') {
+        const gone = matched.map(r => r.id); // ON DELETE CASCADE
+        store.user_list_items = (store.user_list_items || []).filter(i => !gone.includes(i.list_id));
+      }
+
       if (this.op === 'insert' || this.op === 'upsert') {
-        const isNew = row => !(row.tmdb_id && rows.some(r => r.user_id === row.user_id && r.tmdb_id === row.tmdb_id));
+        // Listas: o mesmo título pode estar em várias listas da mesma pessoa
+        const isNew = row => !(row.tmdb_id && rows.some(r => r.user_id === row.user_id && r.tmdb_id === row.tmdb_id && r.list_id === row.list_id));
         out = [].concat(this.value).filter(row => this.op === 'insert' || isNew(row))
           .map(row => ({ id: crypto.randomUUID(), watched_at: new Date().toISOString(), ...row }));
         rows.push(...out);

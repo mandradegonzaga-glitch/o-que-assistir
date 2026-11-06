@@ -1,4 +1,6 @@
 // Dados da versão antiga, que guardava tudo no navegador. Lógica pura: quem lê e grava é src/app/legacyImport.js.
+import { normalizeGuestLists } from './userLists.js';
+
 const TYPES = ['movie', 'tv', 'dorama'];
 
 function normalizeItem(item) {
@@ -68,11 +70,12 @@ export function collectLegacyData({ allUsers, currentUser, watchlist, vistos, gu
     watchlist: normalizeList([...normalizeList(watchlist), ...(guest?.watchlist || [])]),
     rouletteWins: Math.max(rouletteWins, guest?.rouletteWins || 0),
     series: normalizeEpisodes(guest?.episodes),
+    lists: normalizeGuestLists(guest?.lists),
   };
 }
 
-export function hasLegacyData({ history, watchlist, series = [] }) {
-  return history.length > 0 || watchlist.length > 0 || series.length > 0;
+export function hasLegacyData({ history, watchlist, series = [], lists = [] }) {
+  return history.length > 0 || watchlist.length > 0 || series.length > 0 || lists.length > 0;
 }
 
 export function stripPasswords(allUsers) {

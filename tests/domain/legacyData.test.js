@@ -37,7 +37,7 @@ describe('collectLegacyData', () => {
   });
 
   it('survives corrupted storage', () => {
-    expect(collectLegacyData({ allUsers: 'x', watchlist: 'y', vistos: 3 })).toEqual({ history: [], watchlist: [], rouletteWins: 0, series: [] });
+    expect(collectLegacyData({ allUsers: 'x', watchlist: 'y', vistos: 3 })).toEqual({ history: [], watchlist: [], rouletteWins: 0, series: [], lists: [] });
     expect(collectLegacyData({ allUsers: { a: null } }).history).toEqual([]);
   });
 });
@@ -52,6 +52,15 @@ describe('hasLegacyData', () => {
   it('is true with only series progress', () => {
     expect(hasLegacyData({ history: [], watchlist: [], series: [{ id: 1 }] })).toBe(true);
     expect(hasLegacyData({ history: [], watchlist: [], series: [] })).toBe(false);
+  });
+
+  it('is true with only guest lists, even an empty one', () => {
+    expect(hasLegacyData({ history: [], watchlist: [], lists: [{ id: 'g1', name: 'Terror', items: [] }] })).toBe(true);
+  });
+
+  it('brings the guest lists, cleaned', () => {
+    const data = collectLegacyData({ guest: { history: [], watchlist: [], lists: [{ id: 'g1', name: ' Terror ', emoji: '👻', items: [{ id: 694, title: 'O Iluminado' }] }] } });
+    expect(data.lists).toEqual([{ id: 'g1', name: 'Terror', emoji: '👻', items: [{ id: 694, title: 'O Iluminado', poster: null, type: 'movie' }] }]);
   });
 });
 

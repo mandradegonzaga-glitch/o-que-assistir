@@ -123,6 +123,7 @@ export function switchTab(t) {
         watchlist: document.getElementById('tab-watchlist'),
         andando:   document.getElementById('tab-andando'),
         vistos:    document.getElementById('tab-vistos'),
+        listas:    document.getElementById('tab-listas'),
     };
 
     Object.entries(tabs).forEach(([key, el]) => {

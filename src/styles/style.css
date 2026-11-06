@@ -5589,3 +5589,216 @@ button.site-footer__link {
         display: none;
     }
 }
+
+/* ==================== LISTAS PERSONALIZADAS (src/app/userLists.js) ==================== */
+.list-cards {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: var(--space-md);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.list-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    width: 100%;
+    min-height: 88px;
+    padding: var(--space-md);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s var(--ease-smooth), transform 0.2s var(--ease-smooth);
+}
+
+.list-card:hover { border-color: var(--accent-primary); transform: translateY(-2px); }
+
+/* Nome longo encurta com reticências, sem empurrar o cartão para fora da tela */
+.list-cards > li { min-width: 0; }
+
+.list-card__emoji { font-size: 1.8rem; line-height: 1; }
+
+.list-card__text { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; }
+
+.list-card__name {
+    display: -webkit-box;
+    overflow: hidden;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+}
+
+.list-card__count { color: var(--text-tertiary); font-size: 0.8rem; }
+
+/* Os últimos pôsteres, um sobre o outro, como cartas na mão */
+.list-card__posters { display: flex; flex-shrink: 0; }
+
+.list-card__posters img {
+    width: 36px;
+    height: 54px;
+    object-fit: cover;
+    border: 2px solid var(--bg-tertiary);
+    border-radius: 4px;
+}
+
+.list-card__posters img + img { margin-left: -14px; }
+
+.list-new { justify-self: start; }
+
+.list-view__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-sm) var(--space-md);
+}
+
+.list-view__title {
+    flex: 1 1 100%;
+    margin: var(--space-sm) 0 0;
+    font-size: 1.3rem;
+    overflow-wrap: anywhere;
+}
+
+.list-view__count { margin: 0; color: var(--text-tertiary); font-size: 0.85rem; }
+
+.list-view__actions { display: flex; gap: var(--space-sm); margin-left: auto; }
+
+/* Título sem pôster no TMDB: o nome no lugar da imagem */
+.library-item__noposter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 2 / 3;
+    padding: var(--space-sm);
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.empty-state-emoji { font-size: 3rem; line-height: 64px; }
+
+/* Modelos com um toque */
+.list-templates__label {
+    margin: var(--space-md) 0 var(--space-sm);
+    color: var(--text-tertiary);
+    font-size: 0.85rem;
+}
+
+.list-templates {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-sm);
+    margin: 0 0 var(--space-lg);
+    padding: 0;
+    list-style: none;
+}
+
+#list-templates .list-templates { justify-content: flex-start; }
+
+.list-template {
+    min-height: 40px;
+    padding: 0 var(--space-md);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-default);
+    border-radius: 999px;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.list-template:hover { border-color: var(--accent-primary); }
+
+/* Coleções prontas: abaixo das listas da pessoa */
+.collections { margin-top: var(--space-xl, 32px); }
+
+.collections__title { margin: 0 0 4px; font-size: 1.1rem; }
+
+.collections__hint { margin: 0 0 var(--space-md); color: var(--text-muted); font-size: 0.8rem; }
+
+.list-card--collection { min-height: 72px; background: transparent; border-style: dashed; }
+
+/* Janela "Salvar em lista" */
+.save-lists {
+    margin: 0 0 var(--space-md);
+    padding: 0;
+    border: 0;
+}
+
+.save-lists__options {
+    display: grid;
+    gap: var(--space-sm);
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+.save-lists__emoji { font-size: 1.2rem; }
+
+.save-lists__name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.save-lists__count { color: var(--text-muted); font-size: 0.75rem; white-space: nowrap; }
+
+/* Janela "Nova lista" */
+.list-edit__error {
+    margin: 6px 0 0;
+    color: #ff9b8f;
+    font-size: 0.8rem;
+}
+
+#list-name { width: 100%; margin-bottom: 0; }
+
+#modal-list-edit .field-label + .emoji-picker,
+#list-emoji-label { margin-top: var(--space-md); }
+
+.emoji-picker {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 6px;
+    margin-bottom: var(--space-lg);
+}
+
+.emoji-picker__option {
+    aspect-ratio: 1;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0;
+    background: var(--bg-tertiary);
+    border: 2px solid transparent;
+    border-radius: var(--radius-md);
+    font-size: 1.25rem;
+    cursor: pointer;
+}
+
+.emoji-picker__option[aria-checked="true"] {
+    border-color: var(--accent-primary);
+    background: rgba(var(--accent-primary-rgb), 0.15);
+}
+
+@media (max-width: 400px) {
+    .emoji-picker { gap: 4px; }
+    .list-cards { grid-template-columns: 1fr; }
+}
+
+/* Celular bem estreito: 8 emojis por linha ficaria pequeno demais para o dedo, e 3 pôsteres apertariam o nome */
+@media (max-width: 360px) {
+    .emoji-picker { grid-template-columns: repeat(4, 1fr); }
+    .list-card__posters img + img { display: none; }
+    #modal-list-edit .confirm-dialog__actions { grid-template-columns: 1fr; }
+}
+
+/* Copiar coleção: altura de toque, como os outros botões principais */
+.list-view__copy { min-height: 44px; }

@@ -12,6 +12,7 @@ import { desmarcarTemporadaAtual, desmarcarTodosEpisodios, marcarAteAqui, marcar
 import { friendAccept, friendAdd, friendInvite, friendMatchCurrent, friendOpen, friendRemove, friendSendTitle, friendShareDelete, friendShareOpen, friendUnfriendCurrent, matchInboxDelete, matchInboxOpen, openFriends, toggleShareWithFriends } from './friends.js';
 import { removeLibItem } from './library.js';
 import { reactTitle } from './reactions.js';
+import { closeUserList, copyCollection, createFromTemplate, deleteUserList, openCollection, useListTemplate, openListEditor, openSaveToList, openUserList, pickListEmoji, removeFromUserList, saveListEditor, toggleTitleInList } from './userLists.js';
 import { blindReveal, sessaoEscuras } from './blindSession.js';
 import { abrirBatalha, battleChoose, battleOpenChampion, battleSynopsis, battleUndo } from './battle.js';
 import { openHelp } from './help.js';
@@ -131,6 +132,18 @@ const clickActions = {
   },
   toggleSalvarAtual,
   undoLast,
+  openSaveToList,
+  openListEditor: el => openListEditor(el.dataset.arg),
+  saveListEditor,
+  pickListEmoji: el => pickListEmoji(el.dataset.arg),
+  openUserList: el => openUserList(el.dataset.arg),
+  closeUserList,
+  deleteUserList,
+  openCollection: el => openCollection(el.dataset.arg),
+  copyCollection,
+  createFromTemplate: el => createFromTemplate(el.dataset.arg),
+  useListTemplate: el => useListTemplate(el.dataset.arg),
+  removeFromUserList: el => removeFromUserList(Number(el.dataset.id), el),
 };
 
 // Um único debounce: criar um novo a cada tecla não atrasava nada e disparava uma busca por letra
@@ -159,10 +172,11 @@ const changeActions = {
   onSeasonChange: el => onSeasonChange(el.value),
   toggleShareWithFriends,
   toggleDeviceNotify,
+  toggleTitleInList,
   toggleEpisode: el => toggleEpisode(Number(el.dataset.series), Number(el.dataset.season), Number(el.dataset.episode), el.checked),
 };
 
-const enterActions = { addRoletaItem, buscarDireto, friendAdd, matchCodeJoin, matchLiveJoin };
+const enterActions = { addRoletaItem, buscarDireto, friendAdd, matchCodeJoin, matchLiveJoin, saveListEditor };
 
 export function initActions() {
   document.addEventListener('click', (e) => {
@@ -182,7 +196,12 @@ export function initActions() {
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter') return;
     const enter = enterActions[e.target.dataset?.enter];
-    if (enter) { enter(); return; }
+    if (enter) {
+      // Sem isso, se a ação mover o foco para um botão (ex.: o cartão da lista recém-criada), o mesmo Enter o aciona
+      e.preventDefault();
+      enter();
+      return;
+    }
     // Sugestões de ator são role="option": Enter equivale ao clique
     if (e.target.matches?.('[role="option"][data-action]')) e.target.click();
   });

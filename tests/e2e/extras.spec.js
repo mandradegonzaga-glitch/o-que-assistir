@@ -243,7 +243,7 @@ test.describe('como usar', () => {
     await page.locator('#btn-help').click();
     const modal = page.locator('#modal-help');
     await expect(modal).toBeVisible();
-    await expect(modal.locator('details.help__topic')).toHaveCount(12);
+    await expect(modal.locator('details.help__topic')).toHaveCount(13);
     await expect(modal.locator('details[open]')).toHaveCount(0);
     await modal.getByText('Match: decidir em dupla').click();
     await expect(modal.locator('#guia-match')).toHaveAttribute('open', '');
