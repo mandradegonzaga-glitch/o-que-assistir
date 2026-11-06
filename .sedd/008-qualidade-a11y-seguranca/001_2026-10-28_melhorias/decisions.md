@@ -74,6 +74,82 @@
 
 ---
 
+## D001-039 — Extras: batalha em mata-mata, efeito 3D sem biblioteca
+
+**Decisão:** Pedido do usuário em 2026-11-06: todos os extras, menos listas personalizadas, com SQL liberado (nenhum precisou). A Cine-batalha é um mata-mata de 8 títulos, sem pontuação ELO guardada: serve para escolher o que ver agora, e o gosto já é aprendido pelo DNA. O efeito 3D é código próprio (cerca de 60 linhas), não o vanilla-tilt.js. Lançamentos de filme são o que chegou ao digital no Brasil, não ao cinema.
+
+**Por que essa:** ELO precisaria de muitas batalhas e de um lugar para guardar a pontuação, e repetiria o DNA. Uma biblioteca traria código de terceiros para um efeito que o CSS faz com 4 variáveis. Para quem escolhe o que ver em casa, a estreia que importa é a que dá para ver em casa.
+
+**Alternativas consideradas:** batalha com ELO por gênero → rejeitada pelos motivos acima. `/movie/now_playing` → rejeitado: filmes em cartaz no cinema, que não dá para ver pelo app.
+
+---
+
+## D001-038 — Reação na linha do histórico, mudada só por função
+
+**Decisão:** A reação é uma coluna `reaction` em `watch_history` (só 'fire', 'sad', 'laugh', 'mind'), mudada pela função `set_title_reaction` (SECURITY DEFINER, só nas linhas de `auth.uid()`). O `get_friend_profile` já devolve a coluna. "Já vi" deixa o título aberto para a pessoa reagir na hora.
+
+**Por que essa:** uma reação só existe para título assistido e some junto com ele; não precisa de tabela nova nem de outra consulta para os amigos. O histórico não tem política de UPDATE, e liberar UPDATE deixaria mudar título e data; a função muda só a reação.
+
+**Alternativas consideradas:** tabela `title_reactions` → rejeitada: mais uma tabela, RLS e junção, para guardar um campo por título. Fechar o título depois de "Já vi", como antes → rejeitado: ninguém voltaria ao título só para reagir.
+
+---
+
+## D001-037 — Indicações pelo DNA: rodízio pelos gêneros que pesam
+
+**Decisão:** Com 5+ títulos com gênero, cada cartão busca no /discover um gênero favorito, com os mesmos filtros de qualidade, sem o que a pessoa já viu. O gênero do dia se reveza entre até 3 favoritos que pesem pelo menos metade do primeiro. Em série e dorama, os gêneros de filme viram os de série (Ação+Aventura somam em "Ação e aventura"); os que não existem em série são pulados. Sem gênero que sirva, ou sem resultado, aquele cartão fica com a indicação de todo mundo.
+
+**Por que essa:** aprovado pelo usuário em 2026-11-06 ("pode continuar assim"), inclusive usar os gêneros de filmes para série e dorama de quem só vê filmes. O corte de metade do peso veio do teste com o TMDB real.
+
+**Alternativas consideradas:** DNA por tipo (série só pelo que viu de série) → rejeitada: quem nunca viu série ficaria sempre no padrão. Rodízio igual entre os 3 primeiros → rejeitado: gênero com peso pequeno aparecia um dia sim, um não.
+
+---
+
+## D001-036 — Compatibilidade pela interseção dos gêneros
+
+**Decisão:** A compatibilidade é a soma, gênero a gênero, da menor fatia entre os dois (cada título vale 1, dividido entre os seus gêneros, como no DNA). 100% = mesma mistura de gêneros; 0% = nenhum gênero em comum. Títulos vistos pelos dois aparecem à parte, sem entrar na conta. Só aparece com pelo menos 3 títulos com gênero de cada lado.
+
+**Por que essa:** o número tem leitura direta ("58% do que cada um assiste cai nos mesmos gêneros"), é igual para os dois amigos e reaproveita o DNA. Títulos em comum quase sempre são poucos e puxariam a nota para baixo sem dizer muito.
+
+**Alternativas consideradas:** semelhança de cosseno → rejeitada: dá números altos para quase todo mundo (Drama e Comédia estão em todo histórico) e é difícil de explicar. Contar títulos em comum → rejeitada: com históricos de tamanhos diferentes, quase sempre perto de 0%.
+
+---
+
+## D001-035 — "Outros" do DNA sem barra, com os nomes
+
+**Decisão:** A linha "Outros" do DNA não tem barra: fica separada por um fio, em cor secundária, com a porcentagem e os gêneros que entraram nela, na ordem do ranking. Até 6 nomes aparecem inteiros; com 7 ou mais, os 5 primeiros e "e mais N" ("e mais 1" nunca aparece: o nome ocupa o mesmo espaço).
+
+**Por que essa:** com poucos títulos, "Outros" passava da barra do 1º gênero (28% contra 25% no exemplo real) e parecia o destaque. Recomendado pelo assistente e aprovado pelo usuário em 2026-11-05 ("pode fazer esse ajuste").
+
+**Alternativas consideradas:** mostrar 6 ou 7 gêneros → rejeitado: com poucos títulos sobram muitos gêneros pequenos e a lista só fica mais comprida. Tirar "Outros" → rejeitado: as porcentagens deixariam de somar 100.
+
+---
+
+## D001-034 — Horas assistidas e ator mais visto com detalhes guardados no aparelho
+
+**Decisão:** Para cada título visto (e cada série com episódios marcados) o app busca uma vez `/movie|tv/{id}?append_to_response=credits`, 4 pedidos por vez, e guarda um resumo pequeno em `localStorage` (`title_facts`): duração, episódios, duração do episódio e os 5 primeiros do elenco. Filmes não expiram; séries, em 30 dias (episódios novos). Horas: filme pela duração; série no histórico inteira, a não ser que tenha episódios marcados; série só em andamento conta os episódios marcados. A duração do episódio é a média de `episode_run_time` ou, sem ela, a do último episódio, com teto de 70 min. Ator mais visto: quem aparece em mais títulos vistos (no mínimo 2; empate por nome); séries só em andamento não contam. O número diz "aprox." e, se faltar algum título, "com X de Y títulos". Sem TMDB, mostra "—" e "Sem conexão com o TMDB" em vez de um número errado.
+
+**Por que essa:** escolha do usuário em 2026-11-05 (parte 2 separada). Guardar no aparelho evita repetir dezenas de pedidos a cada abertura do perfil: no Chrome, a primeira abertura com 7 títulos levou 1,4 s e a segunda não fez nenhum pedido. Nada vai para o banco.
+
+**Teto de 70 min:** com o TMDB real, Stranger Things não tem média e o último episódio tem 129 min. Com teto de 90 min a série sozinha dava 63 h (perto de 50 h na vida real); com 70 min, 49 h. Doramas costumam ter de 60 a 70 min por episódio e continuam certos.
+
+**Privacidade:** as chaves de `title_facts` dizem quais títulos a conta viu; por isso são apagadas ao sair da conta e ao deletá-la, e uma busca que ainda estava rodando não grava mais nada depois disso. O convidado mantém, como já mantém a própria biblioteca no aparelho.
+
+**Alternativas consideradas:** guardar no banco → rejeitado: precisaria de SQL e não ajuda quem é convidado. Somar o elenco de todos os episódios (`aggregate_credits`) → rejeitado: pedido pesado e fora das rotas do proxy. Buscar a duração de cada temporada → rejeitado: um pedido por temporada.
+
+---
+
+## D001-033 — DNA do usuário só com o histórico salvo, em duas partes
+
+**Decisão:** A primeira parte (T001-098) usa só o que `watch_history` já guarda: gêneros, tipo, ano e data. Cada título vale 1, dividido igualmente entre os seus gêneros, e as porcentagens são arredondadas para somar 100 (maior resto). Gêneros de série que juntam dois de filme contam como os de filme ("Ação e aventura" → Ação e Aventura; "Ficção e fantasia" → Ficção científica e Fantasia; "Guerra e política" → Guerra; "Infantil" → Família). Mostra os 5 primeiros e junta o resto em "Outros". Com menos de 5 títulos com gênero, avisa que o DNA "ainda está se formando". Horas assistidas e ator mais visto ficam para a parte 2 (T001-099), que precisa buscar detalhes no TMDB.
+
+**Por que essa:** escolha do usuário em 2026-11-05 ("Em 2 partes"). Abre na hora, funciona offline e não precisa de SQL. Dividir o peso evita que um título com cinco gêneros pese cinco vezes mais.
+
+**Alternativas consideradas:** contar cada gênero uma vez por título (as porcentagens passariam de 100) → rejeitado. Gráfico de pizza ou barra empilhada com uma cor por gênero → rejeitado: barras horizontais numa cor só, com nome e número escritos, leem melhor no celular e não dependem de cor. Tudo de uma vez, já com horas e ator → adiado pelo usuário.
+
+**Plural:** `Intl.PluralRules('pt-BR')` trata 0 como singular ("0 título"); nos meses sem nada o texto é "nenhum título".
+
+---
+
 ## D001-032 — Indicações do dia em painel flutuante, aberto sozinho uma vez por dia
 
 **Decisão:** As indicações saem do topo de Descobrir e vão para um painel no canto inferior direito, aberto por um botão redondo (ideia do usuário, "como um chatbot de ajuda"). O painel abre sozinho só na primeira entrada do dia, 1,2 s depois de entrar, e nunca por cima de login, boas-vindas, título aberto ou link de título, Match ou amigo. Depois, só pelo botão. Uma bolinha rosa marca indicações ainda não vistas no dia. O painel não é modal: aberto sozinho, não tira o foco; aberto pelo botão, o foco vai para o fechar; Esc fecha e devolve o foco ao botão.

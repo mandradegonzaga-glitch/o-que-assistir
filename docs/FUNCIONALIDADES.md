@@ -356,8 +356,10 @@ Use este documento para verificar se todas as funcionalidades estão funcionando
 - [ ] Banner de instalação nunca cobre o FECHAR
 - [ ] Convidado: lista, vistos e roleta continuam depois de recarregar; ao criar conta, o app oferece trazer tudo
 - [ ] Perfil mostra sequência, recorde, nível, XP e 26 conquistas em 4 categorias (Jornada, Gêneros, Hábitos, Social)
-- [ ] Indicações do dia (Filme, Série e Dorama, iguais para todos no mesmo dia, trocam à meia-noite) num painel com botão no canto inferior direito; abre sozinho só na primeira entrada do dia, nunca sobre login, boas-vindas ou link; bolinha quando há novas; Esc fecha; tocar abre o título
+- [ ] Indicações do dia (Filme, Série e Dorama, trocam à meia-noite; com 5+ títulos assistidos, pelos gêneros que a pessoa mais assiste, com "Porque você curte X"; com menos, iguais para todos) num painel com botão no canto inferior direito; abre sozinho só na primeira entrada do dia, nunca sobre login, boas-vindas ou link; bolinha quando há novas; Esc fecha; tocar abre o título
 - [ ] Desafio do dia (muda à meia-noite, nunca repete o de ontem, +25 XP) e meta da semana (assistir 3 títulos de segunda a domingo, +50 XP) no perfil; o desafio aparece no aviso ao entrar
+- [ ] Perfil: "Seu DNA" com os gêneros que mais assiste em % (top 5 com barra + Outros sem barra e com os nomes, somando 100), filmes/séries/doramas, década favorita e títulos nos últimos 6 meses; sem títulos, convida a marcar; com poucos, avisa que está se formando
+- [ ] Perfil, no DNA: horas assistidas (aprox.) e ator mais visto (em 2+ títulos); reabrir não busca de novo no TMDB; sem conexão mostra "—"; sair da conta apaga os detalhes guardados
 - [ ] Match: duas pessoas votam nos mesmos títulos; só aparece o que coincidiu; swipe, botões e setas funcionam
 - [ ] Amigos (botão ao lado do perfil): convidar por link, adicionar por usuário exato, aceitar, recusar; contador de pedidos na aba
 - [ ] Perfil do amigo: assistidos, lista, conquistas e o que os dois querem ver; só entre amigos aceitos
@@ -660,8 +662,8 @@ Funcionalidades para fazer o usuário voltar todo dia.
 |---|----------------|------------|-----------|
 | 13 | 📸 **Gerador de Stories** | Alta | Imagem estilo Spotify Wrapped com pôster, nota e frase para Instagram/WhatsApp |
 | 14 | 🎁 **Recomendar para Amigo** | Alta | Botão "Enviar para..." gera link/mensagem pronta para WhatsApp |
-| 15 | 💬 **Reações Rápidas** | Média | Emojis de reação no modal (🔥😢😂🤯) para feedback rápido sem escrever |
-| 16 | 📊 **Comparar Gostos** | Média | "Você e [amigo] têm 73% de compatibilidade cinematográfica" |
+| 15 | 💬 **Reações Rápidas** ✅ | Média | Emojis de reação no modal (🔥😢😂🤯) para feedback rápido sem escrever (feito em 2026-11-06: "Como foi?" no título assistido, visível para amigos) |
+| 16 | 📊 **Comparar Gostos** ✅ | Média | "Você e [amigo] têm 73% de compatibilidade cinematográfica" (feito em 2026-11-06, no perfil do amigo) |
 | 17 | 👥 **Sistema de Amigos** | Baixa | Adicionar amigos, ver o que estão assistindo, sugerir filmes |
 | 18 | 🎉 **Watch Party** | Baixa | Criar sala virtual para decidir filme juntos (votação em grupo) |
 
@@ -671,9 +673,9 @@ Funcionalidades para fazer o usuário voltar todo dia.
 
 | # | Funcionalidade | Prioridade | Descrição |
 |---|----------------|------------|-----------|
-| 19 | 🎲 **Modo "Surpreenda-me"** | Alta | Sorteia de gênero que o usuário NUNCA assistiu - forçar sair da zona de conforto |
-| 20 | 📅 **Lançamentos da Semana** | Alta | Seção automática com novidades das plataformas de streaming |
-| 21 | 🌍 **Filtro por País** | Média | Descobrir cinema francês, japonês, indiano, etc. |
+| 19 | 🎲 **Modo "Surpreenda-me"** ✅ | Alta | Sorteia de gênero que o usuário NUNCA assistiu - forçar sair da zona de conforto (feito em 2026-11-06: o gênero que a pessoa menos vê, só bem avaliados) |
+| 20 | 📅 **Lançamentos da Semana** ✅ | Alta | Seção automática com novidades das plataformas de streaming (feito em 2026-11-06: botão "Lançamentos", 45 dias para filmes no digital e 60 para séries) |
+| 21 | 🌍 **Filtro por País** ✅ | Média | Descobrir cinema francês, japonês, indiano, etc. (feito em 2026-11-06: 15 países) |
 | 22 | 🎬 **Maratona por Pessoa** | Média | "Filmografia Tarantino", "Todos os filmes com Denzel Washington" |
 | 23 | ⏰ **"Tenho X minutos"** | Média | Slider para definir tempo exato disponível (ex: 95 minutos) |
 | 24 | 🔄 **Filtragem Colaborativa** | Alta | Sistema aprende com escolhas. Botões "Gostei"/"Não Gostei" melhoram recomendações |
@@ -686,7 +688,7 @@ Funcionalidades para fazer o usuário voltar todo dia.
 |---|----------------|------------|-----------|
 | 25 | 📂 **Listas Personalizadas** | Alta | Criar coleções: "Maratona Halloween", "Filmes com Namorada". Emoji personalizável |
 | 26 | 📅 **Agendar Filme** | Média | Cria evento no Google Calendar/celular: "Sexta 20h: Ver Matrix" |
-| 27 | 📊 **DNA do Usuário** | Média | Gráfico visual no perfil: "40% Terror, 30% Comédia, 30% Ação" |
+| 27 | 📊 **DNA do Usuário** ✅ | Média | Gráfico visual no perfil: "40% Terror, 30% Comédia, 30% Ação" |
 | 28 | 💬 **Notas Pessoais** | Baixa | Campo para anotar "Vi com a Ana", "Recomendação do João" |
 | 29 | 🔖 **Tags Customizadas** | Baixa | Adicionar tags próprias: #datenight #comfamily #mindblown |
 
@@ -789,7 +791,7 @@ Funcionalidades para fazer o usuário voltar todo dia.
 | # | Funcionalidade | Prioridade | Descrição |
 |---|----------------|------------|-----------|
 | 42 | 🎭 **Filtro por Vibe (Mood Picker)** | Alta | Barra de "vibes" acima dos filtros: 🧠 Explodir a mente, 😭 Pra chorar, ⚡ Adrenalina, 🧸 Conforto |
-| 43 | 🙈 **Sessão às Escuras (Blind Watch)** | Alta | Esconde pôster/título, mostra só sinopse/nota/duração. Botão "Arriscar e Assistir" |
+| 43 | 🙈 **Sessão às Escuras (Blind Watch)** ✅ | Alta | Esconde pôster/título, mostra só sinopse/nota/duração. Botão "Arriscar e Assistir" (feito em 2026-11-06) |
 | 44 | ⏱️ **Slider "Tenho X minutos"** | Média | Range slider para tempo exato disponível (60-180 min) |
 
 ---
@@ -798,7 +800,7 @@ Funcionalidades para fazer o usuário voltar todo dia.
 
 | # | Funcionalidade | Prioridade | Descrição |
 |---|----------------|------------|-----------|
-| 45 | ✨ **Efeito 3D Tilt nos Pôsteres** | Alta | Pôster inclina seguindo o mouse + brilho especular (glare). Biblioteca: vanilla-tilt.js (3kb) |
+| 45 | ✨ **Efeito 3D Tilt nos Pôsteres** ✅ | Alta | Pôster inclina seguindo o mouse + brilho especular (glare). Biblioteca: vanilla-tilt.js (3kb) (feito em 2026-11-06, com código próprio, sem biblioteca) |
 | 46 | 🔊 **Sound Design (UI Sounds)** | Média | Sons sutis: click ao trocar aba, roleta girando, sucesso ao desbloquear. Botão Mute nas config |
 | 47 | 🎨 **Cor Dominante do Pôster** | Média | Extrair cor principal da imagem (Color Thief) para usar no fundo do modal/card |
 
@@ -821,7 +823,7 @@ Funcionalidades para fazer o usuário voltar todo dia.
 | 51 | 🤝 **Match Mode (Tinder para Filmes)** | Alta | Criar sessão, convidar amigo, ambos swipam. Match = confetes + filme vencedor |
 | 52 | 🍿 **Listas Colaborativas Real-time** | Alta | Dois usuários editam mesma lista simultaneamente (como Google Docs) |
 | 53 | 🏆 **Leaderboard Semanal** | Média | Ranking de amigos por filmes vistos/pontos. Reset todo domingo |
-| 54 | 📊 **Comparar Perfis** | Média | "Você e Ana têm 73% de compatibilidade cinematográfica" |
+| 54 | 📊 **Comparar Perfis** ✅ | Média | "Você e Ana têm 73% de compatibilidade cinematográfica" (feito em 2026-11-06, junto com o #16) |
 
 ---
 
@@ -829,7 +831,7 @@ Funcionalidades para fazer o usuário voltar todo dia.
 
 | # | Funcionalidade | Prioridade | Descrição |
 |---|----------------|------------|-----------|
-| 55 | ⚔️ **Cine-Batalha (ELO System)** | Alta | Dois pôsteres lado a lado, "Qual prefere?". Aprende preferências sem formulários |
+| 55 | ⚔️ **Cine-Batalha (ELO System)** ✅ | Alta | Dois pôsteres lado a lado, "Qual prefere?". Aprende preferências sem formulários (feito em 2026-11-06 como mata-mata de 8, sem ELO) |
 | 56 | 🧠 **Quiz de Cinema** | Média | Perguntas diárias sobre filmes. Acertar = XP. Ranking semanal |
 | 57 | 🧩 **Adivinhe o Filme** | Média | Mostra frame/cena borrada, usuário adivinha qual filme é |
 | 58 | 🔤 **Palavras Cruzadas Cinema** | Baixa | Crossword com nomes de filmes/atores/diretores |
@@ -844,7 +846,7 @@ Funcionalidades para fazer o usuário voltar todo dia.
 |---|----------------|------------|-----------|
 | 61 | 🧠 **AI Curator (Chatbot)** | Alta | Chat flutuante: "Quero terror psicológico no espaço tipo Alien". IA devolve JSON que preenche Grid |
 | 62 | 📱 **CineTok (Feed de Trailers)** | Alta | Aba vertical estilo TikTok com trailers em loop. Swipe up = próximo |
-| 63 | 📈 **Life Stats (Estatísticas)** | Média | "342 horas assistindo", "Ator mais visto: Adam Sandler", "Década favorita: 1980" |
+| 63 | 📈 **Life Stats (Estatísticas)** ✅ | Média | "342 horas assistindo", "Ator mais visto: Adam Sandler", "Década favorita: 1980" (feito em 2026-11-05, no DNA do perfil) |
 | 64 | 🎬 **Descobrir por Cena** | Baixa | Upload de screenshot, IA identifica qual filme é |
 
 ---

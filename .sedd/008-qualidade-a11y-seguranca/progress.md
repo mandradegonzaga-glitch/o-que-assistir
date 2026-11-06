@@ -1,7 +1,7 @@
 # Implementation Progress
 
 > Feature: 008-qualidade-a11y-seguranca
-> Last Updated: 2026-11-03 (conquistas com progresso, desafios, indicações do dia)
+> Last Updated: 2026-11-05 (DNA do usuário, partes 1 e 2)
 > Branch: `004-series-tracking` (D001-001). Todo push nesta branch publica o site na Vercel.
 
 ## Summary
@@ -19,6 +19,22 @@
 ---
 
 ## Para retomar
+
+**Ao reabrir (anotado em 2026-11-06):**
+1. ✅ Feito em 2026-11-06 pelo MCP (migração `friend_profile_history_genres`; conferido: a função traz `genres`, anon sem acesso, authenticated com acesso). Antes: **Rodar no Supabase o `get_friend_profile` novo** (`database/friends.sql`, agora com `genres` no histórico), pelo MCP do Supabase: o usuário pediu para eu rodar ("rode você o sql"). Nesta sessão as ferramentas do MCP não carregaram (conectado, mas aberto antes); depois de rodar, conferir que o perfil de um amigo traz `genres`.
+2. ✅ Feito em 2026-11-06 (T001-096, sem commit). Era: **Depois, T001-096 (indicações pelo DNA)**, já aprovado. Combinado com o usuário em 2026-11-06:
+  - Com pelo menos 5 títulos com gênero (o mesmo limite em que o DNA deixa de estar "se formando"), os 3 cartões (filme, série, dorama) puxam os gêneros que a pessoa mais assiste; continuam só títulos bem avaliados, mudam a cada dia e deixam de fora o que ela já viu
+  - Com menos de 5: as indicações de hoje, iguais para todo mundo
+  - O DNA não separa por tipo: quem só viu filmes também recebe série e dorama pelos gêneros dos filmes (o usuário perguntou e aprovou). Gêneros de filme viram os de série (Ação/Aventura → 10759, Ficção científica/Fantasia → 10765, Guerra → 10768); os que não existem em série (Terror, Romance, Suspense…) são pulados e vale o próximo gênero da pessoa; nenhum serve → aquele cartão volta para o padrão
+  - TMDB sem resultado para os gêneros naquele dia → aquele cartão volta para o padrão (nunca fica vazio)
+  - Vale para conta e convidado (o DNA usa o histórico salvo)
+2b. ✅ Reações rápidas (T001-093) feitas em 2026-11-06, SQL rodado no Supabase. Ordem combinada concluída: próximo é o usuário escolher as ideias extras.
+2c. ✅ Extras feitos em 2026-11-06 (T001-104 a 110): lançamentos, Surpreenda-me, Sessão às escuras, filtro por país, Cine-batalha, efeito 3D. Listas personalizadas ficaram para depois, a pedido do usuário.
+2d. ✅ Guia "Como usar" (T001-111) e avatar do topo no celular (T001-112), em 2026-11-06. Ao criar funcionalidade nova, incluir no guia (`#modal-help` em index.html).
+3. Publicado em 2026-11-06 (site `v23`): commits de código, docs e ferramentas enviados para `004-series-tracking` e `main`; produção na Vercel. O MCP do Supabase (`.mcp.json`) e as skills do Supabase entraram no repositório.
+4. Vídeo de lançamento: foi só uma prévia; o de verdade será feito quando tudo estiver implementado (roteiro em `E:TrabalhosO que assistirDivulgacaooteiro-do-video`).
+
+**Atualização 2026-11-05:** ordem confirmada pelo usuário. DNA do usuário partes 1 e 2 feitas (T001-098 e T001-099, site `v23`, sem commit). "Outros" sem barra e com os nomes (T001-101, aprovado). Comparar gostos feito em 2026-11-06 (T001-092, sem commit; falta o usuário rodar o `get_friend_profile` novo no Supabase). Próximo: indicações pelo DNA (T001-096). MCP do Supabase conectado (usar para consultar; alteração continua como SQL aprovado).
 
 **Próxima sessão (anotado no fim de 2026-11-03):**
 1. **Ordem combinada para as próximas funcionalidades** (recomendação aceita para conversar; confirmar com o usuário): DNA do usuário + estatísticas no perfil (FUNCIONALIDADES #27 e #63) → comparar gostos (T001-092, que compara o DNA de dois perfis) → indicações do dia pelo DNA de cada perfil (T001-096) → reações rápidas (T001-093, SQL). O usuário ainda vai escolher quais destas entram na fila: Surpreenda-me (#19), Sessão às escuras (#43), filtro por país (#21), Cine-batalha (#55), lançamentos e estreias (#20, #84), listas personalizadas (#25, SQL), efeito 3D nos pôsteres (#45). Em espera (servidor): T001-094 e T001-095. Descartado: compartilhar conquista.
@@ -145,6 +161,9 @@ Testes: Jest 268, banco 17, e2e 126. Service worker em `v20`.
 
 ### Progresso nas conquistas (2026-11-03, T001-089, publicado no site `v21`)
 Conquistas bloqueadas com meta maior que 1 mostram quanto falta ("4 de 10") e uma barrinha. Cada conquista agora tem `goal` e `count` em `src/domain/badges.js`; `check` sai disso, então o desbloqueio não mudou. Só no app, sem SQL. Fecha o último item aberto da spec 007. Testes: Jest 275, e2e 127. Service worker em `v21`.
+
+### DNA do usuário (2026-11-05, T001-098, site `v23`, ainda não publicado)
+Seção "Seu DNA" no perfil, logo abaixo de "Títulos assistidos": frase "Você é 60% Terror, 10% Drama…", barras dos 5 gêneros mais assistidos e Outros, quantos filmes, séries e doramas, década favorita e títulos por mês nos últimos 6 meses. Calculado só com o histórico salvo (D001-033), sem rede nem SQL. Lógica em `src/domain/tasteDna.js`, tela em `src/app/tasteDna.js`. O rótulo "Filmes Assistidos" virou "Títulos assistidos". Testes: Jest 324, e2e 143. Service worker em `v23`. Parte 2 (T001-099, D001-034): horas assistidas (aprox.) e ator mais visto, com detalhes do TMDB guardados no aparelho em `title_facts` e apagados ao sair da conta. Dois testes instáveis corrigidos (T001-100). Testes: Jest 340, e2e 147.
 
 ### Canto inferior direito sem sobreposição (2026-11-03, T001-097, site `v22`)
 O usuário viu o aviso e a faixa "Instalar App" por cima do botão ✨. Agora os avisos ficam à esquerda do botão; a faixa termina antes dele no computador; no celular a faixa fica embaixo e o canto inteiro sobe (o `pwa.js` publica a altura em `--install-banner-h`). "Voltar ao topo" e conquista ficam acima do botão. Regras no fim do `style.css` ("CANTO INFERIOR DIREITO"). Teste que mede cada par de elementos em `dailyPicks.spec.js`.

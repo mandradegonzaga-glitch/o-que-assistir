@@ -107,7 +107,24 @@
         "T001-094",
         "T001-095",
         "T001-096",
-        "T001-097"
+        "T001-097",
+        "T001-098",
+        "T001-099",
+        "T001-100",
+        "T001-101",
+        "T001-102",
+        "T001-103",
+        "T001-104",
+        "T001-105",
+        "T001-106",
+        "T001-107",
+        "T001-108",
+        "T001-109",
+        "T001-110",
+        "T001-111",
+        "T001-112",
+        "T001-113",
+        "T001-114"
       ],
       "tasksCompleted": [
         "T001-001",
@@ -200,7 +217,27 @@
         "T001-089",
         "T001-090",
         "T001-091",
-        "T001-097"
+        "T001-097",
+        "T001-098",
+        "T001-099",
+        "T001-100",
+        "T001-101",
+        "T001-092",
+        "T001-102",
+        "T001-096",
+        "T001-093",
+        "T001-103",
+        "T001-104",
+        "T001-105",
+        "T001-106",
+        "T001-107",
+        "T001-108",
+        "T001-109",
+        "T001-110",
+        "T001-111",
+        "T001-112",
+        "T001-113",
+        "T001-114"
       ],
       "files": {
         "tasks": "001_2026-10-28_melhorias/tasks.md",
@@ -268,17 +305,31 @@
   },
   "lastSession": {
     "completed": [
-      "T001-088",
-      "T001-089",
-      "T001-090",
-      "T001-091",
-      "T001-097"
+      "T001-098",
+      "T001-099",
+      "T001-100",
+      "T001-101",
+      "T001-092",
+      "T001-102",
+      "T001-096",
+      "T001-103",
+      "T001-093",
+      "T001-104",
+      "T001-105",
+      "T001-106",
+      "T001-107",
+      "T001-108",
+      "T001-109",
+      "T001-110",
+      "T001-111",
+      "T001-112",
+      "T001-113",
+      "T001-114"
     ],
     "inProgress": null,
     "nextSteps": [
-      "Confirmar com o usuário a ordem: DNA do usuário + estatísticas → comparar gostos (T001-092) → indicações pelo DNA (T001-096) → reações rápidas (T001-093); ele escolhe quais ideias extras do FUNCIONALIDADES.md entram",
-      "Teste real com dois celulares e duas contas: amizade, indicação com aviso, Match ao vivo (recarregando no meio), lista do Match, WhatsApp com ingresso",
-      "Com o usuário: confirmação de email, Site URL, links do rodapé, limpar dados de teste",
+      "Extras feitos (menos listas personalizadas, que ficaram para depois a pedido do usuário). Próximo: perguntar (listas personalizadas? commit e publicar? vídeo de lançamento final?)",
+      "Teste real com dois celulares e duas contas (amizade, indicação, Match ao vivo, WhatsApp com ingresso)",
       "Em espera (precisam de servidor): T001-094 ranking, T001-095 aviso de sequência"
     ],
     "filesModified": [
@@ -290,7 +341,7 @@
       ".sedd/",
       "docs/FUNCIONALIDADES.md"
     ],
-    "timestamp": "2026-11-03T18:30:00.000Z",
+    "timestamp": "2026-11-05T12:00:00.000Z",
     "status": "paused"
   }
 }

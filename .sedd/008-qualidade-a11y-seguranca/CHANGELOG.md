@@ -2,6 +2,33 @@
 
 All notable changes to this feature will be documented in this file.
 
+## [2026-11-05] — site `v23` (ainda não publicado)
+
+### Added
+
+- DNA do usuário no perfil: "Você é 40% Terror, 30% Comédia…", barras dos 5 gêneros que mais assiste (e Outros), quantos filmes, séries e doramas, década favorita e títulos por mês nos últimos 6 meses
+- Cine-batalha: trilha com as fases (Quartas, Semi, Final) no lugar da barra, "duelo 4 de 4" no texto e botão Voltar para desfazer o último voto
+- Cine-batalha mostra a sinopse: passando o mouse no pôster ou, no celular, no botão "Sinopse" (que não vota)
+- Guia "Como usar" com todas as funcionalidades: no ? do topo, no rodapé e nos "Como funciona?" das seções. Batalha e Sessão às escuras mostram quais filtros estão valendo
+- Lançamentos: botão ao lado do Top 10 com o que chegou ao streaming e ao aluguel (filmes, 45 dias) ou estreou (séries e doramas, 60 dias), com os seus filtros
+- "Outros jeitos de escolher": Surpreenda-me (um gênero que você quase nunca vê, só bem avaliados), Sessão às escuras (só sinopse e nota, sem título nem pôster) e Cine-batalha (8 títulos em mata-mata até sobrar um)
+- Filtro por país de origem (15 países), também no link
+- Pôsteres inclinam em 3D seguindo o mouse, com brilho (no computador; desligado com "reduzir movimento")
+- Reações rápidas: depois de "Já vi", "Como foi?" com 🔥 Amei, 😢 Chorei, 😂 Ri muito e 🤯 Explodiu minha cabeça; a reação aparece no pôster em "Já assistidos" e os amigos a veem no seu perfil
+- Indicações do dia pelo seu gosto: com 5 títulos assistidos ou mais, o filme, a série e o dorama do dia vêm dos gêneros que você mais assiste ("Porque você curte Terror"), sem o que você já viu; com menos, continuam as de todo mundo
+- Comparar gostos: no perfil de um amigo, a compatibilidade em % pelos gêneros que cada um assiste, o que os dois curtem, quem assiste mais o quê e os títulos que os dois já viram (precisa do SQL novo de `get_friend_profile`)
+- Horas assistidas (aproximadas) e ator mais visto no DNA, com os detalhes de cada título buscados no TMDB uma vez e guardados no aparelho (apagados ao sair da conta)
+
+### Fixed
+
+- No celular, o avatar do topo ficava espremido; agora é o logo que diminui
+- Uma ponta do aviso já escondido ficava aparecendo na borda direita da tela (celulares maiores e avisos compridos)
+
+### Changed
+
+- No DNA, "Outros" não tem barra: mostra a porcentagem e quais gêneros entraram nele
+- No perfil, "Filmes Assistidos" virou "Títulos assistidos" (o número sempre contou filmes, séries e doramas)
+
 ## [2026-11-03, correção] — site `v22`
 
 ### Fixed
