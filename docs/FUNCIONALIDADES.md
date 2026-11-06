@@ -687,7 +687,7 @@ Funcionalidades para fazer o usuário voltar todo dia.
 
 | # | Funcionalidade | Prioridade | Descrição |
 |---|----------------|------------|-----------|
-| 25 | 📂 **Listas Personalizadas** | Alta | Criar coleções: "Maratona Halloween", "Filmes com Namorada". Emoji personalizável |
+| 25 | 📂 **Listas Personalizadas** (parte 1 ✅) | Alta | Criar coleções: "Maratona Halloween", "Filmes com Namorada". Emoji personalizável (parte 1 feita em 2026-11-06; falta ordem arrastando e link público) |
 | 26 | 📅 **Agendar Filme** | Média | Cria evento no Google Calendar/celular: "Sexta 20h: Ver Matrix" |
 | 27 | 📊 **DNA do Usuário** ✅ | Média | Gráfico visual no perfil: "40% Terror, 30% Comédia, 30% Ação" |
 | 28 | 💬 **Notas Pessoais** | Baixa | Campo para anotar "Vi com a Ana", "Recomendação do João" |

@@ -424,3 +424,15 @@
 - Card inteiro como `<button>` → rejeitado: teria outro botão ("Episódios") dentro, o que é HTML inválido.
 
 **Impacto:** clique em qualquer parte do card continua abrindo os detalhes (verificado com mouse real).
+
+## D001-041 — Listas personalizadas em 2 partes, independentes das outras listas
+
+**Decisão:** pedido do usuário em 2026-11-06, escolhendo as recomendações. Parte 1: criar, renomear e apagar listas, emoji, "Salvar em uma lista" no título e a aba "Minhas Listas". Parte 2 (depois): ordem arrastando e link público. O convidado também tem listas, no aparelho, levadas para a conta na pergunta de importação. Um título pode estar em várias listas, e entrar numa lista não mexe em "Quero Assistir" nem em "Já assistidos". O emoji é escolhido entre 16 fixos (o app não aceita texto livre ali). Nome único por pessoa, sem diferenciar maiúsculas; na importação, a lista do convidado com o nome de uma que a conta já tem junta os títulos nela.
+
+**Alternativas consideradas:**
+- Tudo de uma vez → maior e mais demorado; dividido como o DNA.
+- Só com conta → o resto do app funciona para convidado.
+- Salvar numa lista também pôr em "Quero Assistir" → misturaria as duas coisas.
+
+**Complemento (T001-121):** o usuário pediu pré-listas e escolheu os dois tipos: modelos vazios com um toque e coleções prontas com títulos. As coleções não ficam guardadas no banco: são buscas fixas no TMDB (mais bem avaliados do tema), e só a cópia vira lista da pessoa. Criar listas sozinhas em toda conta nova foi descartado (encheria a aba de quem não quer).
+
