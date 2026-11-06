@@ -1,6 +1,6 @@
 // Service Worker - O Que Assistir? PWA
 // Trocar CACHE_VERSION a cada deploy: o activate apaga os caches de versões anteriores.
-const CACHE_VERSION = 'v22';
+const CACHE_VERSION = 'v23';
 const STATIC_CACHE = `oqueassistir-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `oqueassistir-dynamic-${CACHE_VERSION}`;
 
@@ -21,6 +21,7 @@ const STATIC_ASSETS = [
     '/src/app/friends.js',
     '/src/app/guestLibrary.js',
     '/src/app/library.js',
+    '/src/app/lifeStats.js',
     '/src/app/match.js',
     '/src/app/matchHistory.js',
     '/src/app/myProviders.js',
@@ -31,6 +32,7 @@ const STATIC_ASSETS = [
     '/src/app/pwa.js',
     '/src/app/roulette.js',
     '/src/app/sorteioHistory.js',
+    '/src/app/tasteDna.js',
     '/src/app/titleModal.js',
     '/src/app/ticket.js',
     '/src/app/urlSync.js',
@@ -44,6 +46,7 @@ const STATIC_ASSETS = [
     '/src/domain/history.js',
     '/src/domain/inbox.js',
     '/src/domain/legacyData.js',
+    '/src/domain/lifeStats.js',
     '/src/domain/matchHistory.js',
     '/src/domain/liveMatch.js',
     '/src/domain/match.js',
@@ -55,6 +58,18 @@ const STATIC_ASSETS = [
     '/src/domain/roulette.js',
     '/src/domain/qr.js',
     '/src/domain/seriesProgress.js',
+    '/src/domain/tasteDna.js',
+    '/src/domain/tasteMatch.js',
+    '/src/domain/reactions.js',
+    '/src/app/reactions.js',
+    '/src/domain/surprise.js',
+    '/src/domain/blind.js',
+    '/src/app/blindSession.js',
+    '/src/domain/countries.js',
+    '/src/domain/battle.js',
+    '/src/app/battle.js',
+    '/src/ui/tilt.js',
+    '/src/app/help.js',
     '/src/domain/titleShare.js',
     '/src/domain/urlState.js',
     '/src/main.js',

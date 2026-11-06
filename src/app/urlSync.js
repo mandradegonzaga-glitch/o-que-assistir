@@ -14,6 +14,7 @@ const FIELD_IDS = {
   similar: 'input-similar',
   yearFrom: 'year-from',
   yearTo: 'year-to',
+  country: 'input-country',
 };
 
 let ready = false; // nada grava antes de a URL inicial ser lida

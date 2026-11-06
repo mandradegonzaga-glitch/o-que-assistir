@@ -20,6 +20,11 @@ export const onboardingSteps = [
         icon: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle fill="currentColor" fill-opacity="0.2" cx="12" cy="13.5" r="8.5"/><path d="M12 13.5V5M12 13.5l7.4 4.2M12 13.5l-7.4 4.2"/><circle fill="currentColor" stroke="none" cx="12" cy="13.5" r="1.7"/><path fill="currentColor" stroke="none" d="M12 6 9.6 1.5h4.8z"/></svg>',
         title: 'Roleta Personalizada',
         desc: 'Crie sua própria roleta com filmes e deixe a sorte decidir!'
+    },
+    {
+        icon: '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle fill="currentColor" fill-opacity="0.2" cx="12" cy="12" r="9.5"/><path d="M9.3 9.2a2.8 2.8 0 0 1 5.4 1c0 1.9-2.7 2.4-2.7 4"/><circle fill="currentColor" stroke="none" cx="12" cy="17.3" r="1.1"/></svg>',
+        title: 'Tem muito mais',
+        desc: 'Match em dupla, Cine-batalha, Sessão às escuras, seu DNA… Em "Como usar", no fim da página, tem o guia de tudo.'
     }
 ];
 

@@ -265,11 +265,11 @@ test.describe('boas-vindas', () => {
     await expect(icon.locator('svg')).toBeVisible();
 
     const seen = new Set();
-    for (let step = 0; step < 3; step++) {
+    for (let step = 0; step < 4; step++) {
       seen.add(await icon.innerHTML());
       await page.locator('#onboarding-btn').click();
     }
-    expect(seen.size).toBe(3);
+    expect(seen.size).toBe(4);
     await expect(page.locator('#onboarding-overlay')).toBeHidden();
   });
 });

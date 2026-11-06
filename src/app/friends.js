@@ -9,6 +9,8 @@ import { IMG_URL } from '../config/constants.js';
 import { BADGE_DEFINITIONS } from '../domain/badges.js';
 import { diffInbox, inboxSnapshot, summarizeNews } from '../domain/inbox.js';
 import { shareRow, titleKind } from '../domain/titleShare.js';
+import { MATCH_MIN_TITLES, compareTastes, joinNames } from '../domain/tasteMatch.js';
+import { reactionOf } from '../domain/reactions.js';
 import { session, state } from '../state/appState.js';
 import { BADGE_ICONS } from '../ui/badgeIcons.js';
 import { switchMode } from '../ui/navigation.js';
@@ -438,7 +440,9 @@ function titleCard(item) {
   card.dataset.action = 'carregarDetalhes';
   card.dataset.id = item.tmdb_id;
   card.dataset.media = item.media_type;
-  card.setAttribute('aria-label', item.title);
+  // Reação do amigo (database/reactions.sql): selo no pôster e no nome lido
+  const reaction = reactionOf(item.reaction);
+  card.setAttribute('aria-label', reaction ? `${item.title} · ${reaction.label}` : item.title);
   const image = document.createElement('img');
   image.alt = '';
   image.width = 500;
@@ -447,7 +451,18 @@ function titleCard(item) {
   if (item.poster_path) image.src = IMG_URL + item.poster_path;
   const name = document.createElement('span');
   name.textContent = item.title;
-  card.append(image, name);
+  if (reaction) {
+    const poster = document.createElement('span');
+    poster.className = 'friend-title__poster';
+    const badge = document.createElement('span');
+    badge.className = 'title-reaction';
+    badge.setAttribute('aria-hidden', 'true');
+    badge.textContent = reaction.emoji;
+    poster.append(image, badge);
+    card.append(poster, name);
+  } else {
+    card.append(image, name);
+  }
   return card;
 }
 
@@ -461,6 +476,40 @@ function fillGrid(id, items, emptyText) {
     return;
   }
   grid.replaceChildren(...items.map(titleCard));
+}
+
+// Comparar gostos: porcentagem pelos gêneros que cada um assiste e os títulos que os dois já viram
+function renderCompatibility(name, history) {
+  const box = document.getElementById('friend-compat');
+  const result = compareTastes(session.user.history || [], history);
+  document.getElementById('friend-watched-box').hidden = result.common.length === 0;
+  fillGrid('friend-watched', result.common, '');
+
+  // Servidor sem o SQL novo: o histórico do amigo chega sem gêneros, e a porcentagem sairia errada
+  if (history.length > 0 && !history.some(item => 'genres' in item)) {
+    box.hidden = true;
+    return;
+  }
+  box.hidden = false;
+  const note = document.getElementById('friend-compat-note');
+  document.getElementById('friend-compat-result').hidden = !result.ready;
+  note.hidden = result.ready;
+  if (!result.ready) {
+    if (result.needMine && result.needTheirs) note.textContent = `Vocês dois ainda assistiram poucos títulos. Com pelo menos ${MATCH_MIN_TITLES} cada um, aparece a compatibilidade.`;
+    else if (result.needMine) note.textContent = `Marque pelo menos ${MATCH_MIN_TITLES} títulos como assistidos para ver a compatibilidade com ${name}.`;
+    else note.textContent = `${name} ainda assistiu poucos títulos para comparar.`;
+    return;
+  }
+
+  document.getElementById('friend-compat-score').textContent = `${result.score}%`;
+  document.getElementById('friend-compat-label').textContent = result.label;
+  document.getElementById('friend-compat-bar').style.width = `${result.score}%`;
+  const parts = [];
+  if (result.shared.length) parts.push(`Os dois curtem ${joinNames(result.shared)}.`);
+  if (result.theirsMore && result.mineMore) parts.push(`${name} assiste mais ${result.theirsMore}; você, mais ${result.mineMore}.`);
+  else if (result.theirsMore) parts.push(`${name} assiste mais ${result.theirsMore} que você.`);
+  else if (result.mineMore) parts.push(`Você assiste mais ${result.mineMore} que ${name}.`);
+  document.getElementById('friend-compat-text').textContent = parts.join(' ');
 }
 
 export async function friendOpen(friendId) {
@@ -486,6 +535,8 @@ export async function friendOpen(friendId) {
   document.getElementById('friend-stat-watched').textContent = formatCount(profile.history.length);
   document.getElementById('friend-stat-wants').textContent = formatCount(profile.watchlist.length);
   document.getElementById('friend-stat-badges').textContent = formatCount(profile.badges.length);
+
+  renderCompatibility(name, profile.history);
 
   // O que vale conversar: os dois querem ver o mesmo título
   const mine = new Set((session.user.watchlist || []).map(i => i.id));

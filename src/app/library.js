@@ -5,6 +5,8 @@ import { fetchAllSeasonsLocal } from './episodes.js';
 import { saveGuestHistory, saveGuestWatchlist } from './guestLibrary.js';
 import { checkAllBadges } from './profile.js';
 import { grantXp, trackChallenge } from './progress.js';
+import { renderReactions } from './reactions.js';
+import { reactionOf } from '../domain/reactions.js';
 import { calcProgressPercent, getNextEpisode } from '../domain/seriesProgress.js';
 import { session, state } from '../state/appState.js';
 import { pendingRemovals, scheduleUndoable, showToast } from '../ui/feedback.js';
@@ -124,6 +126,8 @@ export async function toggleWatchlist(f) {
 
 export async function renderLibrary() {
     if (!session.currentUser) return;
+    // O histórico mudou (marcou, desmarcou, terminou a série): o "Como foi?" do título aberto acompanha
+    renderReactions();
 
     const div = document.getElementById('library-content');
 
@@ -175,7 +179,12 @@ export async function renderLibrary() {
 
 function libraryGroup(title, items, media, key) {
     if (items.length === 0) return '';
-    const cards = items.map(f => `<div class="library-item"><button type="button" class="library-item__open" data-action="carregarDetalhes" data-id="${f.id}" data-media="${media}" aria-label="${escapeHtml(f.title || 'Abrir título')}"><img src="${IMG_URL + f.poster}" alt="" width="500" height="750" loading="lazy"></button><button type="button" class="remove-btn" data-action="removeLibItem" data-key="${key}" data-id="${f.id}" aria-label="Remover ${escapeHtml(f.title || 'título')}">${CLOSE_ICON}</button></div>`);
+    const cards = items.map(f => {
+        const reaction = key === 'vistos_obj' ? reactionOf(f.reaction) : null;
+        const name = escapeHtml(f.title || 'Abrir título') + (reaction ? ` · ${reaction.label}` : '');
+        const badge = reaction ? `<span class="title-reaction" aria-hidden="true">${reaction.emoji}</span>` : '';
+        return `<div class="library-item"><button type="button" class="library-item__open" data-action="carregarDetalhes" data-id="${f.id}" data-media="${media}" aria-label="${name}"><img src="${IMG_URL + f.poster}" alt="" width="500" height="750" loading="lazy">${badge}</button><button type="button" class="remove-btn" data-action="removeLibItem" data-key="${key}" data-id="${f.id}" aria-label="Remover ${escapeHtml(f.title || 'título')}">${CLOSE_ICON}</button></div>`;
+    });
     return `<div class="library-group-title">${title} (${items.length})</div>${cards.join('')}`;
 }
 

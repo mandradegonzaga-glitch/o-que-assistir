@@ -12,6 +12,8 @@ import { BADGE_DEFINITIONS } from '../domain/badges.js';
 import { addGuestBadge, getGuestBadges } from './guestLibrary.js';
 import { renderProgress } from './progress.js';
 import { loadAllProviders } from './myProviders.js';
+import { renderTasteDna } from './tasteDna.js';
+import { clearLifeStatsCache } from './lifeStats.js';
 
 // PERFIL
 
@@ -23,6 +25,7 @@ export function abrirPerfil() {
     document.getElementById('profile-avatar-large').innerText = session.user.name.charAt(0).toUpperCase();
     document.getElementById('stats-count').innerText = formatCount(session.user.history.length);
     document.getElementById('stats-wins').innerText = formatCount(session.user.rouletteWins);
+    renderTasteDna();
     renderBadges();
     renderBlacklist();
 
@@ -147,6 +150,7 @@ export async function deletarConta() {
         session.currentUserId = null;
         session.userProfile = null;
         session.user.history = [];
+        clearLifeStatsCache();
 
         document.getElementById('modal-profile').style.display = 'none';
         document.getElementById('login-overlay').style.display = 'flex';

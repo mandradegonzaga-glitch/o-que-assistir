@@ -180,6 +180,7 @@ export async function supabaseGetWatchHistory(userId) {
             type: item.media_type,
             year: item.release_year,
             genres: item.genres,
+            reaction: item.reaction || null,
             watchedAt: item.watched_at
         }));
 
@@ -224,6 +225,12 @@ export async function supabaseAddToHistory(userId, item) {
         console.error('Erro ao adicionar ao histórico:', error);
         return { success: false, error: error.message };
     }
+}
+
+// Reação rápida (database/reactions.sql). null tira. Sem o SQL, ou título fora do histórico: success false.
+export async function supabaseSetReaction(tmdbId, reaction) {
+    const { data, error } = await supabase.rpc('set_title_reaction', { p_tmdb_id: tmdbId, p_reaction: reaction });
+    return { success: !error && data === true };
 }
 
 /**

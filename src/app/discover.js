@@ -4,7 +4,9 @@ import { addToSorteioHistory } from './sorteioHistory.js';
 import { abrirModal } from './titleModal.js';
 import { syncUrl } from './urlSync.js';
 import { resolveProviderFilter } from './myProviders.js';
-import { buildDiscoverUrl, getRandomPage } from '../domain/filters.js';
+import { RELEASE_DAYS, buildDiscoverUrl, getRandomPage, hasLatinTitle } from '../domain/filters.js';
+import { GENRE_NAMES } from '../domain/genres.js';
+import { SURPRISE_QUALITY, surpriseGenres } from '../domain/surprise.js';
 import { session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
@@ -77,7 +79,23 @@ export function getFilterOptions() {
         yearFrom: document.getElementById('year-from').value,
         yearTo: document.getElementById('year-to').value,
         personId: state.personId,
+        country: document.getElementById('input-country').value,
     };
+}
+
+// "Filmes · Terror · Netflix": os filtros que estão valendo, para mostrar dentro dos modos que os usam
+const TYPE_NAMES = { movie: 'Filmes', tv: 'Séries', dorama: 'Doramas' };
+export function filtersSummary() {
+    const chosen = id => {
+        const el = document.getElementById(id);
+        return el && el.value && !el.disabled ? el.selectedOptions[0].textContent.trim() : '';
+    };
+    const from = document.getElementById('year-from').value.trim();
+    const to = document.getElementById('year-to').value.trim();
+    const years = from && to ? `${from} a ${to}` : from ? `desde ${from}` : to ? `até ${to}` : '';
+    const person = state.personId ? document.getElementById('person-name').textContent : '';
+    const parts = [person, chosen('input-mood'), chosen('input-genero'), chosen('input-provider'), chosen('duration-select'), chosen('input-country'), years].filter(Boolean);
+    return [TYPE_NAMES[state.type], ...(parts.length ? parts : ['todos os gêneros'])].join(' · ');
 }
 
 export async function sortearOutro() {
@@ -89,6 +107,73 @@ export async function sortearOutro() {
     btn.disabled = false;
     btn.classList.remove('loading');
     document.getElementById('modal-resultado').scrollTop = 0;
+}
+
+// Um da lista: com pôster, fora da blacklist e (se der) fora do que já foi visto e do que acabou de sair.
+// `extra` filtra mais (ex.: só com sinopse, para a Sessão às escuras). null se não sobrar nenhum.
+export function pickDraw(lista, extra = () => true) {
+    const valid = (lista || []).filter(m => m.poster_path && !session.blacklist.includes(m.id) && extra(m));
+    if (valid.length === 0) return null;
+    const vistos = new Set((session.user?.history || []).map(h => h.id));
+    const recentes = new Set(session.sorteioHistory.slice(0, RECENT_DRAWS).map(h => h.id));
+    const novos = valid.filter(m => !recentes.has(m.id) && !vistos.has(m.id));
+    const opcoes = novos.length > 0 ? novos : valid; // se só restar isso, repete em vez de falhar
+    const escolhido = opcoes[Math.floor(Math.random() * opcoes.length)];
+    return { ...escolhido, media_type: escolhido.media_type || state.type }; // cópia: a resposta fica no cache
+}
+
+// Detalhes completos (duração, temporadas, gêneros com nome); sem eles abre com o resumo
+export async function withDetails(item, endpoint) {
+    try {
+        return { ...item, ...await tmdbGet(`/${endpoint}/${item.id}`), media_type: item.media_type };
+    } catch (e) {
+        console.error('Erro ao carregar detalhes do sorteado:', e);
+        return item;
+    }
+}
+
+const busy = async (id, task) => {
+    const btn = document.getElementById(id);
+    if (btn.disabled) return;
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
+    try {
+        await task();
+    } finally {
+        btn.disabled = false;
+        btn.removeAttribute('aria-busy');
+    }
+};
+
+// Surpreenda-me: gênero que a pessoa quase nunca vê, só títulos bem avaliados
+export function surpreendaMe() {
+    return busy('btn-surpresa', async () => {
+        const endpoint = state.type === 'dorama' ? 'tv' : state.type;
+        const quality = SURPRISE_QUALITY[state.type];
+        try {
+            for (const genre of surpriseGenres(session.user?.history, state.type).slice(0, 4)) {
+                const url = buildDiscoverUrl(endpoint, {
+                    genre: String(genre),
+                    provider: resolveProviderFilter(),
+                    country: document.getElementById('input-country').value,
+                    isDorama: state.type === 'dorama',
+                    minVotes: quality['vote_count.gte'],
+                }) + `&vote_average.gte=${quality['vote_average.gte']}`;
+                let data = await tmdbFetch(url + `&page=${getRandomPage(3)}`);
+                if (!data.results?.length) data = await tmdbFetch(url + '&page=1');
+                const sorteado = pickDraw(data.results);
+                if (!sorteado) continue;
+                abrirModal(await withDetails(sorteado, endpoint), { fromDraw: true });
+                addToSorteioHistory(sorteado);
+                showToast(`Fora da sua zona de conforto: ${GENRE_NAMES[genre]}`);
+                return;
+            }
+            showToast('Não achei uma surpresa com esses filtros. Tente outra plataforma.', 'error');
+        } catch (e) {
+            console.error(e);
+            showToast('Erro na API.', 'error');
+        }
+    });
 }
 
 export async function sortearFilme() {
@@ -139,6 +224,7 @@ export async function sortearFilme() {
                 yearFrom: document.getElementById('year-from').value,
                 yearTo: document.getElementById('year-to').value,
                 personId: state.personId,
+                country: document.getElementById('input-country').value,
                 isDorama: state.type === 'dorama',
             });
 
@@ -151,23 +237,9 @@ export async function sortearFilme() {
             lista = data.results || [];
         }
 
-        // Filtrar resultados válidos (com poster) e excluir blacklist
-        const valid = lista.filter(m => m.poster_path && !session.blacklist.includes(m.id));
-
-        if(valid.length > 0) {
-            // Evita repetir o que acabou de sair; se só restar isso, repete em vez de falhar
-            const recentes = new Set(session.sorteioHistory.slice(0, RECENT_DRAWS).map(h => h.id));
-            const novos = valid.filter(m => !recentes.has(m.id));
-            const opcoes = novos.length > 0 ? novos : valid;
-            const escolhido = opcoes[Math.floor(Math.random() * opcoes.length)];
-            const sorteado = { ...escolhido, media_type: escolhido.media_type || state.type }; // cópia: a resposta fica no cache
-            let completo = sorteado;
-            try {
-                completo = { ...sorteado, ...await tmdbGet(`/${endpoint}/${sorteado.id}`), media_type: sorteado.media_type };
-            } catch (e) {
-                console.error('Erro ao carregar detalhes do sorteado:', e); // abre com o resumo, sem episódios
-            }
-            abrirModal(completo, { fromDraw: true });
+        const sorteado = pickDraw(lista);
+        if (sorteado) {
+            abrirModal(await withDetails(sorteado, endpoint), { fromDraw: true });
             addToSorteioHistory(sorteado);
         } else {
             showToast("Nada encontrado (ou tudo na sua blacklist)!", "error");
@@ -209,6 +281,7 @@ export async function mostrarTop10() {
             provider: resolveProviderFilter(),
             yearFrom: document.getElementById('year-from').value,
             yearTo: document.getElementById('year-to').value,
+            country: document.getElementById('input-country').value,
             isDorama: state.type === 'dorama',
             minVotes: 100,
         }));
@@ -223,16 +296,59 @@ export async function mostrarTop10() {
     }
 }
 
-export function renderResults(list, rank=false) {
+// Lançamentos: o que chegou nas últimas semanas, com os mesmos filtros de gênero, clima e plataforma
+export async function mostrarLancamentos() {
+    const btn = document.getElementById('btn-lancamentos');
+    if (btn.disabled) return;
+    btn.disabled = true;
+    btn.classList.add('loading');
+    btn.setAttribute('aria-busy', 'true');
+    showSkeletonLoader();
+
+    const endpoint = state.type === 'dorama' ? 'tv' : state.type;
+    try {
+        const data = await tmdbFetch(buildDiscoverUrl(endpoint, {
+            genre: document.getElementById('input-genero').value,
+            mood: document.getElementById('input-mood').value,
+            provider: resolveProviderFilter(),
+            personId: state.personId,
+            country: document.getElementById('input-country').value,
+            isDorama: state.type === 'dorama',
+            minVotes: 0,
+            releases: { today: new Date() },
+        }));
+        const days = RELEASE_DAYS[endpoint];
+        const caption = endpoint === 'movie'
+            ? `Chegaram ao streaming e ao aluguel nos últimos ${days} dias`
+            : `${state.type === 'dorama' ? 'Doramas' : 'Séries'} que estrearam nos últimos ${days} dias`;
+        renderResults((data.results || []).filter(hasLatinTitle).slice(0, 20), false, { caption, empty: 'Nenhum lançamento com esses filtros nas últimas semanas' });
+    } catch (e) {
+        console.error(e);
+        document.getElementById('results-area').innerHTML = '';
+        showToast('Erro ao carregar os lançamentos', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.classList.remove('loading');
+        btn.removeAttribute('aria-busy');
+    }
+}
+
+export function renderResults(list, rank=false, { caption = '', empty = '' } = {}) {
     const area = document.getElementById('results-area');
     area.innerHTML = '';
     area.style.display = 'grid';
+    if (caption && list.length > 0) {
+        const note = document.createElement('p');
+        note.className = 'results-caption grid-full';
+        note.textContent = caption;
+        area.appendChild(note);
+    }
 
     if(list.length === 0) {
         area.innerHTML = `
             <div class="empty-state grid-full">
                 <div class="empty-state-icon"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></div>
-                <h3 class="empty-state-title">Nenhum resultado encontrado</h3>
+                <h3 class="empty-state-title">${escapeHtml(empty || 'Nenhum resultado encontrado')}</h3>
                 <p class="empty-state-desc">Tente ajustar seus filtros ou fazer uma nova busca</p>
                 <button class="empty-state-cta ripple" data-action="focusSearch">
                     <svg class="icon-16 icon-lead-6" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="2"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>Nova Busca

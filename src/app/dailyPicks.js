@@ -2,8 +2,8 @@
 // Abre sozinho só na primeira entrada do dia; depois, pelo botão. A escolha é de src/domain/dailyPicks.js.
 import { tmdbGet } from '../api/tmdb.js';
 import { IMG_URL } from '../config/constants.js';
-import { PICK_KINDS, choosePick, msUntilMidnight, pickRequest } from '../domain/dailyPicks.js';
-import { genreNames } from '../domain/genres.js';
+import { PICK_KINDS, choosePick, msUntilMidnight, personalRequest, pickProfile, pickRequest, profileKey } from '../domain/dailyPicks.js';
+import { GENRE_NAMES, genreNames } from '../domain/genres.js';
 import { localDay } from '../domain/progress.js';
 import { session } from '../state/appState.js';
 import { getActiveModal } from '../ui/modals.js';
@@ -18,7 +18,8 @@ const AUTO_OPEN_DELAY_MS = 1200;
 const LINK_PARAMS = ['titulo', 'ao-vivo', 'match', 'amigo'];
 
 let shownDay = null;
-let loadingDay = null;
+let shownKey = null; // dia + gêneros que contam: outra pessoa (ou o gosto mudou) refaz o painel
+let loadingKey = null;
 let midnightTimer = null;
 let autoTimer = null;
 
@@ -31,7 +32,26 @@ const els = () => ({
 
 const seenToday = () => storage.get(SEEN_KEY, null) === localDay();
 
-async function loadPick(kind, index, day) {
+// Sob medida: tenta a página do dia e, se o gênero tiver poucos títulos, a primeira.
+// Sem nada que sirva (ou sem conexão para esse pedido), o cartão fica com a indicação de todo mundo.
+async function loadPersonalPick(kind, index, day, profile) {
+  const request = personalRequest(index, day, profile);
+  if (!request) return null;
+  for (const page of [...new Set([request.params.page, 1])]) {
+    try {
+      const data = await tmdbGet(request.path, { ...request.params, page }, { ttl: DAY_MS });
+      const item = choosePick(data?.results, request.index, kind.kind, request.exclude);
+      if (item) return { kind, item, genre: request.genre };
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+async function loadPick(kind, index, day, profile) {
+  const personal = profile ? await loadPersonalPick(kind, index, day, profile) : null;
+  if (personal) return personal;
   const request = pickRequest(index, day);
   // As indicações valem o dia todo: o cache pode durar mais que o dos outros pedidos
   const data = await tmdbGet(request.path, request.params, { ttl: DAY_MS });
@@ -47,11 +67,14 @@ function shortOverview(text, max = 220) {
   return `${clean.slice(0, max).replace(/\s+\S*$/, '')}…`;
 }
 
-function rowHtml({ kind, item }) {
+function rowHtml({ kind, item, genre }) {
+  const why = genre ? `<span class="daily-pick__why">Porque você curte ${escapeHtml(GENRE_NAMES[genre])}</span>` : '';
   const title = escapeHtml(item.title || item.name);
   const year = (item.release_date || item.first_air_date || '').slice(0, 4);
   const meta = [year, `★ ${formatRating(item.vote_average)}`].filter(Boolean).join(' · ');
-  const genres = genreNames(item.genre_ids, 2).join(' · ');
+  // O gênero que trouxe a indicação aparece primeiro, para combinar com o "Porque você curte"
+  const ids = genre ? [genre, ...(item.genre_ids || []).filter(id => id !== genre)] : item.genre_ids;
+  const genres = genreNames(ids, 2).join(' · ');
   return `<li>
       <button type="button" class="daily-pick" data-kind="${kind.kind}" data-action="carregarDetalhes" data-id="${item.id}" data-media="${kind.kind}" aria-label="${kind.label} do dia: ${title}" aria-describedby="daily-peek-${kind.kind}">
         <img src="${IMG_URL + item.poster_path}" alt="" width="500" height="750" loading="lazy">
@@ -59,6 +82,7 @@ function rowHtml({ kind, item }) {
           <span class="daily-pick__kind">${kind.label}</span>
           <span class="daily-pick__title">${title}</span>
           <span class="daily-pick__meta">${escapeHtml([meta, genres].filter(Boolean).join(' · '))}</span>
+          ${why}
           <span class="daily-pick__overview" id="daily-peek-${kind.kind}">${escapeHtml(shortOverview(item.overview))}</span>
         </span>
       </button>
@@ -75,14 +99,19 @@ function updateLauncher() {
 
 export async function renderDailyPicks() {
   const day = localDay();
-  if (day === shownDay || day === loadingDay) return;
+  // Antes de entrar não há histórico: as de todo mundo
+  const profile = session.currentUser ? pickProfile(session.user?.history) : null;
+  const key = `${day}#${profileKey(profile)}`;
+  if (key === shownKey || key === loadingKey) return;
   const { launcher, list } = els();
   if (!launcher || !list) return;
-  loadingDay = day;
+  loadingKey = key;
 
-  const settled = await Promise.allSettled(PICK_KINDS.map((kind, index) => loadPick(kind, index, day)));
+  const settled = await Promise.allSettled(PICK_KINDS.map((kind, index) => loadPick(kind, index, day, profile)));
   const picks = settled.filter(r => r.status === 'fulfilled' && r.value).map(r => r.value);
-  loadingDay = null;
+  // Outra pessoa entrou enquanto carregava: o pedido dela já está a caminho
+  if (loadingKey !== key) return;
+  loadingKey = null;
 
   // Sem conexão com o TMDB: nem botão nem painel; o resto da tela continua
   if (picks.length === 0) {
@@ -91,7 +120,11 @@ export async function renderDailyPicks() {
     return;
   }
   list.innerHTML = picks.map(rowHtml).join('');
+  document.getElementById('daily-picks-note').textContent = picks.some(p => p.genre)
+    ? 'Escolhidos pelo seu gosto, novos à meia-noite'
+    : 'Um de cada, novos à meia-noite';
   shownDay = day;
+  shownKey = key;
   launcher.hidden = !session.currentUser;
   updateLauncher();
 

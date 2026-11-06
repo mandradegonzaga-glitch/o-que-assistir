@@ -170,6 +170,8 @@ test.describe('Match ao vivo com amigos', () => {
     await page.goto('/');
     await page.locator('#tab-mode-match').click();
     await page.locator('#btn-match-live').click();
+    // O código aparece depois que a sala abre; ler antes dava "ao-vivo:" vazio
+    await expect(page.locator('#match-live-code')).toHaveText(/^[A-Z0-9]{6}$/);
     const code = await page.locator('#match-live-code').textContent();
     await page.locator('#match-live-lobby .friend-target', { hasText: 'Bia' }).click();
     await expect(page.locator('#toast')).toHaveText('Enviado para Bia!');

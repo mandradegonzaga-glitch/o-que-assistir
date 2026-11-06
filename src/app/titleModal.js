@@ -3,6 +3,7 @@ import { isAbortError, latestSignal, tmdbGet } from '../api/tmdb.js';
 import { PERSON_PLACEHOLDER } from './discover.js';
 import { loadEpisodesSection } from './episodes.js';
 import { salvarHistorico, toggleWatchlist } from './library.js';
+import { renderReactions } from './reactions.js';
 import { updateHistoryNav } from './sorteioHistory.js';
 import { setUrlTitle } from './urlSync.js';
 import { trackChallenge } from './progress.js';
@@ -194,6 +195,8 @@ export async function abrirModal(f, { fromDraw = false } = {}) {
     const watchlistLabel = isSeries ? 'Quero Assistir' : 'Salvar';
     btnS.innerHTML = inWatchlist ? `${removeIcon}Remover da Lista` : `${starIcon}${watchlistLabel}`;
 
+    renderReactions();
+
     // Atualizar navegação do histórico de sorteios
     updateHistoryNav();
 
@@ -210,9 +213,19 @@ export async function abrirModal(f, { fromDraw = false } = {}) {
     ]);
 }
 
-export function marcarVistoAtual() {
-    salvarHistorico(state.currentMovie);
-    fecharModal();
+// Fica aberto: o botão vira "JÁ VISTO" e aparece o "Como foi?", com o foco na primeira reação
+export async function marcarVistoAtual() {
+    const movie = state.currentMovie;
+    if (!movie) return;
+    await salvarHistorico(movie);
+    if (state.currentMovie !== movie || !(session.user.history || []).some(h => h.id === movie.id)) return;
+    const btnV = document.getElementById('btn-visto');
+    btnV.innerHTML = '<svg aria-hidden="true" class="icon icon-16 icon-lead-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>JÁ VISTO';
+    btnV.disabled = true;
+    renderReactions();
+    if (document.getElementById('modal-resultado').style.display !== 'none') {
+        document.querySelector('#m-reactions [data-action="reactTitle"]')?.focus();
+    }
 }
 
 export async function toggleSalvarAtual() {

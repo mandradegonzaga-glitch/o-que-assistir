@@ -27,7 +27,9 @@ function tmdbResponse(pathname) {
   if (/\/season\/\d+$/.test(path)) return { season_number: 1, episodes: [1, 2, 3].map(n => ({ season_number: 1, episode_number: n, name: `Episódio ${n}` })) };
   const id = Number(path.split('/').pop());
   const found = LIST.find(i => i.id === id) || title(id, `Título ${id}`);
-  return { ...found, number_of_seasons: 1, number_of_episodes: 3 };
+  // Duração e elenco (append_to_response=credits) para as horas e o ator mais visto do perfil
+  const credits = { cast: [{ id: 900, name: 'Atriz Teste' }, { id: 1000 + id, name: `Ator ${id}` }] };
+  return { ...found, number_of_seasons: 1, number_of_episodes: 3, runtime: 120, episode_run_time: [45], credits };
 }
 
 export const test = base.extend({

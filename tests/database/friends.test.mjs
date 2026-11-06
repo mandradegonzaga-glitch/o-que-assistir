@@ -41,7 +41,7 @@ before(async () => {
     ALTER TABLE user_badges ENABLE ROW LEVEL SECURITY;
     INSERT INTO profiles VALUES
       ('${ANA}', 'ana', 'Ana', 'ana@x.dev'), ('${BIA}', 'bia', 'Bia', 'bia@x.dev'), ('${CAU}', 'cau', NULL, 'cau@x.dev');
-    INSERT INTO watch_history (user_id, tmdb_id, title, media_type) VALUES ('${BIA}', 603, 'Matrix', 'movie');
+    INSERT INTO watch_history (user_id, tmdb_id, title, media_type, genres) VALUES ('${BIA}', 603, 'Matrix', 'movie', '{28,878}');
     INSERT INTO watchlist (user_id, tmdb_id, title, media_type) VALUES ('${BIA}', 550, 'Clube da Luta', 'movie');
     INSERT INTO user_badges VALUES ('${BIA}', 'Iniciante');
   `);
@@ -53,6 +53,10 @@ before(async () => {
   await db.exec(shares);
   // O Supabase já cria a publicação; aqui ela começa vazia
   await db.exec('CREATE PUBLICATION supabase_realtime;');
+  const reactions = readFileSync(new URL('../../database/reactions.sql', import.meta.url), 'utf8');
+  await db.exec(reactions);
+  await db.exec(reactions); // pode rodar de novo sem erro
+  await db.exec(sql); // e friends.sql depois dele também
   const realtime = readFileSync(new URL('../../database/realtime_inbox.sql', import.meta.url), 'utf8');
   await db.exec(realtime);
   await db.exec(realtime); // pode rodar de novo sem erro
@@ -134,10 +138,32 @@ test('cada pessoa vê só as próprias amizades, com o mínimo do outro', async 
 test('perfil: amigo vê o que a pessoa assistiu, a lista e as conquistas, e nada além', async () => {
   const profile = await friendProfile(ANA, BIA);
   assert.deepEqual(profile.history.map(h => h.title), ['Matrix']);
+  assert.deepEqual(profile.history[0].genres, [28, 878], 'os gêneros vão junto, para comparar gostos');
   assert.deepEqual(profile.watchlist.map(w => w.title), ['Clube da Luta']);
   assert.deepEqual(profile.badges, ['Iniciante']);
   assert.equal(JSON.stringify(profile).includes('bia@x.dev'), false, 'não expõe email');
   assert.equal('user_id' in profile.history[0], false);
+});
+
+test('reação: só no próprio histórico, só as 4 válidas, e o amigo vê', async () => {
+  const react = (who, id, value) => as(who, async () => (await rows('SELECT set_title_reaction($1, $2) AS ok', [id, value]))[0].ok);
+  assert.equal(await react(BIA, 603, 'fire'), true);
+  assert.equal(await react(BIA, 999, 'fire'), false, 'título fora do histórico');
+  assert.equal(await react(ANA, 603, 'sad'), false, 'não muda o histórico de outra pessoa');
+  await assert.rejects(react(BIA, 603, 'love'), /violates check constraint/);
+  await denied(as(null, () => rows('SELECT set_title_reaction(603, $1)', ['fire'])), 'sem login');
+  // Atualizar direto continua proibido (sem permissão de UPDATE no histórico)
+  // (no Supabase a tabela tem permissão e a RLS barra: 0 linhas; aqui, sem permissão: erro)
+  await as(BIA, async () => {
+    const changed = await db.query(`UPDATE watch_history SET title = 'x'`).then(r => r.affectedRows, e => (/permission denied|row-level/.test(e.message) ? 0 : Promise.reject(e)));
+    assert.equal(changed, 0);
+  });
+
+  const profile = await friendProfile(ANA, BIA);
+  assert.equal(profile.history[0].reaction, 'fire');
+  assert.equal(profile.history[0].title, 'Matrix');
+  assert.equal(await react(BIA, 603, null), true, 'null tira a reação');
+  assert.equal((await friendProfile(ANA, BIA)).history[0].reaction, null);
 });
 
 test('perfil: quem não é amigo não vê, nem sem login', async () => {

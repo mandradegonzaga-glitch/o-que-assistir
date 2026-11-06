@@ -129,6 +129,10 @@ GRANT EXECUTE ON FUNCTION find_user_by_username(TEXT), list_friends(), list_matc
 -- Perfil de um amigo: só devolve algo se a amizade estiver aceita.
 -- Sem amizade (ou pedido ainda pendente) a resposta é vazia, igual a um usuário que não existe.
 -- Quem escolheu não compartilhar: o amigo recebe só o nome, sem dados para esconder na tela.
+-- A reação (database/reactions.sql) vai junto no histórico; a coluna é criada aqui também,
+-- para este arquivo rodar sozinho ou depois daquele
+ALTER TABLE watch_history ADD COLUMN IF NOT EXISTS reaction TEXT;
+
 CREATE OR REPLACE FUNCTION get_friend_profile(p_friend UUID)
 RETURNS JSON
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
@@ -139,7 +143,7 @@ AS $$
         'private', NOT p.share_with_friends,
         'history', COALESCE((
             SELECT json_agg(h ORDER BY h.watched_at DESC) FROM (
-                SELECT tmdb_id, title, poster_path, media_type, release_year, watched_at
+                SELECT tmdb_id, title, poster_path, media_type, release_year, genres, reaction, watched_at
                 FROM watch_history WHERE user_id = p.id AND p.share_with_friends ORDER BY watched_at DESC LIMIT 200
             ) h
         ), '[]'::json),

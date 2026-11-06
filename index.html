@@ -135,6 +135,9 @@
                     <svg aria-hidden="true" class="icon icon-24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle fill="currentColor" fill-opacity="0.2" cx="9" cy="8" r="3.5"/><path fill="currentColor" fill-opacity="0.2" d="M2.5 20a6.5 6.5 0 0 1 13 0z"/><path d="M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.2a6.5 6.5 0 0 1 3.5 5.8"/></svg>
                     <span id="friends-badge" class="mode-tab__badge" aria-hidden="true" hidden></span>
                 </button>
+                <button type="button" id="btn-help" class="header-friends header-help" data-action="openHelp" aria-label="Como usar" title="Como usar">
+                    <svg aria-hidden="true" class="icon icon-24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle fill="currentColor" fill-opacity="0.2" cx="12" cy="12" r="9.5"/><path d="M9.3 9.2a2.8 2.8 0 0 1 5.4 1c0 1.9-2.7 2.4-2.7 4"/><circle fill="currentColor" stroke="none" cx="12" cy="17.3" r="1.1"/></svg>
+                </button>
                 <button class="logout-btn is-hidden" id="logout-btn" data-action="logout">Sair</button>
             </div>
         </header>
@@ -183,6 +186,7 @@
                 <div class="section-header">
                     <div class="badge-num">2</div>
                     <div class="section-title">Filtros Inteligentes</div>
+                    <button type="button" class="help-link" data-action="openHelp" data-arg="guia-filtros">Como funcionam?</button>
                 </div>
 
                 <div class="input-wrapper actor-field">
@@ -228,12 +232,33 @@
                     </select>
                 </div>
 
-                <select id="duration-select" class="input-dark mt-10" aria-label="Selecionar duração">
-                    <option value="">Duração: Qualquer</option>
-                    <option value="short">Rapidinho (&lt; 90m)</option>
-                    <option value="medium">Padrão (90-120m)</option>
-                    <option value="long">Longo (&gt; 120m)</option>
-                </select>
+                <div class="grid-2 mt-10">
+                    <select id="duration-select" class="input-dark" aria-label="Selecionar duração">
+                        <option value="">Duração: Qualquer</option>
+                        <option value="short">Rapidinho (&lt; 90m)</option>
+                        <option value="medium">Padrão (90-120m)</option>
+                        <option value="long">Longo (&gt; 120m)</option>
+                    </select>
+                    <select id="input-country" class="input-dark" aria-label="Selecionar país de origem" aria-describedby="hint-country">
+                        <option value="">País: Qualquer</option>
+                        <option value="BR">Brasil</option>
+                        <option value="US">Estados Unidos</option>
+                        <option value="GB">Reino Unido</option>
+                        <option value="FR">França</option>
+                        <option value="ES">Espanha</option>
+                        <option value="IT">Itália</option>
+                        <option value="DE">Alemanha</option>
+                        <option value="JP">Japão</option>
+                        <option value="KR">Coreia do Sul</option>
+                        <option value="IN">Índia</option>
+                        <option value="MX">México</option>
+                        <option value="AR">Argentina</option>
+                        <option value="TR">Turquia</option>
+                        <option value="DK">Dinamarca</option>
+                        <option value="SE">Suécia</option>
+                    </select>
+                </div>
+                <p id="hint-country" class="field-hint" hidden>Doramas já são coreanos: o país não muda nada aqui.</p>
 
                 <input type="text" id="input-similar" class="input-dark mt-10" placeholder="Parecido com... (Ex: Breaking Bad)" aria-label="Buscar similares a um título" aria-describedby="hint-similar">
                 <p id="hint-similar" class="field-hint">Digite um título de que você gostou para receber recomendações parecidas.</p>
@@ -258,7 +283,37 @@
                     </svg>
                     Ver Top 10
                 </button>
+                <button id="btn-lancamentos" class="btn-outline btn-main ripple" data-action="mostrarLancamentos">
+                    <svg aria-hidden="true" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="m10 14 1.5 1.5L15 13"/>
+                    </svg>
+                    Lançamentos
+                </button>
             </div>
+
+            <section class="fun-modes" aria-labelledby="fun-modes-title">
+                <div class="fun-modes__header">
+                    <h2 id="fun-modes-title" class="fun-modes__title">Outros jeitos de escolher</h2>
+                    <button type="button" class="help-link" data-action="openHelp" data-arg="guia-outros">Como funciona?</button>
+                </div>
+                <div class="fun-modes__list">
+                    <button type="button" id="btn-surpresa" class="fun-mode" data-action="surpreendaMe" aria-describedby="fun-surpresa-desc">
+                        <span class="fun-mode__icon" aria-hidden="true">🎲</span>
+                        <span class="fun-mode__name">Surpreenda-me</span>
+                        <span class="fun-mode__desc" id="fun-surpresa-desc">Um gênero que você quase nunca vê</span>
+                    </button>
+                    <button type="button" id="btn-escuras" class="fun-mode" data-action="sessaoEscuras" aria-describedby="fun-escuras-desc">
+                        <span class="fun-mode__icon" aria-hidden="true">🙈</span>
+                        <span class="fun-mode__name">Sessão às escuras</span>
+                        <span class="fun-mode__desc" id="fun-escuras-desc">Só a sinopse e a nota, sem título nem pôster</span>
+                    </button>
+                    <button type="button" id="btn-batalha" class="fun-mode" data-action="abrirBatalha" aria-describedby="fun-batalha-desc">
+                        <span class="fun-mode__icon" aria-hidden="true">⚔️</span>
+                        <span class="fun-mode__name">Cine-batalha</span>
+                        <span class="fun-mode__desc" id="fun-batalha-desc">8 títulos se enfrentam até sobrar um</span>
+                    </button>
+                </div>
+            </section>
 
             <!-- Botão Histórico de Sorteios -->
             <button id="btn-show-history" class="btn-history ripple is-hidden" data-action="abrirHistoricoSorteios" aria-label="Ver histórico de sorteios">
@@ -484,6 +539,10 @@
                 <svg class="site-footer__icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M20,3H4V5H20V3M20,7H4C2.9,7 2,7.9 2,9V14C2,15.1 2.9,16 4,16H6V18C6,19.1 6.9,20 8,20H14C15.1,20 16,19.1 16,18V16H20C21.1,16 22,15.1 22,14V9C22,7.9 21.1,7 20,7M20,14H18V9H20V14M16,18H8V9H16V18Z" /></svg>
                 <span>Apoiar</span>
             </a>
+            <button type="button" class="site-footer__link" data-action="openHelp">
+                <svg class="site-footer__icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 16.2a1.2 1.2 0 1 1 0-2.4 1.2 1.2 0 0 1 0 2.4Zm1.3-5.1v.6h-2.4v-.9c0-1.9 2.6-2.2 2.6-3.6a1.5 1.5 0 0 0-3-.1H8.1a3.9 3.9 0 0 1 7.8.2c0 2.2-2.6 2.6-2.6 3.8Z"/></svg>
+                <span>Como usar</span>
+            </button>
             <a class="site-footer__link" href="mailto:contato@app.com">
                 <svg class="site-footer__icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4A2,2 0 0,0 20,2M20,16H6L4,18V4H20V16Z" /></svg>
                 <span>Feedback</span>
@@ -565,6 +624,19 @@
                 <div class="stat-card text-center"><div class="stat-card__value text-accent" id="friend-stat-badges">0</div><div class="stat-card__label">Conquistas</div></div>
             </div>
 
+            <section id="friend-compat" class="friend-block compat" aria-labelledby="friend-compat-title" hidden>
+                <h3 class="subsection-title" id="friend-compat-title">Compatibilidade</h3>
+                <div id="friend-compat-result">
+                    <p class="compat__score"><span class="compat__value" id="friend-compat-score"></span> <span class="compat__label" id="friend-compat-label"></span></p>
+                    <div class="compat__meter" aria-hidden="true"><span id="friend-compat-bar"></span></div>
+                    <p class="compat__text" id="friend-compat-text"></p>
+                </div>
+                <p class="section-note" id="friend-compat-note" hidden></p>
+            </section>
+            <div id="friend-watched-box" class="friend-block" hidden>
+                <h3 class="subsection-title">Vocês dois já assistiram</h3>
+                <div id="friend-watched" class="friend-titles"></div>
+            </div>
             <div id="friend-common-box" class="friend-block" hidden>
                 <h3 class="subsection-title">Vocês dois querem ver</h3>
                 <div id="friend-common" class="friend-titles"></div>
@@ -670,6 +742,17 @@
                     </div>
                 </div>
 
+                <div id="m-reactions" class="reactions" role="group" aria-labelledby="m-reactions-title" hidden>
+                    <p id="m-reactions-title" class="reactions__title">Como foi?</p>
+                    <div class="reactions__list">
+                        <button type="button" class="reaction" data-action="reactTitle" data-arg="fire" aria-pressed="false"><span aria-hidden="true">🔥</span> Amei</button>
+                        <button type="button" class="reaction" data-action="reactTitle" data-arg="sad" aria-pressed="false"><span aria-hidden="true">😢</span> Chorei</button>
+                        <button type="button" class="reaction" data-action="reactTitle" data-arg="laugh" aria-pressed="false"><span aria-hidden="true">😂</span> Ri muito</button>
+                        <button type="button" class="reaction" data-action="reactTitle" data-arg="mind" aria-pressed="false"><span aria-hidden="true">🤯</span> Explodiu minha cabeça</button>
+                    </div>
+                    <p id="m-reactions-note" class="reactions__note" hidden>Seus amigos veem sua reação.</p>
+                </div>
+
                 <div class="modal-actions">
                     <button id="btn-visto" data-action="marcarVistoAtual" class="btn-modal btn-green ripple tooltip" data-tooltip="Marcar como assistido" aria-label="Marcar como assistido">
                         <svg aria-hidden="true" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -768,13 +851,27 @@
             <div class="grid-two grid-two--stats">
                 <div class="stat-card">
                     <div class="stat-card__value text-accent" id="stats-count">0</div>
-                    <div class="stat-card__label">Filmes Assistidos</div>
+                    <div class="stat-card__label">Títulos assistidos</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-card__value text-gold" id="stats-wins">0</div>
                     <div class="stat-card__label">Vitórias Roleta</div>
                 </div>
             </div>
+            <!-- DNA do usuário: gêneros, tipos, década e meses (src/domain/tasteDna.js) -->
+            <section class="dna" id="dna" aria-labelledby="dna-title">
+                <h3 class="subsection-title" id="dna-title">Seu DNA</h3>
+                <p class="dna__summary" id="dna-summary"></p>
+                <p class="section-note" id="dna-note" hidden></p>
+                <ul class="dna__genres" id="dna-genres" aria-label="Gêneros que você mais assiste"></ul>
+                <dl class="dna__facts" id="dna-facts"></dl>
+                <!-- Parte 2: detalhes do TMDB guardados no aparelho (src/app/lifeStats.js) -->
+                <dl class="dna__facts dna__facts--life" id="dna-life" aria-live="polite" hidden></dl>
+                <div class="dna__months-wrap" id="dna-months-wrap">
+                    <p class="dna__months-title" id="dna-months-title">Últimos 6 meses</p>
+                    <ol class="dna__months" id="dna-months" aria-labelledby="dna-months-title"></ol>
+                </div>
+            </section>
             <!-- Sequência e nível -->
             <div class="progress-cards">
                 <div class="stat-card progress-card">
@@ -952,7 +1049,7 @@
         <div class="daily-panel__header">
             <div>
                 <h2 id="daily-picks-title" class="daily-panel__title">Indicações do dia</h2>
-                <p class="daily-panel__note">Um de cada, novos à meia-noite</p>
+                <p class="daily-panel__note" id="daily-picks-note">Um de cada, novos à meia-noite</p>
             </div>
             <button type="button" class="daily-panel__close" data-action="closeDailyPicks" aria-label="Fechar indicações do dia">
                 <svg aria-hidden="true" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
@@ -1011,12 +1108,171 @@
                 <span class="onboarding-dot active"></span>
                 <span class="onboarding-dot"></span>
                 <span class="onboarding-dot"></span>
+                <span class="onboarding-dot"></span>
             </div>
             <button class="btn-main ripple" data-action="nextOnboarding" id="onboarding-btn">Começar</button>
         </div>
     </div>
 
     <!-- Confirmação do app (substitui confirm() nativo) -->
+    <!-- COMO USAR: guia de todas as funcionalidades (src/app/help.js abre direto num tópico) -->
+    <div id="modal-help" class="modal-overlay">
+        <div class="modal-content modal-content--panel modal-content--wide help" role="dialog" aria-modal="true" aria-labelledby="help-title" tabindex="-1">
+            <h2 id="help-title" class="help__title">Como usar</h2>
+            <p class="help__intro">Toque num tópico para ver como funciona.</p>
+
+            <details class="help__topic" id="guia-comecar">
+                <summary><span aria-hidden="true">🎬</span> Sortear o que assistir</summary>
+                <ol>
+                    <li>Em <strong>Descobrir</strong>, escolha <strong>Filme</strong>, <strong>Série</strong> ou <strong>Dorama</strong>.</li>
+                    <li>Se quiser, marque os <strong>Filtros Inteligentes</strong>.</li>
+                    <li>Toque em <strong>Sortear Agora</strong>. Não gostou? Na tela do título, <strong>Sortear outro</strong>.</li>
+                </ol>
+                <p>O sorteio evita o que você já assistiu e o que saiu há pouco. <strong>Histórico</strong> mostra os últimos sorteados.</p>
+            </details>
+
+            <details class="help__topic" id="guia-filtros">
+                <summary><span aria-hidden="true">🎛️</span> Filtros Inteligentes</summary>
+                <ul>
+                    <li><strong>Ator ou diretor</strong>: digite o nome e escolha na lista.</li>
+                    <li><strong>Clima</strong> (leve, para chorar, tensão…) ou <strong>Gênero</strong>: um substitui o outro.</li>
+                    <li><strong>Onde</strong>: a plataforma de streaming. "Minhas plataformas" usa as que você marcou no perfil.</li>
+                    <li><strong>Duração</strong>, <strong>País</strong> e <strong>período</strong> (de um ano a outro).</li>
+                    <li><strong>Parecido com…</strong>: digite um título de que gostou para receber parecidos.</li>
+                </ul>
+                <p>Os filtros valem para <strong>tudo</strong>: sortear, Top 10, Lançamentos, Surpreenda-me, Sessão às escuras e Cine-batalha. Eles também ficam no link, para mandar a alguém.</p>
+            </details>
+
+            <details class="help__topic" id="guia-listas">
+                <summary><span aria-hidden="true">🔥</span> Top 10, Lançamentos e busca</summary>
+                <ul>
+                    <li><strong>Ver Top 10</strong>: os mais populares e bem avaliados, com os seus filtros.</li>
+                    <li><strong>Lançamentos</strong>: filmes que chegaram ao streaming e ao aluguel nas últimas semanas; séries e doramas que acabaram de estrear.</li>
+                    <li><strong>Busca específica</strong>: procure um título pelo nome.</li>
+                </ul>
+            </details>
+
+            <details class="help__topic" id="guia-outros">
+                <summary><span aria-hidden="true">🎲</span> Surpreenda-me, Sessão às escuras e Cine-batalha</summary>
+                <ul>
+                    <li><strong>Surpreenda-me</strong>: sorteia um título bem avaliado de um gênero que você quase nunca vê.</li>
+                    <li><strong>Sessão às escuras</strong>: mostra só a sinopse, a nota e a duração. Gostou? <strong>Arriscar e revelar</strong>.</li>
+                    <li><strong>Cine-batalha</strong>: 8 títulos se enfrentam de dois em dois. Toque no que prefere até sobrar o campeão. Para ler a sinopse, passe o mouse no pôster (no celular, toque em <strong>Sinopse</strong>, embaixo dele). Votou errado? <strong>Voltar</strong> desfaz o último voto.</li>
+                </ul>
+                <p>Quer uma batalha só de terror, ou uma sessão às escuras só da Netflix? Marque o gênero ou a plataforma nos <strong>Filtros Inteligentes</strong> antes de começar.</p>
+            </details>
+
+            <details class="help__topic" id="guia-titulo">
+                <summary><span aria-hidden="true">🍿</span> Na tela do título</summary>
+                <ul>
+                    <li><strong>Onde assistir</strong>, elenco e trailer.</li>
+                    <li><strong>Já Vi</strong>: vai para "Já assistidos" e abre o <strong>Como foi?</strong> (🔥 😢 😂 🤯). Seus amigos veem a reação.</li>
+                    <li><strong>Salvar</strong>: guarda em "Quero Assistir".</li>
+                    <li><strong>Adicionar à Roleta</strong>, <strong>Gerar ingresso</strong> (uma imagem para postar) e <strong>Compartilhar</strong> (WhatsApp, outros apps ou um amigo).</li>
+                    <li><strong>Não tenho interesse</strong>: o título nunca mais aparece nos sorteios.</li>
+                </ul>
+            </details>
+
+            <details class="help__topic" id="guia-series">
+                <summary><span aria-hidden="true">📺</span> Séries: episódios e "Em Andamento"</summary>
+                <p>Na tela de uma série, marque os episódios que já viu (um a um ou com <strong>Marcar temporada</strong>). Ela aparece em <strong>Em Andamento</strong> com o próximo episódio, e vai sozinha para "Já assistidos" quando você termina.</p>
+            </details>
+
+            <details class="help__topic" id="guia-roleta">
+                <summary><span aria-hidden="true">🎡</span> Roleta</summary>
+                <p>Na aba <strong>Roleta</strong>, digite os títulos em dúvida (ou use "Adicionar à Roleta" na tela de um título) e toque em <strong>Girar Roleta!</strong></p>
+            </details>
+
+            <details class="help__topic" id="guia-match">
+                <summary><span aria-hidden="true">💞</span> Match: decidir em dupla</summary>
+                <ul>
+                    <li><strong>No mesmo celular</strong>: cada um vota "Quero" ou "Não quero" na sua vez.</li>
+                    <li><strong>Ao vivo</strong>: cada um no seu celular, pelo código da sala.</li>
+                    <li><strong>Por link ou email</strong>: a outra pessoa vota quando puder.</li>
+                </ul>
+                <p>No fim aparecem os títulos que os dois querem ver. Com uma conta, dá para chamar um amigo direto do app.</p>
+            </details>
+
+            <details class="help__topic" id="guia-diario">
+                <summary><span aria-hidden="true">✨</span> Indicações do dia</summary>
+                <p>O botão ✨ no canto traz um filme, uma série e um dorama novos todo dia. Depois de 5 títulos assistidos, eles seguem os gêneros de que você mais gosta.</p>
+            </details>
+
+            <details class="help__topic" id="guia-perfil">
+                <summary><span aria-hidden="true">🧬</span> Perfil, DNA e conquistas</summary>
+                <p>Toque no seu nome, lá em cima:</p>
+                <ul>
+                    <li><strong>Seu DNA</strong>: os gêneros que você mais assiste, horas assistidas e ator mais visto.</li>
+                    <li><strong>Sequência e nível</strong>: volte todo dia para não perder a sequência.</li>
+                    <li><strong>Desafio do dia</strong>, <strong>meta da semana</strong> e <strong>conquistas</strong>.</li>
+                    <li><strong>Minhas plataformas</strong>: marque os streamings que você assina.</li>
+                </ul>
+            </details>
+
+            <details class="help__topic" id="guia-amigos">
+                <summary><span aria-hidden="true">👥</span> Amigos</summary>
+                <p>Precisa de uma conta. No ícone de pessoas, lá em cima:</p>
+                <ul>
+                    <li>Adicione pelo <strong>@usuário</strong> ou mande seu <strong>link de convite</strong>.</li>
+                    <li>No perfil de um amigo: a <strong>compatibilidade</strong> de gostos, o que ele assistiu (com as reações) e o que os dois querem ver.</li>
+                    <li>Indique títulos e chame para um Match. Prefere privacidade? Desmarque "Amigos podem ver o que assisti…".</li>
+                </ul>
+            </details>
+
+            <details class="help__topic" id="guia-app">
+                <summary><span aria-hidden="true">📲</span> Instalar como app</summary>
+                <p>No celular, use "Instalar App" quando aparecer, ou "Adicionar à tela inicial" no menu do navegador. Ele abre direto, como um app.</p>
+            </details>
+
+            <button type="button" class="btn-main ripple w-full help__close" data-action="closeModal" data-arg="modal-help">Entendi</button>
+        </div>
+    </div>
+
+    <!-- CINE-BATALHA: mata-mata entre 8 títulos -->
+    <div id="modal-battle" class="modal-overlay">
+        <div class="modal-content modal-content--panel modal-content--wide battle" role="dialog" aria-modal="true" aria-labelledby="battle-heading" tabindex="-1">
+            <h2 id="battle-heading" class="battle__heading"><span aria-hidden="true">⚔️</span> Cine-batalha</h2>
+            <p class="mode-filters">Filtros: <span id="battle-filters"></span></p>
+            <p id="battle-stage" class="battle__stage" aria-live="polite"></p>
+            <!-- Trilha por fase (Quartas, Semi, Final); quem usa leitor de tela ouve a fase no texto acima -->
+            <div id="battle-track" class="battle__track" aria-hidden="true"></div>
+            <p class="battle__hint">Qual você prefere ver?</p>
+            <div id="battle-arena" class="battle__arena"></div>
+            <div id="battle-result" class="battle__result" hidden>
+                <img id="battle-champion-img" class="battle__champion-img" alt="" width="500" height="750">
+                <p class="battle__champion-label">Venceu a batalha</p>
+                <p id="battle-champion-name" class="battle__champion-name"></p>
+                <button type="button" id="battle-open" class="btn-main ripple" data-action="battleOpenChampion">Ver o campeão</button>
+                <button type="button" class="btn-outline btn-main ripple" data-action="abrirBatalha">Nova batalha</button>
+            </div>
+            <div class="battle__footer">
+                <button type="button" id="battle-undo" class="btn-clear-small" data-action="battleUndo" aria-label="Voltar: desfazer o último voto" hidden><span aria-hidden="true">↶</span> Voltar</button>
+                <button type="button" class="btn-clear-small" data-action="closeModal" data-arg="modal-battle">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SESSÃO ÀS ESCURAS: sem título nem pôster até a pessoa arriscar -->
+    <div id="modal-blind" class="modal-overlay">
+        <div class="modal-content modal-content--panel blind" role="dialog" aria-modal="true" aria-labelledby="blind-title" aria-describedby="blind-overview" tabindex="-1">
+            <p class="blind__eyebrow"><span aria-hidden="true">🙈</span> Sessão às escuras</p>
+            <h2 id="blind-title" class="blind__title">Um filme misterioso</h2>
+            <p class="mode-filters">Filtros: <span id="blind-filters"></span></p>
+            <ul class="blind__facts" aria-label="O que dá para saber">
+                <li id="blind-rating"></li>
+                <li id="blind-length"></li>
+                <li id="blind-decade"></li>
+                <li id="blind-genres"></li>
+            </ul>
+            <p id="blind-overview" class="blind__overview"></p>
+            <div class="blind__actions">
+                <button type="button" id="blind-reveal" class="btn-main ripple" data-action="blindReveal">Arriscar e revelar</button>
+                <button type="button" id="blind-another" class="btn-outline btn-main ripple" data-action="sessaoEscuras">Outro às escuras</button>
+                <button type="button" class="btn-clear-small" data-action="closeModal" data-arg="modal-blind">Fechar</button>
+            </div>
+        </div>
+    </div>
+
     <div id="modal-confirm" class="modal-overlay">
         <div class="modal-content confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message" tabindex="-1">
             <h2 id="confirm-title" class="confirm-dialog__title"></h2>

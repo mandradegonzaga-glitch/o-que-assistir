@@ -4,6 +4,7 @@ import { legacyDataAvailable, offerLegacyImport } from './legacyImport.js';
 import { openFriendLinkFromUrl, refreshFriends } from './friends.js';
 import { getGuestData } from './guestLibrary.js';
 import { renderLibrary } from './library.js';
+import { clearLifeStatsCache } from './lifeStats.js';
 import { syncProvidersWithAccount } from './myProviders.js';
 import { registerDailyVisit } from './progress.js';
 import { dailyPicksAfterLogin } from './dailyPicks.js';
@@ -337,6 +338,8 @@ export async function logout() {
         if (session.currentUser !== 'guest' && session.currentUserId) {
             await saveUserData();
             await supabaseLogout();
+            // Os detalhes guardados dizem quais títulos a conta viu: não ficam para a próxima pessoa
+            clearLifeStatsCache();
         }
 
         session.currentUser = null;

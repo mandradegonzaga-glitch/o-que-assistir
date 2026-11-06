@@ -1,6 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
 import { BASE_URL } from '../../src/config/constants.js';
-import { buildDiscoverUrl, getRandomPage } from '../../src/domain/filters.js';
+import { buildDiscoverUrl, getRandomPage, hasLatinTitle, releaseWindow } from '../../src/domain/filters.js';
 
 const BASE = BASE_URL;
 
@@ -87,5 +87,45 @@ describe('getRandomPage', () => {
     for (let i = 0; i < 50; i++) {
       expect(getRandomPage(1)).toBe(1);
     }
+  });
+});
+
+describe('lançamentos', () => {
+  const today = new Date(2026, 10, 6);
+
+  it('releaseWindow: 45 days for movies, 60 for series', () => {
+    expect(releaseWindow('movie', today)).toEqual({ from: '2026-09-22', to: '2026-11-06', days: 45 });
+    expect(releaseWindow('tv', today)).toEqual({ from: '2026-09-07', to: '2026-11-06', days: 60 });
+  });
+
+  it('movies: digital releases in Brazil, ignoring the chosen years', () => {
+    const url = buildDiscoverUrl('movie', { genre: '27', yearFrom: '1990', releases: { today }, minVotes: 0 });
+    expect(url).toContain('&with_genres=27');
+    expect(url).toContain('&release_date.gte=2026-09-22&release_date.lte=2026-11-06&with_release_type=4&region=BR');
+    expect(url).not.toContain('1990');
+  });
+
+  it('series and doramas: first air date', () => {
+    const url = buildDiscoverUrl('tv', { isDorama: true, releases: { today } });
+    expect(url).toContain('with_origin_country=KR');
+    expect(url).toContain('&first_air_date.gte=2026-09-07&first_air_date.lte=2026-11-06');
+    expect(url).not.toContain('with_release_type');
+  });
+
+  it('hasLatinTitle drops titles with no Latin letter', () => {
+    expect(hasLatinTitle({ name: 'Amor Disfarçado' })).toBe(true);
+    expect(hasLatinTitle({ title: 'Ç' })).toBe(true);
+    expect(hasLatinTitle({ name: '조선슬화핌' })).toBe(false);
+    expect(hasLatinTitle({ name: 'กฎหลังเที่ยงคืน' })).toBe(false);
+    expect(hasLatinTitle({})).toBe(false);
+  });
+});
+
+describe('país de origem', () => {
+  it('adds the country, except for doramas (always Korean)', () => {
+    expect(buildDiscoverUrl('movie', { country: 'FR' })).toContain('&with_origin_country=FR');
+    const dorama = buildDiscoverUrl('tv', { country: 'FR', isDorama: true });
+    expect(dorama).toContain('with_origin_country=KR');
+    expect(dorama).not.toContain('FR');
   });
 });

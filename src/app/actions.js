@@ -3,7 +3,7 @@
 import { debounce } from '../utils/debounce.js';
 import { checkPasswordStrength, esqueceuSenha, loginAsGuest, loginUser, logout, registerUser, switchLoginTab } from './auth.js';
 import { adicionarBlacklist, limparBlacklist, removerBlacklist } from './blacklist.js';
-import { buscarDireto, buscarPessoa, limparPessoa, mostrarTop10, selectPerson, sortearFilme, sortearOutro } from './discover.js';
+import { buscarDireto, buscarPessoa, limparPessoa, mostrarLancamentos, mostrarTop10, selectPerson, sortearFilme, sortearOutro, surpreendaMe } from './discover.js';
 import { matchCodeJoin, matchSendToFriend, matchContinue, matchDraw, matchEmailInvite, matchInvite, matchJoin, matchLive, matchLiveJoin, matchLiveSend, matchRestart, matchSendAnswer, matchSendInvite, matchStart, matchVote } from './match.js';
 import { filterProviders, onProviderChange, toggleMyProvider } from './myProviders.js';
 import { compartilhar, compartilharApps, compartilharWhatsapp, gerarIngresso } from './ticket.js';
@@ -11,6 +11,10 @@ import { syncUrl } from './urlSync.js';
 import { desmarcarTemporadaAtual, desmarcarTodosEpisodios, marcarTemporadaAtual, marcarTodosEpisodios, onSeasonChange, toggleEpisode } from './episodes.js';
 import { friendAccept, friendAdd, friendInvite, friendMatchCurrent, friendOpen, friendRemove, friendSendTitle, friendShareDelete, friendShareOpen, friendUnfriendCurrent, matchInboxDelete, matchInboxOpen, openFriends, toggleShareWithFriends } from './friends.js';
 import { removeLibItem } from './library.js';
+import { reactTitle } from './reactions.js';
+import { blindReveal, sessaoEscuras } from './blindSession.js';
+import { abrirBatalha, battleChoose, battleOpenChampion, battleSynopsis, battleUndo } from './battle.js';
+import { openHelp } from './help.js';
 import { toggleDeviceNotify } from './notifications.js';
 import { matchHistoryRemove, matchHistorySave } from './matchHistory.js';
 import { nextOnboarding } from './onboarding.js';
@@ -61,6 +65,7 @@ const clickActions = {
   openFriends,
   friendMatchCurrent,
   friendOpen: el => friendOpen(el.dataset.arg),
+  reactTitle: el => reactTitle(el.dataset.arg),
   friendUnfriendCurrent,
   matchInboxDelete: el => matchInboxDelete(el.dataset.arg),
   matchInboxOpen,
@@ -95,6 +100,16 @@ const clickActions = {
   marcarTodosEpisodios,
   marcarVistoAtual,
   mostrarTop10,
+  mostrarLancamentos,
+  surpreendaMe,
+  sessaoEscuras,
+  blindReveal,
+  abrirBatalha,
+  battleOpenChampion,
+  battleChoose: el => battleChoose(el.dataset.arg),
+  battleSynopsis: el => battleSynopsis(el.dataset.arg),
+  battleUndo,
+  openHelp: el => openHelp(el.dataset.arg),
   navigateSorteio: el => navigateSorteio(num(el)),
   nextOnboarding,
   registerUser,

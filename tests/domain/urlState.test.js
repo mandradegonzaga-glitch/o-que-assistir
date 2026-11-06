@@ -36,3 +36,12 @@ describe('serializeUrlState', () => {
     expect(parseUrlState(serializeUrlState(state))).toEqual(state);
   });
 });
+
+describe('país na URL', () => {
+  it('keeps known countries and drops anything else', () => {
+    expect(parseUrlState('?pais=JP').country).toBe('JP');
+    expect(parseUrlState('?pais=XX').country).toBeUndefined();
+    expect(parseUrlState('?pais=jp').country).toBeUndefined();
+    expect(serializeUrlState({ country: 'FR' })).toContain('pais=FR');
+  });
+});

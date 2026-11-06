@@ -1,5 +1,6 @@
 // Estado compartilhável na URL (modo, tipo, filtros e título aberto) em português, sem depender do DOM.
 import { MOODS } from './moods.js';
+import { isCountry } from './countries.js';
 
 const FIELDS = {
   mode: 'modo',
@@ -13,6 +14,7 @@ const FIELDS = {
   yearTo: 'ate',
   personId: 'pessoa',
   personName: 'pessoaNome',
+  country: 'pais',
 };
 const DEFAULTS = { mode: 'discover', type: 'movie' };
 const MODES = ['discover', 'roulette', 'match'];
@@ -35,6 +37,7 @@ export function parseUrlState(search) {
   if (result.genre && !/^[\d,]+$/.test(result.genre)) delete result.genre;
   if (result.provider && !/^(\d+|minhas)$/.test(result.provider)) delete result.provider;
   if (result.mood && !(result.mood in MOODS)) delete result.mood;
+  if (result.country && !isCountry(result.country)) delete result.country;
   ['yearFrom', 'yearTo'].forEach(key => {
     if (result[key] && !/^\d{4}$/.test(result[key])) delete result[key];
   });

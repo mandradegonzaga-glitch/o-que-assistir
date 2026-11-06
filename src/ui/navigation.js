@@ -104,6 +104,13 @@ export function selecionarTipo(t) {
     // Apply theme based on content type
     document.body.setAttribute('data-theme', t);
 
+    // Dorama já é coreano: o filtro de país não se aplica
+    const country = document.getElementById('input-country');
+    if (country) {
+        country.disabled = t === 'dorama';
+        document.getElementById('hint-country').hidden = t !== 'dorama';
+    }
+
     // Salvar preferência
     localStorage.setItem('last_type', t);
     syncUrl();

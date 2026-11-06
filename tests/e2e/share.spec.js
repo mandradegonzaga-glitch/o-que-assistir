@@ -41,7 +41,8 @@ test.describe('gerar ingresso', () => {
   });
 
   test('pelo teclado, mostra que está gerando e o foco fica no botão', async ({ page }) => {
-    await page.route(/\/credits$/, async route => { await new Promise(r => setTimeout(r, 400)); await route.fallback(); });
+    // Segura o elenco para dar tempo de ver o "Gerando…" com a máquina ocupada (400 ms falhava na suíte inteira)
+    await page.route(/\/credits$/, async route => { await new Promise(r => setTimeout(r, 1500)); await route.fallback(); });
     await enterAsGuest(page);
     await drawTitle(page);
     const button = page.locator('#btn-ingresso');

@@ -255,3 +255,58 @@ test('cabeçalho e abas cabem no celular', async ({ page }) => {
   await expect(page.locator('#logout-btn')).toBeInViewport();
   await expect(page.locator('#tab-mode-match')).toBeInViewport();
 });
+
+test.describe('comparar gostos', () => {
+  test.use({ logged: true });
+
+  const watched = (id, genres, type = 'movie') => ({ user_id: 'u1', tmdb_id: id, title: `Meu ${id}`, poster_path: `/${id}.jpg`, media_type: type, release_year: '2020', genres, watched_at: new Date(2026, 10, id).toISOString() });
+  const theirs = (id, genres, type = 'movie') => ({ tmdb_id: id, title: `Dela ${id}`, poster_path: `/${id}.jpg`, media_type: type, release_year: '2020', genres });
+
+  const setup = (page, mine, friendHistory) => page.addInitScript(([history, profile]) => {
+    if (sessionStorage.getItem('__db')) return;
+    window.__seed = { friends: [{ friendship_id: 'f1', other_id: 'u2', username: 'bia', display_name: 'Bia', status: 'accepted', direction: 'sent' }], profiles: { u2: profile } };
+    sessionStorage.setItem('__db', JSON.stringify({
+      profiles: [{ id: 'u1', username: 'teste', display_name: 'Pessoa Teste', email: 't@t.dev', roulette_wins: 0 }],
+      watch_history: history, watchlist: [], user_preferences: [], user_badges: [], sorteio_history: [], blacklist: [], episode_progress: [],
+    }));
+  }, [mine, { username: 'bia', display_name: 'Bia', history: friendHistory, watchlist: [], badges: [] }]);
+
+  const openBia = async page => {
+    await openApp(page);
+    await openFriends(page);
+    await page.locator('[data-action="friendOpen"]').click();
+    await expect(page.locator('#modal-friend')).toBeVisible();
+  };
+
+  test('mostra a porcentagem, os gêneros em comum e o que os dois já viram', async ({ page }) => {
+    // eu: Terror 2/4, Comédia 1/4, Ação 1/4; Bia: Terror, Comédia e Ação 1/5 cada, Drama 2/5 → 20+20+20 = 60%
+    await setup(page,
+      [watched(1, [27]), watched(2, [27]), watched(3, [35]), watched(4, [28])],
+      [theirs(2, [27]), theirs(5, [35]), theirs(6, [18]), theirs(7, [18]), theirs(4, [28], 'tv')]);
+    await openBia(page);
+    const box = page.locator('#friend-compat');
+    await expect(box).toBeVisible();
+    await expect(page.locator('#friend-compat-score')).toHaveText('60%');
+    await expect(page.locator('#friend-compat-label')).toHaveText('Gostos bem parecidos');
+    await expect(page.locator('#friend-compat-text')).toHaveText('Os dois curtem Ação, Comédia e Terror. Bia assiste mais Drama; você, mais Terror.');
+    // o 4 dela é série, o meu é filme: não conta como o mesmo título
+    await expect(page.locator('#friend-watched .friend-title')).toHaveText(['Dela 2']);
+    await expect(page.locator('#friend-compat-note')).toBeHidden();
+  });
+
+  test('com poucos títulos explica o que falta', async ({ page }) => {
+    await setup(page, [watched(1, [27])], [theirs(2, [27]), theirs(3, [27]), theirs(4, [35])]);
+    await openBia(page);
+    await expect(page.locator('#friend-compat-result')).toBeHidden();
+    await expect(page.locator('#friend-compat-note')).toHaveText('Marque pelo menos 3 títulos como assistidos para ver a compatibilidade com Bia.');
+    await expect(page.locator('#friend-watched-box')).toBeHidden();
+  });
+
+  test('servidor sem os gêneros esconde a porcentagem, mas mostra os títulos em comum', async ({ page }) => {
+    const old = [theirs(1, [27]), theirs(2, [27]), theirs(3, [35])].map(({ genres, ...rest }) => rest);
+    await setup(page, [watched(1, [27]), watched(2, [27]), watched(3, [35])], old);
+    await openBia(page);
+    await expect(page.locator('#friend-compat')).toBeHidden();
+    await expect(page.locator('#friend-watched .friend-title')).toHaveText(['Dela 1', 'Dela 2', 'Dela 3']);
+  });
+});

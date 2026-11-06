@@ -8,6 +8,8 @@ const openFirst = async page => {
 
 test.describe('convidado', () => {
   test('lista e vistos continuam depois de recarregar', async ({ page }) => {
+    // Meio-dia: de madrugada, "Madrugador" apareceria antes de "Iniciante"
+    await page.clock.setFixedTime(new Date(2026, 10, 3, 12, 0));
     await enterAsGuest(page);
     await openFirst(page);
     await page.locator('#btn-salvar').click();
@@ -16,6 +18,9 @@ test.describe('convidado', () => {
     await openFirst(page);
     await page.locator('#btn-visto').click();
     await expect(page.locator('#achievement-name')).toHaveText('Iniciante');
+    // "Já vi" deixa o título aberto (para o "Como foi?"); aberto, o endereço reabriria ele ao recarregar
+    await page.keyboard.press('Escape');
+    await expect(modal(page)).toBeHidden();
 
     await page.reload();
     await page.locator('#login-form [data-action="loginAsGuest"]').click();

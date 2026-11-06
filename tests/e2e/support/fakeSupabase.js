@@ -138,6 +138,12 @@
           if (friendsMissing || window.__TEST_NO_SHARES) return { data: null, error: { code: 'PGRST202', message: 'função não existe' } };
           return { data: (seed.shares || []).filter(s => !store.removed?.includes(s.id)), error: null };
         }
+        if (name === 'set_title_reaction') {
+          if (window.__TEST?.failReaction) return { data: null, error: { code: 'PGRST202', message: 'função não existe' } };
+          const row = store.watch_history.find(r => r.user_id === 'u1' && r.tmdb_id === args.p_tmdb_id);
+          if (row) { row.reaction = args.p_reaction; save(); }
+          return { data: Boolean(row), error: null };
+        }
         if (name === 'list_match_invites') {
           return { data: (seed.invites || []).filter(i => !store.removed?.includes(i.id)), error: null };
         }

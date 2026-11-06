@@ -170,3 +170,85 @@ test.describe('indicações do dia', () => {
     });
   }
 });
+
+test.describe('indicações do dia pelo DNA', () => {
+  const seedHistory = (page, list) => page.addInitScript(items => {
+    if (!sessionStorage.getItem('__seeded')) {
+      sessionStorage.setItem('__seeded', '1');
+      localStorage.setItem('guest_history', JSON.stringify(items));
+    }
+  }, list);
+  // Ids que não estão na lista falsa do TMDB: nada é tirado por "já assistido"
+  const horror = n => Array.from({ length: n }, (_, i) => ({ id: 100 + i, title: `T${i}`, poster: '/t.jpg', type: 'movie', year: '1990', genres: [27] }));
+  const discover = urls => urls.filter(u => u.pathname.includes('/discover/'));
+
+  test.beforeEach(async ({ page }) => {
+    await page.clock.setFixedTime(new Date(2026, 10, 6, 12, 0));
+  });
+
+  test('só vê terror: o filme vem de terror; série e dorama, sem terror em série, ficam com as de todo mundo', async ({ page, tmdbUrls }) => {
+    await seedHistory(page, horror(5));
+    await enterAsGuest(page);
+    await launcher(page).click();
+    await expect(rows(page)).toHaveCount(3);
+
+    await expect(rows(page).first().locator('.daily-pick__why')).toHaveText('Porque você curte Terror');
+    // o gênero que trouxe a indicação vem primeiro
+    await expect(rows(page).first().locator('.daily-pick__meta')).toHaveText(/ · Terror · /);
+    await expect(rows(page).nth(1).locator('.daily-pick__why')).toHaveCount(0);
+    await expect(rows(page).nth(2).locator('.daily-pick__why')).toHaveCount(0);
+    await expect(page.locator('#daily-picks-note')).toHaveText('Escolhidos pelo seu gosto, novos à meia-noite');
+
+    const personal = discover(tmdbUrls).filter(u => u.searchParams.has('with_genres'));
+    expect(personal.map(u => [u.pathname.replace(/^.*\/tmdb/, ''), u.searchParams.get('with_genres')])).toEqual([['/discover/movie', '27']]);
+    expect(personal[0].searchParams.get('vote_average.gte')).toBe('7.3');
+  });
+
+  test('com menos de 5 títulos, são as de todo mundo', async ({ page, tmdbUrls }) => {
+    await seedHistory(page, horror(4));
+    await enterAsGuest(page);
+    await launcher(page).click();
+    await expect(rows(page)).toHaveCount(3);
+    await expect(page.locator('#daily-picks-list .daily-pick__why')).toHaveCount(0);
+    await expect(page.locator('#daily-picks-note')).toHaveText('Um de cada, novos à meia-noite');
+    expect(discover(tmdbUrls).some(u => u.searchParams.has('with_genres'))).toBe(false);
+  });
+
+  test('gênero sem resultado no TMDB: tenta a primeira página e volta para a de todo mundo', async ({ page, tmdbUrls }) => {
+    await seedHistory(page, horror(5));
+    await page.route('**/functions/v1/tmdb/discover/**', route => {
+      const url = new URL(route.request().url());
+      if (!url.searchParams.has('with_genres')) return route.fallback();
+      tmdbUrls.push(url);
+      return route.fulfill({ contentType: 'application/json', json: { results: [] } });
+    });
+    await enterAsGuest(page);
+    await launcher(page).click();
+    await expect(rows(page)).toHaveCount(3);
+    await expect(page.locator('#daily-picks-list .daily-pick__why')).toHaveCount(0);
+    const tried = discover(tmdbUrls).filter(u => u.searchParams.has('with_genres')).map(u => u.searchParams.get('page'));
+    expect(tried.at(-1)).toBe('1');
+  });
+});
+
+// Achado do usuário (2026-11-06): com o aviso ao lado do botão ✨, o deslocamento fixo de 400px
+// deixava uma ponta do aviso escondido aparecendo na borda (tela de ~450px ou aviso comprido)
+for (const width of [453, 600, 1280]) {
+  test(`aviso escondido sai inteiro da tela (${width}px)`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 800 });
+    await enterAsGuest(page);
+    const toast = page.locator('#toast');
+    await page.evaluate(() => {
+      const t = document.getElementById('toast');
+      t.innerText = 'Sequência de 12 dias! +5 XP · Desafio de hoje: Marque 2 títulos como assistidos';
+      t.className = 'toast show success';
+    });
+    await expect(toast).toBeVisible();
+    const right = () => toast.evaluate(el => el.getBoundingClientRect().right);
+    await expect.poll(right).toBeLessThanOrEqual(width); // depois de entrar, inteiro na tela
+
+    await page.evaluate(() => document.getElementById('toast').classList.remove('show'));
+    await expect(toast).toBeHidden(); // invisível depois de sair
+    expect(await toast.evaluate(el => el.getBoundingClientRect().left)).toBeGreaterThanOrEqual(width);
+  });
+}
