@@ -5,6 +5,7 @@ import { PERSON_PLACEHOLDER } from './discover.js';
 import { _moveFromWatchlistIfNeeded, loadEpisodesSection, markWholeSeries, setSeriesSeenButton } from './episodes.js';
 import { salvarHistorico, toggleWatchlist } from './library.js';
 import { renderReactions } from './reactions.js';
+import { hideRouletteNote, updateRouletteButton } from './roulette.js';
 import { updateSaveListButton } from './userLists.js';
 import { updateHistoryNav } from './sorteioHistory.js';
 import { setUrlTitle } from './urlSync.js';
@@ -317,6 +318,8 @@ export async function abrirModal(f, { fromDraw = false } = {}) {
 
     renderReactions();
     updateSaveListButton();
+    updateRouletteButton();
+    hideRouletteNote();
 
     // Atualizar navegação do histórico de sorteios
     updateHistoryNav();

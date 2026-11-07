@@ -39,16 +39,47 @@ export function addRoletaItem() {
     }
 }
 
+// No título: põe (ou tira) da roleta sem sair dali; quem quiser vai para a roleta pelo aviso
+const titleName = () => state.currentMovie && (state.currentMovie.title || state.currentMovie.name);
+
+export function updateRouletteButton() {
+    const btn = document.getElementById('btn-roleta');
+    const name = titleName();
+    if (!btn || !name) return;
+    const inWheel = state.rouletteItems.includes(name);
+    btn.classList.toggle('is-on', inWheel);
+    btn.setAttribute('aria-pressed', String(inWheel));
+    document.getElementById('btn-roleta-label').textContent = inWheel ? 'Na roleta' : 'Roleta';
+}
+
+export function hideRouletteNote() {
+    const note = document.getElementById('m-roulette-note');
+    if (note) note.hidden = true;
+}
+
 export function addCurrentToRoulette() {
     if (spinning) return;
-    if(state.currentMovie) {
-        const title = state.currentMovie.title || state.currentMovie.name;
-        state.rouletteItems.push(title);
-        renderRoleta();
-        showToast("Adicionado à Roleta!");
-        fecharModal();
-        switchMode('roulette');
+    const name = titleName();
+    if (!name) return;
+    const note = document.getElementById('m-roulette-note');
+    if (state.rouletteItems.includes(name)) {
+        state.rouletteItems = state.rouletteItems.filter(item => item !== name);
+        note.hidden = true;
+        showToast('Tirado da roleta');
+    } else {
+        state.rouletteItems.push(name);
+        const n = state.rouletteItems.length;
+        document.getElementById('m-roulette-note-text').textContent =
+            `Na roleta: ${n} ${n === 1 ? 'opção' : 'opções'}${n < 2 ? '. Ponha mais uma para girar.' : '.'}`;
+        note.hidden = false;
     }
+    renderRoleta();
+    updateRouletteButton();
+}
+
+export function goToRoulette() {
+    fecharModal();
+    switchMode('roulette');
 }
 
 export function renderRoleta() {

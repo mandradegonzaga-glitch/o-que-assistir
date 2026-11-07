@@ -685,11 +685,16 @@
                         <svg class="ph icon" data-icon="list-plus" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M32,64a8,8,0,0,1,8-8H216a8,8,0,0,1,0,16H40A8,8,0,0,1,32,64Zm8,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16Zm104,48H40a8,8,0,0,0,0,16H144a8,8,0,0,0,0-16Zm88,0H216V168a8,8,0,0,0-16,0v16H184a8,8,0,0,0,0,16h16v16a8,8,0,0,0,16,0V200h16a8,8,0,0,0,0-16Z"/></svg>
                         <span id="btn-salvar-lista-label">Salvar em uma lista</span>
                     </button>
-                    <button class="title-action ripple" data-action="addCurrentToRoulette" data-tooltip="Adicionar à roleta personalizada" aria-label="Adicionar à roleta">
+                    <button type="button" id="btn-roleta" class="title-action ripple" data-action="addCurrentToRoulette" aria-pressed="false">
                         <svg class="ph icon" data-icon="roulette" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><g fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"><circle cx="128" cy="146" r="82"/><path d="M128.0,64.0L128.0,228.0M199.0,105.0L57.0,187.0M199.0,187.0L57.0,105.0"/></g><circle cx="128" cy="146" r="14"/><path d="M108,26h40l-20,34Z" stroke="currentColor" stroke-width="8.0" stroke-linejoin="round"/></svg>
-                        Roleta
+                        <span id="btn-roleta-label">Roleta</span>
                     </button>
                 </div>
+                <!-- Depois de pôr na roleta: fica no título e oferece ir para lá -->
+                <p id="m-roulette-note" class="title-note" role="status" hidden>
+                    <span id="m-roulette-note-text"></span>
+                    <button type="button" class="title-note__go" data-action="goToRoulette">Ir para a roleta</button>
+                </p>
 
                 <button type="button" id="btn-sortear-outro" class="btn-main ripple sortear-outro" data-action="sortearOutro" hidden>
                     <svg class="ph icon icon-18" data-icon="shuffle" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M240.49,175.51a12,12,0,0,1,0,17l-24,24a12,12,0,0,1-17-17L203,196h-2.09a76.17,76.17,0,0,1-61.85-31.83L97.38,105.78A52.1,52.1,0,0,0,55.06,84H32a12,12,0,0,1,0-24H55.06a76.17,76.17,0,0,1,61.85,31.83l41.71,58.39A52.1,52.1,0,0,0,200.94,172H203l-3.52-3.51a12,12,0,0,1,17-17Zm-95.62-72.62a12,12,0,0,0,16.93-1.13A52,52,0,0,1,200.94,84H203l-3.52,3.51a12,12,0,0,0,17,17l24-24a12,12,0,0,0,0-17l-24-24a12,12,0,0,0-17,17L203,60h-2.09a76,76,0,0,0-57.2,26A12,12,0,0,0,144.87,102.89Zm-33.74,50.22a12,12,0,0,0-16.93,1.13A52,52,0,0,1,55.06,172H32a12,12,0,0,0,0,24H55.06a76,76,0,0,0,57.2-26A12,12,0,0,0,111.13,153.11Z"/></svg>

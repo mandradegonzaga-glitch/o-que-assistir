@@ -58,4 +58,26 @@ test.describe('página do título', () => {
     await expect(save).toHaveClass(/is-on/);
     await expect(save).toHaveText('Remover da Lista');
   });
+
+  test('Roleta: põe e tira sem sair do título; "Ir para a roleta" leva até lá', async ({ page }) => {
+    await openTitle(page, 'movie-1');
+    const wheel = page.locator('#btn-roleta');
+    const note = page.locator('#m-roulette-note');
+    await expect(wheel).toHaveAttribute('aria-pressed', 'false');
+
+    await wheel.click();
+    await expect(modal(page)).toBeVisible(); // continua no título
+    await expect(wheel).toHaveAttribute('aria-pressed', 'true');
+    await expect(wheel).toHaveText('Na roleta');
+    await expect(note).toContainText('Na roleta: 1 opção. Ponha mais uma para girar.');
+
+    await wheel.click(); // tira
+    await expect(wheel).toHaveAttribute('aria-pressed', 'false');
+    await expect(note).toBeHidden();
+
+    await wheel.click();
+    await note.getByRole('button', { name: 'Ir para a roleta' }).click();
+    await expect(modal(page)).toBeHidden();
+    await expect(page.locator('#roulette-pool')).toContainText('Filme Um');
+  });
 });

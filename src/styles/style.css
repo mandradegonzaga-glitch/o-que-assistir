@@ -6028,10 +6028,10 @@ button, [role="tab"], [role="radio"], summary, .fun-mode, .list-card, .result-it
     gap: 2px;
     margin: var(--space-lg) calc(-1 * var(--space-xl)) var(--space-md);
     padding: 10px var(--space-md);
-    background: color-mix(in srgb, var(--bg-card) 88%, transparent);
-    -webkit-backdrop-filter: blur(14px);
-    backdrop-filter: blur(14px);
+    /* opaca: o trailer e as fotos passam por baixo sem aparecer através dela */
+    background: var(--bg-card);
     border-bottom: 1px solid var(--border-subtle);
+    box-shadow: 0 6px 12px -8px rgba(0, 0, 0, 0.6);
     overflow-x: auto;
     scrollbar-width: none;
 }
@@ -6134,3 +6134,31 @@ button, [role="tab"], [role="radio"], summary, .fun-mode, .list-card, .result-it
 @media (max-width: 380px) {
     .title-action { font-size: 0.72rem; min-height: 72px; }
 }
+
+/* Aviso depois de pôr o título na roleta */
+.title-note {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+    margin: 0 0 var(--space-md);
+    padding: 10px 12px 10px 14px;
+    background: rgba(var(--accent-primary-rgb), 0.12);
+    border: 1px solid rgba(var(--accent-primary-rgb), 0.4);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+}
+.title-note[hidden] { display: none; }
+.title-note__go {
+    min-height: 36px;
+    padding: 0 14px;
+    background: var(--accent-primary);
+    border: 0;
+    border-radius: 999px;
+    color: var(--accent-on);
+    font: 700 0.85rem var(--font-family);
+    cursor: pointer;
+}
+.title-note__go:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 2px; }

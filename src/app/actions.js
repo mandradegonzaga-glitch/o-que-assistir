@@ -21,7 +21,7 @@ import { toggleDeviceNotify } from './notifications.js';
 import { matchHistoryRemove, matchHistorySave } from './matchHistory.js';
 import { nextOnboarding } from './onboarding.js';
 import { abrirPerfil, alterarSenha, deletarConta, salvarPerfil } from './profile.js';
-import { addCurrentToRoulette, addRoletaItem, girarRoleta, limparRoleta, removeRoletaItem } from './roulette.js';
+import { addCurrentToRoulette, addRoletaItem, girarRoleta, goToRoulette, limparRoleta, removeRoletaItem } from './roulette.js';
 import { abrirDoHistorico, abrirHistoricoSorteios, limparHistoricoSorteios, navigateSorteio } from './sorteioHistory.js';
 import { abrirEpisodios, carregarDetalhes, fecharModal, goTitleSection, marcarVistoAtual, toggleSalvarAtual } from './titleModal.js';
 import { closeDailyPicks, toggleDailyPicks } from './dailyPicks.js';
@@ -37,6 +37,7 @@ const clickActions = {
   abrirHistoricoSorteios,
   abrirPerfil,
   addCurrentToRoulette,
+  goToRoulette,
   addRoletaItem,
   adicionarBlacklist,
   alterarSenha,
