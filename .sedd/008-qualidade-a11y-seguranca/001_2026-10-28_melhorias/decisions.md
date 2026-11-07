@@ -436,3 +436,21 @@
 
 **Complemento (T001-121):** o usuário pediu pré-listas e escolheu os dois tipos: modelos vazios com um toque e coleções prontas com títulos. As coleções não ficam guardadas no banco: são buscas fixas no TMDB (mais bem avaliados do tema), e só a cópia vira lista da pessoa. Criar listas sozinhas em toda conta nova foi descartado (encheria a aba de quem não quer).
 
+## D001-042 — Redesign geral da UX/UI em 5 etapas, publicado só no fim
+
+**Decisão:** pedido do usuário em 2026-11-06 ("mudar o layout ux e ui do site e deixar algo mais profissional"), a partir de 3 varreduras no Dribbble e de um brainstorming com o Gemini. Ordem aprovada:
+1. Base: ícones Phosphor no lugar de emojis e SVGs à mão, linha única do título, toques de app, pôsteres padronizados. ✅ (T001-124)
+2. Página do título: fundo com a cor do pôster, ações em ícones que acendem (estilo Letterboxd/Reelmark), abas, "Parecidos", esqueletos. ✅ (T001-125)
+3. Navegação: barra flutuante embaixo com Sortear no centro, biblioteca em grade de pôsteres, "Continue assistindo" e indicações no início.
+4. Filtros em pílulas com logos dos serviços (no lugar dos 6 `<select>`), busca junto dos filtros.
+5. Gavetas que sobem de baixo no lugar das janelas, sorteio animado com vibração, Match com cartão de arrastar e tela "Deu Match!", reações ilustradas (6, com "Não curti" e "Dormi no meio": muda o CHECK de `watch_history.reaction` em `database/reactions.sql`), DNA como "Perfil de gosto". Primeira visita com perguntas de serviços e gêneros e "Pular".
+
+Regras combinadas: cada etapa numa branch `redesign/etapa-N`, com commit e envio ao GitHub; **nada vai para `main`/`004-series-tracking`/produção até as 5 etapas estarem prontas**; **antes das etapas 3, 4 e 5, fazer a captação de referências no Dribbble** (uma página por vez, com pausas: a conta do usuário levou bloqueio temporário por excesso de buscas). Ícones: Phosphor (traço, preenchido e duotone) e reações como selos ilustrados próprios (gerados no Gemini, revisados e aprovados pelo usuário antes de usar). As prévias da Vercel não carregam títulos (o proxy do TMDB só aceita o domínio oficial e localhost) e o usuário decidiu não liberar.
+
+**Referências escolhidas (Dribbble):** Reelmark/Callour Studio (27212048), Movie discovery app/Yaroslav H. (26894339), PrimeVision/Bato (26628290), Letterboxd redesenhado/Matthew Buchanan, AstraFlix/Kites Design (26872729), UIGREAT (fundo na cor do pôster), barras em pílula (Onix, strangehelix), "Deu Match!" (Artur Lopato), reações em selos (Tatiana O'Toole).
+
+**Alternativas consideradas:**
+- Publicar cada etapa → o app ficaria "meio reformado" por um tempo; o usuário preferiu tudo junto.
+- Lucide em vez de Phosphor → menos variações de peso (sem duotone/preenchido para estados ativos).
+- Abas que escondem as partes do título → quem só rola perderia conteúdo e vários testes teriam de mudar; ficaram abas que levam até a parte.
+

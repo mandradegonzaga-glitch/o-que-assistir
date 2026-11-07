@@ -2,6 +2,26 @@
 
 All notable changes to this feature will be documented in this file.
 
+## [2026-11-07, redesign etapas 1 e 2] — branches `redesign/etapa-1` e `redesign/etapa-2` (ainda não publicado)
+
+### Changed
+
+- Todos os ícones do app no mesmo estilo (Phosphor), seguindo a cor do tipo escolhido; roleta com desenho próprio
+- Listas e coleções com ícone colorido no lugar do emoji
+- Título: linha única com nota, ano, duração ou temporadas e gêneros
+- Página do título com fundo na cor do pôster, ações em ícones que acendem, "Onde assistir" no alto e abas Sobre / Elenco / Episódios / Parecidos
+- "Roleta" no título põe e tira sem sair da página, com aviso "Ir para a roleta"
+- Botões afundam ao tocar; pôsteres com o mesmo acabamento em todo o app
+
+### Added
+
+- "Parecidos": até 10 recomendações no título
+- Carregamento em esqueleto no elenco, onde assistir e parecidos
+
+### Fixed
+
+- Um aviso de conquista não apaga mais outro que chega ao mesmo tempo
+
 ## [2026-11-06, CI] — sem mudança no site
 
 ### Fixed

@@ -1,7 +1,7 @@
 # Implementation Progress
 
 > Feature: 008-qualidade-a11y-seguranca
-> Last Updated: 2026-11-05 (DNA do usuário, partes 1 e 2)
+> Last Updated: 2026-11-07 (redesign, etapas 1 e 2)
 > Branch: `004-series-tracking` (D001-001). Todo push nesta branch publica o site na Vercel.
 
 ## Summary
@@ -20,6 +20,19 @@
 
 ## Para retomar
 
+**REDESIGN EM ANDAMENTO (D001-042): ler isto primeiro (atualizado em 2026-11-07):**
+- **Onde está:** branches `redesign/etapa-1` (`f896607`) e `redesign/etapa-2` (inclui a etapa 1), no GitHub. Trabalhar a partir da `redesign/etapa-2` (a etapa 3 sai dela). **A produção continua no `3c0d797` (SW `v26`) e só será publicada quando as 5 etapas estiverem prontas.**
+- **Backup:** etiqueta `backup-antes-redesign` e branch `backup/antes-redesign` (T001-123).
+- **Feito:** etapa 1 (T001-124: ícones Phosphor, linha única do título, toques de app, pôsteres) e etapa 2 (T001-125: página do título).
+- **Próxima sessão, pedidos do usuário em 2026-11-07:**
+  1. **"Nos cinemas" / data de estreia** no título quando "Onde assistir" vem vazio: em cartaz no Brasil → "Nos cinemas"; ainda vai lançar → "Estreia nos cinemas em DD/MM". Dados do TMDB `release_dates` (país BR, tipo 3 = cinema). O proxy já aceita `/movie/{id}?append_to_response=release_dates`; o caminho `/release_dates` sozinho não está liberado.
+  2. **Repaginar a imagem do ingresso** ("Gerar ingresso", `src/app/ticket.js`) no visual novo.
+  3. **Etapas 3, 4 e 5** (ver D001-042). **Antes de cada uma, fazer a captação no Dribbble** (já decidido; uma página por vez, ~10 s de pausa).
+- **Ícones:** para acrescentar um, pôr o nome e o peso em `ICONS` de `scripts/build-icons.mjs` e rodar `node scripts/build-icons.mjs`.
+- **Testes:** a suíte e2e inteira às vezes falha 1 teste de tempo diferente por rodada com a máquina carregada; rodar o que falhou sozinho antes de concluir que quebrou algo.
+- **Pendências de antes do redesign:** refazer as 2 ilustrações com defeito do vídeo (casal com dois braços esquerdos, amigos com pernas estranhas) e mostrar ao usuário antes de usar; vídeo final com Remotion (`Divulgacao/video-remotion`, só depois do redesign); teste real com 2 celulares.
+
+
 **Ao reabrir (anotado em 2026-11-06):**
 1. ✅ Feito em 2026-11-06 pelo MCP (migração `friend_profile_history_genres`; conferido: a função traz `genres`, anon sem acesso, authenticated com acesso). Antes: **Rodar no Supabase o `get_friend_profile` novo** (`database/friends.sql`, agora com `genres` no histórico), pelo MCP do Supabase: o usuário pediu para eu rodar ("rode você o sql"). Nesta sessão as ferramentas do MCP não carregaram (conectado, mas aberto antes); depois de rodar, conferir que o perfil de um amigo traz `genres`.
 2. ✅ Feito em 2026-11-06 (T001-096, sem commit). Era: **Depois, T001-096 (indicações pelo DNA)**, já aprovado. Combinado com o usuário em 2026-11-06:
@@ -36,9 +49,10 @@
 3c. **Ao retomar (pedido em 2026-11-06):** perguntar qual seguir: listas personalizadas (#25, SQL), vídeo final, ou o teste real com dois celulares (incluir séries logado: "Já Vi", "Vi até aqui", Em Andamento, importação do convidado). Em espera (servidor): T001-094 e T001-095.
 3d. **MCPs (2026-11-06):** varredura completa de mcpservers.org (19.521 servidores, 583 ligados ao projeto). Adicionados ao `.mcp.json` só oficiais: `context7` (documentação atual das bibliotecas), `github` (CI e logs; precisa da variável `GITHUB_PAT` com um token fine-grained só deste repositório, leitura em Actions/Contents/Pull requests, criado pelo usuário) e `chrome-devtools` (Lighthouse, desempenho, PWA, gravação de tela). Não oficiais recusados após checagem (TMDB: pacote npm sem ligação comprovada com o repositório; acessibilidade: 0–4 estrelas). Ao reabrir: aprovar os 3 no `/mcp`, conferir se conectaram e perguntar se faz commit do `.mcp.json` (ainda sem commit).
 3e. Commit `3f512b4` (2026-11-06): `.mcp.json` e a nota 3d publicados.
-3f. ✅ Listas personalizadas completas: parte 1 (T001-120, D001-041), pré-listas (T001-121) e parte 2, ordem + link público (T001-122, SW `v26`) em 2026-11-06, SQL aplicado no Supabase. **Sem commit** (SW `v25`). Falta: parte 2 (ordem arrastando e link público), vídeo final, teste com dois celulares (incluir as listas com conta e a importação do convidado).
-4. Vídeo de lançamento: foi só uma prévia; o de verdade será feito quando tudo estiver implementado (roteiro em `E:TrabalhosO que assistirDivulgacao
-oteiro-do-video`).
+3f. ✅ Listas personalizadas completas: parte 1 (T001-120, D001-041), pré-listas (T001-121) e parte 2, ordem + link público (T001-122, SW `v26`) em 2026-11-06, SQL aplicado no Supabase. Publicado em `1b50c3a` + `3c0d797` (as duas branches, produção em `v26`, CI verde).
+
+**Pausa em 2026-11-06 (usuário: "continuamos depois").** Próximo, à escolha do usuário: (a) vídeo de lançamento final com Remotion (skills globais; roteiro antigo em `Divulgacao/roteiro-do-video`), mostrando também listas, coleções e link; ou (b) teste real com dois celulares: amizade, indicação, Match ao vivo, séries com conta, listas com conta, ordem, link público aberto por outra pessoa e importação do convidado. Em espera até o usuário pedir: T001-094 e T001-095.
+4. Vídeo de lançamento: foi só uma prévia; o de verdade será feito quando tudo estiver implementado (roteiro em `E:\Trabalhos\O que assistir\Divulgacao\roteiro-do-video`).
 
 **Atualização 2026-11-05:** ordem confirmada pelo usuário. DNA do usuário partes 1 e 2 feitas (T001-098 e T001-099, site `v23`, sem commit). "Outros" sem barra e com os nomes (T001-101, aprovado). Comparar gostos feito em 2026-11-06 (T001-092, sem commit; falta o usuário rodar o `get_friend_profile` novo no Supabase). Próximo: indicações pelo DNA (T001-096). MCP do Supabase conectado (usar para consultar; alteração continua como SQL aprovado).
 
