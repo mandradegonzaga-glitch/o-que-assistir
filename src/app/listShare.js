@@ -5,6 +5,7 @@ import { isShareToken, sharedListFrom } from '../domain/userLists.js';
 import { session } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { confirmDialog } from '../ui/modals.js';
+import { listIcon } from '../ui/listIcons.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { formatCount, pluralize } from '../utils/format.js';
 import { IMG_URL } from '../config/constants.js';
@@ -102,7 +103,7 @@ export async function openSharedListFromUrl() {
 
 function renderSharedList() {
     const n = shared.items.length;
-    document.getElementById('shared-list-title').innerHTML = `<span aria-hidden="true">${shared.emoji}</span> ${escapeHtml(shared.name)}`;
+    document.getElementById('shared-list-title').innerHTML = `${listIcon(shared.emoji)} ${escapeHtml(shared.name)}`;
     document.getElementById('shared-list-owner').textContent =
         `${shared.owner ? `Lista de ${shared.owner}` : 'Lista compartilhada'} · ${n === 0 ? 'nenhum título' : `${formatCount(n)} ${pluralize(n, 'título', 'títulos')}`}`;
     document.getElementById('shared-list-items').innerHTML = n === 0

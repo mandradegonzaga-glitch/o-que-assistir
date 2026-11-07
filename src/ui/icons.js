@@ -1,6 +1,8 @@
 // Ícones usados nos templates (decorativos: o nome acessível fica no botão)
-export const CLOSE_ICON = '<svg aria-hidden="true" class="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-export const TV_ICON = '<svg aria-hidden="true" class="icon-24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>';
-export const WHEEL_ICON = '<svg aria-hidden="true" class="icon-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle fill="currentColor" fill-opacity="0.2" cx="12" cy="13.5" r="8.5"/><path d="M12 13.5V5M12 13.5l7.4 4.2M12 13.5l-7.4 4.2"/><circle fill="currentColor" stroke="none" cx="12" cy="13.5" r="1.7"/><path fill="currentColor" stroke="none" d="M12 6 9.6 1.5h4.8z"/></svg>';
+// Todos do Phosphor (src/ui/phosphor.js), menos o ingresso, que é a marca do app
+import { ph } from './phosphor.js';
+export const CLOSE_ICON = ph('x', { weight: 'bold', cls: 'icon-x' });
+export const TV_ICON = ph('television', { weight: 'duotone', cls: 'icon-24' });
+export const WHEEL_ICON = ph('roulette', { weight: 'duotone', cls: 'icon-40' });
 export const TICKET_ICON = '<svg aria-hidden="true" class="icon-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path fill="currentColor" fill-opacity="0.2" d="M2 8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2.5a1.5 1.5 0 0 0 0 3V16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2.5a1.5 1.5 0 0 0 0-3z"/><path d="M16 6v2M16 11v2M16 16v2"/><path fill="currentColor" stroke="none" d="M8 9v6l5-3z"/></svg>';
-export const STAR_ICON = '<svg aria-hidden="true" class="icon-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path fill="currentColor" fill-opacity="0.2" d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5-5.9-3.2-5.9 3.2 1.2-6.5L2.5 9.4l6.6-.9z"/></svg>';
+export const STAR_ICON = ph('star', { weight: 'duotone', cls: 'icon-40' });

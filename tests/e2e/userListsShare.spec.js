@@ -1,5 +1,11 @@
 import { test, expect, enterAsGuest, openApp } from './support/app.js';
 
+// Título da lista: ícone (o banco guarda o emoji; a tela mostra o ícone Phosphor) + nome
+const expectListTitle = async (title, icon, name) => {
+  await expect(title.locator(`.list-icon[data-icon="${icon}"]`)).toHaveCount(1);
+  await expect(title).toHaveText(name);
+};
+
 const TOKEN = '3f2a6c1e-8b7d-4e2f-9a1b-0c3d4e5f6a7b';
 const it = (id, title) => ({ id, title, poster: `/${id}.jpg`, type: 'movie' });
 const posters = page => page.locator('#library-content .library-item[data-reorder-id]');
@@ -129,7 +135,7 @@ test.describe('listas: link público', () => {
 
     const modal = page.locator('#modal-shared-list');
     await expect(modal).toBeVisible();
-    await expect(page.locator('#shared-list-title')).toHaveText('❤️ Para a Bia');
+    await expectListTitle(page.locator('#shared-list-title'), 'heart', 'Para a Bia');
     await expect(page.locator('#shared-list-owner')).toHaveText('Lista de Ana · 2 títulos');
     expect(await modal.locator('.library-item__open').evaluateAll(els => els.map(el => el.getAttribute('aria-label')))).toEqual(['Filme 3', 'Filme 1']);
     expect(new URL(page.url()).searchParams.get('lista')).toBeNull(); // o link não abre de novo ao recarregar
@@ -144,7 +150,7 @@ test.describe('listas: link público', () => {
     await page.getByRole('button', { name: 'Copiar para minhas listas' }).click();
     await expect(modal).toBeHidden();
     await expect(page.locator('#toast')).toContainText('Copiada para as suas listas como "Para a Bia".');
-    await expect(page.locator('#list-view-title')).toHaveText('❤️ Para a Bia');
+    await expectListTitle(page.locator('#list-view-title'), 'heart', 'Para a Bia');
     await expect(page.locator('#list-view-title')).toBeFocused();
     const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('guest_lists')));
     expect(saved.map(l => `${l.name}:${l.items.map(i => i.id).join(',')}`)).toEqual(['Para a Bia:3,1']);
@@ -180,7 +186,7 @@ test.describe('listas: link público', () => {
       await expect(page.locator('#toast')).toContainText('Link copiado');
       const token = await page.evaluate(() => window.__db.user_lists[0].share_token);
       expect(await page.evaluate(() => navigator.clipboard.readText())).toContain(`?lista=${token}`);
-      await expect(page.locator('#library-content')).toContainText('🔗 Compartilhada por link');
+      await expect(page.locator('#library-content')).toContainText('Compartilhada por link');
 
       // Compartilhar de novo usa o mesmo link, sem perguntar
       await page.getByRole('button', { name: 'Compartilhar', exact: true }).click();
@@ -197,7 +203,7 @@ test.describe('listas: link público', () => {
     test('abrir o próprio link leva direto à lista, para editar', async ({ page }) => {
       await seedAccountList(page, { share_token: TOKEN });
       await page.goto(`/?lista=${TOKEN}`);
-      await expect(page.locator('#list-view-title')).toHaveText('🍿 Sexta');
+      await expectListTitle(page.locator('#list-view-title'), 'popcorn', 'Sexta');
       await expect(page.locator('#modal-shared-list')).toBeHidden();
     });
   });

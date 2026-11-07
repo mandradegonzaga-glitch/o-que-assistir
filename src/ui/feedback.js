@@ -129,9 +129,23 @@ export function createConfetti() {
     }
 }
 
-// Bilhete de conquista: momento próprio para o desbloqueio, sem interromper o que a pessoa faz
+// Bilhete de conquista: momento próprio para o desbloqueio, sem interromper o que a pessoa faz.
+// Fila: avisos que chegam juntos (ex.: conquista + desafio do dia) aparecem um depois do outro, em vez
+// de o segundo apagar o primeiro. A conquista vem antes, depois o nível, depois desafio e meta.
+const ACHIEVEMENT_MS = 5000;
+const ACHIEVEMENT_GAP_MS = 350;
+const priorityOf = kicker => (kicker === 'Conquista desbloqueada' ? 0 : kicker === 'Novo nível' ? 1 : 2);
+const achievementQueue = [];
 let achievementTimer;
-export function showAchievement({ name, desc, icon, kicker = 'Conquista desbloqueada' }) {
+let achievementBusy = false;
+let achievementScheduled = false;
+
+function showNextAchievement() {
+    achievementScheduled = false;
+    if (achievementBusy || achievementQueue.length === 0) return;
+    achievementQueue.sort((a, b) => a.priority - b.priority || a.order - b.order);
+    const { name, desc, icon, kicker } = achievementQueue.shift();
+    achievementBusy = true;
     document.querySelector('.achievement__kicker').textContent = kicker;
     document.getElementById('achievement-icon').innerHTML = BADGE_ICONS[icon] || '';
     document.getElementById('achievement-name').textContent = name;
@@ -145,5 +159,17 @@ export function showAchievement({ name, desc, icon, kicker = 'Conquista desbloqu
     achievementTimer = setTimeout(() => {
         box.classList.remove('show');
         box.hidden = true;
-    }, 5000);
+        achievementBusy = false;
+        if (achievementQueue.length) setTimeout(showNextAchievement, ACHIEVEMENT_GAP_MS);
+    }, ACHIEVEMENT_MS);
+}
+
+let achievementOrder = 0;
+export function showAchievement({ name, desc, icon, kicker = 'Conquista desbloqueada' }) {
+    achievementQueue.push({ name, desc, icon, kicker, priority: priorityOf(kicker), order: achievementOrder++ });
+    // Espera o fim da tarefa atual: assim avisos disparados juntos entram na fila antes de escolher o primeiro
+    if (!achievementBusy && !achievementScheduled) {
+        achievementScheduled = true;
+        setTimeout(showNextAchievement, 0);
+    }
 }

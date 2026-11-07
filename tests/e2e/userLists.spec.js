@@ -1,5 +1,11 @@
 import { test, expect, enterAsGuest, modal, openApp } from './support/app.js';
 
+// Título da lista: ícone (o banco guarda o emoji; a tela mostra o ícone Phosphor) + nome
+const expectListTitle = async (title, icon, name) => {
+  await expect(title.locator(`.list-icon[data-icon="${icon}"]`)).toHaveCount(1);
+  await expect(title).toHaveText(name);
+};
+
 const saveModal = page => page.locator('#modal-save-list');
 const editModal = page => page.locator('#modal-list-edit');
 const option = (page, name) => saveModal(page).locator('label', { hasText: name }).locator('input');
@@ -19,12 +25,12 @@ const closeBoth = async page => {
 };
 
 // Pela janela "Salvar em lista": cria a lista e já guarda o título aberto nela
-const createFromTitle = async (page, name, emoji) => {
+const createFromTitle = async (page, name, icone) => {
   await saveModal(page).getByRole('button', { name: '+ Nova lista' }).click();
   await expect(editModal(page)).toBeVisible();
   await expect(page.locator('#list-name')).toBeFocused();
   await page.locator('#list-name').fill(name);
-  if (emoji) await editModal(page).getByRole('radio', { name: emoji }).click();
+  if (icone) await editModal(page).getByRole('radio', { name: icone }).click();
   await editModal(page).getByRole('button', { name: 'Criar e salvar' }).click();
   await expect(editModal(page)).toBeHidden();
 };
@@ -40,7 +46,7 @@ test.describe('listas personalizadas', () => {
     await expect(page.locator('#save-list-subtitle')).toHaveText('Onde guardar "Filme Um"? Pode marcar mais de uma.');
     await expect(page.locator('#save-list-empty')).toBeVisible();
 
-    await createFromTitle(page, '  Maratona   Halloween ', '🎃');
+    await createFromTitle(page, '  Maratona   Halloween ', 'Caveira');
     await expect(option(page, 'Maratona Halloween')).toBeChecked();
     await expect(page.locator('#save-list-empty')).toBeHidden();
     // O foco volta para o botão que abriu a janela de criar
@@ -78,7 +84,7 @@ test.describe('listas personalizadas', () => {
     await expect(page.locator('#tab-listas')).toHaveAttribute('aria-selected', 'true'); // a aba é lembrada
     await cards.filter({ hasText: 'Sexta à noite' }).click();
     await expect(page.locator('#list-view-title')).toBeFocused();
-    await expect(page.locator('#list-view-title')).toHaveText('🎬 Sexta à noite');
+    await expectListTitle(page.locator('#list-view-title'), 'film-slate', 'Sexta à noite');
     await expect(page.locator('#library-content .library-item__open')).toHaveCount(2);
 
     // Tirar da lista, com desfazer
@@ -105,14 +111,14 @@ test.describe('listas personalizadas', () => {
     await expect(page.locator('#list-name-error')).toHaveText('Dê um nome para a lista.');
     await expect(page.locator('#list-name')).toHaveAttribute('aria-invalid', 'true');
     await page.locator('#list-name').fill('Terror');
-    // Escolher o emoji pelas setas
-    await editModal(page).getByRole('radio', { name: '🎬' }).focus();
+    // Escolher o ícone pelas setas
+    await editModal(page).getByRole('radio', { name: 'Claquete' }).focus();
     await page.keyboard.press('ArrowRight');
-    await expect(editModal(page).getByRole('radio', { name: '🍿' })).toHaveAttribute('aria-checked', 'true');
+    await expect(editModal(page).getByRole('radio', { name: 'Pipoca' })).toHaveAttribute('aria-checked', 'true');
     await page.locator('#list-name').press('Enter');
     await expect(editModal(page)).toBeHidden();
     await expect(page.locator('#library-content .list-card:not(.list-card--collection)')).toBeFocused();
-    await expect(page.locator('#library-content .list-card:not(.list-card--collection)')).toContainText('🍿');
+    await expect(page.locator('#library-content .list-card:not(.list-card--collection) .list-icon[data-icon="popcorn"]')).toHaveCount(1);
 
     await page.locator('#library-content').getByRole('button', { name: '+ Nova lista' }).click();
     await page.locator('#list-name').fill('TERROR');
@@ -125,9 +131,9 @@ test.describe('listas personalizadas', () => {
     await expect(page.locator('#list-edit-title')).toHaveText('Renomear lista');
     await expect(page.locator('#list-name')).toHaveValue('Terror');
     await page.locator('#list-name').fill('Terror dos anos 80');
-    await editModal(page).getByRole('radio', { name: '👻' }).click();
+    await editModal(page).getByRole('radio', { name: 'Fantasma' }).click();
     await editModal(page).getByRole('button', { name: 'Salvar' }).click();
-    await expect(page.locator('#list-view-title')).toHaveText('👻 Terror dos anos 80');
+    await expectListTitle(page.locator('#list-view-title'), 'ghost', 'Terror dos anos 80');
     await expect(page.locator('#list-view-title')).toBeFocused();
 
     await page.getByRole('button', { name: 'Apagar lista' }).click();
@@ -140,13 +146,13 @@ test.describe('listas personalizadas', () => {
     expect(await page.evaluate(() => localStorage.getItem('guest_lists'))).toBe('[]');
   });
 
-  test('modelos: um toque cria a lista; na janela "Nova lista", preenche nome e emoji', async ({ page }) => {
+  test('modelos: um toque cria a lista; na janela "Nova lista", preenche nome e ícone', async ({ page }) => {
     await enterAsGuest(page);
     await page.locator('#tab-listas').click();
     await page.locator('#library-content').getByRole('button', { name: 'Favoritos' }).click();
     await expect(page.locator('#toast')).toContainText('Lista "Favoritos" criada.');
     const mine = page.locator('#library-content .list-card:not(.list-card--collection)');
-    await expect(mine).toContainText('🏆');
+    await expect(mine.locator('.list-icon[data-icon="trophy"]')).toHaveCount(1);
     await expect(mine).toBeFocused();
 
     await page.locator('#library-content').getByRole('button', { name: '+ Nova lista' }).click();
@@ -154,7 +160,7 @@ test.describe('listas personalizadas', () => {
     await expect(templates.getByRole('button', { name: 'Favoritos' })).toHaveCount(0); // já existe
     await templates.getByRole('button', { name: 'Com o mozão' }).click();
     await expect(page.locator('#list-name')).toHaveValue('Com o mozão');
-    await expect(editModal(page).getByRole('radio', { name: '❤️' })).toHaveAttribute('aria-checked', 'true');
+    await expect(editModal(page).getByRole('radio', { name: 'Coração' })).toHaveAttribute('aria-checked', 'true');
     await expect(page.locator('#list-edit-save')).toBeFocused();
     await page.locator('#list-edit-save').click();
     await expect(mine).toHaveCount(2);
@@ -169,7 +175,7 @@ test.describe('listas personalizadas', () => {
     await enterAsGuest(page);
     await page.locator('#tab-listas').click();
     await page.locator('#library-content .list-card--collection', { hasText: 'Clássicos do terror' }).click();
-    await expect(page.locator('#list-view-title')).toHaveText('🎃 Clássicos do terror');
+    await expectListTitle(page.locator('#list-view-title'), 'skull', 'Clássicos do terror');
     await expect(page.locator('#list-view-title')).toBeFocused();
     await expect(page.locator('#library-content .library-item__open')).toHaveCount(5);
     await expect(page.locator('#library-content .remove-btn')).toHaveCount(0); // a coleção não é da pessoa
@@ -215,7 +221,7 @@ test.describe('listas personalizadas', () => {
       await openApp(page);
       await openTitle(page);
       await page.locator('#btn-salvar-lista').click();
-      await createFromTitle(page, 'Com a família', '🧸');
+      await createFromTitle(page, 'Com a família', 'Balão');
       await expect(option(page, 'Com a família')).toBeChecked();
       const db = () => page.evaluate(() => ({
         lists: window.__db.user_lists.map(l => `${l.emoji} ${l.name}`),

@@ -15,10 +15,12 @@ import { initPwa } from './app/pwa.js';
 import { initRoulette } from './app/roulette.js';
 import { initUrlState, openTitleFromUrl } from './app/urlSync.js';
 import { initModalA11y } from './ui/modals.js';
+import { hydrateIcons } from './ui/phosphor.js';
 import { initTilt } from './ui/tilt.js';
 import { initAccessibility, initRovingGroups, initScrollButton, initYearInputs, setupInputWrappers } from './ui/navigation.js';
 import { session } from './state/appState.js';
 
+hydrateIcons();
 initActions();
 initPwa();
 removeLegacyPasswords();

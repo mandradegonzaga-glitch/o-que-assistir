@@ -12,6 +12,8 @@ import { pendingRemovals, scheduleUndoable, showToast } from '../ui/feedback.js'
 import { confirmDialog } from '../ui/modals.js';
 import { setDragReorder } from '../ui/dragReorder.js';
 import { CLOSE_ICON } from '../ui/icons.js';
+import { listIcon, listIconInfo } from '../ui/listIcons.js';
+import { ph } from '../ui/phosphor.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { formatCount, pluralize } from '../utils/format.js';
 import { IMG_URL } from '../config/constants.js';
@@ -109,7 +111,7 @@ export function renderListsTab(div) {
     if (lists.length === 0) {
         div.innerHTML = `
             <div class="empty-state grid-full">
-                <div class="empty-state-icon"><span class="empty-state-emoji" aria-hidden="true">📂</span></div>
+                <div class="empty-state-icon">${ph('folder-open', { cls: 'empty-state-ph' })}</div>
                 <h3 class="empty-state-title">Nenhuma lista ainda</h3>
                 <p class="empty-state-desc">Junte títulos do seu jeito, como "Maratona de Halloween" ou "Filmes com a namorada". Abra um título e toque em "Salvar em uma lista", ou crie uma agora.</p>
                 ${templateChips('createFromTemplate', 'Comece com uma:')}
@@ -123,7 +125,7 @@ export function renderListsTab(div) {
         const posters = l.items.filter(i => i.poster).slice(-3).reverse()
             .map(i => `<img src="${IMG_URL + i.poster}" alt="" width="500" height="750" loading="lazy">`).join('');
         return `<li><button type="button" class="list-card" data-action="openUserList" data-arg="${escapeHtml(l.id)}">
-                <span class="list-card__emoji" aria-hidden="true">${l.emoji}</span>
+                ${listIcon(l.emoji, 'list-card__emoji')}
                 <span class="list-card__text"><span class="list-card__name">${escapeHtml(l.name)}</span>
                 <span class="list-card__count">${countLabel(l.items.length)}</span></span>
                 <span class="list-card__posters" aria-hidden="true">${posters}</span>
@@ -139,13 +141,13 @@ export function renderListsTab(div) {
 function templateChips(action, label) {
     const templates = availableTemplates(allLists());
     if (templates.length === 0) return '';
-    const chips = templates.map(t => `<li><button type="button" class="list-template" data-action="${action}" data-arg="${escapeHtml(t.name)}"><span aria-hidden="true">${t.emoji}</span> ${escapeHtml(t.name)}</button></li>`).join('');
+    const chips = templates.map(t => `<li><button type="button" class="list-template" data-action="${action}" data-arg="${escapeHtml(t.name)}">${listIcon(t.emoji)} ${escapeHtml(t.name)}</button></li>`).join('');
     return `<p class="list-templates__label" id="templates-${action}">${label}</p><ul class="list-templates" aria-labelledby="templates-${action}">${chips}</ul>`;
 }
 
 function collectionsSection() {
     const cards = COLLECTIONS.map(c => `<li><button type="button" class="list-card list-card--collection" data-action="openCollection" data-arg="${c.id}">
-            <span class="list-card__emoji" aria-hidden="true">${c.emoji}</span>
+            ${listIcon(c.emoji, 'list-card__emoji')}
             <span class="list-card__text"><span class="list-card__name">${escapeHtml(c.name)}</span>
             <span class="list-card__count">${collectionKind(c)}</span></span>
         </button></li>`).join('');
@@ -168,7 +170,7 @@ function renderCollection(div, c) {
     div.innerHTML = `
         <div class="list-view__head grid-full">
             <button type="button" class="btn-clear-small" data-action="closeUserList"><span aria-hidden="true">←</span> Todas as listas</button>
-            <h3 id="list-view-title" class="list-view__title" tabindex="-1"><span aria-hidden="true">${c.emoji}</span> ${escapeHtml(c.name)}</h3>
+            <h3 id="list-view-title" class="list-view__title" tabindex="-1">${listIcon(c.emoji)} ${escapeHtml(c.name)}</h3>
             <p class="list-view__count">${ready ? `Coleção pronta · ${countLabel(items.length)}` : 'Coleção pronta'}</p>
             <div class="list-view__actions">
                 ${ready ? '<button type="button" class="btn-main btn-compact ripple list-view__copy" data-action="copyCollection">Copiar para minhas listas</button>' : ''}
@@ -309,8 +311,8 @@ function renderOpenList(div, list) {
     div.innerHTML = `
         <div class="list-view__head grid-full">
             <button type="button" class="btn-clear-small" data-action="closeUserList"><span aria-hidden="true">←</span> Todas as listas</button>
-            <h3 id="list-view-title" class="list-view__title" tabindex="-1"><span aria-hidden="true">${list.emoji}</span> ${escapeHtml(list.name)}</h3>
-            <p class="list-view__count">${countLabel(items.length)}${shared ? ' · <span class="list-view__shared">🔗 Compartilhada por link</span>' : ''}</p>
+            <h3 id="list-view-title" class="list-view__title" tabindex="-1">${listIcon(list.emoji)} ${escapeHtml(list.name)}</h3>
+            <p class="list-view__count">${countLabel(items.length)}${shared ? ` · <span class="list-view__shared">${ph('link', { weight: 'bold' })} Compartilhada por link</span>` : ''}</p>
             <div class="list-view__actions">
                 ${items.length > 1 ? `<button type="button" class="btn-clear-small${ordering ? ' is-on' : ''}" data-action="toggleListReorder" aria-pressed="${ordering}">${ordering ? 'Pronto' : 'Ordenar'}</button>` : ''}
                 <button type="button" class="btn-clear-small" data-action="shareUserList">Compartilhar</button>
@@ -480,7 +482,7 @@ function renderSaveOptions() {
     document.getElementById('save-list-options').innerHTML = lists.map(l => `
         <label class="provider-choice save-lists__option">
             <input type="checkbox" data-change="toggleTitleInList" value="${escapeHtml(l.id)}" ${hasItem(l, movie.id) ? 'checked' : ''}>
-            <span class="save-lists__emoji" aria-hidden="true">${l.emoji}</span>
+            ${listIcon(l.emoji, 'save-lists__emoji')}
             <span class="save-lists__name">${escapeHtml(l.name)}</span>
             <span class="save-lists__count">${countLabel(l.items.length)}</span>
         </label>`).join('');
@@ -521,7 +523,7 @@ export async function toggleTitleInList(input) {
 function renderEmojiPicker() {
     document.getElementById('list-emoji').innerHTML = LIST_EMOJIS.map(e => {
         const on = e === editor.emoji;
-        return `<button type="button" class="emoji-picker__option" role="radio" aria-checked="${on}" tabindex="${on ? 0 : -1}" data-action="pickListEmoji" data-arg="${e}">${e}</button>`;
+        return `<button type="button" class="emoji-picker__option" role="radio" aria-checked="${on}" tabindex="${on ? 0 : -1}" data-action="pickListEmoji" data-arg="${e}" aria-label="${listIconInfo(e).label}">${listIcon(e)}</button>`;
     }).join('');
 }
 

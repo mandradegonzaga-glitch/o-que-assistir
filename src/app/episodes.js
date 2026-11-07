@@ -1,5 +1,6 @@
 // Rastreamento de episódios (004-series-tracking)
 import { supabaseRemoveFromHistory, supabaseRemoveFromWatchlist } from '../api/supabase.js';
+import { ph } from '../ui/phosphor.js';
 import { canTrackEpisodes, getSeriesProgress, markEpisode, markEpisodes, unmarkEpisode } from './episodeStore.js';
 import { saveGuestHistory, saveGuestWatchlist } from './guestLibrary.js';
 import { tmdbGet } from '../api/tmdb.js';
@@ -308,7 +309,7 @@ export function updateSeriesWatchButton(seriesData, watchedKeys) {
     }
 }
 
-const CHECK_ICON = '<svg aria-hidden="true" class="icon icon-16 icon-lead-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>';
+const CHECK_ICON = ph('check', { weight: 'bold', cls: 'icon icon-16 icon-lead-4' });
 
 // Mesmo botão dos filmes: "Já Vi" (ativo) ou "JÁ VISTO" (desativado)
 export function setSeriesSeenButton(btnV, seen) {

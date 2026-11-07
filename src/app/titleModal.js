@@ -1,5 +1,6 @@
 // Modal de detalhes do título
 import { isAbortError, latestSignal, tmdbGet } from '../api/tmdb.js';
+import { ph } from '../ui/phosphor.js';
 import { PERSON_PLACEHOLDER } from './discover.js';
 import { _moveFromWatchlistIfNeeded, loadEpisodesSection, markWholeSeries, setSeriesSeenButton } from './episodes.js';
 import { salvarHistorico, toggleWatchlist } from './library.js';
@@ -11,7 +12,7 @@ import { trackChallenge } from './progress.js';
 import { session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
-import { formatRating } from '../utils/format.js';
+import { titleFacts } from '../domain/titleFacts.js';
 import { IMG_URL } from '../config/constants.js';
 
 // ================================================
@@ -78,6 +79,37 @@ async function loadImdbLink(f, type, signal) {
         }
     } catch (e) {
         if (!isAbortError(e)) console.error('Erro ao buscar IMDb ID:', e);
+    }
+}
+
+// Linha única de informações: aparece na hora com o que o título já traz; a duração
+// (ou as temporadas) chega depois, com os detalhes do TMDB
+const STAR = ph('star', { weight: 'fill', cls: 'icon icon-14' });
+const CHECK_ICON = ph('check', { weight: 'bold', cls: 'icon icon-16 icon-lead-4' });
+function renderFacts(f, type, details = {}) {
+    const isTv = type === 'tv';
+    const facts = titleFacts({
+        rating: f.vote_average,
+        date: f.release_date || f.first_air_date,
+        runtime: details.runtime,
+        seasons: isTv ? details.number_of_seasons : undefined,
+        genres: f.genre_ids?.length ? f.genre_ids : (details.genres || f.genres),
+    });
+    // Nota, ano e duração numa linha; os gêneros na linha de baixo (assim nenhum "•" fica sobrando ao quebrar)
+    const main = facts.filter(fact => fact.kind !== 'genres').map(fact => fact.kind === 'rating'
+        ? `<span class="rating"><span class="sr-only">Nota </span>${STAR}${escapeHtml(fact.text)}</span>`
+        : `<span>${escapeHtml(fact.text)}</span>`).join('<span class="modal-info__dot" aria-hidden="true">•</span>');
+    const genres = facts.find(fact => fact.kind === 'genres');
+    document.getElementById('m-facts').innerHTML = main + (genres ? `<span class="modal-info__genres">${escapeHtml(genres.text)}</span>` : '');
+}
+
+async function loadFacts(f, type, signal) {
+    try {
+        const details = await tmdbGet(`/${type}/${f.id}`, {}, { signal });
+        if (signal.aborted || state.currentMovie?.id !== f.id) return;
+        renderFacts(f, type, details);
+    } catch (e) {
+        if (!isAbortError(e)) console.error('Erro ao carregar detalhes:', e);
     }
 }
 
@@ -160,8 +192,7 @@ export async function abrirModal(f, { fromDraw = false } = {}) {
     const linkRt = document.getElementById('link-rt');
     linkRt.href = `https://www.rottentomatoes.com/search?search=${encodeURIComponent(f.original_title || f.original_name || f.title || f.name)}`;
     linkImdb.hidden = true;
-    document.getElementById('m-rating').innerHTML = `<svg aria-hidden="true" class="icon icon-14 icon-lead-2" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>${formatRating(f.vote_average)}`;
-    document.getElementById('m-year').innerText = (f.release_date || f.first_air_date || '').split('-')[0];
+    renderFacts(f, type);
     document.getElementById('m-poster').src = f.backdrop_path ? IMG_URL + f.backdrop_path : (f.poster_path ? IMG_URL + f.poster_path : '');
 
     // Mostra "Sortear outro" só para o que veio de um sorteio
@@ -185,12 +216,12 @@ export async function abrirModal(f, { fromDraw = false } = {}) {
         // Séries também têm "Já Vi"; ao terminar todos os episódios, a série é marcada sozinha
         setSeriesSeenButton(btnV, !!vistos.find(i => i.id === f.id));
     } else {
-        btnV.innerHTML = vistos.find(i=>i.id===f.id) ? '<svg aria-hidden="true" class="icon icon-16 icon-lead-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>JÁ VISTO' : '<svg aria-hidden="true" class="icon icon-16 icon-lead-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Já Vi';
+        btnV.innerHTML = vistos.find(i=>i.id===f.id) ? CHECK_ICON + 'JÁ VISTO' : CHECK_ICON + 'Já Vi';
         btnV.disabled = !!vistos.find(i=>i.id===f.id);
     }
 
-    const starIcon = '<svg aria-hidden="true" class="icon icon-16 icon-lead-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>';
-    const removeIcon = '<svg aria-hidden="true" class="icon icon-16 icon-lead-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    const starIcon = ph('bookmark-simple', { weight: 'bold', cls: 'icon icon-16 icon-lead-4' });
+    const removeIcon = ph('x', { weight: 'bold', cls: 'icon icon-16 icon-lead-4' });
     const inWatchlist = !!(session.user.watchlist || []).find(i => i.id === f.id);
     const watchlistLabel = isSeries ? 'Quero Assistir' : 'Salvar';
     btnS.innerHTML = inWatchlist ? `${removeIcon}Remover da Lista` : `${starIcon}${watchlistLabel}`;
@@ -208,6 +239,7 @@ export async function abrirModal(f, { fromDraw = false } = {}) {
 
     await Promise.all([
         loadImdbLink(f, type, signal),
+        loadFacts(f, type, signal),
         loadCast(f, type, signal),
         loadTrailer(f, type, signal),
         loadProviders(f, type, signal),
@@ -232,7 +264,7 @@ export async function marcarVistoAtual() {
         await _moveFromWatchlistIfNeeded(movie.id);
     }
     if (state.currentMovie !== movie) return;
-    btnV.innerHTML = '<svg aria-hidden="true" class="icon icon-16 icon-lead-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>JÁ VISTO';
+    btnV.innerHTML = CHECK_ICON + 'JÁ VISTO';
     btnV.disabled = true;
     renderReactions();
     if (document.getElementById('modal-resultado').style.display !== 'none') {

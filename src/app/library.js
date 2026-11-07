@@ -1,5 +1,6 @@
 // Biblioteca: Quero Assistir, Em Andamento, Já Assistidos e Minhas Listas (src/app/userLists.js)
 import { supabaseAddToHistory, supabaseAddToWatchlist, supabaseGetWatchlist, supabaseRemoveFromHistory, supabaseRemoveFromWatchlist } from '../api/supabase.js';
+import { ph } from '../ui/phosphor.js';
 import { clearSeries, getAllSeriesInProgress } from './episodeStore.js';
 import { tmdbGet } from '../api/tmdb.js';
 import { fetchAllSeasonsLocal } from './episodes.js';
@@ -167,16 +168,17 @@ export async function renderLibrary() {
 
     if (list.length === 0) {
         const isWatchlist = state.tab === 'watchlist';
-        const starIcon = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>';
-        const checkIcon = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>';
-        const tvIcon = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/></svg>';
+        const starIcon = ph('bookmark-simple', { weight: 'duotone' });
+        const checkIcon = ph('check-circle', { weight: 'duotone' });
+        const tvIcon = ph('eye', { weight: 'regular' });
+        const bookmarkBtn = ph('bookmark-simple', { weight: 'regular' });
         div.innerHTML = `
             <div class="empty-state grid-full">
                 <div class="empty-state-icon">${isWatchlist ? starIcon : checkIcon}</div>
                 <h3 class="empty-state-title">${isWatchlist ? 'Sua lista está vazia' : 'Nenhum item assistido ainda'}</h3>
                 <p class="empty-state-desc">${isWatchlist ? 'Comece adicionando filmes e séries que deseja assistir!' : 'Marque filmes como assistidos para construir seu histórico'}</p>
                 <button class="empty-state-cta ripple" data-action="switchTabAndTop" data-arg="${isWatchlist ? 'vistos' : 'watchlist'}">
-                    ${isWatchlist ? tvIcon : starIcon} ${isWatchlist ? 'Ver Assistidos' : 'Ver Lista'}
+                    ${isWatchlist ? tvIcon : bookmarkBtn} ${isWatchlist ? 'Ver Assistidos' : 'Ver Lista'}
                 </button>
             </div>
         `;
@@ -211,7 +213,7 @@ export async function renderAndando(div, isStale = () => false) {
     const seen = new Set((session.user.history || []).map(h => h.id));
     if (result.success) result.series = result.series.filter(s => !seen.has(s.id));
     if (!result.success || result.series.length === 0) {
-        const playIcon = '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+        const playIcon = ph('play-circle', { weight: 'duotone' });
         div.innerHTML = `
             <div class="empty-state grid-full">
                 <div class="empty-state-icon">${playIcon}</div>

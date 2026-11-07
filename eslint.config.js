@@ -9,7 +9,7 @@ export default [
     languageOptions: { globals: { ...globals.browser, ...globals.serviceworker } },
   },
   {
-    files: ['tests/**/*.js', 'tests/**/*.mjs', 'config/**/*.js', 'eslint.config.js'],
+    files: ['tests/**/*.js', 'tests/**/*.mjs', 'config/**/*.js', 'scripts/**/*.mjs', 'eslint.config.js'],
     languageOptions: { globals: { ...globals.node, ...globals.browser } },
     rules: { 'no-empty-pattern': 'off' }, // fixtures do Playwright exigem {}
   },

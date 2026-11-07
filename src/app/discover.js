@@ -1,5 +1,6 @@
 // Descobrir: filtros, sorteio, Top 10 e busca
 import { isAbortError, latestSignal, tmdbFetch, tmdbGet } from '../api/tmdb.js';
+import { ph } from '../ui/phosphor.js';
 import { addToSorteioHistory } from './sorteioHistory.js';
 import { abrirModal } from './titleModal.js';
 import { syncUrl } from './urlSync.js';
@@ -179,7 +180,7 @@ export function surpreendaMe() {
 export async function sortearFilme() {
     const btn = document.getElementById('btn-sortear');
     if (btn.disabled) return; // evita sorteios duplicados com cliques repetidos
-    btn.innerHTML = '<svg aria-hidden="true" class="icon spin icon-16 icon-lead-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>Buscando...';
+    btn.innerHTML = ph('circle-notch', { weight: 'bold', cls: 'icon spin icon-16 icon-lead-6' }) + 'Buscando...';
     btn.disabled = true;
     btn.classList.add('loading');
 
@@ -209,7 +210,7 @@ export async function sortearFilme() {
                 }
             } else {
                 showToast("Não encontrei esse título. Tente outro nome!", "error");
-                btn.innerHTML = '<svg aria-hidden="true" class="icon icon-18 icon-lead-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.5 4.5H18l-3.5 2.5 1.5 4.5-4-3-4 3 1.5-4.5L6 7.5h4.5L12 3z"/></svg>Sortear Agora';
+                btn.innerHTML = ph('shuffle', { weight: 'bold', cls: 'icon icon-18 icon-lead-6' }) + 'Sortear Agora';
                 btn.disabled = false;
                 btn.classList.remove('loading');
                 return;
@@ -248,7 +249,7 @@ export async function sortearFilme() {
         console.error(e);
         showToast("Erro na API.", "error");
     }
-    btn.innerHTML = '<svg aria-hidden="true" class="icon icon-18 icon-lead-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.5 4.5H18l-3.5 2.5 1.5 4.5-4-3-4 3 1.5-4.5L6 7.5h4.5L12 3z"/></svg>Sortear Agora';
+    btn.innerHTML = ph('shuffle', { weight: 'bold', cls: 'icon icon-18 icon-lead-6' }) + 'Sortear Agora';
     btn.disabled = false;
     btn.classList.remove('loading');
 }
@@ -267,7 +268,7 @@ export function showSkeletonLoader() {
 export async function mostrarTop10() {
     const btn = document.getElementById('btn-top10');
     if (btn.disabled) return;
-    btn.innerHTML = '<svg aria-hidden="true" class="icon spin icon-16 icon-lead-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg>Carregando...';
+    btn.innerHTML = ph('circle-notch', { weight: 'bold', cls: 'icon spin icon-16 icon-lead-6' }) + 'Carregando...';
     btn.disabled = true;
     btn.classList.add('loading');
 
@@ -290,7 +291,7 @@ export async function mostrarTop10() {
     } catch(e) {
         showToast("Erro ao carregar Top 10", "error");
     } finally {
-        btn.innerHTML = '<svg aria-hidden="true" class="icon icon-18 icon-lead-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>Ver Top 10';
+        btn.innerHTML = ph('fire', { weight: 'regular', cls: 'icon icon-18 icon-lead-6' }) + 'Ver Top 10';
         btn.disabled = false;
         btn.classList.remove('loading');
     }
@@ -347,11 +348,11 @@ export function renderResults(list, rank=false, { caption = '', empty = '' } = {
     if(list.length === 0) {
         area.innerHTML = `
             <div class="empty-state grid-full">
-                <div class="empty-state-icon"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></div>
+                <div class="empty-state-icon">${ph('magnifying-glass', { weight: 'duotone' })}</div>
                 <h3 class="empty-state-title">${escapeHtml(empty || 'Nenhum resultado encontrado')}</h3>
                 <p class="empty-state-desc">Tente ajustar seus filtros ou fazer uma nova busca</p>
                 <button class="empty-state-cta ripple" data-action="focusSearch">
-                    <svg class="icon-16 icon-lead-6" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="2"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>Nova Busca
+                    ${ph('magnifying-glass', { weight: 'bold', cls: 'icon-16 icon-lead-6' })}Nova Busca
                 </button>
             </div>
         `;
@@ -407,7 +408,7 @@ export async function buscarDireto() {
         if(data.results.length === 0) {
             area.innerHTML = `
                 <div class="empty-state grid-full">
-                    <div class="empty-state-icon"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></div>
+                    <div class="empty-state-icon">${ph('magnifying-glass', { weight: 'duotone' })}</div>
                     <h3 class="empty-state-title">Nenhum resultado para "${escapeHtml(query)}"</h3>
                     <p class="empty-state-desc">Tente palavras diferentes ou verifique a ortografia</p>
                 </div>

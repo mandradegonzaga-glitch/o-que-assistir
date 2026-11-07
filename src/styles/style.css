@@ -975,9 +975,11 @@ header {
 
 .fun-mode__icon {
     grid-area: icon;
-    font-size: 1.6rem;
-    line-height: 1;
+    display: inline-flex;
+    color: var(--accent-text);
 }
+
+.fun-mode__icon .ph { width: 30px; height: 30px; }
 
 .fun-mode__name {
     grid-area: name;
@@ -2028,7 +2030,11 @@ header {
 
 .modal-info {
     display: flex;
-    gap: var(--space-md);
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: var(--space-sm);
+    row-gap: 2px;
+    min-height: 1.4em;
     margin-bottom: var(--space-md);
     font-size: 0.9rem;
     font-weight: 600;
@@ -2046,6 +2052,10 @@ header {
     width: 14px;
     height: 14px;
 }
+
+.modal-info__dot { color: var(--text-muted); }
+
+.modal-info__genres { flex-basis: 100%; color: var(--text-tertiary); font-weight: 500; }
 
 /* Video Container */
 .video-container {
@@ -2861,7 +2871,7 @@ header {
     width: 64px;
     height: 64px;
     margin: 0 auto var(--space-lg);
-    color: var(--text-muted);
+    color: var(--accent-text);
     animation: float 3s ease-in-out infinite;
 }
 
@@ -5622,7 +5632,7 @@ button.site-footer__link {
 /* Nome longo encurta com reticências, sem empurrar o cartão para fora da tela */
 .list-cards > li { min-width: 0; }
 
-.list-card__emoji { font-size: 1.8rem; line-height: 1; }
+.list-card__emoji .ph { width: 30px; height: 30px; }
 
 .list-card__text { display: flex; flex: 1; flex-direction: column; gap: 2px; min-width: 0; }
 
@@ -5684,7 +5694,7 @@ button.site-footer__link {
     text-align: center;
 }
 
-.empty-state-emoji { font-size: 3rem; line-height: 64px; }
+.empty-state-icon .ph { width: 100%; height: 100%; }
 
 /* Modelos com um toque */
 .list-templates__label {
@@ -5706,6 +5716,9 @@ button.site-footer__link {
 #list-templates .list-templates { justify-content: flex-start; }
 
 .list-template {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     min-height: 40px;
     padding: 0 var(--space-md);
     background: var(--bg-tertiary);
@@ -5741,7 +5754,7 @@ button.site-footer__link {
     overflow-y: auto;
 }
 
-.save-lists__emoji { font-size: 1.2rem; }
+.save-lists__emoji .ph { width: 22px; height: 22px; }
 
 .save-lists__name {
     flex: 1;
@@ -5779,9 +5792,10 @@ button.site-footer__link {
     background: var(--bg-tertiary);
     border: 2px solid transparent;
     border-radius: var(--radius-md);
-    font-size: 1.25rem;
     cursor: pointer;
 }
+
+.emoji-picker__option .ph { width: 22px; height: 22px; }
 
 .emoji-picker__option[aria-checked="true"] {
     border-color: var(--accent-primary);
@@ -5876,3 +5890,70 @@ button.site-footer__link {
 .library-item.is-drop-target { outline: 3px dashed var(--accent-primary); outline-offset: 2px; }
 
 .shared-list__grid { max-height: 55vh; overflow-y: auto; }
+
+/* ===== Ícones Phosphor (src/ui/phosphor.js) ===== */
+/* :where() zera o peso: qualquer classe de tamanho do app (icon-24, icon-28...) vence este padrão */
+:where(.ph) { display: inline-block; width: 1.25em; height: 1.25em; flex-shrink: 0; vertical-align: -0.2em; }
+.ph-slot, .ph-inline { display: inline-flex; }
+.ph-inline .ph { width: 1.1em; height: 1.1em; color: var(--accent-text); }
+.help__topic summary .ph-slot .ph { width: 24px; height: 24px; color: var(--accent-text); }
+/* Ícones novos seguem a cor do tipo escolhido (amarelo, verde-água ou rosa) */
+.battle__heading .ph, .blind__eyebrow .ph { color: var(--accent-text); }
+.list-view__shared .ph { width: 1em; height: 1em; }
+.list-template .ph { width: 18px; height: 18px; vertical-align: 0; }
+.list-view__title .list-icon .ph { vertical-align: -0.12em; }
+
+/* Cor de cada ícone de lista (o banco guarda o emoji; ver src/ui/listIcons.js) */
+.list-icon { display: inline-flex; }
+.list-icon--ouro { color: var(--accent-gold); }
+.list-icon--rosa { color: #ff7aa8; }
+.list-icon--agua { color: #3dd6c6; }
+.list-icon--lilas { color: #b69cff; }
+.list-icon--laranja { color: #ff9f5a; }
+.list-icon--verde { color: #6fd08c; }
+.list-icon--azul { color: #6aa8ff; }
+
+/* ===== Toques de app (etapa 1 do redesign) ===== */
+/* Instalado como app: sem o "elástico" da página nem o puxar-para-atualizar do navegador */
+@media (display-mode: standalone) {
+    html, body { overscroll-behavior-y: none; }
+}
+
+/* Botões, abas e tópicos não selecionam texto com um toque longo (campos de texto continuam normais) */
+button, [role="tab"], [role="radio"], summary, .fun-mode, .list-card, .result-item, .library-item__open {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Botão "afunda" de leve enquanto o dedo está nele. A propriedade scale se soma ao transform que o elemento já tenha */
+@media (hover: none) and (prefers-reduced-motion: no-preference) {
+    button:not(:disabled):active, .fun-mode:active, .list-card:active, .result-item:active,
+    .library-item__open:active, .critic-btn:active {
+        scale: 0.97;
+    }
+}
+
+/* ===== Pôsteres padronizados ===== */
+:root {
+    --radius-poster: var(--radius-md);   /* grades, cartões e destaques */
+    --radius-poster-sm: var(--radius-sm); /* miniaturas */
+    --poster-edge: rgba(255, 255, 255, 0.08);
+}
+
+/* Fio claro por dentro: pôster escuro não some no fundo escuro. Fundo enquanto a imagem carrega */
+.result-item img, .library-item img, .history-item img, .match-card__poster, .match-result-item img,
+.match-history__title img, .friend-title img, .battle__fighter img, .battle__champion-img, .daily-pick img,
+.list-card__posters img {
+    background: var(--bg-elevated);
+    outline: 1px solid var(--poster-edge);
+    outline-offset: -1px;
+}
+
+.result-item img, .library-item img, .history-item img, .match-card__poster, .match-result-item img,
+.battle__champion-img {
+    border-radius: var(--radius-poster);
+}
+
+.match-history__title img, .friend-title img, .battle__fighter img, .daily-pick img, .list-card__posters img {
+    border-radius: var(--radius-poster-sm);
+}
