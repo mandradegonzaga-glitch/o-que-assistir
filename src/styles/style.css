@@ -6022,12 +6022,14 @@ button, [role="tab"], [role="radio"], summary, .fun-mode, .list-card, .result-it
 /* Abas que grudam no alto */
 .title-tabs {
     position: sticky;
-    top: 0;
+    /* gruda no topo da tela, cobrindo também o respiro do alto da janela (senão o conteúdo aparece ali) */
+    top: calc(-1 * var(--space-md));
     z-index: 2;
     display: flex;
     gap: 2px;
     margin: var(--space-lg) calc(-1 * var(--space-xl)) var(--space-md);
-    padding: 10px var(--space-md);
+    padding: calc(10px + var(--space-md)) var(--space-md) 10px;
+    margin-top: calc(var(--space-lg) - var(--space-md));
     /* opaca: o trailer e as fotos passam por baixo sem aparecer através dela */
     background: var(--bg-card);
     border-bottom: 1px solid var(--border-subtle);
