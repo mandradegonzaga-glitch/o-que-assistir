@@ -31,7 +31,7 @@ export const ICONS = {
   'clock-counter-clockwise': ['regular', 'duotone'], x: ['bold'], 'trend-up': ['duotone'],
   'sliders-horizontal': ['duotone'],
   // ---- biblioteca ----
-  'bookmark-simple': ['regular', 'bold', 'duotone'], 'play-circle': ['regular', 'duotone'],
+  'bookmark-simple': ['regular', 'bold', 'duotone', 'fill'], 'play-circle': ['regular', 'duotone'],
   'check-circle': ['regular', 'duotone'], 'folder-simple': ['regular'], 'folder-open': ['duotone'], eye: ['regular'],
   // ---- roleta ----
   trash: ['regular'],

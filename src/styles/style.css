@@ -5957,3 +5957,180 @@ button, [role="tab"], [role="radio"], summary, .fun-mode, .list-card, .result-it
 .match-history__title img, .friend-title img, .battle__fighter img, .daily-pick img, .list-card__posters img {
     border-radius: var(--radius-poster-sm);
 }
+
+/* ===== Etapa 2: página do título ===== */
+/* clip (e não hidden) para as abas poderem grudar no alto enquanto a janela rola */
+.title-sheet { overflow: clip; isolation: isolate; }
+
+/* Fundo com a cor do pôster: o próprio pôster, enorme e desfocado, apagando para o fundo do cartão */
+.title-ambient {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 900px;
+    z-index: -1;
+    background: var(--bg-card) center top / cover no-repeat;
+    filter: blur(60px) saturate(1.4);
+    opacity: 0.5;
+    transform: scale(1.4);
+    pointer-events: none;
+}
+.title-ambient::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 0%, transparent 35%, var(--bg-card) 100%);
+}
+.title-sheet .modal-poster { opacity: 0.55; }
+
+/* Ações principais: ícone em cima, nome embaixo (estilo Letterboxd) */
+.title-actions {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-sm);
+    margin: var(--space-lg) 0 var(--space-md);
+}
+.title-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    min-height: 76px;
+    padding: 12px 4px 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-lg);
+    color: var(--text-secondary);
+    font: 600 0.78rem/1.2 var(--font-family);
+    text-align: center;
+    text-transform: none;
+    letter-spacing: 0;
+    cursor: pointer;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+.title-action .ph, .title-action .icon { width: 26px; height: 26px; margin: 0; }
+.title-action:hover { background: rgba(255, 255, 255, 0.1); color: var(--text-primary); }
+.title-action:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+/* Acesas: já vi (verde), na lista de quero ver (cor do tipo) */
+.title-action--seen:disabled { color: var(--accent-success); cursor: default; background: rgba(34, 197, 94, 0.16); border-color: rgba(34, 197, 94, 0.45); opacity: 1; }
+.title-action.is-on { color: var(--accent-text); background: rgba(var(--accent-primary-rgb), 0.14); border-color: rgba(var(--accent-primary-rgb), 0.5); }
+
+.title-where { background: rgba(255, 255, 255, 0.04); }
+
+/* Abas que grudam no alto */
+.title-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    gap: 2px;
+    margin: var(--space-lg) calc(-1 * var(--space-xl)) var(--space-md);
+    padding: 10px var(--space-md);
+    background: color-mix(in srgb, var(--bg-card) 88%, transparent);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border-subtle);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.title-tabs::-webkit-scrollbar { display: none; }
+.title-tab {
+    flex: 1 0 auto;
+    min-height: 40px;
+    padding: 0 12px;
+    background: transparent;
+    border: 0;
+    border-radius: 999px;
+    color: var(--text-tertiary);
+    font: 700 0.9rem var(--font-family);
+    cursor: pointer;
+}
+.title-tab:hover { color: var(--text-primary); }
+.title-tab.is-active { background: rgba(var(--accent-primary-rgb), 0.16); color: var(--accent-text); }
+.title-tab:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 1px; }
+.title-section { scroll-margin-top: 70px; }
+.title-section:focus { outline: none; }
+.title-section + .title-section, .title-section + .episodes-section, .episodes-section + .title-section { margin-top: var(--space-lg); }
+
+/* Parecidos: fileira de pôsteres */
+.similar-list {
+    display: flex;
+    gap: 10px;
+    margin-top: var(--space-sm);
+    padding-bottom: 6px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+}
+.similar-item {
+    flex: 0 0 104px;
+    padding: 0;
+    background: none;
+    border: 0;
+    color: var(--text-secondary);
+    text-align: left;
+    cursor: pointer;
+    scroll-snap-align: start;
+}
+.similar-item img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border-radius: var(--radius-poster);
+    background: var(--bg-elevated);
+    outline: 1px solid var(--poster-edge);
+    outline-offset: -1px;
+}
+.similar-item__name {
+    display: -webkit-box;
+    margin-top: 6px;
+    overflow: hidden;
+    font-size: 0.75rem;
+    line-height: 1.25;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+.similar-item:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 3px; border-radius: var(--radius-poster); }
+
+/* Ações secundárias: pílulas pequenas no fim */
+.title-more {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-top: var(--space-xl);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--border-subtle);
+}
+.title-more__btn {
+    display: inline-flex;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 14px;
+    background: transparent;
+    border: 1px solid var(--border-default);
+    border-radius: 999px;
+    color: var(--text-secondary);
+    font: 600 0.85rem var(--font-family);
+    text-transform: none;
+    cursor: pointer;
+}
+.title-more__btn .ph, .title-more__btn .icon { width: 18px; height: 18px; margin: 0; }
+.title-more__btn:hover { color: var(--text-primary); border-color: var(--border-strong); }
+.title-more__btn--ignore:hover { color: #f87171; border-color: #f87171; }
+
+/* Esqueletos no formato do que vai chegar */
+.skeleton--cast { flex-shrink: 0; width: 60px; height: 60px; border-radius: 50%; }
+.skeleton--provider { width: 44px; height: 44px; }
+.skeleton--poster { flex: 0 0 104px; aspect-ratio: 2 / 3; border-radius: var(--radius-poster); }
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+
+@media (max-width: 380px) {
+    .title-action { font-size: 0.72rem; min-height: 72px; }
+}

@@ -22,6 +22,8 @@ function tmdbResponse(pathname) {
   if (path.startsWith('/discover') || path.startsWith('/search')) return { results: LIST };
   if (/\/credits$/.test(path)) return { cast: [{ name: 'Atriz Teste', profile_path: null }] };
   if (/\/videos$/.test(path)) return { results: [] };
+  // "Parecidos": o título 4 não tem nenhum (a aba some)
+  if (/\/recommendations$/.test(path)) return { results: /\/4\/recommendations$/.test(path) ? [] : LIST.filter(i => !path.includes(`/${i.id}/`)) };
   if (/\/watch\/providers$/.test(path)) return { results: {} };
   if (/\/external_ids$/.test(path)) return { imdb_id: 'tt0000001' };
   if (/\/season\/\d+$/.test(path)) return { season_number: 1, episodes: [1, 2, 3].map(n => ({ season_number: 1, episode_number: n, name: `Episódio ${n}` })) };

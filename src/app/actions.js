@@ -23,7 +23,7 @@ import { nextOnboarding } from './onboarding.js';
 import { abrirPerfil, alterarSenha, deletarConta, salvarPerfil } from './profile.js';
 import { addCurrentToRoulette, addRoletaItem, girarRoleta, limparRoleta, removeRoletaItem } from './roulette.js';
 import { abrirDoHistorico, abrirHistoricoSorteios, limparHistoricoSorteios, navigateSorteio } from './sorteioHistory.js';
-import { abrirEpisodios, carregarDetalhes, fecharModal, marcarVistoAtual, toggleSalvarAtual } from './titleModal.js';
+import { abrirEpisodios, carregarDetalhes, fecharModal, goTitleSection, marcarVistoAtual, toggleSalvarAtual } from './titleModal.js';
 import { closeDailyPicks, toggleDailyPicks } from './dailyPicks.js';
 import { dismissInstall, installPWA } from './pwa.js';
 import { undoLast } from '../ui/feedback.js';
@@ -42,6 +42,7 @@ const clickActions = {
   alterarSenha,
   buscarDireto,
   carregarDetalhes: el => carregarDetalhes(Number(el.dataset.id), el.dataset.media),
+  goTitleSection: el => goTitleSection(el.dataset.arg),
   clearInput: el => clearInput(el.dataset.arg),
   closeDailyPicks: () => closeDailyPicks(),
   closeModal: el => { document.getElementById(el.dataset.arg).style.display = 'none'; },

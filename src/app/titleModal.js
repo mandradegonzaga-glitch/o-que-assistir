@@ -59,11 +59,20 @@ export function showSectionError(containerId, message) {
     container.replaceChildren(note);
 }
 
+// Carregando: blocos no formato do que vai chegar (o texto fica para o leitor de tela)
+const SKELETON = { 'cast-list': 'cast', 'm-providers': 'provider', 'm-similar': 'poster' };
 function showSectionLoading(containerId, message) {
     const note = document.createElement('span');
-    note.className = 'section-loading';
+    note.className = 'section-loading sr-only';
     note.textContent = message;
-    document.getElementById(containerId).replaceChildren(note);
+    const shape = SKELETON[containerId];
+    const blocks = Array.from({ length: shape === 'provider' ? 3 : 4 }, () => {
+        const b = document.createElement('span');
+        b.className = `skeleton skeleton--${shape}`;
+        b.setAttribute('aria-hidden', 'true');
+        return b;
+    });
+    document.getElementById(containerId).replaceChildren(note, ...blocks);
 }
 
 async function loadImdbLink(f, type, signal) {
@@ -111,6 +120,83 @@ async function loadFacts(f, type, signal) {
     } catch (e) {
         if (!isAbortError(e)) console.error('Erro ao carregar detalhes:', e);
     }
+}
+
+// "Parecidos": recomendações do TMDB; sem nenhuma, a aba e a seção somem
+async function loadSimilar(f, type, mediaType, signal) {
+    const section = document.getElementById('sec-parecidos');
+    const tab = document.getElementById('tab-parecidos');
+    section.hidden = false;
+    tab.hidden = false;
+    showSectionLoading('m-similar', 'Carregando parecidos...');
+    try {
+        const data = await tmdbGet(`/${type}/${f.id}/recommendations`, {}, { signal });
+        if (signal.aborted || state.currentMovie?.id !== f.id) return;
+        const items = (data.results || []).filter(i => i.poster_path).slice(0, 10);
+        section.hidden = tab.hidden = items.length === 0;
+        document.getElementById('m-similar').innerHTML = items.map(i => {
+            const name = i.title || i.name;
+            return `<button type="button" class="similar-item" data-action="carregarDetalhes" data-id="${i.id}" data-media="${mediaType}" aria-label="${escapeHtml(name)}">
+                <img src="${IMG_URL + i.poster_path}" alt="" width="500" height="750" loading="lazy">
+                <span class="similar-item__name" aria-hidden="true">${escapeHtml(name)}</span></button>`;
+        }).join('');
+    } catch (e) {
+        if (isAbortError(e)) return;
+        section.hidden = tab.hidden = true;
+    }
+}
+
+// Abas da página do título: levam até a parte e marcam a que está na tela
+const scroller = () => document.getElementById('modal-resultado');
+// Depois de tocar numa aba, ela fica marcada até a rolagem parar (a marcação automática não a desfaz no caminho)
+let tabLockUntil = 0;
+export function goTitleSection(id) {
+    const target = document.getElementById(id);
+    if (!target || target.hidden) return;
+    const nav = document.querySelector('.title-tabs');
+    const top = target.getBoundingClientRect().top - scroller().getBoundingClientRect().top + scroller().scrollTop - (nav?.offsetHeight || 0) - 8;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    scroller().scrollTo({ top, behavior: reduce ? 'auto' : 'smooth' });
+    tabLockUntil = performance.now() + 1000;
+    setActiveTab(id);
+    target.setAttribute('tabindex', '-1');
+    target.focus({ preventScroll: true });
+}
+
+function setActiveTab(id) {
+    document.querySelectorAll('.title-tab').forEach(tab => {
+        const on = tab.dataset.arg === id;
+        tab.classList.toggle('is-active', on);
+        if (on) tab.setAttribute('aria-current', 'true'); else tab.removeAttribute('aria-current');
+    });
+}
+
+let tabsReady = false;
+function initTitleTabs() {
+    if (tabsReady) return;
+    tabsReady = true;
+    // Episódios: a aba aparece junto com a seção (só séries e doramas)
+    const episodes = document.getElementById('episodes-section');
+    const sync = () => { document.getElementById('tab-episodios').hidden = episodes.hidden; };
+    new MutationObserver(sync).observe(episodes, { attributes: true, attributeFilter: ['hidden'] });
+    sync();
+    // Marca a aba da parte que está no alto da tela enquanto a pessoa rola
+    let ticking = false;
+    scroller().addEventListener('scroll', () => {
+        if (ticking) return;
+        if (performance.now() < tabLockUntil) { tabLockUntil = performance.now() + 150; return; }
+        ticking = true;
+        requestAnimationFrame(() => {
+            ticking = false;
+            const line = scroller().getBoundingClientRect().top + (document.querySelector('.title-tabs')?.offsetHeight || 0) + 24;
+            let current = 'sec-sobre';
+            document.querySelectorAll('.title-tab').forEach(tab => {
+                const sec = document.getElementById(tab.dataset.arg);
+                if (sec && !sec.hidden && !tab.hidden && sec.getBoundingClientRect().top <= line) current = tab.dataset.arg;
+            });
+            setActiveTab(current);
+        });
+    }, { passive: true });
 }
 
 // Cada seção carrega por conta própria: o modal já está aberto e uma falha não afeta as outras
@@ -193,6 +279,8 @@ export async function abrirModal(f, { fromDraw = false } = {}) {
     linkRt.href = `https://www.rottentomatoes.com/search?search=${encodeURIComponent(f.original_title || f.original_name || f.title || f.name)}`;
     linkImdb.hidden = true;
     renderFacts(f, type);
+    const ambient = document.getElementById('m-ambient');
+    ambient.style.backgroundImage = f.poster_path ? `url("${IMG_URL + f.poster_path}")` : (f.backdrop_path ? `url("${IMG_URL + f.backdrop_path}")` : 'none');
     document.getElementById('m-poster').src = f.backdrop_path ? IMG_URL + f.backdrop_path : (f.poster_path ? IMG_URL + f.poster_path : '');
 
     // Mostra "Sortear outro" só para o que veio de um sorteio
@@ -221,10 +309,11 @@ export async function abrirModal(f, { fromDraw = false } = {}) {
     }
 
     const starIcon = ph('bookmark-simple', { weight: 'bold', cls: 'icon icon-16 icon-lead-4' });
-    const removeIcon = ph('x', { weight: 'bold', cls: 'icon icon-16 icon-lead-4' });
+    const removeIcon = ph('bookmark-simple', { weight: 'fill', cls: 'icon icon-16 icon-lead-4' });
     const inWatchlist = !!(session.user.watchlist || []).find(i => i.id === f.id);
     const watchlistLabel = isSeries ? 'Quero Assistir' : 'Salvar';
     btnS.innerHTML = inWatchlist ? `${removeIcon}Remover da Lista` : `${starIcon}${watchlistLabel}`;
+    btnS.classList.toggle('is-on', inWatchlist);
 
     renderReactions();
     updateSaveListButton();
@@ -235,11 +324,15 @@ export async function abrirModal(f, { fromDraw = false } = {}) {
     // Carregar seção de episódios (TV/Dorama only — T001-009)
     loadEpisodesSection(f);
 
+    initTitleTabs();
+    setActiveTab('sec-sobre');
     document.getElementById('modal-resultado').style.display = 'flex';
+    scroller().scrollTop = 0;
 
     await Promise.all([
         loadImdbLink(f, type, signal),
         loadFacts(f, type, signal),
+        loadSimilar(f, type, mediaType, signal),
         loadCast(f, type, signal),
         loadTrailer(f, type, signal),
         loadProviders(f, type, signal),
