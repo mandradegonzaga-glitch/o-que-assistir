@@ -371,6 +371,7 @@ Use este documento para verificar se todas as funcionalidades estão funcionando
 - [ ] "Seus matches" na tela do Match: partidas com match, com quem e quando; abrir título, salvar todos em Quero Assistir, apagar com desfazer
 - [ ] Avisos de Amigos: pedido, aceite, indicação e convite de Match viram aviso no app e no contador; opção "Avisar neste aparelho" (notificação do sistema com o app em segundo plano)
 - [ ] Ingresso tem QR code que abre o título pela câmera
+- [ ] Ingresso novo: imagem grande no topo, Tipo · Ano · Nota · Duração (ou Temporadas); sem imagem de paisagem mostra o pôster inteiro; sem pôster, cena do episódio, fotos do elenco ou ícone do tipo
 - [ ] "Compartilhar": no celular envia ingresso, texto e link juntos; no computador baixa o ingresso e copia o texto com o link
 - [ ] "Sortear outro" aparece em título sorteado e não repete os últimos sorteios
 - [ ] Modal abre na hora; seções mostram "Carregando..." e falham separadamente

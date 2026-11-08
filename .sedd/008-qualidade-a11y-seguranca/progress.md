@@ -26,7 +26,7 @@
 - **Feito:** etapa 1 (T001-124: ícones Phosphor, linha única do título, toques de app, pôsteres) e etapa 2 (T001-125: página do título).
 - **Próxima sessão, pedidos do usuário em 2026-11-07:**
   1. ✅ Feito em 2026-11-07 (T001-126, D001-043): barra de "Parecidos" igual à do Elenco e "Nos cinemas" / "Estreia nos cinemas em DD/MM". SW `v29`.
-  2. **Repaginar a imagem do ingresso** ("Gerar ingresso", `src/app/ticket.js`) no visual novo. **O usuário escolheu fazer a captação no Dribbble antes** (só para o ingresso: cinema ticket, boarding pass, event ticket). Em 2026-11-07 a extensão do Claude no Chrome não estava conectada e ele pausou a sessão: ao reabrir, conferir a extensão (`tabs_context_mcp`) e começar pela captação. Imagem do ingresso atual para comparar: gerar de novo com `drawTicket` (o print de 07/11 ficou só no scratchpad).
+  2. ✅ Feito em 2026-11-07 (T001-127, D001-044): ingresso novo ("Pôster em destaque") com a imagem do topo em cadeia. SW `v30`.
   3. **Etapas 3, 4 e 5** (ver D001-042). **Antes de cada uma, fazer a captação no Dribbble** (já decidido; uma página por vez, ~10 s de pausa).
 - **Pendências de antes do redesign só DEPOIS do redesign inteiro** (decisão do usuário em 2026-11-07): ilustrações do vídeo, vídeo final, teste com 2 celulares.
 - **Ícones:** para acrescentar um, pôr o nome e o peso em `ICONS` de `scripts/build-icons.mjs` e rodar `node scripts/build-icons.mjs`.

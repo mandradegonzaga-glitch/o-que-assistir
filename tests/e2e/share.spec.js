@@ -68,15 +68,62 @@ test.describe('gerar ingresso', () => {
 
   test('cor do ingresso segue o tipo: âmbar filme, teal série, rosa dorama', async ({ page }) => {
     await enterAsGuest(page);
-    const colors = await page.evaluate(async () => {
+    // Selo "Hoje é dia de" e marca do canhoto na cor do tipo: conta os pixels de cada cor
+    const counts = await page.evaluate(async () => {
       const { drawTicket } = await import('/src/app/ticket.js');
-      const pixel = async kind => {
+      const palette = { movie: [255, 201, 77], tv: [61, 214, 198], dorama: [255, 143, 184] };
+      const count = async kind => {
         const canvas = await drawTicket({ id: 1, title: 'X' }, { kind });
-        return [...canvas.getContext('2d').getImageData(80, 300, 1, 1).data.slice(0, 3)];
+        const { data } = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+        const found = Object.fromEntries(Object.keys(palette).map(k => [k, 0]));
+        for (let i = 0; i < data.length; i += 4) {
+          for (const [k, [r, g, b]] of Object.entries(palette)) {
+            if (data[i] === r && data[i + 1] === g && data[i + 2] === b) found[k] += 1;
+          }
+        }
+        return found;
       };
-      return { movie: await pixel('movie'), tv: await pixel('tv'), dorama: await pixel('dorama') };
+      return { movie: await count('movie'), tv: await count('tv'), dorama: await count('dorama') };
     });
-    expect(colors).toEqual({ movie: [255, 201, 77], tv: [61, 214, 198], dorama: [255, 143, 184] });
+    for (const kind of ['movie', 'tv', 'dorama']) {
+      const others = Object.entries(counts[kind]).filter(([k]) => k !== kind).map(([, n]) => n);
+      expect(counts[kind][kind]).toBeGreaterThan(5000);
+      expect(Math.max(...others)).toBeLessThan(50);
+    }
+  });
+
+  test('sem pôster: usa a cena do episódio; sem cena, o elenco; e o canvas segue exportável', async ({ page }) => {
+    await enterAsGuest(page);
+    const requested = [];
+    page.on('request', req => { if (req.url().includes('image.tmdb.org')) requested.push(new URL(req.url()).pathname); });
+    const draw = opts => page.evaluate(async o => {
+      const { drawTicket } = await import('/src/app/ticket.js');
+      const canvas = await drawTicket({ id: 1, name: 'Sem Pôster' }, o);
+      return canvas.toDataURL('image/png').length;
+    }, opts);
+
+    expect(await draw({ kind: 'tv', still: '/cena.jpg', castPhotos: ['/a.jpg', '/b.jpg'] })).toBeGreaterThan(1000);
+    expect(requested).toContain('/t/p/w780/cena.jpg');
+    expect(requested.some(p => p.startsWith('/t/p/w185/'))).toBe(false); // a cena bastou
+
+    requested.length = 0;
+    expect(await draw({ kind: 'movie', castPhotos: ['/a.jpg', '/b.jpg', '/c.jpg'] })).toBeGreaterThan(1000);
+    expect(requested).toEqual(expect.arrayContaining(['/t/p/w185/a.jpg', '/t/p/w185/b.jpg', '/t/p/w185/c.jpg']));
+  });
+
+  test('série sem imagem nenhuma: o ingresso busca uma cena da 1ª temporada', async ({ page }) => {
+    await enterAsGuest(page);
+    await page.route(/\/functions\/v1\/tmdb\/tv\/\d+\/season\/1/, route => route.fulfill({
+      contentType: 'application/json', json: { episodes: [{ still_path: null }, { still_path: '/ep2.jpg' }] },
+    }));
+    await page.route(/\/functions\/v1\/tmdb\/tv\/\d+(\?|$)/, route => route.fulfill({
+      contentType: 'application/json', json: { id: 9, number_of_seasons: 2 },
+    }));
+    const extras = await page.evaluate(async () => {
+      const { titleExtras } = await import('/src/app/ticket.js');
+      return titleExtras({ id: 9, name: 'Sem Imagem' }, 'tv');
+    });
+    expect(extras).toMatchObject({ still: '/ep2.jpg', length: '2', poster: null, backdrop: null });
   });
 
   test('canvas continua exportável com pôster e logos', async ({ page }) => {

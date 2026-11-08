@@ -459,3 +459,14 @@ Regras combinadas: cada etapa numa branch `redesign/etapa-N`, com commit e envio
 **Decisão:** pedido do usuário em 2026-11-07. Filme sem streaming no Brasil mostra, no "Onde assistir", "Estreia nos cinemas em DD/MM" (estreia futura) ou "Nos cinemas" (em cartaz). Fonte: `release_dates` do TMDB, país BR, tipo 3 (cinema) ou, sem ele, tipo 2 (limitado). O TMDB não diz quando um filme sai de cartaz, então "em cartaz" = estreou há no máximo 75 dias **e** nenhum lançamento digital (4), físico (5) ou na TV (6) no Brasil com data até hoje. Data em outro ano leva o ano (DD/MM/AAAA). Sem dados do Brasil, nada muda.
 
 **Por quê:** a janela entre cinema e streaming no Brasil costuma ficar entre 45 e 90 dias; 75 dias evita dizer "nos cinemas" para filmes que já saíram, e a data digital, quando existe, corta antes. Ajustável em `IN_THEATERS_DAYS` (`src/domain/cinemaRelease.js`) se o usuário preferir outro prazo.
+
+## D001-044 — Ingresso: imagem do topo em cadeia, sem fontes de fora do TMDB
+
+**Decisão:** pedido do usuário em 2026-11-07, ao ver o ingresso novo (T001-127). O topo usa, nesta ordem: imagem de paisagem (da lista ou dos detalhes) → pôster inteiro ao lado do título (nunca cortado, para não aparecer só o letreiro) → cena de episódio da 1ª temporada (série e dorama) → mosaico com fotos do elenco → topo menor com o ícone do tipo.
+
+**Por quê:** o app já tira os títulos sem pôster do sorteio, da roleta, do Match, da batalha, das indicações, das coleções e dos "Parecidos"; o caso sem imagem fica para a busca e links diretos. Tudo na cadeia usa dados que o app já carrega e caminhos que o proxy já libera.
+
+**Alternativas consideradas:**
+- Galeria `/images` do TMDB (pôsteres sem letreiro) → exigiria liberar e publicar o proxy de novo, que é o mesmo da produção; ficou para depois.
+- Wikipédia, OMDb ou Fanart.tv → mais uma fonte e regra de segurança (as duas últimas com chave) para um caso raro.
+- Cortar o pôster no topo → mostrava o letreiro em inglês de alguns pôsteres.

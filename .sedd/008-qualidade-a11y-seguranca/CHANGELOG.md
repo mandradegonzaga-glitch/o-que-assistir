@@ -4,6 +4,10 @@ All notable changes to this feature will be documented in this file.
 
 ## [2026-11-07, pós-etapa 2] — branch `redesign/etapa-2` (ainda não publicado)
 
+### Changed
+
+- Ingresso novo: escuro, com a imagem do título grande no topo, grade Tipo · Ano · Nota · Duração e QR em cartão branco; sem pôster, usa uma cena do episódio, as fotos do elenco ou o ícone do tipo
+
 ### Added
 
 - Filme sem streaming mostra "Nos cinemas" ou "Estreia nos cinemas em DD/MM" no "Onde assistir", pelas datas do Brasil
