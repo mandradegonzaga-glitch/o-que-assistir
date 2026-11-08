@@ -1,4 +1,4 @@
-import { test, expect, enterAsGuest, modal } from './support/app.js';
+import { test, expect, enterAsGuest, modal, openLibrary, openLibraryTab } from './support/app.js';
 
 const openFirst = async page => {
   await page.locator('#btn-top10').click();
@@ -25,7 +25,7 @@ test.describe('convidado', () => {
     await page.reload();
     await page.locator('#login-form [data-action="loginAsGuest"]').click();
     await expect(page.locator('#library-content .library-item')).toHaveCount(1);
-    await page.locator('#tab-vistos').click();
+    await openLibraryTab(page, 'vistos');
     await expect(page.locator('#library-content .library-item')).toHaveCount(1);
   });
 
@@ -33,6 +33,8 @@ test.describe('convidado', () => {
     await enterAsGuest(page);
     await openFirst(page);
     await page.locator('#btn-salvar').click();
+    await expect(modal(page)).toBeHidden();
+    await openLibrary(page);
     const items = page.locator('#library-content .library-item:visible');
     await expect(items).toHaveCount(1);
     await page.locator('#library-content .remove-btn').click({ force: true });
@@ -143,7 +145,7 @@ test.describe('de convidado para conta', () => {
     expect(result).toEqual({ episodes: ['Dorama Oito/dorama/T2E3', 'Série Sete/tv/T1E1', 'Série Sete/tv/T1E2'], left: null });
 
     // Em Andamento da conta já mostra as duas
-    await page.locator('#tab-andando').click();
+    await openLibraryTab(page, 'andando');
     await expect(page.locator('.up-next-card')).toHaveCount(2);
   });
 

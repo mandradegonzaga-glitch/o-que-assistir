@@ -442,243 +442,301 @@ header {
     color: var(--text-secondary);
 }
 
-/* ==================== INDICAÇÕES DO DIA ==================== */
-/* Botão no canto, como um chat de ajuda; o painel abre acima dele */
-.daily-launcher {
-    position: fixed;
-    right: calc(var(--space-lg) + env(safe-area-inset-right));
-    bottom: calc(var(--space-lg) + env(safe-area-inset-bottom));
-    z-index: 1001;
+/* ==================== INÍCIO: FILEIRAS ==================== */
+/* "Continue assistindo" e "Indicações do dia" no alto do Início, em fileiras de pôsteres que
+   rolam para o lado (estilo app de streaming). Só aparecem quando há conteúdo. */
+.home-row {
+    margin-bottom: var(--space-xl);
+}
+
+.home-row[hidden] {
+    display: none;
+}
+
+.home-row__head {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 56px;
-    height: 56px;
-    background: var(--accent-primary);
-    border: none;
-    border-radius: var(--radius-full);
-    color: var(--accent-on);
-    box-shadow: var(--shadow-lg);
-    cursor: pointer;
-    transition: transform var(--duration-fast) var(--ease-smooth),
-                box-shadow var(--duration-fast) var(--ease-smooth);
-}
-
-.daily-launcher[hidden] {
-    display: none;
-}
-
-.daily-launcher:hover {
-    transform: scale(1.06);
-    box-shadow: var(--shadow-xl), var(--shadow-glow);
-}
-
-.daily-launcher .icon {
-    width: 26px;
-    height: 26px;
-}
-
-/* Indicações novas que a pessoa ainda não abriu hoje */
-.daily-launcher__dot {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    width: 14px;
-    height: 14px;
-    background: #ff8fb8;
-    border: 2px solid var(--bg-primary, #17121f);
-    border-radius: var(--radius-full);
-}
-
-.daily-panel {
-    position: fixed;
-    right: calc(var(--space-lg) + env(safe-area-inset-right));
-    bottom: calc(var(--space-lg) + 56px + 12px + env(safe-area-inset-bottom));
-    z-index: 1002;
-    /* Cabeçalho fixo; só a lista rola, para o fechar nunca sumir */
-    display: flex;
-    flex-direction: column;
-    width: min(380px, calc(100vw - 32px));
-    max-height: min(72vh, 600px);
-    overflow: hidden;
-    padding: var(--space-md);
-    background: rgba(35, 29, 51, 0.98);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-xl);
-    transform-origin: bottom right;
-    animation: daily-panel-in var(--duration-normal) var(--ease-out);
-}
-
-.daily-panel[hidden] {
-    display: none;
-}
-
-@keyframes daily-panel-in {
-    from { opacity: 0; transform: translateY(12px) scale(0.97); }
-    to { opacity: 1; transform: none; }
-}
-
-.daily-panel__header {
-    display: flex;
-    align-items: flex-start;
     justify-content: space-between;
     gap: var(--space-md);
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--space-sm);
 }
 
-.daily-panel__title {
-    font-family: var(--font-display);
-    font-size: 1.35rem;
-    line-height: 1.1;
-}
-
-.daily-panel__note {
-    margin-top: 2px;
-    color: var(--text-tertiary);
-    font-size: 0.8rem;
-}
-
-.daily-panel__close {
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    margin: -8px -8px 0 0;
-    background: none;
-    border: none;
-    border-radius: var(--radius-full);
+/* Mesmo tamanho de "Outros jeitos de escolher": as fileiras não disputam com o sorteio */
+.home-row__title {
+    margin: 0;
     color: var(--text-secondary);
-    cursor: pointer;
-}
-
-.daily-panel__close:hover {
-    background: var(--bg-elevated);
-    color: var(--text-primary);
-}
-
-.daily-panel__list {
-    display: grid;
-    gap: var(--space-sm);
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    list-style: none;
-}
-
-.daily-pick {
-    --kind-color: #ffc94d;
-    display: grid;
-    grid-template-columns: 72px minmax(0, 1fr);
-    gap: var(--space-md);
-    width: 100%;
-    padding: var(--space-sm);
-    background: var(--bg-secondary);
-    border: 1px solid transparent;
-    border-radius: var(--radius-md);
-    color: inherit;
-    text-align: left;
-    cursor: pointer;
-    transition: border-color var(--duration-fast) var(--ease-smooth),
-                background var(--duration-fast) var(--ease-smooth);
-}
-
-.daily-pick[data-kind="tv"] { --kind-color: #3dd6c6; }
-.daily-pick[data-kind="dorama"] { --kind-color: #ff8fb8; }
-
-.daily-pick:hover,
-.daily-pick:focus-visible {
-    border-color: var(--kind-color);
-    background: var(--bg-elevated);
-}
-
-.daily-pick img {
-    width: 72px;
-    height: auto;
-    aspect-ratio: 2/3;
-    object-fit: cover;
-    border-radius: var(--radius-sm);
-}
-
-.daily-pick__body {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-}
-
-.daily-pick__kind {
-    color: var(--kind-color);
-    font-size: 0.7rem;
+    font-family: inherit;
+    font-size: 0.85rem;
     font-weight: 700;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
 }
 
-.daily-pick__title {
+.home-row__note {
+    margin: 2px 0 0;
+    color: var(--text-tertiary);
+    font-size: 0.85rem;
+}
+
+.home-row__more {
+    flex-shrink: 0;
+    min-height: 44px;
+    padding: 0 var(--space-xs);
+    background: none;
+    border: none;
+    color: var(--accent-primary);
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.home-row__more:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.home-row__list {
+    display: flex;
+    gap: var(--space-md);
+    margin: 0;
+    padding: 4px 0 var(--space-sm);
+    list-style: none;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--text-tertiary) 50%, transparent) transparent;
+}
+
+.home-row__list::-webkit-scrollbar {
+    height: 6px;
+}
+
+.home-row__list::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--text-tertiary) 50%, transparent);
+    border-radius: var(--radius-full);
+}
+
+.home-row__list::-webkit-scrollbar-button {
+    display: none;
+}
+
+.home-row__list > li {
+    flex: 0 0 132px;
+    scroll-snap-align: start;
+}
+
+/* Indicações do dia: 3 colunas que cabem na largura, nenhuma cortada */
+.home-row__list--grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
+    scroll-snap-type: none;
+}
+
+.home-row__list--grid > li {
+    min-width: 0;
+}
+
+/* Continue assistindo: cartão deitado e baixo (pôster pequeno, nome, episódio e progresso) */
+.home-row__list > li:has(> .home-card--wide) {
+    flex-basis: min(300px, 86%);
+}
+
+.home-card.home-card--wide {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    column-gap: var(--space-md);
+    row-gap: 2px;
+    align-content: center;
+    padding: var(--space-sm);
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+}
+
+.home-card.home-card--wide .home-card__poster {
+    grid-row: 1 / 4;
+    width: 56px;
+    margin: 0;
+    border-radius: var(--radius-poster-sm);
+}
+
+.home-card.home-card--wide .home-card__title {
+    align-self: end;
+    -webkit-line-clamp: 1;
+}
+
+.home-card.home-card--wide .home-card__progress {
+    margin: 6px 0 0;
+    align-self: start;
+}
+
+.home-card.home-card--wide:hover .home-card__poster {
+    transform: none;
+}
+
+.home-card.home-card--wide:hover {
+    border-color: color-mix(in srgb, var(--accent-primary) 45%, transparent);
+}
+
+.home-card.home-card--wide:focus-visible {
+    outline: 3px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+.home-card.home-card--wide:focus-visible .home-card__poster {
+    outline: none;
+}
+
+.home-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    padding: 0;
+    background: none;
+    border: none;
     color: var(--text-primary);
-    font-size: 0.95rem;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.home-card__poster {
+    display: block;
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    height: auto;
+    object-fit: cover;
+    margin-bottom: 4px;
+    transition: transform var(--duration-normal) var(--ease-smooth);
+}
+
+.home-card__poster--empty {
+    background: var(--bg-elevated);
+}
+
+.home-card:hover .home-card__poster {
+    transform: translateY(-3px);
+}
+
+.home-card:focus-visible {
+    outline: none;
+}
+
+.home-card:focus-visible .home-card__poster {
+    outline: 3px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+/* Progresso da série colado na base do pôster */
+.home-card__progress {
+    display: block;
+    height: 4px;
+    margin: -10px 6px 6px;
+    position: relative;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.home-card__progress > span {
+    display: block;
+    height: 100%;
+    background: var(--accent-primary);
+}
+
+.home-card__kind {
+    color: var(--accent-primary);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+/* Cada indicação na cor do próprio tipo */
+.home-card--pick[data-kind="movie"] .home-card__kind { color: #ffc94d; }
+.home-card--pick[data-kind="tv"] .home-card__kind { color: #3dd6c6; }
+.home-card--pick[data-kind="dorama"] .home-card__kind { color: #ff8fb8; }
+
+.home-card__title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 0.92rem;
     font-weight: 700;
     line-height: 1.25;
-    overflow-wrap: anywhere;
 }
 
-.daily-pick__meta {
+.home-card__meta,
+.home-card__why {
     color: var(--text-tertiary);
-    font-size: 0.75rem;
-    font-variant-numeric: tabular-nums;
-}
-
-.daily-pick__why {
-    color: var(--text-secondary);
-    font-size: 0.75rem;
-    font-weight: 600;
-}
-
-.daily-pick__overview {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    margin-top: 2px;
-    color: var(--text-secondary);
     font-size: 0.78rem;
-    line-height: 1.35;
+    line-height: 1.3;
 }
 
-/* Celular: o painel ocupa a largura toda, acima do botão */
-@media (max-width: 640px) {
-    .daily-panel {
-        right: calc(12px + env(safe-area-inset-right));
-        left: calc(12px + env(safe-area-inset-left));
-        width: auto;
-        max-height: min(70vh, 560px);
-    }
-
-    .daily-pick {
-        grid-template-columns: 56px minmax(0, 1fr);
-        gap: var(--space-sm);
-    }
-
-    .daily-pick img {
-        width: 56px;
-    }
-
-    .daily-pick__overview {
-        -webkit-line-clamp: 2;
-    }
+.home-card__why {
+    color: var(--text-secondary);
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .daily-panel {
-        animation: none;
+@media (min-width: 641px) {
+    .home-row__list > li {
+        flex-basis: 150px;
     }
 
-    .daily-launcher:hover {
+    /* No computador, as 3 indicações ocupam a largura toda, cada uma deitada:
+       pôster à esquerda e tipo, nome, nota e um trecho da sinopse à direita */
+    .home-row__list--grid {
+        gap: var(--space-lg);
+    }
+
+    .home-card.home-card--pick {
+        display: grid;
+        grid-template-columns: 104px minmax(0, 1fr);
+        grid-template-rows: auto auto auto auto 1fr;
+        column-gap: var(--space-md);
+        row-gap: 3px;
+        align-content: start;
+        height: 100%;
+        padding: var(--space-sm);
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        transition: border-color var(--duration-normal) var(--ease-smooth);
+    }
+
+    .home-card--pick .home-card__poster {
+        grid-row: 1 / 6;
+        margin: 0;
+    }
+
+    .home-card.home-card--pick:hover {
+        border-color: color-mix(in srgb, var(--accent-primary) 45%, transparent);
+    }
+
+    .home-card.home-card--pick:hover .home-card__poster {
         transform: none;
     }
+
+    .home-card--pick .home-card__overview {
+        display: -webkit-box;
+    }
+}
+
+/* Trecho da sinopse: só cabe no cartão deitado do computador */
+.home-card__overview {
+    display: none;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-top: 4px;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    line-height: 1.4;
 }
 
 /* ==================== OPTIONS GRID (Content Type Selection) ==================== */
@@ -3058,7 +3116,7 @@ header {
 /* ==================== SCROLL TO TOP ==================== */
 .scroll-top-btn {
     position: fixed;
-    bottom: calc(96px + env(safe-area-inset-bottom)); /* acima do botão das indicações do dia */
+    bottom: calc(96px + env(safe-area-inset-bottom)); /* o lugar final vem do bloco do canto, no fim */
     right: calc(var(--space-lg) + env(safe-area-inset-right));
     width: 48px;
     height: 48px;
@@ -5342,35 +5400,35 @@ select.input-dark:hover {
 }
 
 /* ==================== CANTO INFERIOR DIREITO ==================== */
-/* O botão das indicações do dia ocupa o canto; avisos, faixa "Instalar App", "voltar ao topo" e conquista
-   se arrumam em volta dele, sem se cobrir. Fica no fim para vencer as regras acima.
-   --banner-lift: quanto avisos e conquista sobem enquanto a faixa de instalação aparece (altura vem do pwa.js). */
+/* "Voltar ao topo" ocupa o canto; avisos ficam à esquerda dele, a conquista acima e a faixa
+   "Instalar App" embaixo. No celular, tudo fica acima da barra de navegação. Fica no fim para
+   vencer as regras acima.
+   --banner-lift: quanto avisos, "voltar ao topo" e conquista sobem enquanto a faixa aparece (altura vem do pwa.js).
+   --nav-room: espaço da barra de baixo (só no celular). */
 :root {
-    --fab-edge: var(--space-lg);                         /* distância do botão até a borda */
-    --fab-room: calc(var(--fab-edge) + 56px + 12px);     /* espaço que o botão ocupa, com folga */
+    --fab-edge: var(--space-lg);                     /* distância até a borda */
+    --fab-size: 48px;                                /* "voltar ao topo" */
+    --fab-room: calc(var(--fab-edge) + var(--fab-size) + 12px);
+    --nav-room: 0px;
     --banner-lift: 0px;
+    --floor: calc(var(--fab-edge) + var(--nav-room) + env(safe-area-inset-bottom));
 }
 
 body:has(#pwa-install-banner) {
     --banner-lift: calc(var(--install-banner-h, 90px) + 12px);
 }
 
-.daily-launcher {
+.scroll-top-btn {
     right: calc(var(--fab-edge) + env(safe-area-inset-right));
-    bottom: calc(var(--fab-edge) + env(safe-area-inset-bottom));
+    bottom: calc(var(--floor) + var(--banner-lift));
 }
 
-.daily-panel {
-    right: calc(var(--fab-edge) + env(safe-area-inset-right));
-    bottom: calc(var(--fab-room) + env(safe-area-inset-bottom));
-}
-
-/* Avisos à esquerda do botão; acima da faixa de instalação quando ela aparece.
-   Escondido, sai pela direita a distância toda (a própria largura + o espaço até a borda; um
-   deslocamento fixo deixava uma ponta aparecendo) e fica invisível quando termina de sair. */
+/* Avisos à esquerda do "voltar ao topo". Escondido, sai pela direita a distância toda (a própria
+   largura + o espaço até a borda; um deslocamento fixo deixava uma ponta aparecendo) e fica
+   invisível quando termina de sair. */
 .toast {
     right: calc(var(--fab-room) + env(safe-area-inset-right));
-    bottom: calc(var(--fab-edge) + var(--banner-lift) + env(safe-area-inset-bottom));
+    bottom: calc(var(--floor) + var(--banner-lift));
     transform: translateX(calc(100% + var(--fab-room) + env(safe-area-inset-right) + 24px));
     visibility: hidden;
     transition: transform 0.3s var(--ease-smooth), visibility 0s linear 0.3s;
@@ -5383,7 +5441,7 @@ body:has(#pwa-install-banner) {
 }
 
 .undo-toast {
-    bottom: calc(var(--fab-edge) + 72px + var(--banner-lift) + env(safe-area-inset-bottom));
+    bottom: calc(var(--floor) + 72px + var(--banner-lift));
 }
 
 /* "Desfazer" some pelo [hidden] e recebe o foco antes de entrar: não pode ficar invisível */
@@ -5394,45 +5452,193 @@ body:has(#pwa-install-banner) {
 
 /* Conquista acima da fileira dos avisos e do "voltar ao topo" */
 .achievement {
-    bottom: calc(var(--fab-room) + 44px + 12px + var(--banner-lift) + env(safe-area-inset-bottom));
+    bottom: calc(var(--floor) + 96px + var(--banner-lift)); /* cabe um aviso de 2 linhas embaixo */
 }
 
-/* Computador: a faixa termina antes do botão */
+/* A faixa embaixo de tudo; no computador termina antes do "voltar ao topo" */
 .install-banner {
     right: calc(var(--fab-room) + env(safe-area-inset-right));
+    bottom: var(--floor);
 }
 
 @media (max-width: 640px) {
     :root {
         --fab-edge: var(--space-md);
+        --fab-size: 44px;
+        --nav-room: calc(var(--nav-height) + var(--nav-gap));
     }
 
-    /* Celular: a faixa fica embaixo, na largura toda, e o canto inteiro sobe acima dela */
+    /* Celular: a faixa ocupa a largura toda, logo acima da barra */
     .install-banner {
         left: calc(var(--fab-edge) + env(safe-area-inset-left));
         right: calc(var(--fab-edge) + env(safe-area-inset-right));
-        bottom: calc(var(--fab-edge) + env(safe-area-inset-bottom));
     }
 
-    .daily-launcher {
-        bottom: calc(var(--fab-edge) + var(--banner-lift) + env(safe-area-inset-bottom));
-    }
-
-    .daily-panel {
-        left: calc(var(--fab-edge) + env(safe-area-inset-left));
-        bottom: calc(var(--fab-room) + var(--banner-lift) + env(safe-area-inset-bottom));
-    }
-
-    .toast,
-    .undo-toast {
-        bottom: calc(var(--fab-edge) + var(--banner-lift) + env(safe-area-inset-bottom));
-    }
-
-    /* "Voltar ao topo" (44px) acima do botão, centralizado com ele */
     .scroll-top-btn {
-        right: calc(var(--fab-edge) + 6px + env(safe-area-inset-right));
-        bottom: calc(var(--fab-room) + var(--banner-lift) + env(safe-area-inset-bottom));
+        width: var(--fab-size);
+        height: var(--fab-size);
     }
+}
+
+/* ==================== BARRA DE BAIXO (CELULAR) ==================== */
+/* Pílula flutuante com Início, Roleta, Sortear (no centro), Match e Biblioteca.
+   O item da tela atual acende e mostra o nome; os outros ficam só com o ícone.
+   No computador, a navegação é pelas abas do topo. */
+:root {
+    --nav-height: 64px;
+    --nav-gap: 10px;
+}
+
+.bottom-nav {
+    display: none;
+}
+
+@media (max-width: 640px) {
+    .mode-tabs {
+        display: none;
+    }
+
+    body {
+        padding-bottom: calc(var(--nav-height) + var(--nav-gap) * 2 + env(safe-area-inset-bottom));
+    }
+
+    .bottom-nav {
+        position: fixed;
+        left: calc(var(--space-sm) + env(safe-area-inset-left));
+        right: calc(var(--space-sm) + env(safe-area-inset-right));
+        bottom: calc(var(--nav-gap) + env(safe-area-inset-bottom));
+        z-index: 950; /* acima da faixa de instalação, abaixo das janelas (1000) */
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 2px;
+        height: var(--nav-height);
+        padding: 0 var(--space-sm);
+        background: rgba(20, 16, 31, 0.88);
+        -webkit-backdrop-filter: blur(18px) saturate(140%);
+        backdrop-filter: blur(18px) saturate(140%);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-full);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+    }
+
+    /* Cinco colunas iguais: o Sortear fica sempre no meio, qualquer que seja a tela */
+    .bottom-nav__item,
+    .bottom-nav__draw {
+        flex: 1 1 0;
+    }
+
+    .bottom-nav__item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        min-width: 0;
+        height: 56px;
+        padding: 0;
+        background: transparent;
+        border: none;
+        border-radius: var(--radius-lg);
+        color: var(--text-tertiary);
+        font: inherit;
+        cursor: pointer;
+        transition: color 0.25s var(--ease-smooth);
+    }
+
+    .bottom-nav__icon {
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+    }
+
+    .bottom-nav__icon--on,
+    .bottom-nav__item[aria-current="page"] .bottom-nav__icon--off {
+        display: none;
+    }
+
+    .bottom-nav__item[aria-current="page"] .bottom-nav__icon--on {
+        display: block;
+    }
+
+    .bottom-nav__label {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 0.68rem;
+        font-weight: 600;
+        line-height: 1;
+    }
+
+    /* Tela atual: ícone cheio e nome na cor de destaque */
+    .bottom-nav__item[aria-current="page"] {
+        color: var(--accent-primary);
+    }
+
+    .bottom-nav__item[aria-current="page"] .bottom-nav__label {
+        font-weight: 800;
+    }
+
+    /* Sortear: ingresso na cor do tipo, um pouco acima da barra */
+    .bottom-nav__draw {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1px;
+        flex: 0 0 66px;
+        height: 56px;
+        margin: -22px 4px 0;
+        background: var(--accent-primary);
+        border: none;
+        border-radius: 14px;
+        color: var(--accent-on);
+        cursor: pointer;
+        /* recortes do ingresso nas laterais */
+        -webkit-mask: radial-gradient(circle 7px at 0 50%, #0000 97%, #000) left / 51% 100% no-repeat,
+                      radial-gradient(circle 7px at 100% 50%, #0000 97%, #000) right / 51% 100% no-repeat;
+        mask: radial-gradient(circle 7px at 0 50%, #0000 97%, #000) left / 51% 100% no-repeat,
+              radial-gradient(circle 7px at 100% 50%, #0000 97%, #000) right / 51% 100% no-repeat;
+        transition: transform 0.2s var(--ease-smooth);
+    }
+
+    .bottom-nav__draw:active {
+        transform: scale(0.94);
+    }
+
+    .bottom-nav__draw-icon {
+        width: 24px;
+        height: 24px;
+    }
+
+    .bottom-nav__draw-label {
+        font-family: var(--font-display, inherit);
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .bottom-nav__item:focus-visible {
+        outline: 3px solid var(--accent-primary);
+        outline-offset: 2px;
+    }
+
+    /* A máscara dos recortes esconderia o contorno de fora: o foco vai por dentro */
+    .bottom-nav__draw:focus-visible {
+        outline: none;
+        box-shadow: inset 0 0 0 3px var(--accent-on);
+    }
+}
+
+/* Título da tela da Biblioteca */
+.view-title {
+    margin: 0 0 var(--space-md);
+    font-family: var(--font-display, inherit);
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
 }
 
 /* ==================== COMO USAR ==================== */
@@ -5946,7 +6152,7 @@ button, [role="tab"], [role="radio"], summary, .fun-mode, .list-card, .result-it
 
 /* Fio claro por dentro: pôster escuro não some no fundo escuro. Fundo enquanto a imagem carrega */
 .result-item img, .library-item img, .history-item img, .match-card__poster, .match-result-item img,
-.match-history__title img, .friend-title img, .battle__fighter img, .battle__champion-img, .daily-pick img,
+.match-history__title img, .friend-title img, .battle__fighter img, .battle__champion-img, .home-card__poster,
 .list-card__posters img {
     background: var(--bg-elevated);
     outline: 1px solid var(--poster-edge);
@@ -5958,8 +6164,12 @@ button, [role="tab"], [role="radio"], summary, .fun-mode, .list-card, .result-it
     border-radius: var(--radius-poster);
 }
 
-.match-history__title img, .friend-title img, .battle__fighter img, .daily-pick img, .list-card__posters img {
+.match-history__title img, .friend-title img, .battle__fighter img, .list-card__posters img {
     border-radius: var(--radius-poster-sm);
+}
+
+.home-card__poster {
+    border-radius: var(--radius-poster);
 }
 
 /* ===== Etapa 2: página do título ===== */
@@ -6183,3 +6393,23 @@ button, [role="tab"], [role="radio"], summary, .fun-mode, .list-card, .result-it
     cursor: pointer;
 }
 .title-note__go:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 2px; }
+
+/* Top 10, lançamentos e busca: 5 por linha fora do celular (o Top 10 fica em 2 linhas de 5) */
+@media (min-width: 641px) {
+    #results-area {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+}
+
+/* Indicações do dia: último tópico do Início, separado da busca e dos resultados */
+#daily-row {
+    margin-top: var(--space-xl);
+}
+
+/* Celular: 2 por linha (o Top 10 fica em 5 linhas certinhas e os pôsteres, legíveis) */
+@media (max-width: 640px) {
+    #results-area {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-md);
+    }
+}

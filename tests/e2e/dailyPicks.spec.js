@@ -1,67 +1,31 @@
 import { test, expect, enterAsGuest, modal } from './support/app.js';
 
-const panel = page => page.locator('#daily-panel');
-const launcher = page => page.locator('#daily-launcher');
-const rows = page => page.locator('#daily-picks-list .daily-pick');
+const row = page => page.locator('#daily-row');
+const cards = page => page.locator('#daily-picks-list .home-card');
 
 test.describe('indicações do dia', () => {
-  test.describe('vistas ontem', () => {
-    test.use({ dailySeen: '2026-11-02' });
-
-  test('abrem sozinhas na primeira entrada do dia e não de novo no mesmo dia', async ({ page, tmdbUrls }) => {
+  test('ficam no alto do Início, um filme, uma série e um dorama', async ({ page, tmdbUrls }) => {
     await page.clock.setFixedTime(new Date(2026, 10, 3, 12, 0));
     await page.goto('/');
-    await expect(launcher(page)).toBeHidden(); // tela de login: nada de botão
     await page.locator('#login-form [data-action="loginAsGuest"]').click();
 
-    // Antes de abrir: bolinha de novas
-    await expect(launcher(page)).toHaveAttribute('aria-label', 'Indicações do dia (novas)');
-    await expect(launcher(page).locator('.daily-launcher__dot')).toBeVisible();
-
-    await expect(panel(page)).toBeVisible();
-    await expect(rows(page).locator('.daily-pick__kind')).toHaveText(['Filme', 'Série', 'Dorama']);
-    await expect(rows(page).first().locator('.daily-pick__meta')).toHaveText('2020 · ★ 8,5 · Drama');
-    await expect(rows(page).first().locator('.daily-pick__overview')).toHaveText(/^Sinopse de /);
-    await expect(rows(page).first()).toHaveAttribute('aria-label', /^Filme do dia: /);
-    await expect(rows(page).nth(2)).toHaveAttribute('data-media', 'dorama');
-    // Aberto sozinho, não rouba o foco
-    expect(await page.evaluate(() => document.getElementById('daily-panel').contains(document.activeElement))).toBe(false);
-    await expect(launcher(page).locator('.daily-launcher__dot')).toBeHidden();
-    await expect(launcher(page)).toHaveAttribute('aria-expanded', 'true');
+    await expect(row(page)).toBeVisible();
+    await expect(cards(page).locator('.home-card__kind')).toHaveText(['Filme', 'Série', 'Dorama']);
+    await expect(cards(page).first().locator('.home-card__meta')).toHaveText('2020 · ★ 8,5 · Drama');
+    await expect(cards(page).first()).toHaveAttribute('aria-label', /^Filme do dia: /);
+    await expect(cards(page).nth(2)).toHaveAttribute('data-media', 'dorama');
+    // Nada abre por cima da tela: não há mais painel nem botão no canto
+    await expect(page.locator('#daily-panel, #daily-launcher')).toHaveCount(0);
 
     // Pedidos ao TMDB: bem avaliados, ordenados por votos; o dorama é coreano
     const asked = tmdbUrls.filter(u => u.searchParams.get('sort_by') === 'vote_count.desc');
     expect(asked.map(u => u.pathname.replace(/^.*\/tmdb/, ''))).toEqual(['/discover/movie', '/discover/tv', '/discover/tv']);
     expect(asked[2].searchParams.get('with_origin_country')).toBe('KR');
-
-    await page.locator('.daily-panel__close').click();
-    await expect(panel(page)).toBeHidden();
-    await expect(launcher(page)).toHaveAttribute('aria-expanded', 'false');
-
-    await page.reload();
-    await page.locator('#login-form [data-action="loginAsGuest"]').click();
-    await expect(launcher(page)).toHaveAttribute('aria-label', 'Indicações do dia');
-    await page.waitForTimeout(1800);
-    await expect(panel(page)).toBeHidden();
-  });
   });
 
-  test('o botão reabre; Esc fecha e devolve o foco; escolher abre o título', async ({ page }) => {
+  test('escolher uma indicação abre o título', async ({ page }) => {
     await enterAsGuest(page);
-    await expect(launcher(page)).toBeVisible();
-    await expect(panel(page)).toBeHidden();
-
-    await launcher(page).click();
-    await expect(panel(page)).toBeVisible();
-    await expect(page.locator('.daily-panel__close')).toBeFocused();
-    await page.keyboard.press('Escape');
-    await expect(panel(page)).toBeHidden();
-    await expect(launcher(page)).toBeFocused();
-
-    await page.keyboard.press('Enter');
-    await expect(panel(page)).toBeVisible();
-    await rows(page).nth(1).click();
-    await expect(panel(page)).toBeHidden();
+    await cards(page).nth(1).click();
     await expect(modal(page)).toBeVisible();
     await expect(page.locator('#m-title')).not.toBeEmpty();
   });
@@ -69,57 +33,43 @@ test.describe('indicações do dia', () => {
   test('é o mesmo ao recarregar no mesmo dia e muda no dia seguinte', async ({ page }) => {
     await page.clock.setFixedTime(new Date(2026, 10, 3, 12, 0));
     await enterAsGuest(page);
-    await expect(rows(page)).toHaveCount(3);
-    const today = await rows(page).evaluateAll(els => els.map(e => e.dataset.id));
+    await expect(cards(page)).toHaveCount(3);
+    const today = await cards(page).evaluateAll(els => els.map(e => e.dataset.id));
     await page.reload();
-    await expect(rows(page)).toHaveCount(3);
-    expect(await rows(page).evaluateAll(els => els.map(e => e.dataset.id))).toEqual(today);
+    await expect(cards(page)).toHaveCount(3);
+    expect(await cards(page).evaluateAll(els => els.map(e => e.dataset.id))).toEqual(today);
 
     await page.clock.setFixedTime(new Date(2026, 10, 4, 12, 0));
     await page.reload();
-    await expect(rows(page)).toHaveCount(3);
-    expect(await rows(page).evaluateAll(els => els.map(e => e.dataset.id))).not.toEqual(today);
+    await expect(cards(page)).toHaveCount(3);
+    expect(await cards(page).evaluateAll(els => els.map(e => e.dataset.id))).not.toEqual(today);
   });
 
-  test.describe('nunca vistas', () => {
-    test.use({ dailySeen: null });
-
-  test('quem chega por link de título não recebe o pop-up', async ({ page }) => {
-    await page.goto('/?titulo=movie-1');
-    await page.locator('#login-form [data-action="loginAsGuest"]').click();
-    await expect(modal(page)).toBeVisible();
-    await page.waitForTimeout(1800);
-    await expect(panel(page)).toBeHidden();
-    await expect(launcher(page).locator('.daily-launcher__dot')).toBeVisible();
-  });
-
-  test('sem TMDB, nem botão nem painel, e o resto da tela continua', async ({ page }) => {
+  test('sem TMDB, a fileira some e o resto da tela continua', async ({ page }) => {
     await page.route(/\/discover\/.*sort_by=vote_count\.desc/, route => route.fulfill({ status: 500, json: {} }));
     await enterAsGuest(page);
     await expect(page.locator('#btn-top10')).toBeVisible();
-    await page.waitForTimeout(1800);
-    await expect(launcher(page)).toBeHidden();
-    await expect(panel(page)).toBeHidden();
-  });
+    await page.waitForTimeout(1500);
+    await expect(row(page)).toBeHidden();
   });
 
-  test('no celular, o painel cabe na tela e fica acima do botão', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
+  test('no celular, as 3 cabem inteiras na largura e ficam depois do sorteio', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
     await enterAsGuest(page);
-    await launcher(page).click();
-    await expect(panel(page)).toBeVisible();
-    // Mede depois da animação de entrada (ela desce o painel 12px); no GitHub, mais lento, media no meio dela
-    await panel(page).evaluate(el => Promise.all(el.getAnimations().map(a => a.finished)));
-    const box = await panel(page).boundingBox();
-    const button = await launcher(page).boundingBox();
-    expect(box.x).toBeGreaterThanOrEqual(0);
-    expect(box.x + box.width).toBeLessThanOrEqual(390);
-    expect(box.y + box.height).toBeLessThanOrEqual(button.y);
+    await expect(cards(page)).toHaveCount(3);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    for (const box of await cards(page).evaluateAll(els => els.map(e => e.getBoundingClientRect().toJSON()))) {
+      expect(box.left).toBeGreaterThanOrEqual(0);
+      expect(box.right).toBeLessThanOrEqual(360);
+    }
+    // O sorteio vem antes: as indicações são um extra
+    const draw = await page.locator('#btn-sortear').boundingBox();
+    const row = await page.locator('#daily-row').boundingBox();
+    expect(row.y).toBeGreaterThan(draw.y);
   });
 
-  // Canto inferior direito: botão das indicações, aviso, faixa "Instalar App", "voltar ao topo" e conquista
-  // não podem se cobrir (achado do usuário em 2026-11-03: aviso e faixa por cima do botão)
+  // Canto inferior direito: aviso, faixa "Instalar App", "voltar ao topo", conquista e (no celular) a barra
+  // de baixo não podem se cobrir (achado do usuário em 2026-11-03: aviso e faixa um por cima do outro)
   for (const [label, size] of [['computador', { width: 1280, height: 800 }], ['celular', { width: 390, height: 844 }]]) {
     test(`no ${label}, os elementos do canto não se cobrem`, async ({ page }) => {
       await page.setViewportSize(size);
@@ -152,7 +102,7 @@ test.describe('indicações do dia', () => {
       });
 
       const overlaps = await page.evaluate(() => {
-        const parts = { botao: '#daily-launcher', aviso: '#toast', faixa: '#pwa-install-banner', topo: '#scroll-top', conquista: '#achievement' };
+        const parts = { aviso: '#toast', faixa: '#pwa-install-banner', topo: '#scroll-top', conquista: '#achievement', barra: '.bottom-nav' };
         const boxes = Object.entries(parts).map(([name, sel]) => [name, document.querySelector(sel).getBoundingClientRect()]);
         const hit = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
         const found = [];
@@ -161,14 +111,15 @@ test.describe('indicações do dia', () => {
       });
       expect(overlaps).toEqual([]);
       await expect(page.locator('.install-banner__dismiss')).toBeInViewport();
+      if (label === 'celular') await expect(page.locator('.bottom-nav')).toBeInViewport({ ratio: 1 });
+      else await expect(page.locator('.bottom-nav')).toBeHidden();
 
-      // Dispensar a faixa devolve o botão para o canto
-      const lifted = (await page.locator('#daily-launcher').boundingBox()).y;
+      // Dispensar a faixa devolve o "voltar ao topo" para baixo
+      const lifted = (await page.locator('#scroll-top').boundingBox()).y;
       await page.locator('.install-banner__dismiss').click();
       await expect(page.locator('#pwa-install-banner')).toHaveCount(0);
-      const settled = (await page.locator('#daily-launcher').boundingBox()).y;
-      if (label === 'celular') expect(settled).toBeGreaterThan(lifted);
-      else expect(settled).toBe(lifted);
+      const settled = (await page.locator('#scroll-top').boundingBox()).y;
+      expect(settled).toBeGreaterThan(lifted);
     });
   }
 });
@@ -191,14 +142,13 @@ test.describe('indicações do dia pelo DNA', () => {
   test('só vê terror: o filme vem de terror; série e dorama, sem terror em série, ficam com as de todo mundo', async ({ page, tmdbUrls }) => {
     await seedHistory(page, horror(5));
     await enterAsGuest(page);
-    await launcher(page).click();
-    await expect(rows(page)).toHaveCount(3);
+    await expect(cards(page)).toHaveCount(3);
 
-    await expect(rows(page).first().locator('.daily-pick__why')).toHaveText('Porque você curte Terror');
+    await expect(cards(page).first().locator('.home-card__why')).toHaveText('Porque você curte Terror');
     // o gênero que trouxe a indicação vem primeiro
-    await expect(rows(page).first().locator('.daily-pick__meta')).toHaveText(/ · Terror · /);
-    await expect(rows(page).nth(1).locator('.daily-pick__why')).toHaveCount(0);
-    await expect(rows(page).nth(2).locator('.daily-pick__why')).toHaveCount(0);
+    await expect(cards(page).first().locator('.home-card__meta')).toHaveText(/ · Terror$/);
+    await expect(cards(page).nth(1).locator('.home-card__why')).toHaveCount(0);
+    await expect(cards(page).nth(2).locator('.home-card__why')).toHaveCount(0);
     await expect(page.locator('#daily-picks-note')).toHaveText('Escolhidos pelo seu gosto, novos à meia-noite');
 
     const personal = discover(tmdbUrls).filter(u => u.searchParams.has('with_genres'));
@@ -209,9 +159,8 @@ test.describe('indicações do dia pelo DNA', () => {
   test('com menos de 5 títulos, são as de todo mundo', async ({ page, tmdbUrls }) => {
     await seedHistory(page, horror(4));
     await enterAsGuest(page);
-    await launcher(page).click();
-    await expect(rows(page)).toHaveCount(3);
-    await expect(page.locator('#daily-picks-list .daily-pick__why')).toHaveCount(0);
+    await expect(cards(page)).toHaveCount(3);
+    await expect(page.locator('#daily-picks-list .home-card__why')).toHaveCount(0);
     await expect(page.locator('#daily-picks-note')).toHaveText('Um de cada, novos à meia-noite');
     expect(discover(tmdbUrls).some(u => u.searchParams.has('with_genres'))).toBe(false);
   });
@@ -225,15 +174,14 @@ test.describe('indicações do dia pelo DNA', () => {
       return route.fulfill({ contentType: 'application/json', json: { results: [] } });
     });
     await enterAsGuest(page);
-    await launcher(page).click();
-    await expect(rows(page)).toHaveCount(3);
-    await expect(page.locator('#daily-picks-list .daily-pick__why')).toHaveCount(0);
+    await expect(cards(page)).toHaveCount(3);
+    await expect(page.locator('#daily-picks-list .home-card__why')).toHaveCount(0);
     const tried = discover(tmdbUrls).filter(u => u.searchParams.has('with_genres')).map(u => u.searchParams.get('page'));
     expect(tried.at(-1)).toBe('1');
   });
 });
 
-// Achado do usuário (2026-11-06): com o aviso ao lado do botão ✨, o deslocamento fixo de 400px
+// Achado do usuário (2026-11-06): com o aviso ao lado do botão do canto, o deslocamento fixo de 400px
 // deixava uma ponta do aviso escondido aparecendo na borda (tela de ~450px ou aviso comprido)
 for (const width of [453, 600, 1280]) {
   test(`aviso escondido sai inteiro da tela (${width}px)`, async ({ page }) => {

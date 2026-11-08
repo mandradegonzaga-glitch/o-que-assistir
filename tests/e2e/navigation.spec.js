@@ -1,0 +1,113 @@
+// Etapa 3 do redesign: barra de baixo no celular, Biblioteca em tela própria e "Continue assistindo" no Início
+import { test, expect, enterAsGuest, modal } from './support/app.js';
+
+const phone = { width: 390, height: 844 };
+
+// Convidado com uma série começada neste aparelho (1 de 3 episódios)
+const seedSeries = page => page.addInitScript(() => {
+  if (sessionStorage.getItem('__seeded')) return;
+  sessionStorage.setItem('__seeded', '1');
+  localStorage.setItem('guest_episodes', JSON.stringify({
+    1: { id: 1, title: 'Série Um', poster: '/s1.jpg', type: 'tv', keys: ['1-s1-e1'], updatedAt: 1 },
+  }));
+});
+
+test.describe('barra de baixo (celular)', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.setViewportSize(phone);
+  });
+
+  test('troca de tela, marca a atual e o nome fica junto do ícone', async ({ page }) => {
+    await enterAsGuest(page);
+    const nav = page.getByRole('navigation', { name: 'Navegação principal' });
+    await expect(nav).toBeVisible();
+    await expect(page.locator('.mode-tabs')).toBeHidden();
+    await expect(page.locator('#nav-discover')).toHaveAttribute('aria-current', 'page');
+
+    await page.locator('#nav-library').click();
+    await expect(page.locator('#view-library')).toBeVisible();
+    await expect(page.locator('#view-discover')).toBeHidden();
+    await expect(page.locator('#nav-library')).toHaveAttribute('aria-current', 'page');
+    await expect(page.locator('#nav-discover')).not.toHaveAttribute('aria-current', 'page');
+    await expect(page).toHaveURL(/modo=library/);
+
+    await page.locator('#nav-roulette').click();
+    await expect(page.locator('#view-roulette')).toBeVisible();
+    await page.locator('#nav-discover').click();
+    await expect(page.locator('#view-discover')).toBeVisible();
+    await expect(page).not.toHaveURL(/modo=/);
+  });
+
+  test('o Sortear do meio fica no centro em qualquer tela e sorteia de onde estiver', async ({ page }) => {
+    await enterAsGuest(page);
+    const center = async () => {
+      const box = await page.locator('#nav-sortear').boundingBox();
+      return Math.round(box.x + box.width / 2);
+    };
+    const atHome = await center();
+    expect(Math.abs(atHome - phone.width / 2)).toBeLessThanOrEqual(2);
+    await page.locator('#nav-library').click();
+    expect(await center()).toBe(atHome);
+
+    await page.locator('#nav-sortear').click();
+    await expect(modal(page)).toBeVisible();
+    await expect(page.locator('#m-title')).not.toBeEmpty();
+  });
+
+  test('o fim da página não fica escondido atrás da barra', async ({ page }) => {
+    await enterAsGuest(page);
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    const footer = await page.locator('.site-footer').boundingBox();
+    const bar = await page.locator('.bottom-nav').boundingBox();
+    expect(footer.y + footer.height).toBeLessThanOrEqual(bar.y);
+  });
+});
+
+test.describe('Biblioteca em tela própria', () => {
+  test('no computador, é uma aba do topo e o link volta para ela', async ({ page }) => {
+    await enterAsGuest(page);
+    await expect(page.locator('.bottom-nav')).toBeHidden();
+    await expect(page.locator('#view-library')).toBeHidden(); // não fica mais no fim do Início
+    await page.locator('#tab-mode-library').click();
+    await expect(page.locator('#view-library')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Biblioteca', level: 2 })).toBeVisible();
+
+    await page.reload();
+    await page.locator('#login-form [data-action="loginAsGuest"]').click();
+    await expect(page.locator('#view-library')).toBeVisible();
+    await expect(page.locator('#tab-mode-library')).toHaveAttribute('aria-selected', 'true');
+  });
+});
+
+test.describe('Continue assistindo', () => {
+  test('mostra a série começada com o próximo episódio; "Ver tudo" leva a Em Andamento', async ({ page }) => {
+    await seedSeries(page);
+    await enterAsGuest(page);
+    const row = page.locator('#continue-row');
+    await expect(row).toBeVisible();
+    const card = row.locator('.home-card');
+    await expect(card).toHaveCount(1);
+    await expect(card.locator('.home-card__title')).toHaveText('Série Um');
+    await expect(card.locator('.home-card__meta')).toHaveText('T01E02 · 2 restantes');
+    await expect(card).toHaveAttribute('aria-label', 'Continuar Série Um, próximo T01E02, 2 restantes');
+
+    await row.getByRole('button', { name: 'Ver tudo' }).click();
+    await expect(page.locator('#view-library')).toBeVisible();
+    await expect(page.locator('#tab-andando')).toHaveAttribute('aria-selected', 'true');
+    await expect(page.locator('.up-next-card')).toHaveCount(1);
+  });
+
+  test('tocar na série abre os episódios', async ({ page }) => {
+    await seedSeries(page);
+    await enterAsGuest(page);
+    await page.locator('#continue-row .home-card').click();
+    await expect(modal(page)).toBeVisible();
+    await expect(page.locator('#episodes-section')).toBeVisible();
+  });
+
+  test('sem série começada, a fileira não aparece', async ({ page }) => {
+    await enterAsGuest(page);
+    await expect(page.locator('#daily-row')).toBeVisible();
+    await expect(page.locator('#continue-row')).toBeHidden();
+  });
+});

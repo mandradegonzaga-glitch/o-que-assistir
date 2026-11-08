@@ -27,7 +27,7 @@ function readFields() {
 
 export function syncUrl() {
   if (!ready) return;
-  const mode = ['roulette', 'match'].find(m => document.getElementById(`view-${m}`).style.display === 'block') || 'discover';
+  const mode = ['roulette', 'match', 'library'].find(m => document.getElementById(`view-${m}`).style.display === 'block') || 'discover';
   const search = serializeUrlState({
     mode,
     type: state.type,

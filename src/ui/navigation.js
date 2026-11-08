@@ -39,7 +39,10 @@ document.addEventListener('click', function(e) {
 
 // NAVEGAÇÃO
 
+export const VIEWS = ['discover', 'roulette', 'match', 'library'];
+
 export function switchMode(mode) {
+    if (!VIEWS.includes(mode)) mode = 'discover';
     document.querySelectorAll('.mode-tab').forEach(el => {
         el.classList.remove('active');
         el.setAttribute('aria-selected', 'false');
@@ -53,9 +56,18 @@ export function switchMode(mode) {
         activeTab.setAttribute('tabindex', '0');
     }
 
-    ['discover', 'roulette', 'match'].forEach(view => {
+    const changed = document.getElementById(`view-${mode}`)?.style.display !== 'block';
+    VIEWS.forEach(view => {
         document.getElementById(`view-${view}`).style.display = mode === view ? 'block' : 'none';
     });
+
+    // Barra de baixo (celular): marca a tela atual
+    document.querySelectorAll('.bottom-nav__item').forEach(item => {
+        if (item.dataset.arg === mode) item.setAttribute('aria-current', 'page');
+        else item.removeAttribute('aria-current');
+    });
+    // Trocar de tela pela barra começa do alto, como num app
+    if (changed && document.activeElement?.closest('.bottom-nav')) window.scrollTo({ top: 0 });
 
     if (mode === 'match') renderMatchHistory();
 

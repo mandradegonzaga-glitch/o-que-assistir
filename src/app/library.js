@@ -9,6 +9,7 @@ import { checkAllBadges } from './profile.js';
 import { grantXp, trackChallenge } from './progress.js';
 import { renderReactions } from './reactions.js';
 import { renderListsTab, updateSaveListButton } from './userLists.js';
+import { renderContinueRow } from './homeRows.js';
 import { reactionOf } from '../domain/reactions.js';
 import { calcProgressPercent, getNextEpisode } from '../domain/seriesProgress.js';
 import { session, state } from '../state/appState.js';
@@ -137,6 +138,7 @@ export async function renderLibrary() {
     // O histórico mudou (marcou, desmarcou, terminou a série): o "Como foi?" do título aberto acompanha
     renderReactions();
     updateSaveListButton();
+    renderContinueRow(); // "Continue assistindo" do Início acompanha a biblioteca
 
     const div = document.getElementById('library-content');
 
@@ -204,15 +206,40 @@ function libraryGroup(title, items, media, key) {
     return `<div class="library-group-title">${title} (${items.length})</div>${cards.join('')}`;
 }
 
+// Séries com episódios marcados e ainda sem terminar, com o próximo episódio e o progresso.
+// Usado por "Em Andamento" (Biblioteca) e por "Continue assistindo" (Início).
+// started: quantas tinham episódios marcados (antes de tirar as terminadas); null se o banco falhou.
+export async function loadSeriesInProgress() {
+    const result = await getAllSeriesInProgress();
+    if (!result.success) return { started: null, series: [] };
+    // Série marcada como vista sai de Em Andamento, mesmo sem todos os episódios marcados
+    const seen = new Set((session.user.history || []).map(h => h.id));
+    const pending = result.series.filter(s => !seen.has(s.id));
+    const series = await Promise.all(pending.map(async s => {
+        try {
+            const info = await tmdbGet(`/tv/${s.id}`, {}, { ttl: 3_600_000 });
+            const allSeasons = await fetchAllSeasonsLocal(s.id, info.number_of_seasons || 0);
+            const next = getNextEpisode(s.watchedKeys, allSeasons, s.id);
+            if (!next) return null; // concluída: não aparece
+            const totalEps = allSeasons.reduce((a, season) => a + season.episodes.length, 0);
+            return {
+                ...s,
+                next,
+                nextLabel: `T${String(next.season_number).padStart(2, '0')}E${String(next.episode_number).padStart(2, '0')}`,
+                percent: calcProgressPercent(s.watchedKeys, allSeasons, s.id),
+                remaining: totalEps - s.watchedKeys.size,
+            };
+        } catch { return null; }
+    }));
+    return { started: pending.length, series: series.filter(Boolean) };
+}
+
 export async function renderAndando(div, isStale = () => false) {
     div.innerHTML = '<div class="library-note">Carregando...</div>';
 
-    const result = await getAllSeriesInProgress();
+    const { started, series } = await loadSeriesInProgress();
     if (isStale()) return;
-    // Série marcada como vista sai de Em Andamento, mesmo sem todos os episódios marcados
-    const seen = new Set((session.user.history || []).map(h => h.id));
-    if (result.success) result.series = result.series.filter(s => !seen.has(s.id));
-    if (!result.success || result.series.length === 0) {
+    if (!started) {
         const playIcon = ph('play-circle', { weight: 'duotone' });
         div.innerHTML = `
             <div class="empty-state grid-full">
@@ -223,19 +250,8 @@ export async function renderAndando(div, isStale = () => false) {
         return;
     }
 
-    // Buscar próximo episódio de cada série para mostrar o progresso
-    const cards = await Promise.all(result.series.map(async s => {
-        try {
-            const info = await tmdbGet(`/tv/${s.id}`, {}, { ttl: 3_600_000 });
-            const allSeasons = await fetchAllSeasonsLocal(s.id, info.number_of_seasons || 0);
-            const next = getNextEpisode(s.watchedKeys, allSeasons, s.id);
-            if (!next) return null; // concluída — não aparece aqui
-
-            const percent = calcProgressPercent(s.watchedKeys, allSeasons, s.id);
+    const cards = series.map(({ nextLabel, percent, remaining, ...s }) => {
             const poster = s.poster ? `${IMG_URL}${s.poster}` : null;
-            const nextLabel = `T${String(next.season_number).padStart(2,'0')}E${String(next.episode_number).padStart(2,'0')}`;
-            const totalEps = allSeasons.reduce((a, season) => a + season.episodes.length, 0);
-            const remaining = totalEps - s.watchedKeys.size;
             const remainingLabel = `${remaining} ep. ${pluralize(remaining, 'restante', 'restantes')}`;
 
             return `
@@ -256,16 +272,13 @@ export async function renderAndando(div, isStale = () => false) {
                         Episódios
                     </button>
                 </article>`;
-        } catch { return null; }
-    }));
+    });
 
-    if (isStale()) return;
-    const activeCards = cards.filter(Boolean);
-    if (activeCards.length === 0) {
+    if (cards.length === 0) {
         div.innerHTML = '<div class="library-note">Todas as séries foram concluídas!</div>';
         return;
     }
-    div.innerHTML = activeCards.join('');
+    div.innerHTML = cards.join('');
 }
 
 export function removeLibItem(key, id, btn) {

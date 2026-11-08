@@ -1,6 +1,6 @@
 // Service Worker - O Que Assistir? PWA
 // Trocar CACHE_VERSION a cada deploy: o activate apaga os caches de versões anteriores.
-const CACHE_VERSION = 'v30';
+const CACHE_VERSION = 'v31';
 const STATIC_CACHE = `oqueassistir-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `oqueassistir-dynamic-${CACHE_VERSION}`;
 
@@ -17,6 +17,7 @@ const STATIC_ASSETS = [
     '/src/app/blacklist.js',
     '/src/app/discover.js',
     '/src/app/episodes.js',
+    '/src/app/homeRows.js',
     '/src/app/episodeStore.js',
     '/src/app/legacyImport.js',
     '/src/app/friends.js',

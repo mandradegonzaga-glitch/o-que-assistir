@@ -1,36 +1,26 @@
-// Indicações do dia num painel flutuante, aberto por um botão no canto (como um chat de ajuda).
-// Abre sozinho só na primeira entrada do dia; depois, pelo botão. A escolha é de src/domain/dailyPicks.js.
+// Indicações do dia: último tópico do Início (filme, série e dorama), novas à meia-noite.
+// Celular: 3 colunas de pôster. Computador: 3 cartões deitados na largura toda, com um trecho da sinopse.
+// A escolha é de src/domain/dailyPicks.js.
 import { tmdbGet } from '../api/tmdb.js';
 import { IMG_URL } from '../config/constants.js';
 import { PICK_KINDS, choosePick, msUntilMidnight, personalRequest, pickProfile, pickRequest, profileKey } from '../domain/dailyPicks.js';
 import { GENRE_NAMES, genreNames } from '../domain/genres.js';
 import { localDay } from '../domain/progress.js';
 import { session } from '../state/appState.js';
-import { getActiveModal } from '../ui/modals.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { formatRating } from '../utils/format.js';
-import { storage } from '../utils/storage.js';
 
 const DAY_MS = 86_400_000;
-const SEEN_KEY = 'daily_picks_seen'; // último dia em que o painel foi aberto neste aparelho
-const AUTO_OPEN_DELAY_MS = 1200;
-// Quem chega por um link de título, Match ou amigo veio fazer outra coisa: nada de pop-up
-const LINK_PARAMS = ['titulo', 'ao-vivo', 'match', 'amigo'];
 
 let shownDay = null;
 let shownKey = null; // dia + gêneros que contam: outra pessoa (ou o gosto mudou) refaz o painel
 let loadingKey = null;
 let midnightTimer = null;
-let autoTimer = null;
 
 const els = () => ({
-  launcher: document.getElementById('daily-launcher'),
-  panel: document.getElementById('daily-panel'),
+  row: document.getElementById('daily-row'),
   list: document.getElementById('daily-picks-list'),
-  dot: document.querySelector('#daily-launcher .daily-launcher__dot'),
 });
-
-const seenToday = () => storage.get(SEEN_KEY, null) === localDay();
 
 // Sob medida: tenta a página do dia e, se o gênero tiver poucos títulos, a primeira.
 // Sem nada que sirva (ou sem conexão para esse pedido), o cartão fica com a indicação de todo mundo.
@@ -60,41 +50,30 @@ async function loadPick(kind, index, day, profile) {
 }
 
 // Sinopse curta; corta no fim de uma palavra
-function shortOverview(text, max = 220) {
+function shortOverview(text, max = 180) {
   const clean = (text || '').trim();
   if (!clean) return 'Sem sinopse.';
   if (clean.length <= max) return clean;
   return `${clean.slice(0, max).replace(/\s+\S*$/, '')}…`;
 }
 
-function rowHtml({ kind, item, genre }) {
-  const why = genre ? `<span class="daily-pick__why">Porque você curte ${escapeHtml(GENRE_NAMES[genre])}</span>` : '';
+function cardHtml({ kind, item, genre }) {
+  const why = genre ? `<span class="home-card__why">Porque você curte ${escapeHtml(GENRE_NAMES[genre])}</span>` : '';
   const title = escapeHtml(item.title || item.name);
   const year = (item.release_date || item.first_air_date || '').slice(0, 4);
-  const meta = [year, `★ ${formatRating(item.vote_average)}`].filter(Boolean).join(' · ');
   // O gênero que trouxe a indicação aparece primeiro, para combinar com o "Porque você curte"
   const ids = genre ? [genre, ...(item.genre_ids || []).filter(id => id !== genre)] : item.genre_ids;
-  const genres = genreNames(ids, 2).join(' · ');
+  const meta = [year, `★ ${formatRating(item.vote_average)}`, genreNames(ids, 1)[0]].filter(Boolean).join(' · ');
   return `<li>
-      <button type="button" class="daily-pick" data-kind="${kind.kind}" data-action="carregarDetalhes" data-id="${item.id}" data-media="${kind.kind}" aria-label="${kind.label} do dia: ${title}" aria-describedby="daily-peek-${kind.kind}">
-        <img src="${IMG_URL + item.poster_path}" alt="" width="500" height="750" loading="lazy">
-        <span class="daily-pick__body">
-          <span class="daily-pick__kind">${kind.label}</span>
-          <span class="daily-pick__title">${title}</span>
-          <span class="daily-pick__meta">${escapeHtml([meta, genres].filter(Boolean).join(' · '))}</span>
-          ${why}
-          <span class="daily-pick__overview" id="daily-peek-${kind.kind}">${escapeHtml(shortOverview(item.overview))}</span>
-        </span>
+      <button type="button" class="home-card home-card--pick" data-kind="${kind.kind}" data-action="carregarDetalhes" data-id="${item.id}" data-media="${kind.kind}" aria-label="${kind.label} do dia: ${title}">
+        <img class="home-card__poster" src="${IMG_URL + item.poster_path}" alt="" width="500" height="750" loading="lazy">
+        <span class="home-card__kind">${kind.label}</span>
+        <span class="home-card__title">${title}</span>
+        <span class="home-card__meta">${escapeHtml(meta)}</span>
+        ${why}
+        <span class="home-card__overview">${escapeHtml(shortOverview(item.overview))}</span>
       </button>
     </li>`;
-}
-
-function updateLauncher() {
-  const { launcher, dot } = els();
-  if (!launcher) return;
-  const fresh = !seenToday();
-  dot.hidden = !fresh;
-  launcher.setAttribute('aria-label', fresh ? 'Indicações do dia (novas)' : 'Indicações do dia');
 }
 
 export async function renderDailyPicks() {
@@ -103,8 +82,8 @@ export async function renderDailyPicks() {
   const profile = session.currentUser ? pickProfile(session.user?.history) : null;
   const key = `${day}#${profileKey(profile)}`;
   if (key === shownKey || key === loadingKey) return;
-  const { launcher, list } = els();
-  if (!launcher || !list) return;
+  const { row, list } = els();
+  if (!row || !list) return;
   loadingKey = key;
 
   const settled = await Promise.allSettled(PICK_KINDS.map((kind, index) => loadPick(kind, index, day, profile)));
@@ -113,86 +92,33 @@ export async function renderDailyPicks() {
   if (loadingKey !== key) return;
   loadingKey = null;
 
-  // Sem conexão com o TMDB: nem botão nem painel; o resto da tela continua
+  // Sem conexão com o TMDB: a fileira some; o resto da tela continua
   if (picks.length === 0) {
-    closeDailyPicks({ returnFocus: false });
-    launcher.hidden = true;
+    row.hidden = true;
     return;
   }
-  list.innerHTML = picks.map(rowHtml).join('');
+  list.innerHTML = picks.map(cardHtml).join('');
   document.getElementById('daily-picks-note').textContent = picks.some(p => p.genre)
     ? 'Escolhidos pelo seu gosto, novos à meia-noite'
     : 'Um de cada, novos à meia-noite';
   shownDay = day;
   shownKey = key;
-  launcher.hidden = !session.currentUser;
-  updateLauncher();
+  row.hidden = !session.currentUser;
 
   clearTimeout(midnightTimer);
   midnightTimer = setTimeout(renderDailyPicks, msUntilMidnight());
 }
 
-export function openDailyPicks({ auto = false } = {}) {
-  const { launcher, panel } = els();
-  if (!panel || !shownDay) return;
-  panel.hidden = false;
-  launcher.setAttribute('aria-expanded', 'true');
-  storage.set(SEEN_KEY, localDay());
-  updateLauncher();
-  // Aberto pelo botão: o foco entra no painel. Sozinho, não tira o foco de onde a pessoa está.
-  if (!auto) panel.querySelector('.daily-panel__close').focus();
-}
-
-export function closeDailyPicks({ returnFocus = true } = {}) {
-  const { launcher, panel } = els();
-  if (!panel || panel.hidden) return;
-  const hadFocus = panel.contains(document.activeElement);
-  panel.hidden = true;
-  launcher.setAttribute('aria-expanded', 'false');
-  if (returnFocus && hadFocus && !launcher.hidden) launcher.focus();
-}
-
-export function toggleDailyPicks() {
-  if (els().panel?.hidden) openDailyPicks();
-  else closeDailyPicks();
-}
-
-function blockedByScreen() {
-  if (getActiveModal()) return true;
-  const onboarding = document.getElementById('onboarding-overlay');
-  if (onboarding && getComputedStyle(onboarding).display !== 'none') return true;
-  const params = new URLSearchParams(location.search);
-  return LINK_PARAMS.some(key => params.has(key));
-}
-
-// Depois de entrar (conta ou convidado): mostra o botão e, na primeira vez do dia, abre o painel
+// Depois de entrar (conta ou convidado): as indicações passam a valer pelo gosto da pessoa
 export async function dailyPicksAfterLogin() {
   await renderDailyPicks();
-  const { launcher } = els();
-  if (!shownDay || !launcher) return;
-  launcher.hidden = false;
-  if (seenToday()) return;
-  clearTimeout(autoTimer);
-  autoTimer = setTimeout(() => {
-    if (!blockedByScreen() && !seenToday()) openDailyPicks({ auto: true });
-  }, AUTO_OPEN_DELAY_MS);
+  const { row } = els();
+  if (shownDay && row) row.hidden = false;
 }
 
 export function initDailyPicks() {
-  const { panel, list } = els();
-  if (!panel) return;
+  if (!els().row) return;
   renderDailyPicks();
-
-  // Escolher um título fecha o painel; o foco volta ao botão, para o título devolvê-lo ali ao fechar
-  list.addEventListener('click', e => {
-    if (e.target.closest('.daily-pick')) closeDailyPicks();
-  });
-  panel.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && !getActiveModal()) {
-      e.stopPropagation();
-      closeDailyPicks();
-    }
-  });
   // Celular que dormiu com a aba aberta: o timer da meia-noite pode não ter rodado
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') renderDailyPicks();

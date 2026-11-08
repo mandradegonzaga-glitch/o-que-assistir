@@ -357,7 +357,9 @@ Use este documento para verificar se todas as funcionalidades estão funcionando
 - [ ] Banner de instalação nunca cobre o FECHAR
 - [ ] Convidado: lista, vistos, roleta e episódios continuam depois de recarregar; ao criar conta, o app oferece trazer tudo (episódios inclusive)
 - [ ] Perfil mostra sequência, recorde, nível, XP e 26 conquistas em 4 categorias (Jornada, Gêneros, Hábitos, Social)
-- [ ] Indicações do dia (Filme, Série e Dorama, trocam à meia-noite; com 5+ títulos assistidos, pelos gêneros que a pessoa mais assiste, com "Porque você curte X"; com menos, iguais para todos) num painel com botão no canto inferior direito; abre sozinho só na primeira entrada do dia, nunca sobre login, boas-vindas ou link; bolinha quando há novas; Esc fecha; tocar abre o título
+- [ ] Celular: barra embaixo com Início, Roleta, Sortear (no meio, sorteia de qualquer tela), Match e Biblioteca; Biblioteca em tela própria
+- [ ] "Continue assistindo" no alto do Início, com o próximo episódio e o progresso; "Ver tudo" abre Em Andamento
+- [ ] Indicações do dia (no fim do Início; Filme, Série e Dorama, trocam à meia-noite; com 5+ títulos assistidos, pelos gêneros que a pessoa mais assiste, com "Porque você curte X"; com menos, iguais para todos) num painel com botão no canto inferior direito; abre sozinho só na primeira entrada do dia, nunca sobre login, boas-vindas ou link; bolinha quando há novas; Esc fecha; tocar abre o título
 - [ ] Desafio do dia (muda à meia-noite, nunca repete o de ontem, +25 XP) e meta da semana (assistir 3 títulos de segunda a domingo, +50 XP) no perfil; o desafio aparece no aviso ao entrar
 - [ ] Perfil: "Seu DNA" com os gêneros que mais assiste em % (top 5 com barra + Outros sem barra e com os nomes, somando 100), filmes/séries/doramas, década favorita e títulos nos últimos 6 meses; sem títulos, convida a marcar; com poucos, avisa que está se formando
 - [ ] Perfil, no DNA: horas assistidas (aprox.) e ator mais visto (em 2+ títulos); reabrir não busca de novo no TMDB; sem conexão mostra "—"; sair da conta apaga os detalhes guardados

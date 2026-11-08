@@ -19,7 +19,7 @@ import { formatCount, pluralize } from '../utils/format.js';
 import { IMG_URL } from '../config/constants.js';
 import { saveGuestLists } from './guestLibrary.js';
 import { renderLibrary } from './library.js';
-import { switchTab } from '../ui/navigation.js';
+import { switchMode, switchTab } from '../ui/navigation.js';
 
 let openListId = null;   // lista aberta na aba; null mostra todas
 let openCollectionId = null; // coleção pronta aberta (src/domain/collections.js)
@@ -262,6 +262,7 @@ export async function showUserList(listId) {
     openCollectionId = null;
     openListId = listId;
     reorderMode = false;
+    switchMode('library'); // a lista fica na tela da Biblioteca
     if (state.tab !== 'listas') switchTab('listas'); // troca a aba e já desenha
     await renderLibrary();
     const title = document.getElementById('list-view-title');

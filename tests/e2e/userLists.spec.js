@@ -1,4 +1,4 @@
-import { test, expect, enterAsGuest, modal, openApp } from './support/app.js';
+import { test, expect, enterAsGuest, modal, openApp, openLibraryTab } from './support/app.js';
 
 // Título da lista: ícone (o banco guarda o emoji; a tela mostra o ícone Phosphor) + nome
 const expectListTitle = async (title, icon, name) => {
@@ -11,6 +11,7 @@ const editModal = page => page.locator('#modal-list-edit');
 const option = (page, name) => saveModal(page).locator('label', { hasText: name }).locator('input');
 
 const openTitle = async (page, index = 0) => {
+  await page.locator('#tab-mode-discover').click(); // o Top 10 fica no Início
   await page.locator('#btn-top10').click();
   await page.locator('#results-area .result-item').nth(index).click();
   await expect(modal(page)).toBeVisible();
@@ -72,7 +73,7 @@ test.describe('listas personalizadas', () => {
     await expect(saveModal(page).locator('label', { hasText: 'Sexta à noite' })).toContainText('2 títulos');
     await closeBoth(page);
 
-    await page.locator('#tab-listas').click();
+    await openLibraryTab(page, 'listas');
     const cards = page.locator('#library-content .list-card:not(.list-card--collection)');
     await expect(cards).toHaveCount(2);
     await expect(cards.nth(0)).toContainText('Maratona Halloween');
@@ -103,7 +104,7 @@ test.describe('listas personalizadas', () => {
 
   test('nome vazio ou repetido não passa; renomear e apagar a lista', async ({ page }) => {
     await enterAsGuest(page);
-    await page.locator('#tab-listas').click();
+    await openLibraryTab(page, 'listas');
     await expect(page.locator('#library-content')).toContainText('Nenhuma lista ainda');
 
     await page.locator('#library-content').getByRole('button', { name: '+ Criar a minha' }).click();
@@ -148,7 +149,7 @@ test.describe('listas personalizadas', () => {
 
   test('modelos: um toque cria a lista; na janela "Nova lista", preenche nome e ícone', async ({ page }) => {
     await enterAsGuest(page);
-    await page.locator('#tab-listas').click();
+    await openLibraryTab(page, 'listas');
     await page.locator('#library-content').getByRole('button', { name: 'Favoritos' }).click();
     await expect(page.locator('#toast')).toContainText('Lista "Favoritos" criada.');
     const mine = page.locator('#library-content .list-card:not(.list-card--collection)');
@@ -173,7 +174,7 @@ test.describe('listas personalizadas', () => {
 
   test('coleção pronta: abre, mostra os títulos e copia para as listas; copiar de novo não repete', async ({ page, tmdbUrls }) => {
     await enterAsGuest(page);
-    await page.locator('#tab-listas').click();
+    await openLibraryTab(page, 'listas');
     await page.locator('#library-content .list-card--collection', { hasText: 'Clássicos do terror' }).click();
     await expectListTitle(page.locator('#list-view-title'), 'skull', 'Clássicos do terror');
     await expect(page.locator('#list-view-title')).toBeFocused();
@@ -201,7 +202,7 @@ test.describe('listas personalizadas', () => {
 
     test('copiar uma coleção grava a lista e os títulos no banco', async ({ page }) => {
       await openApp(page);
-      await page.locator('#tab-listas').click();
+      await openLibraryTab(page, 'listas');
       await page.locator('#library-content .list-card--collection', { hasText: 'Doramas queridinhos' }).click();
       await page.getByRole('button', { name: 'Copiar para minhas listas' }).click();
       await expect(page.locator('#toast')).toContainText('Copiada para as suas listas');
@@ -237,7 +238,7 @@ test.describe('listas personalizadas', () => {
       // Outro aparelho: vem do banco
       await page.goto('/');
       await expect(page.locator('#user-display')).toHaveText('Pessoa Teste');
-      await page.locator('#tab-listas').click();
+      await openLibraryTab(page, 'listas');
       await expect(page.locator('#library-content .list-card:not(.list-card--collection)')).toContainText('1 título');
       await page.locator('#library-content .list-card:not(.list-card--collection)').click();
       await page.getByRole('button', { name: 'Apagar lista' }).click();
@@ -248,7 +249,7 @@ test.describe('listas personalizadas', () => {
     test('se o banco não tiver as listas, a aba avisa e o título não quebra', async ({ page }) => {
       await page.addInitScript(() => { window.__TEST.failListsRead = true; });
       await openApp(page);
-      await page.locator('#tab-listas').click();
+      await openLibraryTab(page, 'listas');
       await expect(page.locator('#library-content')).toContainText('Não foi possível carregar suas listas agora.');
       await openTitle(page);
       await page.locator('#btn-salvar-lista').click();
@@ -284,7 +285,7 @@ test.describe('listas personalizadas', () => {
         items: ['Terror:Filme Quatro', 'Terror:Filme Três', 'outra:Filme Cinco'],
         left: null,
       });
-      await page.locator('#tab-listas').click();
+      await openLibraryTab(page, 'listas');
       await expect(page.locator('#library-content .list-card:not(.list-card--collection)')).toHaveCount(2);
     });
   });

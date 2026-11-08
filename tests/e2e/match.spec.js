@@ -111,7 +111,8 @@ test.describe('match', () => {
   test('o modo vai para a URL e o celular não estoura a largura', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 800 });
     await enterAsGuest(page);
-    await page.locator('#tab-mode-match').click();
+    await page.locator('#nav-match').click(); // no celular, pela barra de baixo
+    await expect(page.locator('#nav-match')).toHaveAttribute('aria-current', 'page');
     await expect(page).toHaveURL(/modo=match/);
     await page.locator('#btn-match-start').click();
     await expect(page.locator('#match-card img')).toBeVisible();

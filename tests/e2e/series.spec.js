@@ -1,5 +1,5 @@
 // Séries: temporadas, episódios, "Já Vi" e "Como foi?" — iguais para conta e convidado (T001-115)
-import { test, expect, enterAsGuest, openApp, modal } from './support/app.js';
+import { test, expect, enterAsGuest, openApp, modal, openLibraryTab } from './support/app.js';
 
 const openFirstSeries = async page => {
   await page.locator('#btn-tv').click();
@@ -31,13 +31,13 @@ test.describe('séries como convidado', () => {
     await expect(seen(page)).toBeEnabled(); // ainda dá para marcar a série inteira
 
     await page.keyboard.press('Escape');
-    await page.locator('#tab-andando').click();
+    await openLibraryTab(page, 'andando');
     await expect(page.locator('.up-next-card')).toHaveCount(1);
     await expect(page.locator('.up-next-card__episode')).toContainText('Próximo: T01E02');
 
     await page.reload();
     await page.locator('#login-form [data-action="loginAsGuest"]').click();
-    await page.locator('#tab-andando').click();
+    await openLibraryTab(page, 'andando');
     await expect(page.locator('.up-next-card')).toHaveCount(1);
     await page.locator('.up-next-card__action').click();
     await expect(page.locator('.episode-checkbox').first()).toBeChecked();
@@ -62,9 +62,9 @@ test.describe('séries como convidado', () => {
     await expect(reactions(page).getByRole('button', { name: 'Amei' })).toHaveAttribute('aria-pressed', 'true');
 
     await page.keyboard.press('Escape');
-    await page.locator('#tab-andando').click();
+    await openLibraryTab(page, 'andando');
     await expect(page.locator('.up-next-card')).toHaveCount(0);
-    await page.locator('#tab-vistos').click();
+    await openLibraryTab(page, 'vistos');
     await expect(page.locator('#library-content .library-item__open').first()).toHaveAttribute('aria-label', / · Amei$/);
   });
 
@@ -103,7 +103,7 @@ test.describe('"Vi até aqui"', () => {
     await expect(page.getByRole('button', { name: 'Vi até T01E02: marca este e todos os anteriores' })).toBeFocused();
 
     await page.keyboard.press('Escape');
-    await page.locator('#tab-andando').click();
+    await openLibraryTab(page, 'andando');
     await expect(page.locator('.up-next-card__episode')).toContainText('Próximo: T01E03');
   });
 
@@ -162,7 +162,7 @@ test.describe('séries com conta', () => {
     await expect(reactions(page)).toBeVisible();
     await page.keyboard.press('Escape');
 
-    await page.locator('#tab-vistos').click();
+    await openLibraryTab(page, 'vistos');
     await expect(page.locator('.library-group-title')).toHaveText('DORAMAS (1)');
     await page.locator('#library-content .library-item__open').first().click();
     await expect(page.locator('.episode-checkbox:checked')).toHaveCount(3);

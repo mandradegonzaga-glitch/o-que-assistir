@@ -2,6 +2,15 @@
 
 All notable changes to this feature will be documented in this file.
 
+## [2026-11-07, redesign etapa 3] — branch `redesign/etapa-3` (ainda não publicado)
+
+### Changed
+
+- No celular, a navegação virou uma barra embaixo (Início, Roleta, Sortear no meio, Match e Biblioteca); no computador, as abas do topo ganharam a Biblioteca
+- A Biblioteca tem tela própria, em vez de ficar no fim da página
+- O Início começa com "Continue assistindo" e o sorteio; as indicações do dia ficam no fim, sem o botão ✨
+- Top 10, lançamentos e busca: 5 por linha no computador e 2 no celular
+
 ## [2026-11-07, pós-etapa 2] — branch `redesign/etapa-2` (ainda não publicado)
 
 ### Changed

@@ -17,7 +17,7 @@ const FIELDS = {
   country: 'pais',
 };
 const DEFAULTS = { mode: 'discover', type: 'movie' };
-const MODES = ['discover', 'roulette', 'match'];
+const MODES = ['discover', 'roulette', 'match', 'library'];
 const TYPES = ['movie', 'tv', 'dorama'];
 const DURATIONS = ['short', 'medium', 'long'];
 const TITLE_PATTERN = /^(movie|tv|dorama)-(\d+)$/;

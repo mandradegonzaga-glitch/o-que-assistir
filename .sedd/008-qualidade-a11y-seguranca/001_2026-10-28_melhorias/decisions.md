@@ -470,3 +470,16 @@ Regras combinadas: cada etapa numa branch `redesign/etapa-N`, com commit e envio
 - Galeria `/images` do TMDB (pôsteres sem letreiro) → exigiria liberar e publicar o proxy de novo, que é o mesmo da produção; ficou para depois.
 - Wikipédia, OMDb ou Fanart.tv → mais uma fonte e regra de segurança (as duas últimas com chave) para um caso raro.
 - Cortar o pôster no topo → mostrava o letreiro em inglês de alguns pôsteres.
+
+## D001-045 — Etapa 3: barra de baixo no celular, Biblioteca própria e Início com o sorteio em primeiro
+
+**Decisão:** escolhas do usuário em 2026-11-07, depois da captação no Dribbble.
+- Celular: barra flutuante com Início · Roleta · Sortear (centro) · Match · Biblioteca; perfil e amigos ficam no topo. No computador, sem barra: as abas do topo ganham a Biblioteca.
+- O nome aparece embaixo de todos os ícones (e não só no ativo, como aprovado no começo): com o nome só no ativo, o Sortear saía do centro quando a Biblioteca estava aberta.
+- Início: "Continue assistindo" compacto no alto; o sorteio logo depois, na primeira tela; Indicações do dia como último tópico (o usuário achou que no alto, e depois no meio, elas tiravam o lugar do sorteio e ficavam desproporcionais). O botão ✨ e o painel flutuante saíram.
+- Top 10, Lançamentos e busca em 5 por linha no computador e 2 no celular (com 3, o 10º ficava sozinho).
+
+**Alternativas consideradas:**
+- Início · Biblioteca · Sortear · Amigos · Perfil na barra (Roleta e Match como cartões no Início) → o usuário preferiu manter Roleta e Match na barra.
+- Indicações no alto em faixa compacta, ou de volta ao botão ✨ → preferiu no fim.
+- Top 10 rolando para o lado no celular → a mesma área mostra a busca; fica para a etapa 4, quando a busca for para junto dos filtros.

@@ -24,7 +24,7 @@ import { abrirPerfil, alterarSenha, deletarConta, salvarPerfil } from './profile
 import { addCurrentToRoulette, addRoletaItem, girarRoleta, goToRoulette, limparRoleta, removeRoletaItem } from './roulette.js';
 import { abrirDoHistorico, abrirHistoricoSorteios, limparHistoricoSorteios, navigateSorteio } from './sorteioHistory.js';
 import { abrirEpisodios, carregarDetalhes, fecharModal, goTitleSection, marcarVistoAtual, toggleSalvarAtual } from './titleModal.js';
-import { closeDailyPicks, toggleDailyPicks } from './dailyPicks.js';
+import { openLibraryTab } from './homeRows.js';
 import { dismissInstall, installPWA } from './pwa.js';
 import { undoLast } from '../ui/feedback.js';
 import { clearInput, scrollToTop, selecionarTipo, switchMode, switchTab } from '../ui/navigation.js';
@@ -45,7 +45,6 @@ const clickActions = {
   carregarDetalhes: el => carregarDetalhes(Number(el.dataset.id), el.dataset.media),
   goTitleSection: el => goTitleSection(el.dataset.arg),
   clearInput: el => clearInput(el.dataset.arg),
-  closeDailyPicks: () => closeDailyPicks(),
   closeModal: el => { document.getElementById(el.dataset.arg).style.display = 'none'; },
   compartilhar,
   compartilharApps,
@@ -57,7 +56,6 @@ const clickActions = {
   dismissInstall,
   esqueceuSenha,
   fecharModal,
-  toggleDailyPicks: () => toggleDailyPicks(),
   friendAccept: el => friendAccept(el.dataset.arg),
   friendAdd,
   friendRemove: el => friendRemove(el.dataset.arg),
@@ -128,6 +126,7 @@ const clickActions = {
   sortearOutro,
   switchLoginTab: el => switchLoginTab(el.dataset.arg),
   switchMode: el => switchMode(el.dataset.arg),
+  openLibraryTab: el => openLibraryTab(el.dataset.arg),
   switchTab: el => switchTab(el.dataset.arg),
   switchTabAndTop: el => {
     switchTab(el.dataset.arg);

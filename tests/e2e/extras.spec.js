@@ -208,6 +208,7 @@ test.describe('efeito 3D nos pôsteres', () => {
     await page.locator('#btn-top10').click();
     const poster = page.locator('#results-area .result-item').first();
     await expect(poster).toBeVisible();
+    await poster.scrollIntoViewIfNeeded(); // o mouse só passa por cima do que está na tela
     const box = await poster.boundingBox();
     await page.mouse.move(box.x + box.width * 0.9, box.y + box.height * 0.1);
     await page.mouse.move(box.x + box.width * 0.95, box.y + box.height * 0.05);

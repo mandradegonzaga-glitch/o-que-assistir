@@ -246,14 +246,18 @@ test('convidado é convidado a criar conta', async ({ page }) => {
   await expect(page.locator('#friends-content')).toBeHidden();
 });
 
-test('cabeçalho e abas cabem no celular', async ({ page }) => {
+test('cabeçalho e barra de baixo cabem no celular', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 700 });
   await enterAsGuest(page);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBe(0);
   await expect(page.locator('#btn-friends')).toBeInViewport();
   await expect(page.locator('#logout-btn')).toBeInViewport();
-  await expect(page.locator('#tab-mode-match')).toBeInViewport();
+  // No celular, a navegação é a barra de baixo: os cinco botões cabem inteiros na tela
+  for (const id of ['#nav-discover', '#nav-roulette', '#nav-sortear', '#nav-match', '#nav-library']) {
+    await expect(page.locator(id)).toBeInViewport({ ratio: 1 });
+  }
+  await expect(page.locator('.mode-tabs')).toBeHidden();
 });
 
 test.describe('comparar gostos', () => {

@@ -21,11 +21,13 @@ export const ICONS = {
   roulette: ['regular', 'bold', 'duotone'],
   // ---- tipos e modos ----
   'film-slate': ['regular', 'duotone'], television: ['regular', 'duotone'], flower: ['duotone'],
-  'dice-five': ['duotone'], 'eye-slash': ['duotone'], sword: ['duotone'], heart: ['regular', 'duotone'],
+  'dice-five': ['duotone'], 'eye-slash': ['duotone'], sword: ['duotone'], heart: ['regular', 'duotone', 'fill'],
   // ---- cabeçalho, abas e rodapé ----
   user: ['regular'], 'user-circle': ['duotone'], users: ['regular'], 'users-three': ['duotone'],
   question: ['regular'], 'magnifying-glass': ['regular', 'bold', 'duotone'], coffee: ['regular'],
   'chat-circle-text': ['regular'],
+  // ---- barra de baixo (celular): traço normal, preenchido quando ativo ----
+  house: ['regular', 'fill'],
   // ---- descobrir ----
   shuffle: ['bold'], 'circle-notch': ['bold'], fire: ['regular', 'duotone'], 'calendar-check': ['regular'],
   'clock-counter-clockwise': ['regular', 'duotone'], x: ['bold'], 'trend-up': ['duotone'],
@@ -46,7 +48,7 @@ export const ICONS = {
   // ---- listas (ícone escolhido pela pessoa) e coleções prontas ----
   ghost: ['duotone'], 'tree-evergreen': ['duotone'], smiley: ['duotone'], 'smiley-sad': ['duotone'],
   'smiley-nervous': ['duotone'], 'rocket-launch': ['duotone'], balloon: ['duotone'], moon: ['duotone'],
-  books: ['duotone'], confetti: ['duotone'], skull: ['duotone'],
+  books: ['regular', 'duotone', 'fill'], confetti: ['duotone'], skull: ['duotone'],
   // ---- conquistas ----
   'paper-plane-tilt': ['duotone'], 'mask-happy': ['duotone'], alien: ['duotone'], lightning: ['duotone'],
   'cassette-tape': ['duotone'], 'video-camera': ['duotone'], detective: ['duotone'], 'moon-stars': ['duotone'],

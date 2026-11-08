@@ -1,4 +1,4 @@
-import { test, expect, enterAsGuest, openApp } from './support/app.js';
+import { test, expect, enterAsGuest, openApp, openLibraryTab } from './support/app.js';
 
 // Título da lista: ícone (o banco guarda o emoji; a tela mostra o ícone Phosphor) + nome
 const expectListTitle = async (title, icon, name) => {
@@ -29,7 +29,7 @@ const seedAccountList = (page, extra = {}) => page.addInitScript(({ extra }) => 
 }, { extra });
 
 const openSexta = async page => {
-  await page.locator('#tab-listas').click();
+  await openLibraryTab(page, 'listas');
   await page.locator('#library-content .list-card', { hasText: 'Sexta' }).click();
 };
 

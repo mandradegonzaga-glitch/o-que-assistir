@@ -1,4 +1,4 @@
-import { test, expect, enterAsGuest, modal, openApp } from './support/app.js';
+import { test, expect, enterAsGuest, modal, openApp, openLibraryTab } from './support/app.js';
 
 const reactions = page => page.locator('#m-reactions');
 const reaction = (page, label) => reactions(page).getByRole('button', { name: label });
@@ -33,14 +33,14 @@ test.describe('reações rápidas', () => {
     await expect(reaction(page, 'Chorei')).toHaveAttribute('aria-pressed', 'false');
 
     await page.keyboard.press('Escape');
-    await page.locator('#tab-vistos').click();
+    await openLibraryTab(page, 'vistos');
     const item = page.locator('#library-content .library-item__open').first();
     await expect(item).toHaveAttribute('aria-label', / · Ri muito$/);
     await expect(item.locator('.title-reaction')).toHaveText('😂');
 
     await page.reload();
     await page.locator('#login-form [data-action="loginAsGuest"]').click();
-    await page.locator('#tab-vistos').click();
+    await openLibraryTab(page, 'vistos');
     await page.locator('#library-content .library-item__open').first().click();
     await expect(reaction(page, 'Ri muito')).toHaveAttribute('aria-pressed', 'true');
     await reaction(page, 'Ri muito').click(); // tocar de novo tira
@@ -64,7 +64,7 @@ test.describe('reações rápidas', () => {
     test('a reação vai para o histórico da conta, e os amigos são avisados na tela', async ({ page }) => {
       await seedWatched(page);
       await openApp(page);
-      await page.locator('#tab-vistos').click();
+      await openLibraryTab(page, 'vistos');
       await page.locator('#library-content .library-item__open').first().click();
       await expect(page.locator('#m-reactions-note')).toHaveText('Seus amigos veem sua reação.');
       await reaction(page, 'Amei').click();
@@ -75,7 +75,7 @@ test.describe('reações rápidas', () => {
       await seedWatched(page);
       await page.addInitScript(() => { window.__TEST.failReaction = true; });
       await openApp(page);
-      await page.locator('#tab-vistos').click();
+      await openLibraryTab(page, 'vistos');
       await page.locator('#library-content .library-item__open').first().click();
       await reaction(page, 'Amei').click();
       await expect(page.locator('#toast')).toHaveText('Não foi possível salvar a reação. Tente de novo.');

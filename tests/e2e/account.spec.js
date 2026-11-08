@@ -1,4 +1,4 @@
-import { test, expect, openApp, modal } from './support/app.js';
+import { test, expect, openApp, modal, openLibrary } from './support/app.js';
 
 test.use({ logged: true });
 
@@ -15,6 +15,7 @@ test.describe('biblioteca', () => {
     await openFirstResult(page);
     await page.locator('#btn-salvar').click();
     await expect(modal(page)).toBeHidden();
+    await openLibrary(page);
 
     const items = page.locator('#library-content .library-item:visible');
     await expect(items).toHaveCount(1);
