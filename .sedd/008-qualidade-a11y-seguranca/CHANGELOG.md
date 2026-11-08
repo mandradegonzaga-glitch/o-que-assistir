@@ -2,6 +2,16 @@
 
 All notable changes to this feature will be documented in this file.
 
+## [2026-11-07, pós-etapa 2] — branch `redesign/etapa-2` (ainda não publicado)
+
+### Added
+
+- Filme sem streaming mostra "Nos cinemas" ou "Estreia nos cinemas em DD/MM" no "Onde assistir", pelas datas do Brasil
+
+### Fixed
+
+- A barra de rolagem de "Parecidos" ficou igual à do Elenco (fina, sem setas)
+
 ## [2026-11-07, redesign etapas 1 e 2] — branches `redesign/etapa-1` e `redesign/etapa-2` (ainda não publicado)
 
 ### Changed

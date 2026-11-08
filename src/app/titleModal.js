@@ -14,6 +14,7 @@ import { session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { titleFacts } from '../domain/titleFacts.js';
+import { cinemaLabel, cinemaStatus, localDay } from '../domain/cinemaRelease.js';
 import { IMG_URL } from '../config/constants.js';
 
 // ================================================
@@ -113,9 +114,15 @@ function renderFacts(f, type, details = {}) {
     document.getElementById('m-facts').innerHTML = main + (genres ? `<span class="modal-info__genres">${escapeHtml(genres.text)}</span>` : '');
 }
 
-async function loadFacts(f, type, signal) {
+// Detalhes do TMDB, pedidos uma vez por título; filmes trazem junto as datas de lançamento (cinema)
+function fetchDetails(f, type, signal) {
+    const params = type === 'movie' ? { append_to_response: 'release_dates' } : {};
+    return tmdbGet(`/${type}/${f.id}`, params, { signal });
+}
+
+async function loadFacts(f, type, signal, detailsPromise) {
     try {
-        const details = await tmdbGet(`/${type}/${f.id}`, {}, { signal });
+        const details = await detailsPromise;
         if (signal.aborted || state.currentMovie?.id !== f.id) return;
         renderFacts(f, type, details);
     } catch (e) {
@@ -242,7 +249,19 @@ async function loadTrailer(f, type, signal) {
     }
 }
 
-async function loadProviders(f, type, signal) {
+// Sem streaming: filme em cartaz no Brasil ou com estreia marcada ganha o aviso no lugar de "Indisponível"
+const CINEMA_ICON = ph('popcorn', { weight: 'duotone', cls: 'icon icon-20' });
+async function cinemaNote(type, detailsPromise) {
+    if (type !== 'movie') return '';
+    try {
+        const today = localDay();
+        return cinemaLabel(cinemaStatus((await detailsPromise)?.release_dates, today), today);
+    } catch {
+        return ''; // sem as datas, fica o aviso de sempre
+    }
+}
+
+async function loadProviders(f, type, signal, detailsPromise) {
     try {
         const pData = await tmdbGet(`/${type}/${f.id}/watch/providers`, { language: null }, { signal });
         if (signal.aborted) return; // resposta do cache não passa pelo abort
@@ -254,7 +273,11 @@ async function loadProviders(f, type, signal) {
                 provDiv.innerHTML += `<a href="${escapeHtml(link)}" target="_blank" rel="noopener" aria-label="Ver no ${escapeHtml(p.provider_name)} (abre em nova aba)"><img src="${IMG_URL+p.logo_path}" class="provider-logo" alt="" width="44" height="44" loading="lazy" title="Ver no ${escapeHtml(p.provider_name)}"></a>`;
             });
         } else {
-            provDiv.innerHTML = '<span class="text-tertiary text-small">Indisponível em streaming</span>';
+            const note = await cinemaNote(type, detailsPromise);
+            if (signal.aborted) return;
+            provDiv.innerHTML = note
+                ? `<span class="cinema-note">${CINEMA_ICON}${escapeHtml(note)}</span>`
+                : '<span class="text-tertiary text-small">Indisponível em streaming</span>';
         }
     } catch(e) {
         if (isAbortError(e)) return;
@@ -332,13 +355,15 @@ export async function abrirModal(f, { fromDraw = false } = {}) {
     document.getElementById('modal-resultado').style.display = 'flex';
     scroller().scrollTop = 0;
 
+    const detailsPromise = fetchDetails(f, type, signal);
+    detailsPromise.catch(() => {}); // o erro é tratado por quem espera (fatos e onde assistir)
     await Promise.all([
         loadImdbLink(f, type, signal),
-        loadFacts(f, type, signal),
+        loadFacts(f, type, signal, detailsPromise),
         loadSimilar(f, type, mediaType, signal),
         loadCast(f, type, signal),
         loadTrailer(f, type, signal),
-        loadProviders(f, type, signal),
+        loadProviders(f, type, signal, detailsPromise),
     ]);
 }
 

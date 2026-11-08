@@ -454,3 +454,8 @@ Regras combinadas: cada etapa numa branch `redesign/etapa-N`, com commit e envio
 - Lucide em vez de Phosphor → menos variações de peso (sem duotone/preenchido para estados ativos).
 - Abas que escondem as partes do título → quem só rola perderia conteúdo e vários testes teriam de mudar; ficaram abas que levam até a parte.
 
+## D001-043 — "Nos cinemas" pelo calendário do Brasil, com limite de 75 dias
+
+**Decisão:** pedido do usuário em 2026-11-07. Filme sem streaming no Brasil mostra, no "Onde assistir", "Estreia nos cinemas em DD/MM" (estreia futura) ou "Nos cinemas" (em cartaz). Fonte: `release_dates` do TMDB, país BR, tipo 3 (cinema) ou, sem ele, tipo 2 (limitado). O TMDB não diz quando um filme sai de cartaz, então "em cartaz" = estreou há no máximo 75 dias **e** nenhum lançamento digital (4), físico (5) ou na TV (6) no Brasil com data até hoje. Data em outro ano leva o ano (DD/MM/AAAA). Sem dados do Brasil, nada muda.
+
+**Por quê:** a janela entre cinema e streaming no Brasil costuma ficar entre 45 e 90 dias; 75 dias evita dizer "nos cinemas" para filmes que já saíram, e a data digital, quando existe, corta antes. Ajustável em `IN_THEATERS_DAYS` (`src/domain/cinemaRelease.js`) se o usuário preferir outro prazo.

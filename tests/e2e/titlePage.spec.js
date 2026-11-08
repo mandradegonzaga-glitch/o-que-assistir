@@ -81,3 +81,34 @@ test.describe('página do título', () => {
     await expect(page.locator('#roulette-pool')).toContainText('Filme Um');
   });
 });
+
+// Filme sem streaming: "Nos cinemas" ou "Estreia nos cinemas em DD/MM" pelas datas do Brasil
+test.describe('nos cinemas', () => {
+  const pad = n => String(n).padStart(2, '0');
+  const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T00:00:00.000Z`;
+  const shift = days => { const d = new Date(); d.setDate(d.getDate() + days); return d; };
+  const withRelease = (page, id, type, date) => page.route(`**/functions/v1/tmdb/movie/${id}?*`, route => route.fulfill({
+    contentType: 'application/json',
+    json: { id, title: `Filme ${id}`, runtime: 100, genres: [], release_dates: { results: [{ iso_3166_1: 'BR', release_dates: [{ type, release_date: iso(date) }] }] } },
+  }));
+
+  test('estreia marcada: mostra a data no lugar de "Indisponível"', async ({ page }) => {
+    const premiere = shift(10);
+    await withRelease(page, 1, 3, premiere);
+    await openTitle(page, 'movie-1');
+    const ddmm = `${pad(premiere.getDate())}/${pad(premiere.getMonth() + 1)}`;
+    await expect(page.locator('#m-providers')).toContainText(`Estreia nos cinemas em ${ddmm}`);
+  });
+
+  test('em cartaz: "Nos cinemas"', async ({ page }) => {
+    await withRelease(page, 2, 3, shift(-5));
+    await openTitle(page, 'movie-2');
+    await expect(page.locator('#m-providers')).toHaveText('Nos cinemas');
+  });
+
+  test('série não pede datas de cinema; sem datas, segue "Indisponível"', async ({ page, tmdbUrls }) => {
+    await openTitle(page, 'tv-3');
+    await expect(page.locator('#m-providers')).toHaveText('Indisponível em streaming');
+    expect(tmdbUrls.some(u => u.searchParams.get('append_to_response') === 'release_dates')).toBe(false);
+  });
+});

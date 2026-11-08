@@ -2103,15 +2103,19 @@ header {
     scrollbar-color: var(--border-default) transparent;
 }
 
-.cast-list::-webkit-scrollbar {
+/* Fileiras horizontais (Elenco, Parecidos): mesma barra fina, sem setas */
+.cast-list::-webkit-scrollbar,
+.similar-list::-webkit-scrollbar {
     height: 4px;
 }
 
-.cast-list::-webkit-scrollbar-track {
+.cast-list::-webkit-scrollbar-track,
+.similar-list::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.cast-list::-webkit-scrollbar-thumb {
+.cast-list::-webkit-scrollbar-thumb,
+.similar-list::-webkit-scrollbar-thumb {
     background: var(--border-default);
     border-radius: var(--radius-full);
 }
@@ -6018,6 +6022,20 @@ button, [role="tab"], [role="radio"], summary, .fun-mode, .list-card, .result-it
 .title-action.is-on { color: var(--accent-text); background: rgba(var(--accent-primary-rgb), 0.14); border-color: rgba(var(--accent-primary-rgb), 0.5); }
 
 .title-where { background: rgba(255, 255, 255, 0.04); }
+/* Filme sem streaming, mas em cartaz ou com estreia marcada no Brasil */
+.cinema-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px 8px 10px;
+    border-radius: var(--radius-full);
+    background: rgba(var(--accent-primary-rgb), 0.12);
+    border: 1px solid rgba(var(--accent-primary-rgb), 0.4);
+    color: var(--accent-text);
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+.cinema-note .ph { width: 20px; height: 20px; flex-shrink: 0; }
 
 /* Abas que grudam no alto */
 .title-tabs {
@@ -6065,6 +6083,7 @@ button, [role="tab"], [role="radio"], summary, .fun-mode, .list-card, .result-it
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     scrollbar-width: thin;
+    scrollbar-color: var(--border-default) transparent;
 }
 .similar-item {
     flex: 0 0 104px;

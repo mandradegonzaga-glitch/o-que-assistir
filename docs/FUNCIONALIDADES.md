@@ -889,7 +889,7 @@ Funcionalidades para fazer o usuário voltar todo dia.
 | 81 | ⏭️ **Widget "Up Next"** | Alta | Card fixo na home mostrando próximo episódio a assistir de cada série em andamento |
 | 82 | 📅 **Calendário de Episódios** | Alta | Visualização mensal/semanal com lançamentos das séries que acompanha |
 | 83 | ⏰ **Countdown de Lançamento** | Alta | "Stranger Things S5E01 em 3 dias 14h 22min" com barra de progresso |
-| 84 | 🎬 **Próximos Filmes** | Alta | Seção de filmes aguardados com data de estreia e countdown |
+| 84 | 🎬 **Próximos Filmes** | Alta | Seção de filmes aguardados com data de estreia e countdown (parcial em 2026-11-07: o título sem streaming mostra "Nos cinemas" ou "Estreia nos cinemas em DD/MM", pelas datas do Brasil) |
 | 85 | 🔔 **Notificação D-Day** | Média | Push no dia do lançamento: "Hoje lança o episódio que você esperava!" |
 | 86 | 📌 **Fixar no Calendário** | Média | Adicionar filme/série ao calendário mesmo sem estar assistindo |
 | 87 | 🔄 **Sync com Google Calendar** | Baixa | Exportar lançamentos para agenda pessoal |

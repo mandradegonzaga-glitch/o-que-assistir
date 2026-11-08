@@ -25,9 +25,10 @@
 - **Backup:** etiqueta `backup-antes-redesign` e branch `backup/antes-redesign` (T001-123).
 - **Feito:** etapa 1 (T001-124: ícones Phosphor, linha única do título, toques de app, pôsteres) e etapa 2 (T001-125: página do título).
 - **Próxima sessão, pedidos do usuário em 2026-11-07:**
-  1. **"Nos cinemas" / data de estreia** no título quando "Onde assistir" vem vazio: em cartaz no Brasil → "Nos cinemas"; ainda vai lançar → "Estreia nos cinemas em DD/MM". Dados do TMDB `release_dates` (país BR, tipo 3 = cinema). O proxy já aceita `/movie/{id}?append_to_response=release_dates`; o caminho `/release_dates` sozinho não está liberado.
-  2. **Repaginar a imagem do ingresso** ("Gerar ingresso", `src/app/ticket.js`) no visual novo.
+  1. ✅ Feito em 2026-11-07 (T001-126, D001-043): barra de "Parecidos" igual à do Elenco e "Nos cinemas" / "Estreia nos cinemas em DD/MM". SW `v29`.
+  2. **Repaginar a imagem do ingresso** ("Gerar ingresso", `src/app/ticket.js`) no visual novo. **O usuário escolheu fazer a captação no Dribbble antes** (só para o ingresso: cinema ticket, boarding pass, event ticket). Em 2026-11-07 a extensão do Claude no Chrome não estava conectada e ele pausou a sessão: ao reabrir, conferir a extensão (`tabs_context_mcp`) e começar pela captação. Imagem do ingresso atual para comparar: gerar de novo com `drawTicket` (o print de 07/11 ficou só no scratchpad).
   3. **Etapas 3, 4 e 5** (ver D001-042). **Antes de cada uma, fazer a captação no Dribbble** (já decidido; uma página por vez, ~10 s de pausa).
+- **Pendências de antes do redesign só DEPOIS do redesign inteiro** (decisão do usuário em 2026-11-07): ilustrações do vídeo, vídeo final, teste com 2 celulares.
 - **Ícones:** para acrescentar um, pôr o nome e o peso em `ICONS` de `scripts/build-icons.mjs` e rodar `node scripts/build-icons.mjs`.
 - **Testes:** a suíte e2e inteira às vezes falha 1 teste de tempo diferente por rodada com a máquina carregada; rodar o que falhou sozinho antes de concluir que quebrou algo.
 - **Pendências de antes do redesign:** refazer as 2 ilustrações com defeito do vídeo (casal com dois braços esquerdos, amigos com pernas estranhas) e mostrar ao usuário antes de usar; vídeo final com Remotion (`Divulgacao/video-remotion`, só depois do redesign); teste real com 2 celulares.
