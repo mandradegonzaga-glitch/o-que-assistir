@@ -7061,3 +7061,44 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
     .type-pills :is(#btn-movie, #btn-tv, #btn-dorama) .icon { width: 18px; height: 18px; }
     .type-pills :is(#btn-movie, #btn-tv, #btn-dorama) .card__label { font-size: 0.75rem; line-height: 1.1; }
 }
+
+/* ===== Títulos das seções do Início em proporção (redesign, 2026-11-08) =====
+   "O que você procura?" e "Filtros Inteligentes" ficavam pequenos (1,35rem na fonte condensada) perto
+   das pílulas de 52px. Título maior; no celular, caixas com menos respiro para o SORTEAR AGORA
+   continuar na primeira tela. */
+.section-title {
+    font-size: 1.85rem;
+    line-height: 1.05;
+}
+.badge-num {
+    width: 36px;
+    height: 36px;
+    font-size: 1.4rem;
+}
+.section-header {
+    gap: 12px;
+}
+
+@media (max-width: 640px) {
+    .section {
+        padding: 20px;
+        margin-bottom: var(--space-md);
+    }
+    .section-header {
+        margin-bottom: var(--space-md);
+    }
+    .section-title {
+        font-size: 1.6rem;
+    }
+    /* "Filtros Inteligentes" pode quebrar no celular: sem a fonte (rede lenta) a letra reserva é mais
+       larga e, sem quebra, passava da tela em 345px */
+    .section-toggle .section-title {
+        white-space: normal;
+        text-wrap: balance;
+    }
+    .badge-num {
+        width: 32px;
+        height: 32px;
+        font-size: 1.25rem;
+    }
+}

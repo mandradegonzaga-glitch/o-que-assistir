@@ -6,6 +6,7 @@ All notable changes to this feature will be documented in this file.
 
 ### Changed
 
+- Títulos "O que você procura?" e "Filtros Inteligentes" maiores; no celular, o SORTEAR AGORA sobe na tela
 - Filme, Série e Dorama viraram 3 pílulas numa fileira (antes, 3 caixas grandes), e a escolhida fica na cor do tipo
 - Animações respondem mais rápido: curva que começa veloz e assenta devagar, durações mais curtas
 - Botões "afundam" ao encostar, com dedo ou mouse; saiu a "onda" ao soltar

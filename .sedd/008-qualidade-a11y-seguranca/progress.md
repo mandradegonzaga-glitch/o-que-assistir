@@ -21,7 +21,7 @@
 ## Para retomar
 
 **REDESIGN EM ANDAMENTO (D001-042): ler isto primeiro (atualizado em 2026-11-07):**
-- **Onde está:** branches `redesign/etapa-1` (`f896607`), `redesign/etapa-2` (inclui a 1) e `redesign/etapa-3` (`6c4184b`, inclui a 2), no GitHub. **A etapa 4 está em `redesign/etapa-4` (`13f9950`), com o acabamento das etapas 1 a 4 (T001-130, D001-047) e as pílulas de tipo (T001-131) por cima, 2026-11-08. Próximo: etapa 5, com a captação no Dribbble antes.** **A produção continua no `3c0d797` (SW `v26`) e só será publicada quando as 5 etapas estiverem prontas.**
+- **Onde está:** branches `redesign/etapa-1` (`f896607`), `redesign/etapa-2` (inclui a 1) e `redesign/etapa-3` (`6c4184b`, inclui a 2), no GitHub. **A etapa 4 está em `redesign/etapa-4` (`13f9950`), com o acabamento das etapas 1 a 4 (T001-130, D001-047) as pílulas de tipo (T001-131) e os títulos em proporção (T001-132) por cima, 2026-11-08. Prints dos testes saem sem a fonte real (Google Fonts bloqueado): para conferir o visual, `page.unroute('**/fonts.googleapis.com/**')`. Próximo: etapa 5, com a captação no Dribbble antes.** **A produção continua no `3c0d797` (SW `v26`) e só será publicada quando as 5 etapas estiverem prontas.**
 - **Backup:** etiqueta `backup-antes-redesign` e branch `backup/antes-redesign` (T001-123).
 - **Feito:** etapa 1 (T001-124: ícones Phosphor, linha única do título, toques de app, pôsteres), etapa 2 (T001-125: página do título) etapa 3 (T001-128, D001-045: barra de baixo no celular, Biblioteca própria, Início com "Continue assistindo", indicações no fim) e etapa 4 (T001-129, D001-046: filtros em pílulas e recolhíveis, Natal, busca no alto, Top 10/Lançamentos que fecham).
 - **Próxima sessão, pedidos do usuário em 2026-11-07:**
