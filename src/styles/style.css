@@ -7197,3 +7197,154 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
     .modal-content.is-dragging .sheet-handle { cursor: grabbing; }
 }
 
+/* ===== Etapa 5b: sorteio em baralho de ingressos (src/ui/drawReveal.js) =====
+   Embaralhar é um laço de espera (keyframes, ninguém toca nele); virar é transição (450 ms, curva
+   de entrada e saída: o ingresso já está na tela e muda). Os recortes de ingresso ficam em cada
+   face: uma máscara no elemento que gira achataria o 3D. */
+.draw-stage {
+    position: fixed;
+    inset: 0;
+    z-index: 1500; /* acima das janelas (1000), abaixo dos avisos (3000) */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 48px; /* os ingressos inclinados passam da própria caixa: espaço para o nome não encostar */
+    background: rgba(15, 11, 24, 0.92);
+    opacity: 1;
+    transition: opacity 0.15s var(--ease-out);
+}
+.draw-stage[hidden] { display: none; }
+@starting-style {
+    .draw-stage { opacity: 0; }
+}
+.draw-stage.is-leaving {
+    opacity: 0;
+    transition-duration: 0.2s;
+    pointer-events: none;
+}
+
+.draw-deck {
+    --ticket-w: min(46vw, 200px);
+    position: relative;
+    width: var(--ticket-w);
+    aspect-ratio: 2 / 3;
+}
+
+.draw-ticket {
+    position: absolute;
+    inset: 0;
+    transition: transform 0.25s var(--ease-out), opacity 0.25s var(--ease-out);
+}
+.draw-ticket:nth-child(1) { transform: rotate(-6deg); animation: draw-riffle-left 0.6s var(--ease-in-out) infinite; }
+.draw-ticket:nth-child(2) { transform: rotate(5deg); animation: draw-riffle-right 0.6s var(--ease-in-out) infinite 0.3s; }
+.draw-ticket--top { perspective: 900px; animation: draw-bob 0.6s var(--ease-in-out) infinite; }
+
+@keyframes draw-riffle-left {
+    0%, 100% { transform: rotate(-6deg) translateX(0); }
+    50% { transform: rotate(-12deg) translateX(-38%); }
+}
+@keyframes draw-riffle-right {
+    0%, 100% { transform: rotate(5deg) translateX(0); }
+    50% { transform: rotate(12deg) translateX(38%); }
+}
+@keyframes draw-bob {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(0.96); }
+}
+
+/* Faces */
+.draw-ticket__flip {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    transition: transform 0.45s var(--ease-in-out);
+}
+.draw-ticket__back,
+.draw-ticket__front {
+    --notch: 12px;
+    position: absolute;
+    inset: 0;
+    border-radius: 14px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    /* recortes dos dois lados, na altura do canhoto */
+    -webkit-mask:
+        radial-gradient(circle var(--notch) at 0 78%, transparent 98%, #000) left / 51% 100% no-repeat,
+        radial-gradient(circle var(--notch) at 100% 78%, transparent 98%, #000) right / 51% 100% no-repeat;
+    mask:
+        radial-gradient(circle var(--notch) at 0 78%, transparent 98%, #000) left / 51% 100% no-repeat,
+        radial-gradient(circle var(--notch) at 100% 78%, transparent 98%, #000) right / 51% 100% no-repeat;
+}
+.draw-ticket__back {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    padding-bottom: 22%;
+    background: var(--accent-primary);
+    color: var(--accent-on);
+    box-shadow: inset 0 0 0 2px rgba(23, 18, 31, 0.15);
+}
+/* picote do canhoto */
+.draw-ticket__back::after {
+    content: '';
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    top: 78%;
+    border-top: 2px dashed rgba(23, 18, 31, 0.35);
+}
+.draw-ticket__logo { width: 42%; height: auto; }
+.draw-ticket__brand {
+    font-family: var(--font-display);
+    font-weight: 900;
+    font-size: calc(var(--ticket-w) * 0.13);
+    line-height: 0.95;
+    text-align: center;
+    text-transform: uppercase;
+}
+.draw-ticket__stub {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 7%;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-align: center;
+    text-transform: uppercase;
+    opacity: 0.7;
+}
+.draw-ticket__front {
+    transform: rotateY(180deg);
+    background: var(--bg-card);
+    overflow: hidden;
+}
+.draw-ticket__poster {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.draw-stage__caption {
+    max-width: min(80vw, 420px);
+    min-height: 2.4em;
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 800;
+    line-height: 1.2;
+    text-align: center;
+    text-wrap: balance;
+    color: var(--text-secondary);
+}
+
+/* Revelação: o baralho para, os de trás se afastam e somem, o de cima vira */
+.draw-stage.is-revealed .draw-ticket { animation: none; }
+.draw-stage.is-revealed .draw-ticket:nth-child(1) { opacity: 0; transform: rotate(-14deg) translateX(-30%); }
+.draw-stage.is-revealed .draw-ticket:nth-child(2) { opacity: 0; transform: rotate(14deg) translateX(30%); }
+.draw-stage.is-revealed .draw-ticket--top { transform: scale(1.06); }
+.draw-stage.is-revealed .draw-ticket__flip { transform: rotateY(180deg); }
+.draw-stage.is-revealed .draw-stage__caption { color: var(--text-primary); }
+

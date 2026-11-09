@@ -10,6 +10,7 @@ import { GENRE_NAMES } from '../domain/genres.js';
 import { SURPRISE_QUALITY, surpriseGenres } from '../domain/surprise.js';
 import { session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
+import { drawReveal, endDrawReveal } from '../ui/drawReveal.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { IMG_URL } from '../config/constants.js';
 
@@ -152,29 +153,78 @@ export function surpreendaMe() {
         const endpoint = state.type === 'dorama' ? 'tv' : state.type;
         const quality = SURPRISE_QUALITY[state.type];
         try {
-            for (const genre of surpriseGenres(session.user?.history, state.type).slice(0, 4)) {
-                const url = buildDiscoverUrl(endpoint, {
-                    genre: String(genre),
-                    provider: resolveProviderFilter(),
-                    country: document.getElementById('input-country').value,
-                    isDorama: state.type === 'dorama',
-                    minVotes: quality['vote_count.gte'],
-                }) + `&vote_average.gte=${quality['vote_average.gte']}`;
-                let data = await tmdbFetch(url + `&page=${getRandomPage(3)}`);
-                if (!data.results?.length) data = await tmdbFetch(url + '&page=1');
-                const sorteado = pickDraw(data.results);
-                if (!sorteado) continue;
-                abrirModal(await withDetails(sorteado, endpoint), { fromDraw: true });
-                addToSorteioHistory(sorteado);
-                showToast(`Fora da sua zona de conforto: ${GENRE_NAMES[genre]}`);
+            let chosenGenre = null;
+            const sorteado = await drawReveal(async () => {
+                for (const genre of surpriseGenres(session.user?.history, state.type).slice(0, 4)) {
+                    const url = buildDiscoverUrl(endpoint, {
+                        genre: String(genre),
+                        provider: resolveProviderFilter(),
+                        country: document.getElementById('input-country').value,
+                        isDorama: state.type === 'dorama',
+                        minVotes: quality['vote_count.gte'],
+                    }) + `&vote_average.gte=${quality['vote_average.gte']}`;
+                    let data = await tmdbFetch(url + `&page=${getRandomPage(3)}`);
+                    if (!data.results?.length) data = await tmdbFetch(url + '&page=1');
+                    const escolhido = pickDraw(data.results);
+                    if (!escolhido) continue;
+                    chosenGenre = genre;
+                    addToSorteioHistory(escolhido);
+                    return withDetails(escolhido, endpoint);
+                }
+                return null;
+            }, { posterBase: IMG_URL });
+            if (!sorteado) {
+                showToast('Não achei uma surpresa com esses filtros. Tente outra plataforma.', 'error');
                 return;
             }
-            showToast('Não achei uma surpresa com esses filtros. Tente outra plataforma.', 'error');
+            abrirModal(sorteado, { fromDraw: true });
+            endDrawReveal();
+            showToast(`Fora da sua zona de conforto: ${GENRE_NAMES[chosenGenre]}`);
         } catch (e) {
             console.error(e);
             showToast('Erro na API.', 'error');
         }
     });
+}
+
+// Lista para o sorteio: "Parecido com..." (recomendações do título informado) ou os filtros.
+// null quando o título de "Parecido com..." não existe (o aviso já foi dado).
+async function fetchDrawList(endpoint) {
+    const similarInput = document.getElementById('input-similar').value.trim();
+
+    if (similarInput.length > 2) {
+        const buscaData = await tmdbGet(`/search/${endpoint}`, { query: similarInput });
+        if (!buscaData.results?.length) {
+            showToast("Não encontrei esse título. Tente outro nome!", "error");
+            return null;
+        }
+        // Recomendações do primeiro resultado; sem elas, os similares
+        const tituloEncontrado = buscaData.results[0];
+        const recData = await tmdbGet(`/${endpoint}/${tituloEncontrado.id}/recommendations`);
+        if (recData.results?.length) {
+            showToast(`Buscando similares a "${tituloEncontrado.title || tituloEncontrado.name}"...`);
+            return recData.results;
+        }
+        const simData = await tmdbGet(`/${endpoint}/${tituloEncontrado.id}/similar`);
+        return simData.results || [];
+    }
+
+    const url = buildDiscoverUrl(endpoint, {
+        genre: document.getElementById('input-genero').value,
+        mood: document.getElementById('input-mood').value,
+        provider: resolveProviderFilter(),
+        duration: document.getElementById('duration-select').value,
+        yearFrom: document.getElementById('year-from').value,
+        yearTo: document.getElementById('year-to').value,
+        personId: state.personId,
+        country: document.getElementById('input-country').value,
+        isDorama: state.type === 'dorama',
+    });
+    let data = await tmdbFetch(url + `&page=${getRandomPage()}`);
+    if (!data.results || data.results.length === 0) {
+        data = await tmdbFetch(url + '&page=1');
+    }
+    return data.results || [];
 }
 
 export async function sortearFilme() {
@@ -185,65 +235,23 @@ export async function sortearFilme() {
     btn.classList.add('loading');
 
     const endpoint = state.type === 'dorama' ? 'tv' : state.type;
-    const similarInput = document.getElementById('input-similar').value.trim();
 
     try {
-        let lista = [];
-
-        // Se o campo "Parecido com..." estiver preenchido
-        if (similarInput.length > 2) {
-            // Buscar o título informado
-            const buscaData = await tmdbGet(`/search/${endpoint}`, { query: similarInput });
-
-            if (buscaData.results && buscaData.results.length > 0) {
-                // Pegar recomendações do primeiro resultado
-                const tituloEncontrado = buscaData.results[0];
-                const recData = await tmdbGet(`/${endpoint}/${tituloEncontrado.id}/recommendations`);
-
-                if (recData.results && recData.results.length > 0) {
-                    lista = recData.results;
-                    showToast(`Buscando similares a "${tituloEncontrado.title || tituloEncontrado.name}"...`);
-                } else {
-                    // Se não houver recomendações, tentar similares
-                    const simData = await tmdbGet(`/${endpoint}/${tituloEncontrado.id}/similar`);
-                    lista = simData.results || [];
-                }
-            } else {
-                showToast("Não encontrei esse título. Tente outro nome!", "error");
-                btn.innerHTML = ph('shuffle', { weight: 'bold', cls: 'icon icon-18 icon-lead-6' }) + 'Sortear Agora';
-                btn.disabled = false;
-                btn.classList.remove('loading');
-                return;
+        // O baralho de ingressos embaralha enquanto a busca acontece e vira no sorteado (src/ui/drawReveal.js)
+        const sorteado = await drawReveal(async () => {
+            const lista = await fetchDrawList(endpoint);
+            if (lista === null) return null;
+            const escolhido = pickDraw(lista);
+            if (!escolhido) {
+                showToast("Nada encontrado (ou tudo na sua blacklist)!", "error");
+                return null;
             }
-        } else {
-            // Busca normal com filtros
-            const url = buildDiscoverUrl(endpoint, {
-                genre: document.getElementById('input-genero').value,
-                mood: document.getElementById('input-mood').value,
-                provider: resolveProviderFilter(),
-                duration: document.getElementById('duration-select').value,
-                yearFrom: document.getElementById('year-from').value,
-                yearTo: document.getElementById('year-to').value,
-                personId: state.personId,
-                country: document.getElementById('input-country').value,
-                isDorama: state.type === 'dorama',
-            });
-
-            let data = await tmdbFetch(url + `&page=${getRandomPage()}`);
-
-            if(!data.results || data.results.length === 0) {
-                data = await tmdbFetch(url + '&page=1');
-            }
-
-            lista = data.results || [];
-        }
-
-        const sorteado = pickDraw(lista);
+            addToSorteioHistory(escolhido);
+            return withDetails(escolhido, endpoint);
+        }, { posterBase: IMG_URL });
         if (sorteado) {
-            abrirModal(await withDetails(sorteado, endpoint), { fromDraw: true });
-            addToSorteioHistory(sorteado);
-        } else {
-            showToast("Nada encontrado (ou tudo na sua blacklist)!", "error");
+            abrirModal(sorteado, { fromDraw: true });
+            endDrawReveal();
         }
     } catch(e) {
         console.error(e);

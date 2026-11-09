@@ -359,6 +359,7 @@ Use este documento para verificar se todas as funcionalidades estão funcionando
 - [ ] Perfil mostra sequência, recorde, nível, XP e 26 conquistas em 4 categorias (Jornada, Gêneros, Hábitos, Social)
 - [ ] Filtros em pílulas (clima, gênero com Natal, logos de onde assistir, duração), "Mais filtros" com contador e seção recolhível com resumo
 - [ ] Busca, Top 10 e Lançamentos no alto do Início; a lista aberta fecha pela mesma pílula ou por "Fechar"
+- [ ] Sorteio em baralho de ingressos: embaralha, vira no sorteado e vibra no celular
 - [ ] Gavetas no celular: janelas sobem de baixo e fecham puxando a alça para baixo
 - [ ] Filme, Série e Dorama em 3 pílulas numa fileira, a escolhida na cor do tipo
 - [ ] Acabamento: animações mais rápidas, botões que afundam ao encostar (sem a onda), hover que não prende no celular, toque sem atraso e título comprido sem cortar palavra

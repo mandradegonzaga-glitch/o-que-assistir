@@ -2,10 +2,11 @@
 
 All notable changes to this feature will be documented in this file.
 
-## [2026-11-08, redesign etapa 5a] — branch `redesign/etapa-5` (ainda não publicado)
+## [2026-11-09, redesign etapas 5a e 5b] — branch `redesign/etapa-5` (ainda não publicado)
 
 ### Changed
 
+- O sorteio virou um baralho de ingressos: embaralha enquanto busca, vira no sorteado e vibra no celular
 - No celular as janelas viram gavetas: sobem de baixo e fecham puxando para baixo pela alça
 - Fechar uma janela (tocar fora, Esc, Fechar) agora tem animação de saída
 - No celular, deslizar para o lado não fecha mais as janelas
