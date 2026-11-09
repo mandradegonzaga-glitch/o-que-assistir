@@ -3,7 +3,6 @@ import { BADGE_ICONS } from './badgeIcons.js';
 import { registerActions } from './actions.js';
 import { prefersReducedMotion } from './motion.js';
 
-
 // DESFAZER — remoção adiada: a interface tira o item na hora e a gravação definitiva só roda
 // depois de UNDO_MS (ou antes, se outra remoção começar ou a página fechar).
 // "Desfazer"/Ctrl+Z cancela a gravação e restaura o item.
@@ -94,8 +93,6 @@ document.addEventListener('keydown', (e) => {
 
 window.addEventListener('pagehide', flushPendingUndo);
 
-// TOAST (Enhanced)
-
 // A entrada e a saída são a transição do .toast no CSS. Um aviso novo reinicia a contagem:
 // antes, o cronômetro do aviso anterior escondia o novo antes da hora.
 let toastTimer = null;
@@ -109,8 +106,6 @@ export function showToast(msg, type="success") {
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
 }
-
-// CONFETTI EFFECT
 
 export function createConfetti() {
     if (prefersReducedMotion()) return;

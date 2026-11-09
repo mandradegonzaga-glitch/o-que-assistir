@@ -86,7 +86,6 @@ export function initRovingGroups() {
 export function selecionarTipo(t) {
     state.type = t;
 
-    // Update visual and accessibility states
     MEDIA_TYPES.forEach(type => {
         const btn = document.getElementById(`btn-${type}`);
         const isSelected = t === type;
@@ -95,7 +94,6 @@ export function selecionarTipo(t) {
         btn.setAttribute('tabindex', isSelected ? '0' : '-1');
     });
 
-    // Apply theme based on content type
     document.body.setAttribute('data-theme', t);
 
     // Dorama já é coreano: o filtro de país não se aplica
@@ -131,8 +129,6 @@ export function switchTab(t) {
     return emit('tab:changed', { tab: t });
 }
 
-// UTILITY FUNCTIONS
-
 function clearInput(inputId) {
     const input = document.getElementById(inputId);
     input.value = '';
@@ -160,24 +156,19 @@ export function setupInputWrappers() {
     });
 }
 
-// ACCESSIBILITY INIT
-
 export function initAccessibility() {
-    // Restore last preferences
     const { last_mode: lastMode, last_type: lastType, last_library_tab: lastTab } = savedPreferences();
 
     if (lastMode && lastMode !== 'discover') {
         switchMode(lastMode);
     }
 
-    // Always apply the theme (default to movie if not set)
     selecionarTipo(lastType);
 
     if (lastTab && lastTab !== 'watchlist') {
         switchTab(lastTab);
     }
 
-    // Add keyboard shortcuts
     document.addEventListener('keydown', (e) => {
         // Ctrl/Cmd + K para focar na busca
         if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
@@ -224,7 +215,6 @@ function handleSwipe() {
     // No celular as janelas são gavetas: entram por baixo e fecham puxando para baixo (sheet.js).
     // Deslizar para o lado fecharia por um caminho que a janela nunca fez.
     if (window.matchMedia(SHEET_QUERY).matches) return;
-    // Fecha só o diálogo do topo
     const modal = getActiveModal();
     if (modal?.classList.contains('modal-overlay')) closeModalWithAnimation(modal);
 }

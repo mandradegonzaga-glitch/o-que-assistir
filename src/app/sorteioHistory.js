@@ -11,11 +11,6 @@ import { on } from '../state/events.js';
 import { registerActions } from '../ui/actions.js';
 import { saveGuestSorteioHistory } from './guestLibrary.js';
 
-// ================================================
-// HISTÓRICO DE SORTEIOS
-// ================================================
-
-
 // Saiu num sorteio (descobrir, surpresa, batalha, sessão às escuras): entra no histórico e abre,
 // com "Sortear outro" à vista
 export function openDrawn(item) {
@@ -24,7 +19,6 @@ export function openDrawn(item) {
 }
 
 async function addToSorteioHistory(item) {
-    // Evitar duplicatas - atualiza timestamp se já existir
     const existingIndex = session.sorteioHistory.findIndex(h => h.id === item.id);
     if (existingIndex !== -1) {
         session.sorteioHistory.splice(existingIndex, 1);
@@ -47,7 +41,6 @@ async function addToSorteioHistory(item) {
     updateHistoryNav();
     updateHistoryButton();
 
-    // Salvar no Supabase (se logado)
     if (isAccount()) {
         await supabaseAddToSorteioHistory(session.currentUserId, item);
     } else {

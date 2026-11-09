@@ -91,7 +91,6 @@ async function renderLibrary() {
         return;
     }
 
-    // Aba Em Andamento
     if (state.tab === 'andando') {
         await renderAndando(div, () => seq !== renderSeq);
         return;

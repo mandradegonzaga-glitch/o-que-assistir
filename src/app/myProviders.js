@@ -1,4 +1,4 @@
-// "Minhas plataformas": os streamings que a pessoa assina, guardados neste aparelho.
+// "Minhas plataformas": os streamings que a pessoa assina (no aparelho; com conta, também na conta).
 import { readAccountData, writeAccountData } from './accountData.js';
 import { tmdbGet } from '../api/tmdb.js';
 import { isAccount } from '../state/appState.js';

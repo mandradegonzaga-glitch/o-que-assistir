@@ -21,8 +21,6 @@ import { whileBusy } from '../ui/busy.js';
 
 const RECENT_DRAWS = 20;
 
-
-
 // FILTRO ATOR: some na hora quando o campo fica curto; busca 300 ms depois da última tecla
 
 const searchPersonSoon = debounce(searchPerson, 300);
@@ -80,8 +78,6 @@ function limparPessoa() {
     document.getElementById('selected-person').style.display = 'none';
     emit('filters:changed');
 }
-
-// LÓGICA PRINCIPAL
 
 async function sortearOutro() {
     const btn = document.getElementById('btn-sortear-outro');
@@ -209,8 +205,6 @@ async function sortearFilme() {
         btn.classList.remove('loading');
     }
 }
-
-// SKELETON LOADERS
 
 function showSkeletonLoader() {
     const area = document.getElementById('results-area');
@@ -363,7 +357,6 @@ function renderResults(list, rank=false, { caption = '', empty = '' } = {}) {
 }
 
 // SEARCH HISTORY
-
 
 async function buscarDireto() {
     const query = document.getElementById('direct-search').value;

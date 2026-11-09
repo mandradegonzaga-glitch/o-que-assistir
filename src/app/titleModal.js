@@ -312,7 +312,6 @@ export async function abrirModal(f, { fromDraw = false } = {}) {
     showSectionLoading('cast-list', 'Carregando elenco...');
     showSectionLoading('m-providers', 'Verificando onde assistir...');
 
-    // Botões
     const vistos = session.user.history || [];
 
     const btnV = document.getElementById('btn-visto');

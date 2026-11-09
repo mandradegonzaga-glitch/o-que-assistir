@@ -95,7 +95,6 @@ export function initPwa() {
     e.preventDefault();
     deferredPrompt = e;
 
-    // Mostrar botão de instalação após 30 segundos de uso
     setTimeout(() => {
       if (deferredPrompt && !localStorage.getItem('pwa_install_dismissed')) {
         showInstallPrompt();

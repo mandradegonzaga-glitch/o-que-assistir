@@ -1,7 +1,7 @@
 // Service Worker - O Que Assistir? PWA
 // CACHE_VERSION e a lista abaixo são gerados por scripts/sw-assets.mjs (npm run sw:assets).
 // O activate apaga os caches de versões anteriores.
-const CACHE_VERSION = '6b8f6f53d9';
+const CACHE_VERSION = 'cb651b5304';
 const STATIC_CACHE = `oqueassistir-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `oqueassistir-dynamic-${CACHE_VERSION}`;
 
@@ -117,7 +117,6 @@ const STATIC_ASSETS = [
     // </assets>
 ];
 
-// Instalar Service Worker
 self.addEventListener('install', (event) => {
     console.log('[SW] Instalando Service Worker...');
     event.waitUntil(
@@ -130,7 +129,6 @@ self.addEventListener('install', (event) => {
     );
 });
 
-// Ativar Service Worker
 self.addEventListener('activate', (event) => {
     console.log('[SW] Ativando Service Worker...');
     event.waitUntil(
@@ -147,12 +145,10 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Interceptar requisições
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
 
-    // Ignorar requisições não-GET
     if (request.method !== 'GET') return;
 
     // Proxy do TMDB: Network First, com o último resultado disponível offline
@@ -181,7 +177,6 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(cacheFirst(request));
 });
 
-// Cache First Strategy
 async function cacheFirst(request) {
     const cached = await caches.match(request);
     if (cached) {
@@ -196,7 +191,6 @@ async function cacheFirst(request) {
         }
         return response;
     } catch (error) {
-        // Retornar página offline se disponível
         if (request.destination === 'document') {
             return caches.match('/index.html');
         }
@@ -204,7 +198,6 @@ async function cacheFirst(request) {
     }
 }
 
-// Network First Strategy
 async function networkFirst(request) {
     try {
         const response = await fetch(request);
@@ -231,27 +224,6 @@ self.addEventListener('message', (event) => {
     if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
 
-// Push Notifications (futuro)
-self.addEventListener('push', (event) => {
-    if (event.data) {
-        const data = event.data.json();
-        const options = {
-            body: data.body || 'Nova recomendação disponível!',
-            icon: '/icons/icon-192.png',
-            badge: '/icons/icon-72.png',
-            vibrate: [100, 50, 100],
-            data: {
-                url: data.url || '/'
-            }
-        };
-
-        event.waitUntil(
-            self.registration.showNotification(data.title || 'O Que Assistir?', options)
-        );
-    }
-});
-
-// Abrir app ao clicar na notificação
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
     const url = event.notification.data?.url || '/';

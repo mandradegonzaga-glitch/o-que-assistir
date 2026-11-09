@@ -44,15 +44,12 @@ async function loadEpisodesSection(seriesData) {
     const numberOfSeasons = seriesData.number_of_seasons || 0;
     session.episodes.seriesId = seriesId;
 
-    // Buscar chaves assistidas do Supabase
     const progressResult = await getSeriesProgress(seriesId);
     session.episodes.watchedKeys = progressResult.watchedKeys || new Set();
     session.episodes.totalEpisodes = seriesData.number_of_episodes || 0;
 
-    // Atualizar status badge e btn-visto
     updateSeriesWatchButton(seriesData, session.episodes.watchedKeys);
 
-    // Preencher selector de temporadas (sem Season 0)
     select.innerHTML = '';
     for (let s = 1; s <= numberOfSeasons; s++) {
         const opt = document.createElement('option');
@@ -120,21 +117,18 @@ async function toggleEpisode(seriesId, seasonNumber, episodeNumber, checked) {
 
     const key = buildEpisodeKey(seriesId, seasonNumber, episodeNumber);
 
-    // Atualizar estado local imediatamente (otimista)
     if (checked) {
         session.episodes.watchedKeys.add(key);
     } else {
         session.episodes.watchedKeys.delete(key);
     }
 
-    // Atualizar classe visual do item e contador da temporada
     const checkbox = document.querySelector(`.episode-checkbox[data-series="${seriesId}"][data-season="${seasonNumber}"][data-episode="${episodeNumber}"]`);
     if (checkbox) {
         checkbox.closest('.episode-item')?.classList.toggle('is-watched', checked);
     }
     updateSeasonCounter(seriesId, seasonNumber);
 
-    // Persistir no Supabase
     let result;
     if (checked) {
         result = await markEpisode(seriesRef({ ...state.currentMovie, id: seriesId }), seasonNumber, episodeNumber);
@@ -143,7 +137,6 @@ async function toggleEpisode(seriesId, seasonNumber, episodeNumber, checked) {
     }
 
     if (!result.success) {
-        // Reverter estado otimista em caso de erro
         if (checked) {
             session.episodes.watchedKeys.delete(key);
         } else {
@@ -153,14 +146,12 @@ async function toggleEpisode(seriesId, seasonNumber, episodeNumber, checked) {
         return;
     }
 
-    // Se marcou um episódio e série está no Quero Assistir → mover para Em Andamento
     if (checked) {
         const wasInWatchlist = (session.user.watchlist || []).find(i => i.id === seriesId);
         await moveSeriesOutOfWatchlist(seriesId);
         if (wasInWatchlist) showToast('Movido para Em Andamento');
     }
 
-    // Atualizar status badge e btn-visto (pode acionar Já Assistido se completo)
     updateSeriesWatchButton(state.currentMovie, session.episodes.watchedKeys);
 
     emit('library:changed'); // Em Andamento e o "Continue assistindo" do Início acompanham
@@ -216,11 +207,9 @@ function updateSeriesWatchButton(seriesData, watchedKeys) {
             badge.className = 'episodes-status-badge status-completed';
             badge.hidden = false;
         }
-        // Auto-adicionar ao histórico se ainda não estiver
         if (session.currentUser && !inHistory) {
             salvarHistorico(seriesData);
         }
-        // Remover do Quero Assistir se ainda estiver lá
         moveSeriesOutOfWatchlist(seriesData.id);
     } else if (isStarted) {
         if (badge) {
@@ -250,7 +239,6 @@ async function desmarcarTemporadaAtual() {
     const btns = document.querySelectorAll('.episodes-mark-all-btn');
     btns.forEach(b => { b.disabled = true; });
 
-    // Coletar chaves da temporada atual que estão marcadas
     const toUnmark = [...session.episodes.watchedKeys].filter(k =>
         parseEpisodeKey(k)?.seriesId === seriesId && parseEpisodeKey(k).season === currentSeason
     );
@@ -260,7 +248,6 @@ async function desmarcarTemporadaAtual() {
         session.episodes.watchedKeys.delete(key);
     }
 
-    // Se série estava concluída, remove do histórico também
     await removeSeriesFromHistory(seriesId);
 
     await renderEpisodeList(seriesId, currentSeason);
@@ -280,7 +267,6 @@ async function desmarcarTodosEpisodios() {
     const btns = document.querySelectorAll('.episodes-mark-all-btn');
     btns.forEach(b => { b.disabled = true; });
 
-    // Desmarcar todos os episódios assistidos dessa série
     const toUnmark = [...session.episodes.watchedKeys];
     for (const key of toUnmark) {
         const { season, episode } = parseEpisodeKey(key);
@@ -288,7 +274,6 @@ async function desmarcarTodosEpisodios() {
     }
     session.episodes.watchedKeys.clear();
 
-    // Remover do histórico também
     await removeSeriesFromHistory(seriesId);
 
     const currentSeason = Number(document.getElementById('episodes-season-select')?.value || 1);

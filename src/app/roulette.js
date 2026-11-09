@@ -24,8 +24,6 @@ const REDUCED_PAUSE_MS = 800;
 const ITEMS_KEY = 'roulette_items';
 let spinning = false;
 
-// ROLETA
-
 export function initRoulette() {
     const saved = storage.get(ITEMS_KEY, []);
     if (Array.isArray(saved) && saved.length > 0) {
@@ -206,14 +204,12 @@ async function girarRoleta() {
         session.user.rouletteWins = (session.user.rouletteWins || 0) + 1;
         saveGuestWins(session.user.rouletteWins);
     } else if (session.currentUserId) {
-        // Incrementar vitórias no Supabase
         const result = await supabaseIncrementRouletteWins(session.currentUserId);
         if (result.success) {
             session.user.rouletteWins = result.wins;
         }
     }
 
-    // Verificar conquista
     await checkAllBadges();
 }
 

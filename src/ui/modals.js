@@ -17,18 +17,13 @@ function hide(modal) {
     else modal.style.display = 'none';
 }
 
-// Event listeners
-
 window.addEventListener('click', (e) => {
     if (e.target.classList?.contains('modal-overlay')) {
         closeModalWithAnimation(e.target);
     }
 });
 
-// KEYBOARD SUPPORT
-
 document.addEventListener('keydown', (e) => {
-    // ESC fecha modais
     if (e.key === 'Escape') {
         // Só o diálogo do topo: com a confirmação aberta sobre o perfil, Esc não fecha os dois.
         // Um que já está saindo (animação de fechar) não conta: o Esc vale para o de baixo.
@@ -38,7 +33,6 @@ document.addEventListener('keydown', (e) => {
         else if (top && closers.has(top.id)) hide(top);
     }
 
-    // TAB preso dentro do modal aberto
     if (e.key === 'Tab') trapFocusInModal(e);
 });
 

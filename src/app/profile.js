@@ -14,8 +14,6 @@ import { MIN_PASSWORD_LENGTH } from '../domain/passwordStrength.js';
 import { emit, on } from '../state/events.js';
 import { registerActions } from '../ui/actions.js';
 
-// PERFIL
-
 // XP e desafios mudaram com o perfil aberto: acompanha
 on('progress:changed', () => {
     if (document.getElementById('modal-profile').style.display === 'flex') renderProgress();
@@ -33,7 +31,6 @@ export function abrirPerfil() {
     renderBadges();
     renderBlacklist();
 
-    // Ocultar seções de senha/deletar para convidados
     const guest = isGuest();
     const changePasswordSection = document.getElementById('change-password-section');
     const deleteAccountSection = document.getElementById('delete-account-section');
@@ -135,7 +132,6 @@ async function deletarConta() {
 
     if (!confirmar) return;
 
-    // Segunda confirmação (o texto antigo pedia "Digite OK", mas não havia campo para digitar)
     const confirmarFinal = await confirmDialog({
         title: 'Última confirmação',
         message: 'Deseja realmente deletar sua conta?',
