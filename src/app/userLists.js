@@ -1,10 +1,9 @@
 // Listas personalizadas: aba "Minhas Listas", "Salvar em uma lista" no título e a janela de criar/renomear.
 // Regras em src/domain/userLists.js; banco em database/user_lists.sql. O convidado guarda no aparelho.
 import { isAbortError, latestSignal, tmdbGet } from '../api/tmdb.js';
-import { supabaseAddListItem, supabaseAddListItems, supabaseCreateList, supabaseDeleteList, supabaseGetLists, supabaseRemoveListItem, supabaseReorderList, supabaseUpdateList } from '../api/supabase.js';
 import {
-    DEFAULT_EMOJI, LIST_EMOJIS, MAX_ITEMS, MAX_LISTS, buildLists, cleanListName, hasItem, listNameError,
-    availableTemplates, findListByName, moveItem, normalizeGuestLists, pickEmoji, toListItem, withItem, withoutItem,
+    DEFAULT_EMOJI, LIST_EMOJIS, MAX_ITEMS, MAX_LISTS, cleanListName, hasItem, listNameError,
+    availableTemplates, findListByName, moveItem, pickEmoji, toListItem,
 } from '../domain/userLists.js';
 import { COLLECTIONS, collectionById, collectionItems, collectionKind, collectionPath } from '../domain/collections.js';
 import { isGuest, session, state } from '../state/appState.js';
@@ -16,7 +15,10 @@ import { listIcon, listIconInfo } from '../ui/listIcons.js';
 import { ph } from '../ui/phosphor.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { formatCount, pluralize } from '../utils/format.js';
-import { saveGuestLists } from './guestLibrary.js';
+import {
+    addTitlesToList, allLists, canCreateList, changeList, createList, deleteList, findList, listsUnavailable,
+    renameList, saveListOrder, setTitleInList as storeTitleInList,
+} from './listStore.js';
 
 import { switchMode, switchTab } from '../ui/navigation.js';
 import { getTitle } from '../domain/mediaItem.js';
@@ -31,7 +33,6 @@ const COLLECTION_TTL_MS = DAY_MS;
 let reorderMode = false; // "Ordenar" ligado na lista aberta
 const pendingOrder = new Map(); // listId → { timer, before }: a ordem é gravada um instante depois do último movimento
 const ORDER_SAVE_MS = 600;
-let unavailable = false; // a conta não conseguiu ler as listas (ou o SQL ainda não foi rodado)
 const editor = { listId: null, fromSave: false, emoji: DEFAULT_EMOJI };
 
 // A próxima pessoa começa com todas as listas à vista, sem a lista ou a coleção de quem saiu aberta
@@ -41,57 +42,17 @@ on('session:ended', () => {
     reorderMode = false;
 });
 
-const allLists = () => session.user?.lists || [];
-export const findList = id => allLists().find(l => l.id === id);
 export const getOpenListId = () => openListId;
 const countLabel = n => (n === 0 ? 'Nenhum título' : `${formatCount(n)} ${pluralize(n, 'título', 'títulos')}`);
 const removalKey = (listId, titleId) => `list:${listId}:${titleId}`;
 
-export function setLists(next) {
-    session.user.lists = next;
-    if (isGuest()) saveGuestLists(next);
-}
-
-// CARREGAR
-
-export async function loadAccountLists() {
-    const result = await supabaseGetLists(session.currentUserId);
-    unavailable = !result.success;
-    session.user.lists = result.success ? buildLists(result.lists, result.items) : [];
-}
-
-export function loadGuestLists(saved) {
-    unavailable = false;
-    session.user.lists = normalizeGuestLists(saved);
-}
-
-// GRAVAR (a conta só muda o estado local depois de o banco confirmar)
-
+// Põe ou tira o título e explica o que deu errado; devolve se ficou como pedido
 async function setTitleInList(listId, item, include) {
-    const list = findList(listId);
-    if (!list) return false;
-    if (include === hasItem(list, item.id)) return true;
-    if (include && list.items.length >= MAX_ITEMS) {
-        showToast(`Essa lista já tem ${MAX_ITEMS} títulos, o máximo.`, 'error');
-        return false;
-    }
-    if (!isGuest()) {
-        const result = include
-            ? await supabaseAddListItem(session.currentUserId, listId, item)
-            : await supabaseRemoveListItem(listId, item.id);
-        if (!result.success) {
-            showToast('Não foi possível mudar a lista. Verifique a conexão e tente de novo.', 'error');
-            return false;
-        }
-    }
-    setLists(allLists().map(l => {
-        if (l.id !== listId) return l;
-        return include ? withItem(l, item) : withoutItem(l, item.id);
-    }));
-    return true;
+    const result = await storeTitleInList(listId, item, include);
+    if (result.full) showToast(`Essa lista já tem ${MAX_ITEMS} títulos, o máximo.`, 'error');
+    else if (!result.success) showToast('Não foi possível mudar a lista. Verifique a conexão e tente de novo.', 'error');
+    return result.success;
 }
-
-const newGuestId = () => (crypto.randomUUID ? crypto.randomUUID() : `g${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`);
 
 // ABA "MINHAS LISTAS"
 
@@ -101,7 +62,7 @@ export const cardPoster = item => (item.poster
     : `<span class="library-item__noposter">${escapeHtml(item.title)}</span>`);
 
 export function renderListsTab(div) {
-    if (unavailable) {
+    if (listsUnavailable()) {
         div.innerHTML = '<p class="library-note grid-full">Não foi possível carregar suas listas agora. Tente de novo mais tarde.</p>';
         return;
     }
@@ -141,7 +102,7 @@ export function renderListsTab(div) {
                 <span class="list-card__posters" aria-hidden="true">${posters}</span>
             </button></li>`;
     }).join('');
-    const canCreate = lists.length < MAX_LISTS;
+    const canCreate = canCreateList();
     div.innerHTML = `<ul class="list-cards grid-full" aria-label="Suas listas">${cards}</ul>
         ${canCreate ? '<button type="button" class="btn-outline list-new grid-full" data-action="openListEditor" data-arg="library">+ Nova lista</button>' : ''}
         ${collectionsSection()}`;
@@ -220,36 +181,27 @@ async function openCollection(id) {
 // Já existe uma com o mesmo nome? Os títulos que faltam entram nela. Devolve o id da lista, ou null.
 export async function copyAsList({ name, emoji, items }) {
     let list = findListByName(allLists(), name);
-    if (!list && allLists().length >= MAX_LISTS) {
-        showToast(`Você chegou ao limite de ${MAX_LISTS} listas.`, 'error');
-        return null;
-    }
     const isNew = !list;
     if (!list) {
-        const created = isGuest() ? { success: true, id: newGuestId() } : await supabaseCreateList(session.currentUserId, { name, emoji: pickEmoji(emoji) });
+        const created = await createList({ name, emoji: pickEmoji(emoji) });
         if (!created.success) {
-            showToast(created.duplicate ? 'Você já tem uma lista com esse nome.' : 'Não foi possível copiar a lista. Tente de novo.', 'error');
+            showToast(created.limit ? `Você chegou ao limite de ${MAX_LISTS} listas.`
+                : created.duplicate ? 'Você já tem uma lista com esse nome.' : 'Não foi possível copiar a lista. Tente de novo.', 'error');
             return null;
         }
-        list = { id: created.id, name, emoji: pickEmoji(emoji), items: [] };
-        setLists([...allLists(), list]);
+        list = findList(created.id);
     }
-    const missing = items.filter(i => !hasItem(list, i.id)).slice(0, Math.max(0, MAX_ITEMS - list.items.length));
-    if (missing.length > 0 && !isGuest()) {
-        const added = await supabaseAddListItems(session.currentUserId, list.id, missing);
-        if (!added.success) {
-            showToast('A lista foi criada, mas os títulos não entraram. Tente copiar de novo.', 'error');
-            return null;
-        }
+    const { success, added } = await addTitlesToList(list.id, items);
+    if (!success) {
+        showToast('A lista foi criada, mas os títulos não entraram. Tente copiar de novo.', 'error');
+        return null;
     }
-    const listId = list.id;
-    setLists(allLists().map(l => (l.id === listId ? { ...l, items: [...l.items, ...missing] } : l)));
     let message;
-    if (missing.length === 0) message = `Todos já estavam em "${list.name}".`;
+    if (added.length === 0) message = `Todos já estavam em "${list.name}".`;
     else if (isNew) message = `Copiada para as suas listas como "${list.name}".`;
-    else message = `${countLabel(missing.length)} ${pluralize(missing.length, 'entrou', 'entraram')} em "${list.name}".`;
+    else message = `${countLabel(added.length)} ${pluralize(added.length, 'entrou', 'entraram')} em "${list.name}".`;
     showToast(message);
-    return listId;
+    return list.id;
 }
 
 async function copyCollection() {
@@ -282,13 +234,12 @@ export async function showUserList(listId) {
 
 async function createFromTemplate(name) {
     const t = availableTemplates(allLists()).find(x => x.name === name);
-    if (!t || allLists().length >= MAX_LISTS) return;
-    const result = isGuest() ? { success: true, id: newGuestId() } : await supabaseCreateList(session.currentUserId, t);
+    if (!t) return;
+    const result = await createList(t);
     if (!result.success) {
-        showToast('Não foi possível criar a lista. Tente de novo.', 'error');
+        showToast(result.limit ? `Você chegou ao limite de ${MAX_LISTS} listas.` : 'Não foi possível criar a lista. Tente de novo.', 'error');
         return;
     }
-    setLists([...allLists(), { id: result.id, name: t.name, emoji: t.emoji, items: [] }]);
     showToast(`Lista "${t.name}" criada.`);
     await emit('library:changed');
     focusListCard(result.id);
@@ -363,7 +314,7 @@ async function applyOrder(listId, from, to, { refocus = 0 } = {}) {
     const moved = moveItem(list, from, to);
     if (moved === list) return;
     if (!pendingOrder.has(listId)) pendingOrder.set(listId, { before: list.items });
-    setLists(allLists().map(l => (l.id === listId ? moved : l)));
+    changeList(listId, { items: moved.items });
     const item = moved.items[to];
     await emit('library:changed');
     const status = document.getElementById('list-order-status');
@@ -386,8 +337,8 @@ async function saveOrder(listId) {
     const entry = pendingOrder.get(listId);
     pendingOrder.delete(listId);
     const list = findList(listId);
-    if (!entry || !list || isGuest()) return; // o convidado já gravou no aparelho (setLists)
-    const result = await supabaseReorderList(listId, list.items.map(i => i.id));
+    if (!entry || !list) return;
+    const result = await saveListOrder(listId);
     if (result.success) return;
     showToast('Não foi possível salvar a ordem. Verifique a conexão e tente de novo.', 'error');
     // Volta para a ordem que estava no banco, mantendo títulos que entraram ou saíram nesse meio-tempo
@@ -395,7 +346,7 @@ async function saveOrder(listId) {
     if (!now) return;
     const ids = new Set(now.items.map(i => i.id));
     const restored = [...entry.before.filter(i => ids.has(i.id)), ...now.items.filter(i => !entry.before.some(b => b.id === i.id))];
-    setLists(allLists().map(l => (l.id === listId ? { ...l, items: restored } : l)));
+    changeList(listId, { items: restored });
     if (state.tab === 'listas' && openListId === listId) emit('library:changed');
 }
 
@@ -457,14 +408,11 @@ async function deleteUserList() {
         danger: true,
     });
     if (!ok) return;
-    if (!isGuest()) {
-        const result = await supabaseDeleteList(list.id);
-        if (!result.success) {
-            showToast('Não foi possível apagar a lista. Tente de novo.', 'error');
-            return;
-        }
+    const result = await deleteList(list.id);
+    if (!result.success) {
+        showToast('Não foi possível apagar a lista. Tente de novo.', 'error');
+        return;
     }
-    setLists(allLists().filter(l => l.id !== list.id));
     openListId = null;
     showToast(`Lista "${list.name}" apagada.`);
     await emit('library:changed');
@@ -500,7 +448,7 @@ function renderSaveOptions() {
 
 function openSaveToList() {
     if (!state.currentMovie || !session.currentUser) return;
-    if (unavailable) {
+    if (listsUnavailable()) {
         showToast('As listas não estão disponíveis agora. Tente de novo mais tarde.', 'error');
         return;
     }
@@ -562,7 +510,7 @@ function showNameError(message) {
 function openListEditor(mode) {
     const list = mode === 'rename' ? findList(openListId) : null;
     if (mode === 'rename' && !list) return;
-    if (!list && allLists().length >= MAX_LISTS) {
+    if (!list && !canCreateList()) {
         showToast(`Você chegou ao limite de ${MAX_LISTS} listas.`, 'error');
         return;
     }
@@ -595,22 +543,20 @@ async function saveListEditor() {
     let id = listId;
     try {
         if (listId) {
-            const result = isGuest() ? { success: true } : await supabaseUpdateList(listId, { name, emoji });
+            const result = await renameList(listId, { name, emoji });
             if (!result.success) {
                 if (result.duplicate) showNameError('Você já tem uma lista com esse nome.');
                 else showToast('Não foi possível renomear a lista. Tente de novo.', 'error');
                 return;
             }
-            setLists(allLists().map(l => (l.id === listId ? { ...l, name, emoji } : l)));
         } else {
-            const result = isGuest() ? { success: true, id: newGuestId() } : await supabaseCreateList(session.currentUserId, { name, emoji });
+            const result = await createList({ name, emoji });
             if (!result.success) {
                 if (result.duplicate) showNameError('Você já tem uma lista com esse nome.');
                 else showToast('Não foi possível criar a lista. Tente de novo.', 'error');
                 return;
             }
             id = result.id;
-            setLists([...allLists(), { id, name, emoji, items: [] }]);
             if (fromSave && state.currentMovie) await setTitleInList(id, toListItem(state.currentMovie, state.type), true);
         }
     } finally {

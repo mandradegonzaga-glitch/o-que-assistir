@@ -44,7 +44,8 @@ Status: [ ] a fazer · [x] feito · [-] descartado (com o motivo).
   - Regras espalhadas em episodes.js e `titleModal.marcarVistoAtual`; `inWatchlist`/`inHistory` refeitos à mão.
   - Desmarcar faz um pedido por episódio e ignora falha; existe `clearSeries`.
 - [x] `library:changed`: a ação da pessoa avisa uma vez, no fim; stores e auxiliares não avisam.
-- [ ] `listStore.js` no molde do libraryStore (create/rename/delete/setItem/reorder); listShare usa o store.
+- [x] `listStore.js` no molde do libraryStore (create/rename/delete/setTitleInList/addTitlesToList/saveListOrder/changeList);
+      limite de listas num lugar só (`canCreateList`); listShare usa `changeList`.
 - [ ] Stores para sorteios, blacklist, roleta, matchHistory, reações; cada um com `load()`; auth só chama.
   - Três políticas diferentes de falha; reactions passa por cima do libraryStore.
   - Conversão de linha do banco (`tmdb_id→id`) repetida em supabase.js, userLists, auth → um `fromRow`.

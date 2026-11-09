@@ -1,7 +1,7 @@
 // Service Worker - O Que Assistir? PWA
 // CACHE_VERSION e a lista abaixo são gerados por scripts/sw-assets.mjs (npm run sw:assets).
 // O activate apaga os caches de versões anteriores.
-const CACHE_VERSION = 'b6be1adbe4';
+const CACHE_VERSION = '4cee9ecb74';
 const STATIC_CACHE = `oqueassistir-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `oqueassistir-dynamic-${CACHE_VERSION}`;
 
@@ -34,6 +34,7 @@ const STATIC_ASSETS = [
     '/src/app/libraryStore.js',
     '/src/app/lifeStats.js',
     '/src/app/listShare.js',
+    '/src/app/listStore.js',
     '/src/app/match.js',
     '/src/app/matchHistory.js',
     '/src/app/myProviders.js',

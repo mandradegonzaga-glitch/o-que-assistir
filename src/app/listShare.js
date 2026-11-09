@@ -8,7 +8,8 @@ import { confirmDialog } from '../ui/modals.js';
 import { listIcon } from '../ui/listIcons.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { formatCount, pluralize } from '../utils/format.js';
-import { cardPoster, copyAsList, findList, getOpenListId, setLists, showUserList } from './userLists.js';
+import { cardPoster, copyAsList, getOpenListId, showUserList } from './userLists.js';
+import { changeList, findList } from './listStore.js';
 import { emit } from '../state/events.js';
 import { appLink, setUrlParams, shareLink } from '../ui/share.js';
 import { registerActions } from '../ui/actions.js';
@@ -18,10 +19,6 @@ const PARAM = 'lista';
 let shared = null; // lista aberta pelo link
 
 const listLink = token => appLink(PARAM, token);
-
-function updateList(listId, changes) {
-    setLists((session.user.lists || []).map(l => (l.id === listId ? { ...l, ...changes } : l)));
-}
 
 async function shareUserList() {
     const list = findList(getOpenListId());
@@ -44,7 +41,7 @@ async function shareUserList() {
             return;
         }
         token = result.token;
-        updateList(list.id, { shareToken: token });
+        changeList(list.id, { shareToken: token });
         await emit('library:changed');
     }
     await shareLink(listLink(token), `${list.emoji} ${list.name}: minha lista no O Que Assistir. Dá uma olhada:`, list.name);
@@ -65,7 +62,7 @@ async function stopSharingUserList() {
         showToast('Não foi possível desligar o link. Tente de novo.', 'error');
         return;
     }
-    updateList(list.id, { shareToken: null });
+    changeList(list.id, { shareToken: null });
     showToast('O link desta lista não funciona mais.');
     await emit('library:changed');
     document.querySelector('#library-content [data-action="shareUserList"]')?.focus();

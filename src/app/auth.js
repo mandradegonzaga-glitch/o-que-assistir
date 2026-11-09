@@ -4,7 +4,7 @@
 // (progresso, amigos, provedores, indicações do dia...) carrega ou limpa o que é seu.
 import { supabaseGetBlacklist, supabaseGetCurrentUser, supabaseGetPreferences, supabaseGetProfile, supabaseGetSorteioHistory, supabaseGetWatchHistory, supabaseGetWatchlist, supabaseLogin, supabaseLogout, supabaseOnAuthStateChange, supabaseRegister, supabaseResetPassword, supabaseUpdatePreferences } from '../api/supabase.js';
 import { getGuestData } from './guestLibrary.js';
-import { loadAccountLists, loadGuestLists } from './userLists.js';
+import { loadAccountLists, loadGuestLists } from './listStore.js';
 import { MIN_PASSWORD_LENGTH, isValidEmail, passwordLevel } from '../domain/passwordStrength.js';
 import { isAccount, isGuest, resetSession, session } from '../state/appState.js';
 import { emit } from '../state/events.js';
