@@ -1,5 +1,6 @@
 // Match no mesmo aparelho: cada pessoa vota sem ver os votos da outra.
 import { MEDIA_TYPES } from './mediaItem.js';
+import { shuffle } from '../utils/shuffle.js';
 
 const MATCH_SIZE = 12;
 
@@ -10,8 +11,7 @@ export function computeMatches(titles, votesA, votesB) {
 
 export function pickTitles(results, blacklist = [], size = MATCH_SIZE, random = Math.random) {
   const valid = results.filter(item => item.poster_path && !blacklist.includes(item.id));
-  const shuffled = valid.map(item => ({ item, order: random() })).sort((a, b) => a.order - b.order).map(x => x.item);
-  return shuffled.slice(0, size);
+  return shuffle(valid, random).slice(0, size);
 }
 
 export function playerName(name, index) {

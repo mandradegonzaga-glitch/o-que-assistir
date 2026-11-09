@@ -1,7 +1,9 @@
 import { describe, it, expect } from '@jest/globals';
 import { MOODS, getMoodGenres } from '../../src/domain/moods.js';
-import { buildDiscoverUrl, normalizeProviderIds } from '../../src/domain/filters.js';
+import { discoverRequest, normalizeProviderIds } from '../../src/domain/filters.js';
+import { buildTmdbUrl } from '../../src/api/tmdb.js';
 
+const buildDiscoverUrl = (type, filters) => { const { path, params } = discoverRequest(type, filters); return buildTmdbUrl(path, params); };
 const params = url => new URL(url).searchParams;
 
 describe('getMoodGenres', () => {
@@ -31,7 +33,7 @@ describe('buildDiscoverUrl with mood', () => {
   });
 
   it('merges dorama and mood exclusions in a single parameter', () => {
-    const p = params(buildDiscoverUrl('tv', { mood: 'tensao', isDorama: true }));
+    const p = params(buildDiscoverUrl('dorama', { mood: 'tensao' }));
     expect(p.getAll('without_genres')).toEqual(['16|35|10751']);
   });
 

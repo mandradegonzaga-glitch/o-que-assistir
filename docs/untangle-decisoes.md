@@ -23,10 +23,11 @@ Status: [ ] a fazer · [x] feito · [-] descartado (com o motivo).
 - [x] Regex de `poster_path` única (`isPosterPath`) (titleShare.js:47, userLists.js:11).
 
 ## 3. Busca no TMDB: um construtor e um jeito de sortear
-- [ ] `buildDiscoverUrl` devolve `{ path, params }` e recebe só o tipo do app; chamadores usam `tmdbGet`.
+- [x] `buildDiscoverUrl` → `discoverRequest(type, filtros)` devolve `{ path, params }` e recebe só o tipo do app; chamadores usam `tmdbGet`.
   - Concatena string com BASE_URL por fora de `buildTmdbUrl`; chamadores colam `&page=`.
   - Surpreenda-me (`discover.js:124-130`) monta URL à mão; `SURPRISE_QUALITY` usa chaves do TMDB no domínio.
-- [ ] Um `fetchRandomPage` + `eligible()` + `shuffle()` para sorteio, Match e Batalha.
+- [x] Um `fetchRandomPage(request, { min, keep })` + `utils/shuffle` para sorteio, Match, Batalha e surpresa.
+      e2e novo prova a divergência do Match (falha no código antigo).
   - `match.js:66-68` não volta à página 1 (filtros estreitos dão "Poucos títulos" e o sorteio funciona) — divergência real.
   - `battle.js:160-177` laço próprio; `domain/match.js` embaralha com sort.
 - [ ] Detalhes do título por uma função só na api (`titleDetails(type, id)`).

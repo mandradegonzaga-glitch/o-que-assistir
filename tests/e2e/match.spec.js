@@ -32,6 +32,16 @@ const freshVisitor = async (page) => {
 };
 
 test.describe('match', () => {
+  test('filtros estreitos: a página sorteada vem vazia e o Match usa a primeira, como o sorteio', async ({ page }) => {
+    await page.route(/\/discover\//, route => {
+      const pageNumber = new URL(route.request().url()).searchParams.get('page');
+      return pageNumber === '1' ? route.fallback() : route.fulfill({ json: { results: [] } });
+    });
+    await page.addInitScript(() => { Math.random = () => 0.99; }); // a página sorteada nunca é a 1
+    await start(page);
+    await expect(page.locator('#match-counter')).toHaveText(`1 de ${LIST.length}`);
+  });
+
   test('cada pessoa vota sem ver a outra e o resultado traz o que coincidiu', async ({ page }) => {
     await start(page);
     await expect(page.locator('#match-player')).toHaveText('Ana');

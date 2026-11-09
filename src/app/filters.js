@@ -1,8 +1,8 @@
 // Os filtros escolhidos, prontos para o TMDB: sorteio, Top 10, lançamentos, Match, batalha e
 // sessão às escuras pedem títulos com as mesmas regras.
-import { buildDiscoverUrl, getRandomPage } from '../domain/filters.js';
-import { tmdbFetch } from '../api/tmdb.js';
-import { MEDIA_KIND, getTmdbEndpoint } from '../domain/mediaItem.js';
+import { discoverRequest as buildRequest, getRandomPage } from '../domain/filters.js';
+import { tmdbGet } from '../api/tmdb.js';
+import { MEDIA_KIND } from '../domain/mediaItem.js';
 import { state } from '../state/appState.js';
 import { filterField, filterValue, filterValues } from '../ui/filterFields.js';
 import { resolveProviderFilter } from './myProviders.js';
@@ -13,15 +13,24 @@ function filterOptions() {
 }
 
 // overrides: o que um modo ignora ou muda (ex.: Top 10 sem duração nem pessoa, minVotes próprio)
-export function discoverUrl(overrides = {}) {
-  return buildDiscoverUrl(getTmdbEndpoint(state.type), { ...filterOptions(), isDorama: state.type === 'dorama', ...overrides });
+export function discoverRequest(overrides = {}) {
+  return buildRequest(state.type, { ...filterOptions(), ...overrides });
 }
 
-// Uma página ao acaso, para variar; vazia (filtros estreitos têm poucas páginas), a primeira
-export async function fetchRandomPage(url, maxPage) {
-  const data = await tmdbFetch(`${url}&page=${getRandomPage(maxPage)}`);
-  if (data.results?.length) return data.results;
-  return (await tmdbFetch(`${url}&page=1`)).results || [];
+export function fetchDiscover({ path, params }, page) {
+  return tmdbGet(path, { ...params, page });
+}
+
+// Uma página ao acaso, para variar. Filtros estreitos têm poucas páginas: se ela não trouxer `min`
+// títulos que sirvam (`keep`), junta os da primeira.
+export async function fetchRandomPage(request, { maxPage, min = 1, keep = () => true } = {}) {
+  const page = getRandomPage(maxPage);
+  const found = new Map();
+  for (const n of page === 1 ? [1] : [page, 1]) {
+    ((await fetchDiscover(request, n)).results || []).filter(keep).forEach(item => found.set(item.id, item));
+    if (found.size >= min) break;
+  }
+  return [...found.values()];
 }
 
 // O que define uma lista aberta: mudou algo desde que abriu?

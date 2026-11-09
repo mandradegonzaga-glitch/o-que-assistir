@@ -1,8 +1,13 @@
 import { describe, it, expect } from '@jest/globals';
-import { BASE_URL } from '../../src/config/constants.js';
-import { buildDiscoverUrl, getRandomPage, hasLatinTitle, releaseWindow } from '../../src/domain/filters.js';
+import { BASE_URL as BASE } from '../../src/config/constants.js';
+import { buildTmdbUrl } from '../../src/api/tmdb.js';
+import { discoverRequest, getRandomPage, hasLatinTitle, releaseWindow } from '../../src/domain/filters.js';
 
-const BASE = BASE_URL;
+// URL final, como o app pede ao TMDB
+const buildDiscoverUrl = (type, filters) => {
+  const { path, params } = discoverRequest(type, filters);
+  return decodeURIComponent(buildTmdbUrl(path, params));
+};
 
 describe('buildDiscoverUrl', () => {
   it('builds base URL for movie with no filters', () => {
@@ -23,14 +28,14 @@ describe('buildDiscoverUrl', () => {
     expect(url).toContain('watch_region=BR');
   });
 
-  it('adds dorama filters when isDorama=true', () => {
-    const url = buildDiscoverUrl('tv', { isDorama: true });
+  it('dorama: série coreana sem animação', () => {
+    const url = buildDiscoverUrl('dorama', {});
     expect(url).toContain('with_origin_country=KR');
     expect(url).toContain('without_genres=16');
   });
 
-  it('does NOT add dorama filters when isDorama=false', () => {
-    const url = buildDiscoverUrl('movie', { isDorama: false });
+  it('filme não leva os filtros de dorama', () => {
+    const url = buildDiscoverUrl('movie', {});
     expect(url).not.toContain('with_origin_country=KR');
   });
 
@@ -106,7 +111,7 @@ describe('lançamentos', () => {
   });
 
   it('series and doramas: first air date', () => {
-    const url = buildDiscoverUrl('tv', { isDorama: true, releases: { today } });
+    const url = buildDiscoverUrl('dorama', { releases: { today } });
     expect(url).toContain('with_origin_country=KR');
     expect(url).toContain('&first_air_date.gte=2026-09-07&first_air_date.lte=2026-11-06');
     expect(url).not.toContain('with_release_type');
@@ -124,7 +129,7 @@ describe('lançamentos', () => {
 describe('país de origem', () => {
   it('adds the country, except for doramas (always Korean)', () => {
     expect(buildDiscoverUrl('movie', { country: 'FR' })).toContain('&with_origin_country=FR');
-    const dorama = buildDiscoverUrl('tv', { country: 'FR', isDorama: true });
+    const dorama = buildDiscoverUrl('dorama', { country: 'FR' });
     expect(dorama).toContain('with_origin_country=KR');
     expect(dorama).not.toContain('FR');
   });
@@ -138,7 +143,7 @@ describe('Natal (palavra-chave, não gênero)', () => {
   });
 
   it('vale também para séries e mantém o "sem animação" do dorama', () => {
-    const url = buildDiscoverUrl('tv', { genre: 'natal', isDorama: true });
+    const url = buildDiscoverUrl('dorama', { genre: 'natal' });
     expect(url).toContain('&with_keywords=207317');
     expect(url).toContain('&without_genres=16');
   });

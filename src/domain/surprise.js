@@ -1,6 +1,7 @@
 // Surpreenda-me: um título bem avaliado de um gênero que a pessoa quase nunca vê.
 // Usa os mesmos pesos do DNA (cada título vale 1, dividido entre os seus gêneros).
 import { TV_GENRE_PARTS } from './genres.js';
+import { shuffle } from '../utils/shuffle.js';
 import { genreWeights } from './tasteDna.js';
 
 // Gêneros que valem uma surpresa (sem filme de TV, notícias, reality, talk show, novela, infantil)
@@ -13,9 +14,9 @@ export const SURPRISE_GENRES = {
 
 // Nota mínima e votos mínimos: surpresa, sim; filme ruim, não
 export const SURPRISE_QUALITY = {
-  movie: { 'vote_average.gte': 7, 'vote_count.gte': 300 },
-  tv: { 'vote_average.gte': 7.5, 'vote_count.gte': 150 },
-  dorama: { 'vote_average.gte': 7.5, 'vote_count.gte': 30 },
+  movie: { minRating: 7, minVotes: 300 },
+  tv: { minRating: 7.5, minVotes: 150 },
+  dorama: { minRating: 7.5, minVotes: 30 },
 };
 
 export function genreScores(history, type) {
@@ -33,9 +34,5 @@ export function surpriseGenres(history, type, random = Math.random) {
   const least = Math.min(...scores.map(s => s.weight));
   const rarest = scores.filter(s => s.weight <= least + 1e-9).map(s => s.id);
   const rest = scores.filter(s => s.weight > least + 1e-9).sort((a, b) => a.weight - b.weight).map(s => s.id);
-  for (let i = rarest.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1));
-    [rarest[i], rarest[j]] = [rarest[j], rarest[i]];
-  }
-  return [...rarest, ...rest];
+  return [...shuffle(rarest, random), ...rest];
 }

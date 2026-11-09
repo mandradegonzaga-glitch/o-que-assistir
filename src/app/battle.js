@@ -1,14 +1,13 @@
 // Cine-batalha: 8 títulos dos filtros escolhidos, de dois em dois, até sobrar um.
 // O campeão abre como um sorteio (vai para o histórico de sorteios).
-import { tmdbFetch } from '../api/tmdb.js';
 import { IMG_URL } from '../config/constants.js';
 import { champion, choose, currentPair, isDone, stageLabel, stageTrack, startBattle } from '../domain/battle.js';
-import { getRandomPage } from '../domain/filters.js';
 import { session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { formatRating } from '../utils/format.js';
 import { withDetails } from './discover.js';
-import { discoverUrl, filtersSummary } from './filters.js';
+import { discoverRequest, fetchRandomPage, filtersSummary } from './filters.js';
+import { shuffle } from '../utils/shuffle.js';
 import { getTmdbEndpoint, getYear, getTitle } from '../domain/mediaItem.js';
 import { registerActions } from '../ui/actions.js';
 import { posterEl } from '../ui/icons.js';
@@ -21,22 +20,9 @@ let past = []; // como estava antes de cada voto: "Voltar" desfaz um por vez, at
 
 // Títulos bons e conhecidos, sem o que a pessoa já viu ou bloqueou, em ordem aleatória
 async function loadPool() {
-  const url = discoverUrl({ minVotes: 300 });
   const seen = new Set([...(session.user?.history || []).map(h => h.id), ...session.blacklist]);
-  const pool = new Map();
-  for (const page of [getRandomPage(), 1]) {
-    const data = await tmdbFetch(url + `&page=${page}`);
-    (data.results || []).forEach(item => {
-      if (item.poster_path && !seen.has(item.id)) pool.set(item.id, { ...item, media_type: state.type });
-    });
-    if (pool.size >= 8) break;
-  }
-  const list = [...pool.values()];
-  for (let i = list.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [list[i], list[j]] = [list[j], list[i]];
-  }
-  return list;
+  const pool = await fetchRandomPage(discoverRequest({ minVotes: 300 }), { min: 8, keep: item => item.poster_path && !seen.has(item.id) });
+  return shuffle(pool).map(item => ({ ...item, media_type: state.type }));
 }
 
 // Cada lado: o pôster vota; a sinopse aparece por cima dele ao passar o mouse (ou com o foco do

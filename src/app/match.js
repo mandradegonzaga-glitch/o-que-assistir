@@ -2,8 +2,7 @@
 // por link (uma de cada vez) ou ao vivo (cada uma no seu, ao mesmo tempo, via Supabase Realtime).
 // Os votos ficam só na memória: não dependem de conta nem de banco.
 import { openLiveRoom } from '../api/supabase.js';
-import { tmdbFetch, tmdbGet } from '../api/tmdb.js';
-import { getRandomPage } from '../domain/filters.js';
+import { tmdbGet } from '../api/tmdb.js';
 import { isHorizontalSwipe } from '../domain/gestures.js';
 import { createLiveState, liveReduce, makeRoomCode, normalizeRoomCode, parseLiveMessage } from '../domain/liveMatch.js';
 import { MATCH_PARAMS, computeMatches, decodeMatchInvite, encodeMatchInvite, invitePayload, pickTitles, playerName } from '../domain/match.js';
@@ -11,7 +10,7 @@ import { session, state } from '../state/appState.js';
 import { createConfetti, showToast } from '../ui/feedback.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { formatRating } from '../utils/format.js';
-import { discoverUrl } from './filters.js';
+import { discoverRequest, fetchRandomPage } from './filters.js';
 import { sendInviteToFriend } from './friends.js';
 import { recordMatch, renderMatchHistory } from './matchHistory.js';
 import { grantXp, recordSocial, trackChallenge } from './progress.js';
@@ -63,9 +62,8 @@ async function beginGame(mode, buttonId) {
   btn.disabled = true;
 
   try {
-    const url = discoverUrl();
-    const data = await tmdbFetch(`${url}&page=${getRandomPage()}`);
-    const titles = pickTitles(data.results || [], session.blacklist);
+    const usable = item => item.poster_path && !session.blacklist.includes(item.id);
+    const titles = pickTitles(await fetchRandomPage(discoverRequest(), { min: 2, keep: usable }), session.blacklist);
 
     if (titles.length < 2) {
       showToast('Poucos títulos com esses filtros. Tente mudar os filtros em Descobrir.', 'error');

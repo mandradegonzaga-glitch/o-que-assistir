@@ -1,8 +1,7 @@
 // Descobrir: filtros, sorteio, Top 10 e busca
-import { isAbortError, latestSignal, tmdbFetch, tmdbGet } from '../api/tmdb.js';
+import { isAbortError, latestSignal, tmdbGet } from '../api/tmdb.js';
 import { ph } from '../ui/phosphor.js';
-import { resolveProviderFilter } from './myProviders.js';
-import { RELEASE_DAYS, buildDiscoverUrl, hasLatinTitle } from '../domain/filters.js';
+import { RELEASE_DAYS, hasLatinTitle } from '../domain/filters.js';
 import { GENRE_NAMES } from '../domain/genres.js';
 import { SURPRISE_QUALITY, surpriseGenres } from '../domain/surprise.js';
 import { session, state } from '../state/appState.js';
@@ -14,7 +13,7 @@ import { debounce } from '../utils/debounce.js';
 import { personPhoto, posterImg } from '../ui/icons.js';
 import { emit } from '../state/events.js';
 import { registerActions } from '../ui/actions.js';
-import { discoverUrl, fetchRandomPage, filtersKey } from './filters.js';
+import { discoverRequest, fetchDiscover, fetchRandomPage, filtersKey } from './filters.js';
 import { filterValue } from '../ui/filterFields.js';
 import { openDrawn } from './sorteioHistory.js';
 import { whileBusy } from '../ui/busy.js';
@@ -121,14 +120,9 @@ function surpreendaMe() {
         let chosenGenre = null;
         const sorteado = await drawReveal(async () => {
             for (const genre of surpriseGenres(session.user?.history, state.type).slice(0, 4)) {
-                const url = buildDiscoverUrl(endpoint, {
-                    genre: String(genre),
-                    provider: resolveProviderFilter(),
-                    country: filterValue('country'),
-                    isDorama: state.type === 'dorama',
-                    minVotes: quality['vote_count.gte'],
-                }) + `&vote_average.gte=${quality['vote_average.gte']}`;
-                const escolhido = pickDraw(await fetchRandomPage(url, 3));
+                // Só o gênero muda: clima, duração, anos e pessoa ficam de fora; plataforma e país valem
+                const request = discoverRequest({ ...quality, genre: String(genre), mood: '', duration: '', yearFrom: '', yearTo: '', personId: null });
+                const escolhido = pickDraw(await fetchRandomPage(request, { maxPage: 3 }));
                 if (!escolhido) continue;
                 chosenGenre = genre;
                 return withDetails(escolhido, endpoint);
@@ -167,7 +161,7 @@ async function fetchDrawList(endpoint) {
         return simData.results || [];
     }
 
-    return fetchRandomPage(discoverUrl());
+    return fetchRandomPage(discoverRequest());
 }
 
 async function sortearFilme() {
@@ -273,7 +267,7 @@ async function mostrarTop10() {
     showSkeletonLoader();
 
     try {
-        const data = await tmdbFetch(discoverUrl({ duration: '', personId: null, minVotes: 100 }));
+        const data = await fetchDiscover(discoverRequest({ duration: '', personId: null, minVotes: 100 }));
         renderResults(data.results.slice(0,10), true);
         markOpenList(btn);
     } catch(e) {
@@ -293,7 +287,7 @@ async function mostrarLancamentos() {
 
     const endpoint = getTmdbEndpoint(state.type);
     try {
-        const data = await tmdbFetch(discoverUrl({ duration: '', yearFrom: '', yearTo: '', minVotes: 0, releases: { today: new Date() } }));
+        const data = await fetchDiscover(discoverRequest({ duration: '', yearFrom: '', yearTo: '', minVotes: 0, releases: { today: new Date() } }));
         const days = RELEASE_DAYS[endpoint];
         const caption = endpoint === 'movie'
             ? `Chegaram ao streaming e ao aluguel nos últimos ${days} dias`
