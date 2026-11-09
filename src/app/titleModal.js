@@ -1,7 +1,7 @@
 // Modal de detalhes do título
 import { isAbortError, latestSignal, titleDetails, tmdbGet } from '../api/tmdb.js';
 import { ph } from '../ui/phosphor.js';
-import { moveSeriesOutOfWatchlist, markWholeSeries, setSeriesSeenButton } from './episodes.js';
+import { markWholeSeries, setSeenButton } from './episodes.js';
 import { salvarHistorico, toggleWatchlist } from './library.js';
 import { session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
@@ -92,7 +92,6 @@ async function loadImdbLink(f, type, signal) {
 // Linha única de informações: aparece na hora com o que o título já traz; a duração
 // (ou as temporadas) chega depois, com os detalhes do TMDB
 const STAR = ph('star', { weight: 'fill', cls: 'icon icon-14' });
-const CHECK_ICON = ph('check', { weight: 'bold', cls: 'icon icon-16 icon-lead-4' });
 function renderFacts(f, type, details = {}) {
     const isTv = type === 'tv';
     const facts = titleFacts({
@@ -315,13 +314,8 @@ export async function abrirModal(item, { fromDraw = false } = {}) {
 
     const isSeries = type === 'tv';
 
-    if (isSeries) {
-        // Séries também têm "Já Vi"; ao terminar todos os episódios, a série é marcada sozinha
-        setSeriesSeenButton(btnV, !!vistos.find(i => i.id === f.id));
-    } else {
-        btnV.innerHTML = vistos.find(i=>i.id===f.id) ? CHECK_ICON + 'JÁ VISTO' : CHECK_ICON + 'Já Vi';
-        btnV.disabled = !!vistos.find(i=>i.id===f.id);
-    }
+    // Séries também: ao terminar todos os episódios, a série é marcada sozinha (episodes.js)
+    setSeenButton(btnV, vistos.some(i => i.id === f.id));
 
     const starIcon = ph('bookmark-simple', { weight: 'bold', cls: 'icon icon-16 icon-lead-4' });
     const removeIcon = ph('bookmark-simple', { weight: 'fill', cls: 'icon icon-16 icon-lead-4' });
@@ -363,14 +357,11 @@ async function marcarVistoAtual() {
         if (isSeries && state.currentMovie === movie) btnV.disabled = false;
         return;
     }
-    if (isSeries) {
-        // "Já Vi" numa série marca todas as temporadas e sai do "Quero Assistir"
-        await markWholeSeries(movie);
-        await moveSeriesOutOfWatchlist(movie.id);
-    }
+    // "Já Vi" numa série marca todas as temporadas (e assim sai do "Quero Assistir")
+    // (markWholeSeries já avisa a biblioteca; sem temporadas para marcar, avisa aqui)
+    if (!(isSeries && await markWholeSeries(movie))) await emit('library:changed');
     if (state.currentMovie !== movie) return;
-    btnV.innerHTML = CHECK_ICON + 'JÁ VISTO';
-    btnV.disabled = true;
+    setSeenButton(btnV, true);
     if (document.getElementById('modal-resultado').style.display !== 'none') {
         document.querySelector('#m-reactions [data-action="reactTitle"]')?.focus();
     }

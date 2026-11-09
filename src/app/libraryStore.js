@@ -1,6 +1,6 @@
 // Quero Assistir e Já Assistidos. A cópia em memória (session.user) e o armazenamento (este aparelho,
 // para o convidado; o Supabase, para a conta) mudam juntos, e só depois que a gravação deu certo.
-// Quem adiciona ou tira passa por aqui; quem desenha avisa 'library:changed' depois.
+// Quem adiciona ou tira passa por aqui. Não avisa 'library:changed': a ação da pessoa avisa uma vez, no fim.
 import { supabaseAddToHistory, supabaseAddToWatchlist, supabaseRemoveFromHistory, supabaseRemoveFromWatchlist } from '../api/supabase.js';
 import { isGuest, session } from '../state/appState.js';
 import { clearSeries } from './episodeStore.js';

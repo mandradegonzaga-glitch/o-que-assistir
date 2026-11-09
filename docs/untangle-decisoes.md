@@ -37,11 +37,13 @@ Status: [ ] a fazer · [x] feito · [-] descartado (com o motivo).
       O ingresso continua com `titleKind` (precisa distinguir dorama pelo país, que é outra regra).
 
 ## 4. Gravação conta/convidado: um store por coleção
-- [ ] Episódios ↔ biblioteca: uma `syncSeriesStatus` no store; o botão "Já Vi" só desenha.
+- [x] Episódios ↔ biblioteca: uma `syncSeriesStatus`; `renderSeriesStatus` só desenha (abrir o título não grava mais).
+      Desmarcar temporada/série: um pedido só (`unmarkSeason`, `clearSeries`), e falha não apaga o estado local.
+      Botão "Já Vi" num lugar só (`setSeenButton`).
   - `updateSeriesWatchButton` grava histórico e tira da watchlist ao abrir o título.
   - Regras espalhadas em episodes.js e `titleModal.marcarVistoAtual`; `inWatchlist`/`inHistory` refeitos à mão.
   - Desmarcar faz um pedido por episódio e ignora falha; existe `clearSeries`.
-- [ ] `library:changed`: o store avisa depois de gravar; ninguém mais.
+- [x] `library:changed`: a ação da pessoa avisa uma vez, no fim; stores e auxiliares não avisam.
 - [ ] `listStore.js` no molde do libraryStore (create/rename/delete/setItem/reorder); listShare usa o store.
 - [ ] Stores para sorteios, blacklist, roleta, matchHistory, reações; cada um com `load()`; auth só chama.
   - Três políticas diferentes de falha; reactions passa por cima do libraryStore.
@@ -59,7 +61,7 @@ Status: [ ] a fazer · [x] feito · [-] descartado (com o motivo).
 
 ## 7. Menores
 - [ ] `whileBusy` em vez de `disabled` à mão (discover, match).
-- [ ] Botão "Já Vi" desenhado num lugar só (titleModal + episodes, CHECK_ICON duplicado).
+- [x] Botão "Já Vi" desenhado num lugar só (feito junto com o grupo 4).
 - [ ] localStorage direto → `storage`; preferências `last_*` gravadas só em `rememberPreferences`; MODES/TABS de uma fonte.
 - [ ] drawReveal espera com `afterAnimations` e importa `TICKET_ICON`.
 - [ ] Limites do Match (`NAME_LIMIT`, `MAX_TITLES`) exportados; `.limit(50)` → `MAX_SORTEIO_HISTORY`.
@@ -67,3 +69,7 @@ Status: [ ] a fazer · [x] feito · [-] descartado (com o motivo).
 - [ ] Validação de senha (`passwordError`), nome a mostrar, cartão de conquista: uma função cada.
 - [ ] Visibilidade de `#daily-row` numa função; regra do convite de Match fora do main.js; `closeLive` ao receber `done/bye`.
 - [ ] badges da conta: guardar conquistas já ganhas na sessão (2 pedidos por conquista a cada ação).
+
+## Observações
+- 2026-11-09: em rodadas repetidas sob carga, 2 falhas em 396 em share.spec ("Gerando…" e "Enviado para Bia!"),
+  contra 0 em 396 no commit 8c5fe7d. Isoladas, passam sempre. Verificar na rodada final se é instabilidade de toast.

@@ -582,6 +582,12 @@ export function supabaseUnmarkEpisodeWatched(userId, seriesId, seasonNumber, epi
 }
 
 /** Todos os episódios da série, de uma vez (série removida da biblioteca volta do zero) */
+/** Todos os episódios de uma temporada, num pedido só */
+export function supabaseUnmarkSeasonWatched(userId, seriesId, seasonNumber) {
+    return run('desmarcar temporada', () => supabase.from(TABLE.EPISODES).delete()
+        .eq('user_id', userId).eq('series_id', seriesId).eq('season_number', seasonNumber));
+}
+
 export function supabaseClearSeriesProgress(userId, seriesId) {
     return run('limpar progresso da série', () => supabase.from(TABLE.EPISODES).delete().eq('user_id', userId).eq('series_id', seriesId));
 }

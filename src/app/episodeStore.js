@@ -1,9 +1,9 @@
 // Episódios assistidos: conta grava no Supabase; convidado, neste aparelho (mesmo formato de chave).
 // Chave de episódio: "{seriesId}-s{temporada}-e{episódio}".
-import { supabaseClearSeriesProgress, supabaseGetAllSeriesInProgress, supabaseGetSeriesProgress, supabaseMarkEpisodesWatched, supabaseMarkEpisodeWatched, supabaseUnmarkEpisodeWatched } from '../api/supabase.js';
+import { supabaseClearSeriesProgress, supabaseGetAllSeriesInProgress, supabaseGetSeriesProgress, supabaseMarkEpisodesWatched, supabaseMarkEpisodeWatched, supabaseUnmarkEpisodeWatched, supabaseUnmarkSeasonWatched } from '../api/supabase.js';
 import { isGuest, session } from '../state/appState.js';
 import { getGuestEpisodes, saveGuestEpisodes } from './guestLibrary.js';
-import { buildEpisodeKey } from '../domain/seriesProgress.js';
+import { buildEpisodeKey, parseEpisodeKey } from '../domain/seriesProgress.js';
 
 
 
@@ -35,17 +35,28 @@ export async function markEpisodes(series, episodes) {
   return addGuestKeys(series, episodes);
 }
 
-export async function unmarkEpisode(seriesId, season, episode) {
-  if (!isGuest()) return supabaseUnmarkEpisodeWatched(session.currentUserId, seriesId, season, episode);
+// Tira do aparelho as chaves que `drop` escolher; a série sem nenhuma sai
+function dropGuestKeys(seriesId, drop) {
   const data = getGuestEpisodes();
   const entry = data[seriesId];
   if (entry) {
-    entry.keys = entry.keys.filter(k => k !== buildEpisodeKey(seriesId, season, episode));
+    entry.keys = entry.keys.filter(k => !drop(k));
     if (entry.keys.length) data[seriesId] = entry;
     else delete data[seriesId];
     saveGuestEpisodes(data);
   }
   return { success: true };
+}
+
+export async function unmarkEpisode(seriesId, season, episode) {
+  if (!isGuest()) return supabaseUnmarkEpisodeWatched(session.currentUserId, seriesId, season, episode);
+  const key = buildEpisodeKey(seriesId, season, episode);
+  return dropGuestKeys(seriesId, k => k === key);
+}
+
+export async function unmarkSeason(seriesId, season) {
+  if (!isGuest()) return supabaseUnmarkSeasonWatched(session.currentUserId, seriesId, season);
+  return dropGuestKeys(seriesId, k => parseEpisodeKey(k)?.season === season);
 }
 
 // Séries com pelo menos um episódio, da mais recente para a mais antiga
@@ -59,11 +70,6 @@ export async function getAllSeriesInProgress() {
 }
 
 export async function clearSeries(seriesId) {
-  if (!isGuest()) {
-    await supabaseClearSeriesProgress(session.currentUserId, seriesId);
-    return;
-  }
-  const data = getGuestEpisodes();
-  delete data[seriesId];
-  saveGuestEpisodes(data);
+  if (!isGuest()) return supabaseClearSeriesProgress(session.currentUserId, seriesId);
+  return dropGuestKeys(seriesId, () => true);
 }

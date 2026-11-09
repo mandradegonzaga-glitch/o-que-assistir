@@ -42,7 +42,6 @@ export async function salvarHistorico(f) {
 
     if (await addToHistory(entry)) {
         showToast("Marcado como visto!");
-        await emit('library:changed');
         grantXp('watched');
         trackChallenge('watched', entry);
         await checkAllBadges();
