@@ -27,6 +27,17 @@ test.describe('biblioteca', () => {
     expect(await page.evaluate(() => window.__db.watchlist.length)).toBe(1);
   });
 
+  test('se o banco não gravar, o título não aparece como salvo', async ({ page }) => {
+    await openApp(page);
+    await page.evaluate(() => { window.__TEST.failInsert = true; });
+    await openFirstResult(page);
+    await page.locator('#btn-salvar').click();
+    await expect(page.locator('#toast')).toHaveText('Não foi possível salvar. Tente de novo.');
+    await openLibrary(page);
+    await expect(page.locator('#library-content .library-item:visible')).toHaveCount(0);
+    expect(await page.evaluate(() => window.__db.watchlist.length)).toBe(0);
+  });
+
   test('dorama sorteado aparece no próprio grupo', async ({ page }) => {
     await openApp(page);
     await page.locator('#btn-dorama').click();

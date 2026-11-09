@@ -32,5 +32,5 @@ export async function getSeason(seriesId, seasonNumber) {
 export async function getAllSeasons(seriesId, numberOfSeasons) {
   const numbers = Array.from({ length: numberOfSeasons }, (_, i) => i + 1);
   const results = await Promise.all(numbers.map(n => getSeason(seriesId, n).catch(() => null)));
-  return results.filter(s => s && s.season_number !== 0);
+  return results.filter(Boolean);
 }

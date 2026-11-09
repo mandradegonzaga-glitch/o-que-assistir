@@ -25,11 +25,3 @@ export function toLibraryItem(item, fallbackType) {
   return { id: item.id, poster: item.poster_path, title: getTitle(item), type: item.media_type || fallbackType };
 }
 
-export function filterValidItems(items, blacklist = []) {
-  return items.filter(item => item.poster_path && !blacklist.includes(item.id));
-}
-
-export function pickRandom(items) {
-  if (!items || items.length === 0) return null;
-  return items[Math.floor(Math.random() * items.length)];
-}

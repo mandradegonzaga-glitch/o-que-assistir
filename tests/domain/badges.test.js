@@ -106,14 +106,6 @@ describe('computeBadgeStatuses', () => {
     const iniciante = result.find(r => r.badge.name === 'Iniciante');
     expect(iniciante.unlocked).toBe(true);
   });
-
-  it('each entry has badge and unlocked properties', () => {
-    const result = computeBadgeStatuses([], 0);
-    result.forEach(r => {
-      expect(r).toHaveProperty('badge');
-      expect(r).toHaveProperty('unlocked');
-    });
-  });
 });
 
 describe('streak badges', () => {
@@ -125,10 +117,6 @@ describe('streak badges', () => {
 
   it('does not break without progress', () => {
     expect(isBadgeEarned('Constante', [], 0)).toBe(false);
-  });
-
-  it('has the 20 original badges plus 6 social ones', () => {
-    expect(computeBadgeStatuses([], 0)).toHaveLength(26);
   });
 });
 

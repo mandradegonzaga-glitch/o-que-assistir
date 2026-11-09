@@ -3,8 +3,8 @@ import {
   getNextEpisode,
   calcProgressPercent,
   isSeriesCompleted,
-  filterSeason0,
   buildEpisodeKey,
+  parseEpisodeKey,
 } from '../../src/domain/seriesProgress.js';
 
 // Fixtures reutilizáveis
@@ -25,13 +25,6 @@ const season2 = {
   ],
 };
 
-const season0 = {
-  season_number: 0,
-  episodes: [
-    { season_number: 0, episode_number: 1 },
-  ],
-};
-
 // Todas as seasons da série (sem season 0)
 const allSeasons = [season1, season2];
 
@@ -40,50 +33,15 @@ function watched(...pairs) {
   return new Set(pairs.map(([s, e]) => buildEpisodeKey(1, s, e)));
 }
 
-// ---------------------------------------------------------------------------
-// buildEpisodeKey
-// ---------------------------------------------------------------------------
-describe('buildEpisodeKey', () => {
-  it('retorna string no formato correto', () => {
-    expect(buildEpisodeKey(123, 1, 5)).toBe('123-s1-e5');
+describe('buildEpisodeKey / parseEpisodeKey', () => {
+  it('a chave volta para os mesmos números (é o formato gravado no banco e no aparelho)', () => {
+    expect(parseEpisodeKey(buildEpisodeKey(99999, 10, 22))).toEqual({ seriesId: 99999, season: 10, episode: 22 });
+    expect(parseEpisodeKey(buildEpisodeKey(1, 0, 1))).toEqual({ seriesId: 1, season: 0, episode: 1 });
   });
 
-  it('trata IDs numéricos grandes', () => {
-    expect(buildEpisodeKey(99999, 10, 22)).toBe('99999-s10-e22');
-  });
-
-  it('season 0 gera chave válida', () => {
-    expect(buildEpisodeKey(1, 0, 1)).toBe('1-s0-e1');
-  });
-});
-
-// ---------------------------------------------------------------------------
-// filterSeason0
-// ---------------------------------------------------------------------------
-describe('filterSeason0', () => {
-  it('remove a season 0 da lista', () => {
-    const result = filterSeason0([season0, season1, season2]);
-    expect(result).toHaveLength(2);
-    expect(result.every(s => s.season_number !== 0)).toBe(true);
-  });
-
-  it('não remove seasons normais', () => {
-    const result = filterSeason0([season1, season2]);
-    expect(result).toHaveLength(2);
-  });
-
-  it('retorna array vazio para input vazio', () => {
-    expect(filterSeason0([])).toEqual([]);
-  });
-
-  it('retorna array vazio se só existir season 0', () => {
-    expect(filterSeason0([season0])).toEqual([]);
-  });
-
-  it('não muta o array original', () => {
-    const original = [season0, season1];
-    filterSeason0(original);
-    expect(original).toHaveLength(2);
+  it('chave fora do formato não vira episódio', () => {
+    expect(parseEpisodeKey('123-s1')).toBeNull();
+    expect(parseEpisodeKey('abc-s1-e2')).toBeNull();
   });
 });
 

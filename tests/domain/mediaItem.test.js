@@ -1,7 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
 import {
-  getTitle, getYear, getTmdbEndpoint,
-  filterValidItems, pickRandom
+  getTitle, getYear, getTmdbEndpoint
 } from '../../src/domain/mediaItem.js';
 
 describe('getTitle', () => {
@@ -45,47 +44,3 @@ describe('getTmdbEndpoint', () => {
     expect(getTmdbEndpoint('tv')).toBe('tv');
   });
 });
-
-describe('filterValidItems', () => {
-  const items = [
-    { id: 1, poster_path: '/abc.jpg' },
-    { id: 2, poster_path: null },
-    { id: 3, poster_path: '/def.jpg' },
-    { id: 4, poster_path: '/ghi.jpg' }
-  ];
-
-  it('removes items without poster_path', () => {
-    const result = filterValidItems(items);
-    expect(result.find(i => i.id === 2)).toBeUndefined();
-  });
-  it('removes blacklisted items', () => {
-    const result = filterValidItems(items, [3]);
-    expect(result.find(i => i.id === 3)).toBeUndefined();
-  });
-  it('keeps valid non-blacklisted items', () => {
-    const result = filterValidItems(items, [3]);
-    expect(result.find(i => i.id === 1)).toBeDefined();
-    expect(result.find(i => i.id === 4)).toBeDefined();
-  });
-  it('defaults to empty blacklist', () => {
-    expect(filterValidItems(items).length).toBe(3);
-  });
-});
-
-describe('pickRandom', () => {
-  it('returns an item from the array', () => {
-    const items = [{ id: 1 }, { id: 2 }, { id: 3 }];
-    const picked = pickRandom(items);
-    expect(items).toContainEqual(picked);
-  });
-  it('returns null for empty array', () => {
-    expect(pickRandom([])).toBeNull();
-  });
-  it('returns null for null input', () => {
-    expect(pickRandom(null)).toBeNull();
-  });
-  it('returns the only item for single-element array', () => {
-    expect(pickRandom([{ id: 99 }])).toEqual({ id: 99 });
-  });
-});
-

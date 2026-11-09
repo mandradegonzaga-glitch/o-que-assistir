@@ -11,11 +11,6 @@ export function parseEpisodeKey(key) {
   return seriesId ? { seriesId: Number(seriesId), season: Number(season), episode: Number(episode) } : null;
 }
 
-// Temporada 0 no TMDB são especiais/OVAs, fora da contagem
-export function filterSeason0(seasons) {
-  return seasons.filter(s => s.season_number !== 0);
-}
-
 export function getNextEpisode(watchedKeys, seasons, seriesId) {
   const sorted = [...seasons].sort((a, b) => a.season_number - b.season_number);
 

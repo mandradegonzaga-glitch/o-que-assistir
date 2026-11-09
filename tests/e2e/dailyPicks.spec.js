@@ -47,9 +47,10 @@ test.describe('indicações do dia', () => {
 
   test('sem TMDB, a fileira some e o resto da tela continua', async ({ page }) => {
     await page.route(/\/discover\/.*sort_by=vote_count\.desc/, route => route.fulfill({ status: 500, json: {} }));
+    const failed = page.waitForResponse(/\/discover\/.*sort_by=vote_count\.desc/);
     await enterAsGuest(page);
+    await failed;
     await expect(page.locator('#btn-top10')).toBeVisible();
-    await page.waitForTimeout(1500);
     await expect(row(page)).toBeHidden();
   });
 
