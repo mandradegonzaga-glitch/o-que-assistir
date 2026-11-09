@@ -6,7 +6,8 @@ import { supabaseGetBlacklist, supabaseGetCurrentUser, supabaseGetPreferences, s
 import { getGuestData } from './guestLibrary.js';
 import { loadAccountLists, loadGuestLists } from './listStore.js';
 import { useSorteioHistory } from './sorteioHistory.js';
-import { MIN_PASSWORD_LENGTH, isValidEmail, passwordLevel } from '../domain/passwordStrength.js';
+import { isValidEmail, passwordError, passwordLevel } from '../domain/passwordStrength.js';
+import { displayName } from '../domain/profileName.js';
 import { isAccount, isGuest, resetSession, session } from '../state/appState.js';
 import { emit } from '../state/events.js';
 import { showToast } from '../ui/feedback.js';
@@ -62,7 +63,7 @@ export async function loadUserData() {
 
     if (profileResult.success) {
         session.userProfile = profileResult.profile;
-        session.user.name = session.userProfile.display_name || session.userProfile.username;
+        session.user.name = displayName(session.userProfile);
         session.user.email = session.userProfile.email || '';
         session.user.rouletteWins = session.userProfile.roulette_wins || 0;
     }
@@ -161,8 +162,8 @@ async function registerUser() {
 
     if (!username || !email || !password || !confirm) return showFormError(errorEl, 'Preencha todos os campos!');
     if (!isValidEmail(email)) return showFormError(errorEl, 'Digite um email válido!');
-    if (password.length < MIN_PASSWORD_LENGTH) return showFormError(errorEl, `A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres!`);
-    if (password !== confirm) return showFormError(errorEl, 'As senhas não coincidem!');
+    const invalid = passwordError(password, confirm);
+    if (invalid) return showFormError(errorEl, invalid);
 
     const result = await supabaseRegister(username, email, password);
     if (!result.success) {

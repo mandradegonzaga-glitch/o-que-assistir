@@ -10,7 +10,14 @@ export const storage = {
   set(key, value) {
     try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
   },
+  // Texto puro, para chaves gravadas antes do JSON ('movie', '1', 'true')
+  getText(key) {
+    try { return localStorage.getItem(key); } catch { return null; }
+  },
+  setText(key, value) {
+    try { localStorage.setItem(key, String(value)); } catch {}
+  },
   remove(key) {
-    localStorage.removeItem(key);
+    try { localStorage.removeItem(key); } catch {}
   }
 };

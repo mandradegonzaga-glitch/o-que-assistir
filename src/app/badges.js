@@ -1,6 +1,6 @@
 // Conquistas: avalia todas depois de cada mudança que conta e comemora as novas.
 // Convidado guarda as já comemoradas neste aparelho; conta, no banco.
-import { supabaseCheckBadge, supabaseUnlockBadge } from '../api/supabase.js';
+import { supabaseGetBadges, supabaseUnlockBadge } from '../api/supabase.js';
 import { BADGE_DEFINITIONS } from '../domain/badges.js';
 import { isGuest, session } from '../state/appState.js';
 import { showAchievement } from '../ui/feedback.js';
@@ -20,10 +20,22 @@ export async function checkAllBadges() {
         return;
     }
 
-    for (const badge of earned) {
-        const { unlocked } = await supabaseCheckBadge(session.currentUserId, badge.name);
-        if (unlocked) continue;
+    const known = await accountBadges();
+    if (!known) return; // sem saber o que já foi ganho, não comemora de novo
+    for (const badge of earned.filter(b => !known.has(b.name))) {
+        known.add(badge.name);
         const result = await supabaseUnlockBadge(session.currentUserId, badge.name);
-        if (result.success) showAchievement(badge);
+        if (!result.success) known.delete(badge.name);
+        else if (!result.message) showAchievement(badge); // message: já estava gravada (outro aparelho)
     }
+}
+
+// Lidas do banco uma vez por sessão; depois, só as novas vão ao banco
+async function accountBadges() {
+    if (!session.badges) {
+        const result = await supabaseGetBadges(session.currentUserId);
+        if (!result.success) return null;
+        session.badges ??= new Set(result.names);
+    }
+    return session.badges;
 }

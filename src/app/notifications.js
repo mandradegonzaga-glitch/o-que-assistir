@@ -3,6 +3,7 @@
 // (isso exigiria push pelo servidor). A escolha fica neste aparelho.
 import { showToast } from '../ui/feedback.js';
 import { registerActions } from '../ui/actions.js';
+import { storage } from '../utils/storage.js';
 
 const KEY = 'notify_device';
 const TITLE = 'O Que Assistir?';
@@ -11,7 +12,7 @@ const supported = () => 'Notification' in window;
 
 function stored() {
   try {
-    return localStorage.getItem(KEY) === '1';
+    return storage.getText(KEY) === '1';
   } catch {
     return false;
   }
@@ -19,7 +20,7 @@ function stored() {
 
 function store(on) {
   try {
-    localStorage.setItem(KEY, on ? '1' : '0');
+    storage.setText(KEY, on ? '1' : '0');
   } catch { /* sem armazenamento: vale só nesta visita */ }
 }
 

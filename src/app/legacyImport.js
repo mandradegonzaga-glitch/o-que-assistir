@@ -21,7 +21,7 @@ function readLegacyData(includeGuest = true) {
   return collectLegacyData({
     guest: includeGuest ? getGuestData() : null,
     allUsers: storage.get('all_users'),
-    currentUser: localStorage.getItem('current_user'),
+    currentUser: storage.getText('current_user'),
     watchlist: storage.get('watchlist_obj'),
     vistos: storage.get('vistos_obj'),
   });
@@ -60,7 +60,7 @@ export async function offerLegacyImport() {
   if (!isAccount()) return;
   const data = readLegacyData();
   if (!hasLegacyData(data)) return;
-  if (Date.now() - Number(localStorage.getItem(LATER_KEY) || 0) < ASK_AGAIN_MS) return;
+  if (Date.now() - Number(storage.getText(LATER_KEY) || 0) < ASK_AGAIN_MS) return;
 
   const total = data.history.length + data.watchlist.length + data.series.length + data.lists.length;
   const accepted = await confirmDialog({
@@ -71,7 +71,7 @@ export async function offerLegacyImport() {
   });
 
   if (!accepted) {
-    localStorage.setItem(LATER_KEY, String(Date.now()));
+    storage.setText(LATER_KEY, Date.now());
     return;
   }
 
@@ -86,8 +86,8 @@ export async function offerLegacyImport() {
   }
 
   adoptGuestProgress();
-  LEGACY_KEYS.forEach(key => localStorage.removeItem(key));
-  localStorage.removeItem(LATER_KEY);
+  LEGACY_KEYS.forEach(key => storage.remove(key));
+  storage.remove(LATER_KEY);
   await loadUserData();
   showToast(`Lista trazida para a sua conta: ${describe(data)}.`);
 }

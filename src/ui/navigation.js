@@ -6,27 +6,27 @@ import { closeModalWithAnimation, getActiveModal } from './modals.js';
 import { SHEET_QUERY } from './sheet.js';
 import { MEDIA_TYPES } from '../domain/mediaItem.js';
 import { registerActions } from './actions.js';
+import { MODES, LIBRARY_TABS } from '../domain/screens.js';
+import { storage } from '../utils/storage.js';
 
 // Onde a pessoa parou (tela, tipo, aba): fica no aparelho e, com conta, também no Supabase (auth.js)
 const PREFERENCE_DEFAULTS = { last_mode: 'discover', last_type: 'movie', last_library_tab: 'watchlist' };
 
 export function savedPreferences() {
     return Object.fromEntries(Object.entries(PREFERENCE_DEFAULTS)
-        .map(([key, fallback]) => [key, localStorage.getItem(key) || fallback]));
+        .map(([key, fallback]) => [key, storage.getText(key) || fallback]));
 }
 
 export function rememberPreferences(prefs) {
     Object.keys(PREFERENCE_DEFAULTS).forEach(key => {
-        if (prefs[key]) localStorage.setItem(key, prefs[key]);
+        if (prefs[key]) storage.setText(key, prefs[key]);
     });
 }
 
 // NAVEGAÇÃO
 
-const VIEWS = ['discover', 'roulette', 'match', 'library'];
-
 export function switchMode(mode) {
-    if (!VIEWS.includes(mode)) mode = 'discover';
+    if (!MODES.includes(mode)) mode = 'discover';
     document.querySelectorAll('.mode-tab').forEach(el => {
         el.classList.remove('active');
         el.setAttribute('aria-selected', 'false');
@@ -42,7 +42,7 @@ export function switchMode(mode) {
 
     const changed = state.mode !== mode;
     state.mode = mode;
-    VIEWS.forEach(view => {
+    MODES.forEach(view => {
         document.getElementById(`view-${view}`).style.display = mode === view ? 'block' : 'none';
     });
 
@@ -54,7 +54,7 @@ export function switchMode(mode) {
     // Trocar de tela pela barra começa do alto, como num app
     if (changed && document.activeElement?.closest('.bottom-nav')) window.scrollTo({ top: 0 });
 
-    localStorage.setItem('last_mode', mode);
+    rememberPreferences({ last_mode: mode });
     emit('mode:changed', { mode });
 }
 
@@ -103,21 +103,16 @@ export function selecionarTipo(t) {
         document.getElementById('hint-country').hidden = t !== 'dorama';
     }
 
-    localStorage.setItem('last_type', t);
+    rememberPreferences({ last_type: t });
     emit('type:changed', { type: t });
 }
 
 export function switchTab(t) {
+    if (!LIBRARY_TABS.includes(t)) t = 'watchlist';
     state.tab = t;
 
-    const tabs = {
-        watchlist: document.getElementById('tab-watchlist'),
-        andando:   document.getElementById('tab-andando'),
-        vistos:    document.getElementById('tab-vistos'),
-        listas:    document.getElementById('tab-listas'),
-    };
-
-    Object.entries(tabs).forEach(([key, el]) => {
+    LIBRARY_TABS.forEach(key => {
+        const el = document.getElementById(`tab-${key}`);
         if (!el) return;
         const active = key === t;
         el.setAttribute('aria-selected', active ? 'true' : 'false');
@@ -125,7 +120,7 @@ export function switchTab(t) {
     });
 
     document.getElementById('library-content')?.setAttribute('aria-labelledby', `tab-${t}`);
-    localStorage.setItem('last_library_tab', t);
+    rememberPreferences({ last_library_tab: t });
     return emit('tab:changed', { tab: t });
 }
 

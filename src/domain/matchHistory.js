@@ -1,17 +1,17 @@
 // Lista do Match: os matches de cada partida, com quem e quando.
 // Guarda só ids (nome, pôster e sinopse vêm do TMDB ao mostrar): cabe nos metadados da conta.
 import { MEDIA_TYPES } from './mediaItem.js';
+import { MATCH_SIZE, NAME_LIMIT } from './match.js';
 
 export const HISTORY_SIZE = 15;
-const NAME_LIMIT = 45; // "Fulano e Beltrana", com os dois nomes no limite de 20
-const MAX_IDS = 20;
+const PARTNERS_LIMIT = NAME_LIMIT * 2 + 5; // "Fulano e Beltrana", com os dois nomes no limite
 
 function validEntry(entry) {
   return entry && typeof entry === 'object'
     && typeof entry.at === 'string' && !Number.isNaN(Date.parse(entry.at))
-    && typeof entry.with === 'string' && entry.with.trim().length > 0 && entry.with.length <= NAME_LIMIT
+    && typeof entry.with === 'string' && entry.with.trim().length > 0 && entry.with.length <= PARTNERS_LIMIT
     && MEDIA_TYPES.includes(entry.type)
-    && Array.isArray(entry.ids) && entry.ids.length > 0 && entry.ids.length <= MAX_IDS
+    && Array.isArray(entry.ids) && entry.ids.length > 0 && entry.ids.length <= MATCH_SIZE
     && entry.ids.every(id => Number.isInteger(id) && id > 0);
 }
 
@@ -26,7 +26,7 @@ const sameMatch = (a, b) => a.type === b.type && a.with === b.with && a.at.slice
   && a.ids.length === b.ids.length && a.ids.every(id => b.ids.includes(id));
 
 export function addMatchEntry(history, entry, size = HISTORY_SIZE) {
-  const clean = { ...entry, with: String(entry.with || '').trim().slice(0, NAME_LIMIT), ids: [...new Set(entry.ids || [])].slice(0, MAX_IDS) };
+  const clean = { ...entry, with: String(entry.with || '').trim().slice(0, PARTNERS_LIMIT), ids: [...new Set(entry.ids || [])].slice(0, MATCH_SIZE) };
   if (!validEntry(clean)) return history;
   return [clean, ...history.filter(old => !sameMatch(old, clean))].slice(0, size);
 }

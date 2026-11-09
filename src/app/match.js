@@ -2,6 +2,7 @@
 // por link (uma de cada vez) ou ao vivo (cada uma no seu, ao mesmo tempo, via Supabase Realtime).
 // Os votos ficam só na memória: não dependem de conta nem de banco.
 import { getActiveModal } from '../ui/modals.js';
+import { whileBusy } from '../ui/busy.js';
 import { openLiveRoom } from '../api/supabase.js';
 import { titleDetails } from '../api/tmdb.js';
 import { isHorizontalSwipe } from '../domain/gestures.js';
@@ -11,6 +12,7 @@ import { session, state } from '../state/appState.js';
 import { createConfetti, showToast } from '../ui/feedback.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { formatRating } from '../utils/format.js';
+import { enterAsGuest } from './auth.js';
 import { discoverRequest, fetchRandomPage } from './filters.js';
 import { sendInviteToFriend } from './friends.js';
 import { recordMatch, renderMatchHistory } from './matchHistory.js';
@@ -57,12 +59,8 @@ const matchStart = () => beginGame('local', 'btn-match-start');
 const matchInvite = () => beginGame('invite', 'btn-match-invite');
 const matchLive = () => beginGame('live', 'btn-match-live');
 
-async function beginGame(mode, buttonId) {
-  const btn = document.getElementById(buttonId);
-  if (btn.disabled) return;
-  btn.disabled = true;
-
-  try {
+function beginGame(mode, buttonId) {
+  return whileBusy(document.getElementById(buttonId), async () => {
     const usable = item => item.poster_path && !session.blacklist.includes(item.id);
     const titles = pickTitles(await fetchRandomPage(discoverRequest(), { min: 2, keep: usable }), session.blacklist);
 
@@ -85,12 +83,7 @@ async function beginGame(mode, buttonId) {
       return;
     }
     enterVoting({ focus: false });
-  } catch (e) {
-    console.error('Erro ao iniciar o Match:', e);
-    showToast('Não foi possível carregar os títulos. Verifique a conexão e tente de novo.', 'error');
-  } finally {
-    btn.disabled = false;
-  }
+  }, { failure: 'Não foi possível carregar os títulos. Verifique a conexão e tente de novo.' });
 }
 
 function matchVote(wanted) {
@@ -230,7 +223,14 @@ function matchJoin() {
 }
 
 const hasInvite = () => [INVITE_PARAM, LIVE_PARAM].some(p => new URLSearchParams(location.search).has(p));
-export { hasInvite as hasMatchInvite };
+
+// Quem chega por um convite de Match vota direto: entra como convidado, sem tela de entrada nem
+// boas-vindas. Devolve se era um convite.
+export function enterFromMatchInvite() {
+  if (!hasInvite()) return false;
+  if (!session.currentUser) enterAsGuest();
+  return true;
+}
 
 // Link recebido: convite para votar, ou resposta com o resultado pronto
 export async function openMatchFromUrl() {

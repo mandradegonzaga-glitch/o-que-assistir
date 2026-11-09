@@ -73,15 +73,11 @@ on('filters:changed', () => {
     document.getElementById('person-name').innerText = personName;
 });
 
-async function sortearOutro() {
-    const btn = document.getElementById('btn-sortear-outro');
-    if (btn.disabled) return;
-    btn.disabled = true;
-    btn.classList.add('loading');
-    await sortearFilme();
-    btn.disabled = false;
-    btn.classList.remove('loading');
-    document.getElementById('modal-resultado').scrollTop = 0;
+function sortearOutro() {
+    return whileBusy(document.getElementById('btn-sortear-outro'), async () => {
+        await sortearFilme();
+        document.getElementById('modal-resultado').scrollTop = 0;
+    });
 }
 
 // Um da lista: com pôster, fora da blacklist e (se der) fora do que já foi visto e do que acabou de sair.
@@ -158,39 +154,36 @@ async function fetchDrawList(endpoint) {
     return fetchRandomPage(discoverRequest());
 }
 
-async function sortearFilme() {
+// Vale para o SORTEAR, a barra de baixo e o "Sortear outro": um sorteio por vez
+function sortearFilme() {
     const btn = document.getElementById('btn-sortear');
-    if (btn.disabled) return; // evita sorteios duplicados com cliques repetidos
-    const idle = btn.innerHTML;
-    btn.innerHTML = ph('circle-notch', { weight: 'bold', cls: 'icon spin icon-16 icon-lead-6' }) + 'Buscando...';
-    btn.disabled = true;
-    btn.classList.add('loading');
-
-    const endpoint = getTmdbEndpoint(state.type);
-
-    try {
-        // O baralho de ingressos embaralha enquanto a busca acontece e vira no sorteado (src/ui/drawReveal.js)
-        const sorteado = await drawReveal(async () => {
-            const lista = await fetchDrawList(endpoint);
-            if (lista === null) return null;
-            const escolhido = pickDraw(lista);
-            if (!escolhido) {
-                showToast("Nada encontrado (ou tudo na sua blacklist)!", "error");
-                return null;
-            }
-            return withDetails(escolhido);
-        });
-        if (sorteado) {
-            openDrawn(sorteado);
-            endDrawReveal();
+    return whileBusy(btn, async () => {
+        const idle = btn.innerHTML;
+        btn.innerHTML = ph('circle-notch', { weight: 'bold', cls: 'icon spin icon-16 icon-lead-6' }) + 'Buscando...';
+        try {
+            await drawFromFilters();
+        } finally {
+            btn.innerHTML = idle;
         }
-    } catch(e) {
-        console.error(e);
-        showToast("Erro na API.", "error");
-    } finally {
-        btn.innerHTML = idle;
-        btn.disabled = false;
-        btn.classList.remove('loading');
+    }, { failure: 'Erro na API.' });
+}
+
+async function drawFromFilters() {
+    const endpoint = getTmdbEndpoint(state.type);
+    // O baralho de ingressos embaralha enquanto a busca acontece e vira no sorteado (src/ui/drawReveal.js)
+    const sorteado = await drawReveal(async () => {
+        const lista = await fetchDrawList(endpoint);
+        if (lista === null) return null;
+        const escolhido = pickDraw(lista);
+        if (!escolhido) {
+            showToast("Nada encontrado (ou tudo na sua blacklist)!", "error");
+            return null;
+        }
+        return withDetails(escolhido);
+    });
+    if (sorteado) {
+        openDrawn(sorteado);
+        endDrawReveal();
     }
 }
 

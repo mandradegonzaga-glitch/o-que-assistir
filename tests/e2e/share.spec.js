@@ -398,6 +398,18 @@ test.describe('conquistas sociais', () => {
       expect(saved.friends).toBe(1);
     });
 
+    test('conquista já gravada na conta não é comemorada de novo nem gravada duas vezes', async ({ page }) => {
+      await seed(page, { friends: [BIA] });
+      await openApp(page);
+      await expect(page.locator('#achievement-name')).toHaveText('Turma');
+      await page.reload();
+      await expect(page.locator('#friends-badge')).toBeAttached();
+      await page.waitForLoadState('networkidle');
+      await expect(page.locator('#achievement')).toBeHidden();
+      const turma = await page.evaluate(() => window.__db.user_badges.filter(b => b.badge_name === 'Turma').length);
+      expect(turma).toBe(1);
+    });
+
     test('pedido ainda pendente não conta como amigo', async ({ page }) => {
       await seed(page, { friends: [{ ...BIA, status: 'pending', direction: 'received' }] });
       await openApp(page);

@@ -68,16 +68,23 @@ Status: [ ] a fazer · [x] feito · [-] descartado (com o motivo).
   - 24 `style.display='flex'`; match.js detecta modal por `[style*="flex"]`; help.js `queueMicrotask`.
 
 ## 7. Menores
-- [ ] `whileBusy` em vez de `disabled` à mão (discover, match).
+- [x] `whileBusy` em vez de `disabled` à mão (sortear, sortear outro, Match); o brilho de carregando vem de `[aria-busy]`.
 - [x] Botão "Já Vi" desenhado num lugar só (feito junto com o grupo 4).
-- [ ] localStorage direto → `storage`; preferências `last_*` gravadas só em `rememberPreferences`; MODES/TABS de uma fonte.
-- [ ] drawReveal espera com `afterAnimations` e importa `TICKET_ICON`.
-- [ ] Limites do Match (`NAME_LIMIT`, `MAX_TITLES`) exportados; `.limit(50)` → `MAX_SORTEIO_HISTORY`.
-- [ ] Erros de amigos logados, silenciosos só para `PG.NO_TABLE`.
-- [ ] Validação de senha (`passwordError`), nome a mostrar, cartão de conquista: uma função cada.
-- [ ] Visibilidade de `#daily-row` numa função; regra do convite de Match fora do main.js; `closeLive` ao receber `done/bye`.
-- [ ] badges da conta: guardar conquistas já ganhas na sessão (2 pedidos por conquista a cada ação).
+- [x] localStorage só por `storage` (`getText/setText` para chaves em texto puro); `last_*` só por `rememberPreferences`;
+      `MODES`/`LIBRARY_TABS` em `domain/screens.js` (URL, navegação e aba salva).
+- [x] drawReveal espera virar e sumir com `afterAnimations` e usa `ticketIcon(cls)` de icons.js.
+- [x] `NAME_LIMIT` e `MATCH_SIZE` exportados de domain/match.js (ao vivo e lista do Match usam); `MAX_SORTEIO_HISTORY` já estava.
+- [x] Todo `run` tem rótulo e loga, menos SQL opcional faltando (`isMissingSql`) e pedido repetido (`duplicate`).
+- [x] `passwordError` (domain/passwordStrength), `displayName` (domain/profileName), `badgeCard` (ui/badgeIcons).
+- [x] `updateRow` em dailyPicks; `enterFromMatchInvite()` em match.js.
+  - [-] `closeLive` ao receber `bye`: descartado. O `bye` também sai ao recarregar a página, e a outra pessoa
+        volta (`partner-back`); fechar a sala ali quebraria a retomada. Depois do resultado, o respiro de 3 s
+        continua: nenhuma mensagem confirma que o outro lado recebeu os votos.
+- [x] `session.badges`: lidas do banco uma vez por sessão (`supabaseGetBadges`); só as novas são gravadas.
+      Sai `supabaseCheckBadge`. Teste: recarregar não comemora nem grava de novo.
 
 ## Observações
 - 2026-11-09: em rodadas repetidas sob carga, 2 falhas em 396 em share.spec ("Gerando…" e "Enviado para Bia!"),
   contra 0 em 396 no commit 8c5fe7d. Isoladas, passam sempre. Verificar na rodada final se é instabilidade de toast.
+- 2026-11-09 (grupo 7): 1 falha em 260 no `enterAsGuest` (tela de entrada não sumiu em 5 s) durante `npm run check`;
+  passou 138/138 repetida e 260/260 na suíte seguinte. Tratado como lentidão sob carga.

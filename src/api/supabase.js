@@ -2,6 +2,7 @@
 import { MAX_SORTEIO_HISTORY, SUPABASE_URL, SUPABASE_ANON_KEY } from '../config/constants.js';
 import { getTitle } from '../domain/mediaItem.js';
 import { buildEpisodeKey } from '../domain/seriesProgress.js';
+import { storage } from '../utils/storage.js';
 
 // Aviso de erro fatal na própria página (ainda não há interface pronta nesse ponto)
 function showFatalError(message) {
@@ -33,7 +34,7 @@ const PG = {
     UNIQUE: '23505',           // linha repetida
     UNDEFINED_TABLE: '42P01',  // SQL opcional ainda não rodado
     NO_TABLE: 'PGRST205',      // idem, visto pelo PostgREST
-    NO_ROWS: 'PGRST116',       // .single() sem linha
+    NO_FUNCTION: 'PGRST202',   // função (rpc) de um SQL opcional ainda não rodado
 };
 
 const TABLE = {
@@ -59,12 +60,16 @@ const ON_CONFLICT = {
     EPISODE: 'user_id,series_id,season_number,episode_number',
 };
 
+// SQL opcional (amigos, reações...) ainda não rodado no projeto: a tela que depende dele fica oculta
+const isMissingSql = error => [PG.UNDEFINED_TABLE, PG.NO_TABLE, PG.NO_FUNCTION].includes(error?.code);
+
 /**
  * Roda um pedido ao Supabase e devolve sempre { success, ... } em vez de lançar erro.
+ * - label: o que estava fazendo, para o console ("Erro ao <label>")
  * - request: função que devolve { data, error } (a query é montada dentro dela, então erro ao montar também vira falha)
  * - onData: campos extras do sucesso, a partir de data
  * - fallback: campos extras da falha (objeto, ou função que recebe o erro)
- * Sem label não loga: a falha é esperada (ex.: SQL opcional ainda não rodado e a tela fica oculta).
+ * Toda falha vai para o console, menos as esperadas: SQL opcional faltando e pedido repetido ({ duplicate }).
  */
 async function run(label, request, onData = () => ({}), fallback = {}) {
     try {
@@ -72,8 +77,8 @@ async function run(label, request, onData = () => ({}), fallback = {}) {
         if (error) throw error;
         return { success: true, ...onData(data) };
     } catch (error) {
-        if (label) console.error(`Erro ao ${label}:`, error);
         const extra = typeof fallback === 'function' ? fallback(error) : fallback;
+        if (!isMissingSql(error) && !extra.duplicate) console.error(`Erro ao ${label}:`, error);
         return { success: false, error: error.message, code: error.code, ...extra };
     }
 }
@@ -161,7 +166,7 @@ export function supabaseDeleteAccount() {
 
         // O usuário não existe mais, então o signOut responde 403 e mantém a sessão salva: limpa à mão
         const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' });
-        if (signOutError) localStorage.removeItem(AUTH_STORAGE_KEY);
+        if (signOutError) storage.remove(AUTH_STORAGE_KEY);
         return {};
     });
 }
@@ -225,7 +230,7 @@ export function supabaseAddToHistory(userId, item) {
 
 // Reação rápida (database/reactions.sql). null tira. Sem o SQL, ou título fora do histórico: success false.
 export function supabaseSetReaction(tmdbId, reaction) {
-    return run(null, () => supabase.rpc('set_title_reaction', { p_tmdb_id: tmdbId, p_reaction: reaction }), data => {
+    return run('gravar a reação', () => supabase.rpc('set_title_reaction', { p_tmdb_id: tmdbId, p_reaction: reaction }), data => {
         if (data !== true) throw new Error('reação não gravada');
         return {};
     });
@@ -303,7 +308,7 @@ export function supabaseGetLists(userId) {
         ]);
         return { data: { lists: lists.data, items: items.data }, error: lists.error || items.error };
     }, data => data, error => ({
-        missing: error.code === PG.UNDEFINED_TABLE || error.code === PG.NO_TABLE, lists: [], items: [],
+        missing: isMissingSql(error), lists: [], items: [],
     }));
 }
 
@@ -404,54 +409,54 @@ export function supabaseUnlockBadge(userId, badgeName) {
         'Badge já desbloqueado');
 }
 
-export function supabaseCheckBadge(userId, badgeName) {
-    return run('verificar badge', async () => {
-        const response = await supabase.from(TABLE.BADGES).select('*').eq('user_id', userId).eq('badge_name', badgeName).single();
-        return response.error?.code === PG.NO_ROWS ? { data: null, error: null } : response;
-    }, data => ({ unlocked: !!data }), { unlocked: false });
+// Nomes das conquistas já ganhas pela conta
+export function supabaseGetBadges(userId) {
+    return run('obter badges',
+        () => supabase.from(TABLE.BADGES).select('badge_name').eq('user_id', userId),
+        data => ({ names: (data || []).map(row => row.badge_name) }));
 }
 
 // ================================================
 // AMIZADES E CONVITES (database/friends.sql)
-// Sem log: sem as tabelas no banco a falha é esperada, e a tela de amigos fica oculta
+// Sem as tabelas no banco a falha é esperada (run não loga), e a tela de amigos fica oculta
 // ================================================
 
 const duplicateRequest = error => (error.code === PG.UNIQUE ? { duplicate: true } : {});
 
 export function supabaseFindUser(username) {
-    return run(null, () => supabase.rpc('find_user_by_username', { p_username: username }), data => ({ user: data?.[0] || null }));
+    return run('buscar usuário', () => supabase.rpc('find_user_by_username', { p_username: username }), data => ({ user: data?.[0] || null }));
 }
 
 export function supabaseListFriends() {
-    return run(null, () => supabase.rpc('list_friends'), data => ({ friends: data || [] }), { friends: [] });
+    return run('listar amigos', () => supabase.rpc('list_friends'), data => ({ friends: data || [] }), { friends: [] });
 }
 
 export function supabaseGetFriendProfile(friendId) {
-    return run(null, () => supabase.rpc('get_friend_profile', { p_friend: friendId }), data => ({ profile: data }));
+    return run('abrir o perfil do amigo', () => supabase.rpc('get_friend_profile', { p_friend: friendId }), data => ({ profile: data }));
 }
 
 export function supabaseRequestFriend(userId, friendId) {
-    return run(null, () => supabase.from(TABLE.FRIENDSHIPS).insert({ requester_id: userId, addressee_id: friendId }), undefined, duplicateRequest);
+    return run('pedir amizade', () => supabase.from(TABLE.FRIENDSHIPS).insert({ requester_id: userId, addressee_id: friendId }), undefined, duplicateRequest);
 }
 
 export function supabaseAcceptFriend(friendshipId) {
-    return run(null, () => supabase.from(TABLE.FRIENDSHIPS).update({ status: 'accepted' }).eq('id', friendshipId));
+    return run('aceitar amizade', () => supabase.from(TABLE.FRIENDSHIPS).update({ status: 'accepted' }).eq('id', friendshipId));
 }
 
 export function supabaseRemoveFriend(friendshipId) {
-    return run(null, () => supabase.from(TABLE.FRIENDSHIPS).delete().eq('id', friendshipId));
+    return run('desfazer amizade', () => supabase.from(TABLE.FRIENDSHIPS).delete().eq('id', friendshipId));
 }
 
 export function supabaseSendMatchInvite(userId, friendId, payload) {
-    return run(null, () => supabase.from(TABLE.MATCH_INVITES).insert({ from_user: userId, to_user: friendId, payload }));
+    return run('enviar convite de Match', () => supabase.from(TABLE.MATCH_INVITES).insert({ from_user: userId, to_user: friendId, payload }));
 }
 
 export function supabaseListMatchInvites() {
-    return run(null, () => supabase.rpc('list_match_invites'), data => ({ invites: data || [] }), { invites: [] });
+    return run('listar convites de Match', () => supabase.rpc('list_match_invites'), data => ({ invites: data || [] }), { invites: [] });
 }
 
 export function supabaseDeleteMatchInvite(inviteId) {
-    return run(null, () => supabase.from(TABLE.MATCH_INVITES).delete().eq('id', inviteId));
+    return run('apagar convite de Match', () => supabase.from(TABLE.MATCH_INVITES).delete().eq('id', inviteId));
 }
 
 // Avisos: o Supabase manda um sinal quando chega algo para esta pessoa (database/realtime_inbox.sql).
@@ -497,15 +502,15 @@ export function openLiveRoom(code, clientId, { onMessage, onLeave, onStatus }) {
 
 // Indicações de títulos (database/title_shares.sql). Sem a tabela, a caixa fica oculta.
 export function supabaseSendTitleShare(userId, friendId, row) {
-    return run(null, () => supabase.from(TABLE.TITLE_SHARES).insert({ from_user: userId, to_user: friendId, ...row }), undefined, duplicateRequest);
+    return run('indicar título', () => supabase.from(TABLE.TITLE_SHARES).insert({ from_user: userId, to_user: friendId, ...row }), undefined, duplicateRequest);
 }
 
 export function supabaseListTitleShares() {
-    return run(null, () => supabase.rpc('list_title_shares'), data => ({ shares: data || [] }), { shares: [] });
+    return run('listar indicações', () => supabase.rpc('list_title_shares'), data => ({ shares: data || [] }), { shares: [] });
 }
 
 export function supabaseDeleteTitleShare(shareId) {
-    return run(null, () => supabase.from(TABLE.TITLE_SHARES).delete().eq('id', shareId));
+    return run('apagar indicação', () => supabase.from(TABLE.TITLE_SHARES).delete().eq('id', shareId));
 }
 
 // ================================================

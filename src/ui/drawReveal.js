@@ -8,16 +8,18 @@
 // e o palco some em 200 ms enquanto a gaveta do título sobe.
 // Com "reduzir movimento", nada disso: o título abre direto, como antes.
 import { getTitle, tmdbImage } from '../domain/mediaItem.js';
-import { prefersReducedMotion } from './motion.js';
+import { afterAnimations, prefersReducedMotion } from './motion.js';
+import { ticketIcon } from './icons.js';
 
-const DRAW_TIMING = { shuffleMin: 900, flip: 450, hold: 250, fade: 200, posterWait: 1500 };
+// Virar e sumir duram o que o CSS manda (afterAnimations); aqui só o que não é animação
+const DRAW_TIMING = { shuffleMin: 900, hold: 250, posterWait: 1500 };
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 // Verso do ingresso: o bilhete da marca, grande, e o letreiro
 const TICKET_BACK = `
   <span class="draw-ticket__back" aria-hidden="true">
-    <svg class="draw-ticket__logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path fill="currentColor" fill-opacity="0.2" d="M2 8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2.5a1.5 1.5 0 0 0 0 3V16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2.5a1.5 1.5 0 0 0 0-3z"/><path d="M16 6v2M16 11v2M16 16v2"/><path fill="currentColor" stroke="none" d="M8 9v6l5-3z"/></svg>
+    ${ticketIcon('draw-ticket__logo')}
     <span class="draw-ticket__brand">O que<br>assistir?</span>
     <span class="draw-ticket__stub">Admite um</span>
   </span>`;
@@ -91,7 +93,8 @@ export async function drawReveal(pick) {
   caption.textContent = getTitle(item);
   stage.classList.add('is-revealed');
   navigator.vibrate?.(15);
-  await wait(DRAW_TIMING.flip + DRAW_TIMING.hold);
+  await afterAnimations(stage);
+  await wait(DRAW_TIMING.hold);
   return item;
 }
 
@@ -100,5 +103,5 @@ export function endDrawReveal() {
   const stage = document.getElementById('draw-stage');
   if (!stage || stage.hidden) return;
   stage.classList.add('is-leaving');
-  setTimeout(() => hideStage(stage), DRAW_TIMING.fade);
+  afterAnimations(stage).then(() => hideStage(stage));
 }

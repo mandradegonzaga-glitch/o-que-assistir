@@ -3,6 +3,7 @@ import { ph } from '../ui/phosphor.js';
 import { TICKET_ICON } from '../ui/icons.js';
 import { closeModal, onModalClose, openModal } from '../ui/modals.js';
 import { registerActions } from '../ui/actions.js';
+import { storage } from '../utils/storage.js';
 
 // Os passos moram só aqui: o HTML traz a moldura e cada passo é desenhado a partir desta lista
 const steps = [
@@ -42,7 +43,7 @@ function showStep(index) {
 }
 
 function finishOnboarding() {
-    localStorage.setItem('has_visited', 'true');
+    storage.setText('has_visited', 'true');
     closeModal('onboarding-overlay');
 }
 
@@ -50,7 +51,7 @@ function finishOnboarding() {
 onModalClose('onboarding-overlay', finishOnboarding);
 
 export function checkFirstVisit() {
-    if (localStorage.getItem('has_visited')) return;
+    if (storage.getText('has_visited')) return;
     showStep(0);
     setTimeout(() => {
         openModal('onboarding-overlay');

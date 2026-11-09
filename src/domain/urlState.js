@@ -3,6 +3,7 @@ import { MOODS } from './moods.js';
 import { isCountry } from './countries.js';
 import { MEDIA_TYPES } from './mediaItem.js';
 import { isGenreFilter, isProviderFilter } from './filters.js';
+import { MODES } from './screens.js';
 
 const FIELDS = {
   mode: 'modo',
@@ -19,7 +20,6 @@ const FIELDS = {
   country: 'pais',
 };
 const DEFAULTS = { mode: 'discover', type: 'movie' };
-const MODES = ['discover', 'roulette', 'match', 'library'];
 const DURATIONS = ['short', 'medium', 'long'];
 const TITLE_PATTERN = /^(movie|tv|dorama)-(\d+)$/;
 

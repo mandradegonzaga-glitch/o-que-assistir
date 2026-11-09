@@ -3,6 +3,7 @@ import { confirmDialog } from '../ui/modals.js';
 import { ph } from '../ui/phosphor.js';
 import { showToast } from '../ui/feedback.js';
 import { registerActions } from '../ui/actions.js';
+import { storage } from '../utils/storage.js';
 
 let deferredPrompt;
 
@@ -68,7 +69,7 @@ async function installPWA() {
 }
 
 function dismissInstall() {
-  localStorage.setItem('pwa_install_dismissed', 'true');
+  storage.setText('pwa_install_dismissed', 'true');
   removeInstallBanner();
 }
 
@@ -96,7 +97,7 @@ export function initPwa() {
     deferredPrompt = e;
 
     setTimeout(() => {
-      if (deferredPrompt && !localStorage.getItem('pwa_install_dismissed')) {
+      if (deferredPrompt && !storage.getText('pwa_install_dismissed')) {
         showInstallPrompt();
       }
     }, 30000);

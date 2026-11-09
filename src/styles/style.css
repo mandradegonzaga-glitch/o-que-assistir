@@ -1476,12 +1476,8 @@ header {
     transform: none;
 }
 
-/* Loading State */
-.btn-main.loading {
-    pointer-events: none;
-}
-
-.btn-main.loading::after {
+/* Loading State (whileBusy) */
+.btn-main[aria-busy="true"]::after {
     content: '';
     position: absolute;
     inset: 0;

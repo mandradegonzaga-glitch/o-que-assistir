@@ -7,11 +7,12 @@ import {
 } from '../api/supabase.js';
 import { BADGE_DEFINITIONS } from '../domain/badges.js';
 import { diffInbox, inboxSnapshot, summarizeNews } from '../domain/inbox.js';
+import { displayName } from '../domain/profileName.js';
 import { shareRow, titleKind } from '../domain/titleShare.js';
 import { MATCH_MIN_TITLES, compareTastes, joinNames } from '../domain/tasteMatch.js';
 import { reactionOf } from '../domain/reactions.js';
 import { isAccount, session, state } from '../state/appState.js';
-import { BADGE_ICONS } from '../ui/badgeIcons.js';
+import { badgeCard } from '../ui/badgeIcons.js';
 import { switchMode } from '../ui/navigation.js';
 import { formatCount } from '../utils/format.js';
 import { isPendingRemoval, scheduleUndoable, showToast } from '../ui/feedback.js';
@@ -39,7 +40,6 @@ const INBOX_POLL_MS = 120000;
 let currentFriend = null;
 
 const accepted = () => friends.filter(f => f.status === 'accepted');
-const nameOf = friend => friend.display_name || friend.username;
 
 function button(label, action, id, className = 'btn-clear-small') {
   const el = document.createElement('button');
@@ -57,10 +57,10 @@ function friendRow(friend, ...actions) {
   const avatar = document.createElement('span');
   avatar.className = 'avatar';
   avatar.setAttribute('aria-hidden', 'true');
-  avatar.textContent = nameOf(friend).charAt(0).toUpperCase();
+  avatar.textContent = displayName(friend).charAt(0).toUpperCase();
   const name = document.createElement('span');
   name.className = 'friend-row__name';
-  name.textContent = nameOf(friend);
+  name.textContent = displayName(friend);
   const handle = document.createElement('small');
   handle.textContent = `@${friend.username}`;
   name.append(handle);
@@ -118,13 +118,13 @@ function renderBadge(requests, shareCount = visibleShares().length) {
 function renderFriendTargets() {
   document.querySelectorAll('[data-friend-targets]').forEach(box => {
     const list = box.querySelector('.friend-targets');
-    list.replaceChildren(...accepted().map(f => button(nameOf(f), 'friendSendMatch', f.other_id, 'btn-outline friend-target')));
+    list.replaceChildren(...accepted().map(f => button(displayName(f), 'friendSendMatch', f.other_id, 'btn-outline friend-target')));
     box.hidden = !isAccount() || !available || accepted().length === 0;
   });
 
   const ready = isAccount() && available && sharesAvailable;
   const box = document.getElementById('share-friends');
-  box.querySelector('.friend-targets').replaceChildren(...accepted().map(f => button(nameOf(f), 'friendSendTitle', f.other_id, 'btn-outline friend-target')));
+  box.querySelector('.friend-targets').replaceChildren(...accepted().map(f => button(displayName(f), 'friendSendTitle', f.other_id, 'btn-outline friend-target')));
   box.hidden = !ready || accepted().length === 0;
   const hint = document.getElementById('share-friends-hint');
   hint.hidden = ready && accepted().length > 0;
@@ -285,9 +285,9 @@ async function friendSendTitle(el) {
   el.setAttribute('aria-disabled', 'true');
   const result = await supabaseSendTitleShare(session.currentUserId, friendId, row);
   if (result.success || result.duplicate) {
-    el.textContent = `${nameOf(friend)} ✓`;
-    el.setAttribute('aria-label', `Enviado para ${nameOf(friend)}`);
-    showToast(result.success ? `Enviado para ${nameOf(friend)}!` : `${nameOf(friend)} já recebeu este título.`);
+    el.textContent = `${displayName(friend)} ✓`;
+    el.setAttribute('aria-label', `Enviado para ${displayName(friend)}`);
+    showToast(result.success ? `Enviado para ${displayName(friend)}!` : `${displayName(friend)} já recebeu este título.`);
     if (result.success) {
       recordSocial('sharesSent');
       trackChallenge('shared');
@@ -362,7 +362,7 @@ async function requestFriendship(username) {
     showToast('Não foi possível enviar o pedido. Tente de novo.', 'error');
   } else {
     sent = true;
-    showToast(`Pedido enviado para ${nameOf(found.user)}!`);
+    showToast(`Pedido enviado para ${displayName(found.user)}!`);
   }
   await refreshFriends();
   return sent;
@@ -384,7 +384,7 @@ async function friendUnfriend(id) {
   const friend = friends.find(f => f.friendship_id === id);
   const ok = await confirmDialog({
     title: 'Remover amizade',
-    message: `Remover ${friend ? nameOf(friend) : 'esta pessoa'} dos seus amigos?`,
+    message: `Remover ${friend ? displayName(friend) : 'esta pessoa'} dos seus amigos?`,
     confirmLabel: 'Remover',
     danger: true,
   });
@@ -511,7 +511,7 @@ async function friendOpen(friendId) {
   }
 
   const { profile } = result;
-  const name = profile.display_name || profile.username;
+  const name = displayName(profile);
   currentFriend = { id: friendId, friendshipId: friend?.friendship_id };
 
   document.getElementById('friend-avatar').textContent = name.charAt(0).toUpperCase();
@@ -539,15 +539,7 @@ async function friendOpen(friendId) {
 
   const badges = document.getElementById('friend-badges');
   const earned = BADGE_DEFINITIONS.filter(b => profile.badges.includes(b.name));
-  badges.replaceChildren(...earned.map(badge => {
-    const chip = document.createElement('div');
-    chip.className = 'badge-item unlocked';
-    chip.dataset.color = badge.color;
-    chip.innerHTML = `<div class="badge-icon">${BADGE_ICONS[badge.icon]}</div><div class="badge-info"><h4></h4><p></p></div>`;
-    chip.querySelector('h4').textContent = badge.name;
-    chip.querySelector('p').textContent = badge.desc;
-    return chip;
-  }));
+  badges.replaceChildren(...earned.map(badge => badgeCard(badge)));
   document.getElementById('friend-badges-box').hidden = earned.length === 0;
 
   openModal('modal-friend');
@@ -566,7 +558,7 @@ function friendMatchCurrent() {
 export async function sendInviteToFriend(friendId, code) {
   const friend = friends.find(f => f.other_id === friendId);
   const result = await supabaseSendMatchInvite(session.currentUserId, friendId, code);
-  showToast(result.success ? `Enviado para ${friend ? nameOf(friend) : 'seu amigo'}!` : 'Não foi possível enviar. Tente pelo link.', result.success ? 'success' : 'error');
+  showToast(result.success ? `Enviado para ${friend ? displayName(friend) : 'seu amigo'}!` : 'Não foi possível enviar. Tente pelo link.', result.success ? 'success' : 'error');
 }
 
 function renderInbox(invites) {

@@ -1,6 +1,7 @@
 // Ícones das conquistas (a regra de cada uma fica em src/domain/badges.js).
 // Phosphor duotone, a mesma família dos ícones de destaque do app (src/ui/phosphor.js).
 import { ph } from './phosphor.js';
+import { formatCount } from '../utils/format.js';
 
 const ICON_OF = {
   friends: 'users-three',      // duas ou mais pessoas
@@ -27,3 +28,24 @@ const ICON_OF = {
 };
 
 export const BADGE_ICONS = Object.fromEntries(Object.entries(ICON_OF).map(([key, name]) => [key, ph(name, { weight: 'duotone' })]));
+
+// O cartão de uma conquista (perfil e perfil do amigo).
+//   status: o leitor de tela ouve se está desbloqueada (no perfil, onde há das duas)
+//   progress: { current, goal } de uma bloqueada com meta maior que 1 ("4 de 10" e barrinha)
+export function badgeCard(badge, { unlocked = true, status = false, progress = null } = {}) {
+  const card = document.createElement('div');
+  card.className = unlocked ? 'badge-item unlocked' : 'badge-item';
+  card.dataset.color = badge.color;
+  card.innerHTML = `<div class="badge-icon">${BADGE_ICONS[badge.icon]}</div><div class="badge-info"><h4></h4><p></p></div>`;
+  const title = card.querySelector('h4');
+  title.textContent = badge.name;
+  if (status) title.insertAdjacentHTML('beforeend', `<span class="sr-only">, ${unlocked ? 'desbloqueada' : 'bloqueada'}</span>`);
+  card.querySelector('p').textContent = badge.desc;
+  if (progress) {
+    const { current, goal } = progress;
+    card.querySelector('.badge-info').insertAdjacentHTML('beforeend', `
+      <p class="badge-count">${formatCount(current)} de ${formatCount(goal)}</p>
+      <div class="badge-meter" aria-hidden="true"><div class="badge-meter__fill" style="width: ${(current / goal) * 100}%"></div></div>`);
+  }
+  return card;
+}

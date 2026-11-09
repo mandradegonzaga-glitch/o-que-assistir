@@ -1,8 +1,7 @@
 // Avisos de Amigos: compara a caixa antes e depois de atualizar e diz o que é novidade.
 // Só o que chega de outra pessoa vira aviso; o que a própria pessoa fez (aceitar, apagar) não.
 import { parseInvitePayload } from './match.js';
-
-const nameOf = friend => friend.display_name || friend.username || 'Alguém';
+import { displayName as nameOf } from './profileName.js';
 
 export function inboxSnapshot({ friends = [], shares = [], invites = [] }) {
   return {

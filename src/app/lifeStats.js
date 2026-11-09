@@ -117,7 +117,7 @@ on('session:ended', ({ kind }) => kind === 'account' && clearLifeStatsCache());
 function clearLifeStatsCache() {
   renderToken++;
   generation++;
-  try { storage.remove(FACTS_STORAGE_KEY); } catch { /* sem localStorage: nada a apagar */ }
+  storage.remove(FACTS_STORAGE_KEY);
 }
 
 export function hideLifeStats() {

@@ -4,13 +4,13 @@ import { endSession, updateUserDisplay } from './auth.js';
 import { renderBlacklist } from './blacklist.js';
 import { BADGE_CATEGORIES, computeBadgeStatuses } from '../domain/badges.js';
 import { isAccount, isGuest, session } from '../state/appState.js';
-import { BADGE_ICONS } from '../ui/badgeIcons.js';
+import { badgeCard } from '../ui/badgeIcons.js';
 import { showToast } from '../ui/feedback.js';
 import { closeModal, confirmDialog, isModalOpen, openModal } from '../ui/modals.js';
 import { formatCount } from '../utils/format.js';
 import { renderProgress } from './progress.js';
 import { renderTasteDna } from './tasteDna.js';
-import { MIN_PASSWORD_LENGTH } from '../domain/passwordStrength.js';
+import { passwordError } from '../domain/passwordStrength.js';
 import { emit, on } from '../state/events.js';
 import { registerActions } from '../ui/actions.js';
 
@@ -94,13 +94,9 @@ async function alterarSenha() {
         return;
     }
 
-    if (newPassword.length < MIN_PASSWORD_LENGTH) {
-        showToast(`A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres!`, "error");
-        return;
-    }
-
-    if (newPassword !== confirmPassword) {
-        showToast("As senhas não coincidem!", "error");
+    const invalid = passwordError(newPassword, confirmPassword);
+    if (invalid) {
+        showToast(invalid, "error");
         return;
     }
 
@@ -167,19 +163,8 @@ function renderBadges() {
     document.getElementById('badges-progress-fill').style.width = `${(unlockedCount / statuses.length) * 100}%`;
     BADGE_CATEGORIES.forEach(category => {
       container.insertAdjacentHTML('beforeend', `<h4 class="badge-category">${category}</h4>`);
-      statuses.filter(s => s.badge.category === category).forEach(({ badge: b, unlocked, current, goal, counted }) => {
-        // Bloqueada com meta maior que 1: mostra quanto falta ("4 de 10" e barrinha)
-        const meter = !unlocked && counted ? `
-                    <p class="badge-count">${formatCount(current)} de ${formatCount(goal)}</p>
-                    <div class="badge-meter" aria-hidden="true"><div class="badge-meter__fill" style="width: ${(current / goal) * 100}%"></div></div>` : '';
-        container.innerHTML += `
-            <div class="badge-item ${unlocked ? 'unlocked' : ''}" data-color="${b.color}">
-                <div class="badge-icon">${BADGE_ICONS[b.icon]}</div>
-                <div class="badge-info">
-                    <h4>${b.name}<span class="sr-only">, ${unlocked ? 'desbloqueada' : 'bloqueada'}</span></h4>
-                    <p>${b.desc}</p>${meter}
-                </div>
-            </div>`;
+      statuses.filter(s => s.badge.category === category).forEach(({ badge, unlocked, current, goal, counted }) => {
+        container.append(badgeCard(badge, { unlocked, status: true, progress: !unlocked && counted ? { current, goal } : null }));
       });
     });
 }

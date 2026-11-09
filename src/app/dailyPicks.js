@@ -13,15 +13,21 @@ import { on } from '../state/events.js';
 import { posterImg } from '../ui/icons.js';
 
 
-let shownDay = null;
 let shownKey = null; // dia + gêneros que contam: outra pessoa (ou o gosto mudou) refaz o painel
 let loadingKey = null;
 let midnightTimer = null;
+let hasPicks = false;
 
 const els = () => ({
   row: document.getElementById('daily-row'),
   list: document.getElementById('daily-picks-list'),
 });
+
+// A fileira aparece com indicações carregadas e alguém dentro: antes de entrar não há de quem ser o gosto
+function updateRow() {
+  const { row } = els();
+  if (row) row.hidden = !(hasPicks && session.currentUser);
+}
 
 // Sob medida: tenta a página do dia e, se o gênero tiver poucos títulos, a primeira.
 // Sem nada que sirva (ou sem conexão para esse pedido), o cartão fica com a indicação de todo mundo.
@@ -94,17 +100,17 @@ async function renderDailyPicks() {
   loadingKey = null;
 
   // Sem conexão com o TMDB: a fileira some; o resto da tela continua
-  if (picks.length === 0) {
-    row.hidden = true;
+  hasPicks = picks.length > 0;
+  if (!hasPicks) {
+    updateRow();
     return;
   }
   list.innerHTML = picks.map(cardHtml).join('');
   document.getElementById('daily-picks-note').textContent = picks.some(p => p.genre)
     ? 'Escolhidos pelo seu gosto, novos à meia-noite'
     : 'Um de cada, novos à meia-noite';
-  shownDay = day;
   shownKey = key;
-  row.hidden = !session.currentUser;
+  updateRow();
 
   clearTimeout(midnightTimer);
   midnightTimer = setTimeout(renderDailyPicks, msUntilMidnight());
@@ -113,15 +119,11 @@ async function renderDailyPicks() {
 // Depois de entrar (conta ou convidado): as indicações passam a valer pelo gosto da pessoa
 on('session:started', dailyPicksAfterLogin);
 // As indicações eram pelo gosto de quem saiu: somem com a pessoa
-on('session:ended', () => {
-  const { row } = els();
-  if (row) row.hidden = true;
-});
+on('session:ended', updateRow);
 
 async function dailyPicksAfterLogin() {
   await renderDailyPicks();
-  const { row } = els();
-  if (shownDay && row) row.hidden = false;
+  updateRow();
 }
 
 export function initDailyPicks() {

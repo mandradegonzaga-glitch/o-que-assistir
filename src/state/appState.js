@@ -24,6 +24,7 @@ function emptySession() {
     blacklist: [],
     progress: normalizeProgress(null),
     episodes: emptyEpisodes(),
+    badges: null,        // conta: nomes das conquistas já gravadas (Set), lidos do banco na primeira vez
   };
 }
 

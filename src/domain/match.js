@@ -2,7 +2,8 @@
 import { MEDIA_TYPES } from './mediaItem.js';
 import { shuffle } from '../utils/shuffle.js';
 
-const MATCH_SIZE = 12;
+// Títulos por partida; um convite ou mensagem de outro aparelho não pode trazer mais
+export const MATCH_SIZE = 12;
 
 // Só títulos que as duas pessoas quiseram, na ordem em que apareceram
 export function computeMatches(titles, votesA, votesB) {
@@ -18,7 +19,8 @@ export function playerName(name, index) {
   return name.trim() || `Pessoa ${index + 1}`;
 }
 
-const NAME_LIMIT = 20;
+// O mesmo limite dos campos de nome (maxlength no index.html)
+export const NAME_LIMIT = 20;
 
 const toBase64Url = text => btoa(String.fromCharCode(...new TextEncoder().encode(text)))
   .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
