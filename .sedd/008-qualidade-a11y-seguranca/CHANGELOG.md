@@ -2,6 +2,18 @@
 
 All notable changes to this feature will be documented in this file.
 
+## [2026-11-09, refatoração "untangle"] — branch `refactor/untangle` (local, ainda não publicado)
+
+### Changed
+
+- Filtros, janelas, botões ocupados e preferências passam cada um por um lugar só no código (nada muda na tela)
+- Conquistas da conta: o app lê do banco uma vez por sessão, em vez de 2 pedidos por conquista a cada ação
+- Falhas do Supabase (amigos, reações) agora aparecem no console
+
+### Fixed
+
+- Guia "Como usar": o tópico Roleta estava sem ícone
+
 ## [2026-11-09, redesign etapas 5a e 5b] — branch `redesign/etapa-5` (ainda não publicado)
 
 ### Changed

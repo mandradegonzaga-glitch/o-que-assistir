@@ -535,3 +535,18 @@ Regras combinadas: cada etapa numa branch `redesign/etapa-N`, com commit e envio
 - Vaul via React só para as gavetas → peso e uma segunda forma de montar a interface.
 - Pôster do título como área de puxar → impedia rolar a página começando o gesto no pôster.
 
+## D001-049 — Refatoração pelas regras do untangle, e essas regras valem para todo código novo
+
+**Data:** 2026-11-09 · **Tarefa:** T001-135
+
+**Contexto:** o código acumulou regras copiadas (filtros, janelas, conquistas), remendos (`setTimeout(0)`, propriedade `value` do `<select>` reescrita, MutationObserver lendo `style.display`) e ordens de chamada que só se sabiam de cabeça em `main.js`.
+
+**Decisão:**
+- Refatorar com a skill `untangle-codebase` na branch `refactor/untangle` (a partir de `redesign/etapa-5`). Problemas e correções em `docs/untangle-decisoes.md`.
+- Cada coisa tem um dono só: filtros em `state.filters` via `setFilters`; janelas por `openModal`/`closeModal`; botão ocupado por `whileBusy`; aparelho por `storage`; telas e abas em `domain/screens.js`.
+- A pedido do usuário, as regras da skill passam a valer para **todo código novo ou ajuste, em qualquer projeto** (CLAUDE.md global). A rodada de revisores com subagentes só roda quando ele pedir.
+- `closeLive` ao receber `bye` foi descartado: o `bye` também sai ao recarregar, e a outra pessoa volta (`partner-back`).
+
+**Alternativas consideradas:**
+- Seguir corrigindo cada caso especial no lugar → o mesmo tipo de bug voltaria em cada tela nova.
+
