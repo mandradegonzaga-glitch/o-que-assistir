@@ -2,7 +2,26 @@
 
 All notable changes to this feature will be documented in this file.
 
-## [2026-11-07, redesign etapa 4] — branch `redesign/etapa-4` (ainda não publicado, sem commit)
+## [2026-11-08, acabamento das etapas 1 a 4] — branch `redesign/etapa-4` (ainda não publicado)
+
+### Changed
+
+- Animações respondem mais rápido: curva que começa veloz e assenta devagar, durações mais curtas
+- Botões "afundam" ao encostar, com dedo ou mouse; saiu a "onda" ao soltar
+- No celular, efeitos de passar o mouse não ficam presos depois do toque, e o toque não espera o "toque duplo"
+- Título comprido na página do título usa letra menor em vez de cortar a palavra no meio
+- Títulos quebram em linhas equilibradas
+
+### Fixed
+
+- Um aviso novo podia sumir antes da hora por causa do aviso anterior
+- Com "reduzir movimento", a roleta ficava 4 segundos parada antes de mostrar o resultado
+
+### Removed
+
+- Aviso "Top 10 carregado!" (a lista já aparece na hora)
+
+## [2026-11-07, redesign etapa 4] — branch `redesign/etapa-4` (commit `13f9950`)
 
 ### Changed
 

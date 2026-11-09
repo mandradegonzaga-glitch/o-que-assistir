@@ -115,7 +115,7 @@ export function renderListsTab(div) {
                 <h3 class="empty-state-title">Nenhuma lista ainda</h3>
                 <p class="empty-state-desc">Junte títulos do seu jeito, como "Maratona de Halloween" ou "Filmes com a namorada". Abra um título e toque em "Salvar em uma lista", ou crie uma agora.</p>
                 ${templateChips('createFromTemplate', 'Comece com uma:')}
-                <button type="button" class="empty-state-cta ripple" data-action="openListEditor" data-arg="library">+ Criar a minha</button>
+                <button type="button" class="empty-state-cta" data-action="openListEditor" data-arg="library">+ Criar a minha</button>
             </div>
             ${collectionsSection()}`;
         return;
@@ -133,7 +133,7 @@ export function renderListsTab(div) {
     }).join('');
     const canCreate = lists.length < MAX_LISTS;
     div.innerHTML = `<ul class="list-cards grid-full" aria-label="Suas listas">${cards}</ul>
-        ${canCreate ? '<button type="button" class="btn-outline ripple list-new grid-full" data-action="openListEditor" data-arg="library">+ Nova lista</button>' : ''}
+        ${canCreate ? '<button type="button" class="btn-outline list-new grid-full" data-action="openListEditor" data-arg="library">+ Nova lista</button>' : ''}
         ${collectionsSection()}`;
 }
 
@@ -173,7 +173,7 @@ function renderCollection(div, c) {
             <h3 id="list-view-title" class="list-view__title" tabindex="-1">${listIcon(c.emoji)} ${escapeHtml(c.name)}</h3>
             <p class="list-view__count">${ready ? `Coleção pronta · ${countLabel(items.length)}` : 'Coleção pronta'}</p>
             <div class="list-view__actions">
-                ${ready ? '<button type="button" class="btn-main btn-compact ripple list-view__copy" data-action="copyCollection">Copiar para minhas listas</button>' : ''}
+                ${ready ? '<button type="button" class="btn-main btn-compact list-view__copy" data-action="copyCollection">Copiar para minhas listas</button>' : ''}
             </div>
         </div>
         ${body}`;

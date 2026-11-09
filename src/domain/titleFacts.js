@@ -31,3 +31,14 @@ export function titleFacts({ rating, date, runtime, seasons, genres } = {}) {
   if (names.length) facts.push({ kind: 'genres', text: names.join(', ') });
   return facts;
 }
+
+// Tamanho do título na página do título. A letra é grande e em maiúsculas: uma palavra comprida
+// ("Remasterizada") não cabe na largura do celular e o navegador a partia no meio.
+// Título longo ou com palavra longa ganha letra menor.
+export function titleSize(text = '') {
+  const clean = String(text).trim();
+  const longestWord = Math.max(0, ...clean.split(/\s+/).map(word => [...word].length));
+  if (clean.length > 60 || longestWord > 11) return 'long';
+  if (clean.length > 32 || longestWord > 9) return 'mid';
+  return '';
+}

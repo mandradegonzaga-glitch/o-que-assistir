@@ -111,3 +111,47 @@ test.describe('Continue assistindo', () => {
     await expect(page.locator('#continue-row')).toBeHidden();
   });
 });
+
+// Acabamento do redesign: quem pede menos movimento não fica vendo a roda girar 4 segundos
+test.describe('reduzir movimento', () => {
+  test('a roleta mostra o resultado logo, sem 4 segundos de roda parada', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await enterAsGuest(page);
+    await page.locator('#tab-mode-roulette').click();
+    for (const name of ['Duna', 'Matrix']) {
+      await page.locator('#roulette-input').fill(name);
+      await page.locator('#roulette-input').press('Enter');
+    }
+    await page.locator('#btn-girar').click();
+    await expect(page.locator('#roulette-winner')).toBeVisible({ timeout: 1800 });
+  });
+
+  test('sem a preferência, o giro continua longo', async ({ page }) => {
+    await enterAsGuest(page);
+    await page.locator('#tab-mode-roulette').click();
+    for (const name of ['Duna', 'Matrix']) {
+      await page.locator('#roulette-input').fill(name);
+      await page.locator('#roulette-input').press('Enter');
+    }
+    await page.locator('#btn-girar').click();
+    await expect(page.locator('#roulette-wheel')).toHaveCSS('transition-duration', '4s');
+  });
+});
+
+// Toque não deixa o cartão "levantado": os efeitos de hover só valem com mouse
+test('no celular, tocar num resultado não deixa o hover preso', async ({ browser }) => {
+  const context = await browser.newContext({ viewport: phone, hasTouch: true, isMobile: true });
+  const page = await context.newPage();
+  await enterAsGuest(page);
+  const hoverRules = await page.evaluate(() => {
+    const out = [];
+    for (const sheet of document.styleSheets) {
+      let rules;
+      try { rules = sheet.cssRules; } catch { continue; }
+      for (const r of rules) if (r.selectorText?.includes(':hover')) out.push(r.selectorText);
+    }
+    return out;
+  });
+  expect(hoverRules).toEqual([]);
+  await context.close();
+});

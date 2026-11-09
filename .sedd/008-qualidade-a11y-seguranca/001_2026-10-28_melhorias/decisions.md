@@ -500,3 +500,22 @@ Regras combinadas: cada etapa numa branch `redesign/etapa-N`, com commit e envio
 - Tocar de novo no Top 10 sempre fechar → se o tipo ou um filtro mudou, o toque atualiza a lista (fechar seria estranho).
 
 **Combinado para a próxima sessão:** Filme, Série e Dorama em 3 pílulas numa fileira (prévia aprovada em 2026-11-07, ver progress.md).
+
+## D001-047 — Acabamento das etapas 1 a 4 pelas regras do Emil Kowalski
+
+**Data:** 2026-11-08 · **Tarefa:** T001-130
+
+**Contexto:** o usuário indicou o repositório `emilkowalski/skills` (regras de animação e acabamento de interface) e pediu uma repassada nas etapas 1 a 4 antes da etapa 5, que é a mais cheia de movimento.
+
+**Decisão:**
+- Curva de saída forte em todo o app pela troca do valor dos tokens (`--ease-smooth`/`--ease-out`), sem mexer nas 83 transições uma a uma.
+- Tirar a "onda" (ripple) em vez de corrigi-la: era o estilo Material antigo e já tinha causado o bug do Top 10 branco. O "afunda" no aperto dá a resposta na hora certa (ao encostar, não ao soltar).
+- Proteger **todo** `:hover` (não só os 22 que mexiam o elemento): um hover de cor preso depois do toque também denuncia "site".
+- "Reduzir movimento": manter a regra geral que já existia (zera tudo); a ideia do Emil ("mais suave, não zero") fica para a etapa 5, ao criar as animações novas. Só a espera da roleta foi encurtada.
+- Título da página do título: letra menor conforme o tamanho do texto e da maior palavra, em vez de cortar (o título é a informação principal).
+
+**Alternativas consideradas:**
+- Instalar as skills com `npx skills add` → bloqueado pela proteção automática; os arquivos (só Markdown, sem comandos) foram lidos e copiados direto do GitHub.
+- Trocar o "reduzir movimento" geral por regras só de esmaecer → exigiria revisar cada animação; adiado para a etapa 5.
+- Manter o aviso "Top 10 carregado!" → redundante (a lista aparece sob o dedo) e cobria os botões no celular.
+

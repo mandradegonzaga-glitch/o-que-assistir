@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
     <meta name="color-scheme" content="dark">
 
     <!-- PWA Meta Tags -->
@@ -72,8 +72,8 @@
                     <input type="password" id="login-password" name="password" placeholder="Digite sua senha" aria-required="true" autocomplete="current-password">
                 </div>
                 <button type="button" class="link-button" data-action="esqueceuSenha">Esqueceu sua senha?</button>
-                <button class="btn-login ripple" data-action="loginUser" aria-label="Fazer login">Entrar</button>
-                <button class="btn-guest ripple" data-action="loginAsGuest" aria-label="Entrar como convidado sem criar conta">
+                <button class="btn-login" data-action="loginUser" aria-label="Fazer login">Entrar</button>
+                <button class="btn-guest" data-action="loginAsGuest" aria-label="Entrar como convidado sem criar conta">
                     <svg class="ph icon" data-icon="user" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/></svg>
                     Entrar como Convidado
                 </button>
@@ -101,8 +101,8 @@
                     <label for="register-confirm">Confirme a senha</label>
                     <input type="password" id="register-confirm" name="confirm-password" placeholder="Digite a senha novamente" aria-required="true" autocomplete="new-password">
                 </div>
-                <button class="btn-login ripple" data-action="registerUser" aria-label="Criar nova conta">Criar Conta</button>
-                <button class="btn-guest ripple" data-action="loginAsGuest" aria-label="Entrar como convidado sem criar conta">
+                <button class="btn-login" data-action="registerUser" aria-label="Criar nova conta">Criar Conta</button>
+                <button class="btn-guest" data-action="loginAsGuest" aria-label="Entrar como convidado sem criar conta">
                     <svg class="ph icon" data-icon="user" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/></svg>
                     Entrar como Convidado
                 </button>
@@ -160,7 +160,7 @@
             <section class="home-search" aria-label="Buscar títulos">
                 <div class="input-wrapper direct-search-row">
                     <input id="direct-search" class="input-dark m-0" placeholder="Buscar filme, série ou dorama..." data-enter="buscarDireto" aria-label="Buscar título específico">
-                    <button class="btn-outline ripple btn-compact m-0" data-action="buscarDireto" aria-label="Buscar">
+                    <button class="btn-outline btn-compact m-0" data-action="buscarDireto" aria-label="Buscar">
                         <svg class="ph icon" data-icon="magnifying-glass" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M232.49,215.51,185,168a92.12,92.12,0,1,0-17,17l47.53,47.54a12,12,0,0,0,17-17ZM44,112a68,68,0,1,1,68,68A68.07,68.07,0,0,1,44,112Z"/></svg>
                     </button>
                 </div>
@@ -329,7 +329,7 @@
             </div>
 
             <div class="actions-container">
-                <button id="btn-sortear" class="btn-main ripple" data-action="sortearFilme" aria-label="Sortear filme ou série aleatório">
+                <button id="btn-sortear" class="btn-main" data-action="sortearFilme" aria-label="Sortear filme ou série aleatório">
                     <svg class="ph icon" data-icon="shuffle" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M240.49,175.51a12,12,0,0,1,0,17l-24,24a12,12,0,0,1-17-17L203,196h-2.09a76.17,76.17,0,0,1-61.85-31.83L97.38,105.78A52.1,52.1,0,0,0,55.06,84H32a12,12,0,0,1,0-24H55.06a76.17,76.17,0,0,1,61.85,31.83l41.71,58.39A52.1,52.1,0,0,0,200.94,172H203l-3.52-3.51a12,12,0,0,1,17-17Zm-95.62-72.62a12,12,0,0,0,16.93-1.13A52,52,0,0,1,200.94,84H203l-3.52,3.51a12,12,0,0,0,17,17l24-24a12,12,0,0,0,0-17l-24-24a12,12,0,0,0-17,17L203,60h-2.09a76,76,0,0,0-57.2,26A12,12,0,0,0,144.87,102.89Zm-33.74,50.22a12,12,0,0,0-16.93,1.13A52,52,0,0,1,55.06,172H32a12,12,0,0,0,0,24H55.06a76,76,0,0,0,57.2-26A12,12,0,0,0,111.13,153.11Z"/></svg>
                     Sortear Agora
                 </button>
@@ -360,7 +360,7 @@
             </section>
 
             <!-- Botão Histórico de Sorteios -->
-            <button id="btn-show-history" class="btn-history ripple is-hidden" data-action="abrirHistoricoSorteios" aria-label="Ver histórico de sorteios">
+            <button id="btn-show-history" class="btn-history is-hidden" data-action="abrirHistoricoSorteios" aria-label="Ver histórico de sorteios">
                 <svg class="ph icon" data-icon="clock-counter-clockwise" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M136,80v43.47l36.12,21.67a8,8,0,0,1-8.24,13.72l-40-24A8,8,0,0,1,120,128V80a8,8,0,0,1,16,0Zm-8-48A95.44,95.44,0,0,0,60.08,60.15C52.81,67.51,46.35,74.59,40,82V64a8,8,0,0,0-16,0v40a8,8,0,0,0,8,8H72a8,8,0,0,0,0-16H49c7.15-8.42,14.27-16.35,22.39-24.57a80,80,0,1,1,1.66,114.75,8,8,0,1,0-11,11.64A96,96,0,1,0,128,32Z"/></svg>
                 Histórico <span class="history-count">0</span>
             </button>
@@ -388,7 +388,7 @@
 
                 <div class="input-row">
                     <input id="roulette-input" class="input-dark m-0" placeholder="Digite um filme ou série" data-enter="addRoletaItem" aria-label="Digite o nome do filme ou série">
-                    <button class="btn-main ripple btn-compact" data-action="addRoletaItem" aria-label="Adicionar item à roleta">+ Adicionar</button>
+                    <button class="btn-main btn-compact" data-action="addRoletaItem" aria-label="Adicionar item à roleta">+ Adicionar</button>
                 </div>
 
                 <div id="roulette-pool" class="roulette-pool"></div>
@@ -403,11 +403,11 @@
                 </div>
 
                 <p id="roulette-hint" class="roulette-hint" role="status">Adicione pelo menos 2 opções para girar.</p>
-                <button id="btn-girar" class="btn-main ripple btn-spin" data-action="girarRoleta" disabled aria-label="Girar roleta e sortear">
+                <button id="btn-girar" class="btn-main btn-spin" data-action="girarRoleta" disabled aria-label="Girar roleta e sortear">
                     <svg class="ph icon" data-icon="roulette" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><g fill="none" stroke="currentColor" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"><circle cx="128" cy="146" r="82"/><path d="M128.0,64.0L128.0,228.0M199.0,105.0L57.0,187.0M199.0,187.0L57.0,105.0"/></g><circle cx="128" cy="146" r="22"/><path d="M108,26h40l-20,36Z" stroke="currentColor" stroke-width="12.0" stroke-linejoin="round"/></svg>
                     Girar Roleta!
                 </button>
-                <button id="btn-limpar-roleta" class="btn-outline ripple row-center w-full mt-10" data-action="limparRoleta" hidden aria-label="Limpar todos os itens da roleta">
+                <button id="btn-limpar-roleta" class="btn-outline row-center w-full mt-10" data-action="limparRoleta" hidden aria-label="Limpar todos os itens da roleta">
                     <svg class="ph icon icon-16" data-icon="trash" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"/></svg>
                     Limpar Lista
                 </button>
@@ -434,14 +434,14 @@
                         </div>
                     </div>
                     <p class="section-note text-center">Usa o tipo e os filtros escolhidos no Início.</p>
-                    <button type="button" id="btn-match-start" class="btn-main ripple w-full mb-10" data-action="matchStart">Jogar no mesmo celular</button>
-                    <button type="button" id="btn-match-live" class="btn-outline ripple w-full mb-10" data-action="matchLive">Ao vivo, cada um no seu celular</button>
-                    <button type="button" id="btn-match-invite" class="btn-outline ripple w-full" data-action="matchInvite">Convidar por link ou email</button>
+                    <button type="button" id="btn-match-start" class="btn-main w-full mb-10" data-action="matchStart">Jogar no mesmo celular</button>
+                    <button type="button" id="btn-match-live" class="btn-outline w-full mb-10" data-action="matchLive">Ao vivo, cada um no seu celular</button>
+                    <button type="button" id="btn-match-invite" class="btn-outline w-full" data-action="matchInvite">Convidar por link ou email</button>
                     <p class="section-note text-center mt-10">Ao vivo, vocês votam ao mesmo tempo. No convite, você vota primeiro e envia o link. A outra pessoa não precisa de conta.</p>
                     <label for="match-code-input" class="field-label mt-20">Recebeu um código de Match ao vivo?</label>
                     <div class="input-row">
                         <input type="text" id="match-code-input" class="input-dark m-0" placeholder="Ex.: K7P2QX" maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false" data-enter="matchCodeJoin">
-                        <button type="button" class="btn-outline ripple btn-compact" data-action="matchCodeJoin">Entrar</button>
+                        <button type="button" class="btn-outline btn-compact" data-action="matchCodeJoin">Entrar</button>
                     </div>
                     <div id="match-history" class="match-history" hidden>
                         <h3 class="subsection-title">Seus matches</h3>
@@ -458,13 +458,13 @@
                     <p id="match-live-code-sr" class="sr-only"></p>
                     <label for="match-live-link" class="field-label">Link</label>
                     <input type="text" id="match-live-link" class="input-dark mb-10" readonly>
-                    <button type="button" id="btn-match-live-send" class="btn-main ripple w-full mb-15" data-action="matchLiveSend">Enviar convite</button>
+                    <button type="button" id="btn-match-live-send" class="btn-main w-full mb-15" data-action="matchLiveSend">Enviar convite</button>
                     <div data-friend-targets class="mb-15" hidden>
                         <p class="field-label">Enviar para um amigo</p>
                         <div class="friend-targets"></div>
                     </div>
                     <p id="match-live-status" class="section-note" role="status"></p>
-                    <button type="button" class="btn-outline ripple w-full" data-action="matchRestart">Cancelar</button>
+                    <button type="button" class="btn-outline w-full" data-action="matchRestart">Cancelar</button>
                 </div>
 
                 <div id="match-live-join" class="text-center" hidden>
@@ -472,16 +472,16 @@
                     <p class="panel-hint">Vocês votam ao mesmo tempo, cada um no seu celular, sem ver o voto do outro. No fim, aparece só o que os dois quiseram.</p>
                     <label for="match-live-name" class="field-label">Seu nome (opcional)</label>
                     <input type="text" id="match-live-name" class="input-dark mb-15" placeholder="Pessoa 2" maxlength="20" autocomplete="off" data-enter="matchLiveJoin">
-                    <button type="button" id="btn-match-live-join" class="btn-main ripple w-full mb-10" data-action="matchLiveJoin">Entrar no Match</button>
+                    <button type="button" id="btn-match-live-join" class="btn-main w-full mb-10" data-action="matchLiveJoin">Entrar no Match</button>
                     <p id="match-live-join-status" class="section-note" role="status"></p>
-                    <button type="button" class="btn-outline ripple w-full" data-action="matchRestart">Voltar</button>
+                    <button type="button" class="btn-outline w-full" data-action="matchRestart">Voltar</button>
                 </div>
 
                 <div id="match-live-wait" class="text-center" hidden>
                     <h2 id="match-live-wait-title" class="match-pass__title" tabindex="-1"></h2>
                     <p class="panel-hint">Seus votos continuam guardados aqui até o outro terminar.</p>
                     <p id="match-live-wait-progress" class="section-note" role="status"></p>
-                    <button type="button" class="btn-outline ripple w-full" data-action="matchRestart">Sair do Match</button>
+                    <button type="button" class="btn-outline w-full" data-action="matchRestart">Sair do Match</button>
                 </div>
 
                 <div id="match-voting" hidden>
@@ -493,8 +493,8 @@
                     <p id="match-partner" class="match-partner text-small" hidden></p>
                     <div id="match-card" class="match-card"></div>
                     <div class="grid-two">
-                        <button type="button" class="btn-outline ripple" data-action="matchNo">Não quero</button>
-                        <button type="button" class="btn-main ripple" data-action="matchYes">Quero</button>
+                        <button type="button" class="btn-outline" data-action="matchNo">Não quero</button>
+                        <button type="button" class="btn-main" data-action="matchYes">Quero</button>
                     </div>
                     <p class="section-note text-center match-tip">Também dá para arrastar o cartão para o lado.</p>
                 </div>
@@ -502,7 +502,7 @@
                 <div id="match-pass" class="text-center" hidden>
                     <h2 class="match-pass__title">Passe o celular para <span id="match-pass-name"></span></h2>
                     <p class="panel-hint">Os votos da primeira pessoa ficam escondidos.</p>
-                    <button type="button" id="btn-match-continue" class="btn-main ripple w-full" data-action="matchContinue">Continuar</button>
+                    <button type="button" id="btn-match-continue" class="btn-main w-full" data-action="matchContinue">Continuar</button>
                 </div>
 
                 <div id="match-invite" hidden>
@@ -510,7 +510,7 @@
                     <p class="panel-hint text-center">Seus votos estão guardados no link. Quem abrir vota nos mesmos títulos e vê o resultado na hora.</p>
                     <label for="match-link" class="field-label">Link do convite</label>
                     <input type="text" id="match-link" class="input-dark mb-10" readonly>
-                    <button type="button" id="btn-match-send" class="btn-main ripple w-full mb-15" data-action="matchSendInvite">Enviar convite</button>
+                    <button type="button" id="btn-match-send" class="btn-main w-full mb-15" data-action="matchSendInvite">Enviar convite</button>
                     <div data-friend-targets class="mb-15" hidden>
                         <p class="field-label">Enviar para um amigo</p>
                         <div class="friend-targets"></div>
@@ -518,9 +518,9 @@
                     <label for="match-email" class="field-label">Ou mande por email</label>
                     <div class="input-row">
                         <input type="email" id="match-email" class="input-dark m-0" placeholder="email@exemplo.com" autocomplete="off" spellcheck="false">
-                        <button type="button" class="btn-outline ripple btn-compact" data-action="matchEmailInvite">Abrir email</button>
+                        <button type="button" class="btn-outline btn-compact" data-action="matchEmailInvite">Abrir email</button>
                     </div>
-                    <button type="button" class="btn-outline ripple w-full" data-action="matchRestart">Começar outro</button>
+                    <button type="button" class="btn-outline w-full" data-action="matchRestart">Começar outro</button>
                 </div>
 
                 <div id="match-joined" class="text-center" hidden>
@@ -528,13 +528,13 @@
                     <p class="panel-hint">Vote nos títulos sem ver os votos da outra pessoa. No fim, aparece só o que as duas quiseram.</p>
                     <label for="match-joined-name" class="field-label">Seu nome (opcional)</label>
                     <input type="text" id="match-joined-name" class="input-dark mb-15" placeholder="Pessoa 2" maxlength="20" autocomplete="off">
-                    <button type="button" class="btn-main ripple w-full" data-action="matchJoin">Começar a votar</button>
+                    <button type="button" class="btn-main w-full" data-action="matchJoin">Começar a votar</button>
                 </div>
 
                 <div id="match-result" hidden>
                     <h2 id="match-result-title" class="match-pass__title text-center" tabindex="-1"></h2>
                     <div id="match-result-list" class="match-result-list"></div>
-                    <button type="button" id="btn-match-draw" class="btn-main ripple w-full mb-10" data-action="matchDraw" hidden>Sortear entre os matches</button>
+                    <button type="button" id="btn-match-draw" class="btn-main w-full mb-10" data-action="matchDraw" hidden>Sortear entre os matches</button>
                     <div id="match-answer" class="match-answer" hidden>
                         <div data-friend-targets class="mb-15" hidden>
                         <p class="field-label">Enviar para um amigo</p>
@@ -542,9 +542,9 @@
                     </div>
                         <p class="section-note">Avise <span id="match-answer-name"></span> do resultado:</p>
                         <input type="text" id="match-answer-link" class="input-dark mb-10" aria-label="Link do resultado" readonly>
-                        <button type="button" class="btn-main ripple w-full mb-10" data-action="matchSendAnswer">Enviar resultado</button>
+                        <button type="button" class="btn-main w-full mb-10" data-action="matchSendAnswer">Enviar resultado</button>
                     </div>
-                    <button type="button" class="btn-outline ripple w-full" data-action="matchRestart">Jogar de novo</button>
+                    <button type="button" class="btn-outline w-full" data-action="matchRestart">Jogar de novo</button>
                 </div>
             </div>
         </div>
@@ -602,12 +602,12 @@
                 <div id="friends-content" hidden>
                     <div class="friends-add">
                         <h2 class="panel-title panel-title--large"><svg class="ph icon icon-28 text-accent" data-icon="users-three" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M168,144a40,40,0,1,1-40-40A40,40,0,0,1,168,144ZM64,56A32,32,0,1,0,96,88,32,32,0,0,0,64,56Zm128,0a32,32,0,1,0,32,32A32,32,0,0,0,192,56Z" opacity="0.2"/><path d="M244.8,150.4a8,8,0,0,1-11.2-1.6A51.6,51.6,0,0,0,192,128a8,8,0,0,1,0-16,24,24,0,1,0-23.24-30,8,8,0,1,1-15.5-4A40,40,0,1,1,219,117.51a67.94,67.94,0,0,1,27.43,21.68A8,8,0,0,1,244.8,150.4ZM190.92,212a8,8,0,1,1-13.85,8,57,57,0,0,0-98.15,0,8,8,0,1,1-13.84-8,72.06,72.06,0,0,1,33.74-29.92,48,48,0,1,1,58.36,0A72.06,72.06,0,0,1,190.92,212ZM128,176a32,32,0,1,0-32-32A32,32,0,0,0,128,176ZM72,120a8,8,0,0,0-8-8A24,24,0,1,1,87.24,82a8,8,0,1,0,15.5-4A40,40,0,1,0,37,117.51,67.94,67.94,0,0,0,9.6,139.19a8,8,0,1,0,12.8,9.61A51.6,51.6,0,0,1,64,128,8,8,0,0,0,72,120Z"/></svg> Amigos</h2>
-                        <button type="button" class="btn-main ripple w-full mb-10" data-action="friendInvite">Convidar amigo por link</button>
+                        <button type="button" class="btn-main w-full mb-10" data-action="friendInvite">Convidar amigo por link</button>
                         <p class="section-note text-center">Quem abrir o link já pede amizade. Seu usuário é <strong id="my-username"></strong>.</p>
                         <label for="friend-username" class="field-label">Ou adicione pelo usuário exato</label>
                         <div class="input-row">
                             <input type="text" id="friend-username" class="input-dark m-0" placeholder="@usuario" autocomplete="off" spellcheck="false" data-enter="friendAdd">
-                            <button type="button" class="btn-outline ripple btn-compact" data-action="friendAdd">Adicionar</button>
+                            <button type="button" class="btn-outline btn-compact" data-action="friendAdd">Adicionar</button>
                         </div>
                     </div>
 
@@ -642,7 +642,7 @@
                 </div>
                 </div>
             
-            <button type="button" class="btn-outline ripple w-full mt-20" data-action="closeModal" data-arg="modal-friends">Fechar</button>
+            <button type="button" class="btn-outline w-full mt-20" data-action="closeModal" data-arg="modal-friends">Fechar</button>
         </div>
     </div>
 
@@ -654,7 +654,7 @@
                 <h2 id="friend-title" class="match-pass__title m-0"></h2>
                 <p id="friend-handle" class="section-note"></p>
             </div>
-            <button type="button" class="btn-main ripple w-full mb-15" data-action="friendMatchCurrent">Chamar para um Match</button>
+            <button type="button" class="btn-main w-full mb-15" data-action="friendMatchCurrent">Chamar para um Match</button>
             <p id="friend-private" class="section-note text-center" hidden>Esta pessoa prefere não mostrar a atividade dela.</p>
             <div id="friend-activity">
             <div class="friend-stats">
@@ -695,8 +695,8 @@
             </div>
 
             <div class="grid-two mt-20">
-                <button type="button" class="btn-outline ripple" data-action="friendUnfriendCurrent">Remover amizade</button>
-                <button type="button" class="btn-main ripple" data-action="closeModal" data-arg="modal-friend">Fechar</button>
+                <button type="button" class="btn-outline" data-action="friendUnfriendCurrent">Remover amizade</button>
+                <button type="button" class="btn-main" data-action="closeModal" data-arg="modal-friend">Fechar</button>
             </div>
         </div>
     </div>
@@ -707,8 +707,8 @@
             <h2 id="shared-list-title" class="panel-title"></h2>
             <p id="shared-list-owner" class="panel-hint text-center"></p>
             <div id="shared-list-items" class="results-grid shared-list__grid"></div>
-            <button type="button" id="shared-list-copy" class="btn-main ripple w-full mt-20" data-action="copySharedList">Copiar para minhas listas</button>
-            <button type="button" class="btn-outline ripple w-full mt-20" data-action="closeModal" data-arg="modal-shared-list">Fechar</button>
+            <button type="button" id="shared-list-copy" class="btn-main w-full mt-20" data-action="copySharedList">Copiar para minhas listas</button>
+            <button type="button" class="btn-outline w-full mt-20" data-action="closeModal" data-arg="modal-shared-list">Fechar</button>
         </div>
     </div>
 
@@ -724,11 +724,11 @@
 
                 <!-- Navegação do Histórico de Sorteios -->
                 <div id="history-nav" class="history-nav is-hidden">
-                    <button type="button" id="btn-history-prev" class="btn-nav ripple" data-action="navigateSorteio" data-arg="1" title="Sorteio anterior" aria-label="Sorteio anterior">
+                    <button type="button" id="btn-history-prev" class="btn-nav" data-action="navigateSorteio" data-arg="1" title="Sorteio anterior" aria-label="Sorteio anterior">
                         <svg class="ph icon" data-icon="caret-left" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M168.49,199.51a12,12,0,0,1-17,17l-80-80a12,12,0,0,1,0-17l80-80a12,12,0,0,1,17,17L97,128Z"/></svg>
                     </button>
                     <span id="history-indicator" class="history-indicator">1/1</span>
-                    <button type="button" id="btn-history-next" class="btn-nav ripple" data-action="navigateSorteio" data-arg="-1" title="Próximo sorteio" aria-label="Próximo sorteio">
+                    <button type="button" id="btn-history-next" class="btn-nav" data-action="navigateSorteio" data-arg="-1" title="Próximo sorteio" aria-label="Próximo sorteio">
                         <svg class="ph icon" data-icon="caret-right" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M184.49,136.49l-80,80a12,12,0,0,1-17-17L159,128,87.51,56.49a12,12,0,1,1,17-17l80,80A12,12,0,0,1,184.49,136.49Z"/></svg>
                     </button>
                 </div>
@@ -738,19 +738,19 @@
 
                 <!-- Ações principais: ícone em cima, nome embaixo; acendem quando marcadas -->
                 <div class="title-actions" role="group" aria-label="O que fazer com este título">
-                    <button id="btn-visto" data-action="marcarVistoAtual" class="title-action title-action--seen ripple" data-tooltip="Marcar como assistido" aria-label="Marcar como assistido">
+                    <button id="btn-visto" data-action="marcarVistoAtual" class="title-action title-action--seen" data-tooltip="Marcar como assistido" aria-label="Marcar como assistido">
                         <svg class="ph icon" data-icon="check" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>
                         Já Vi
                     </button>
-                    <button id="btn-salvar" data-action="toggleSalvarAtual" class="title-action ripple" data-tooltip="Adicionar à lista" aria-label="Adicionar à lista de desejos">
+                    <button id="btn-salvar" data-action="toggleSalvarAtual" class="title-action" data-tooltip="Adicionar à lista" aria-label="Adicionar à lista de desejos">
                         <svg class="ph icon" data-icon="bookmark-simple" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M184,32H72A16,16,0,0,0,56,48V224a8,8,0,0,0,12.24,6.78L128,193.43l59.77,37.35A8,8,0,0,0,200,224V48A16,16,0,0,0,184,32Zm0,177.57-51.77-32.35a8,8,0,0,0-8.48,0L72,209.57V48H184Z"/></svg>
                         Salvar
                     </button>
-                    <button type="button" id="btn-salvar-lista" class="title-action ripple" data-action="openSaveToList" aria-haspopup="dialog">
+                    <button type="button" id="btn-salvar-lista" class="title-action" data-action="openSaveToList" aria-haspopup="dialog">
                         <svg class="ph icon" data-icon="list-plus" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M32,64a8,8,0,0,1,8-8H216a8,8,0,0,1,0,16H40A8,8,0,0,1,32,64Zm8,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16Zm104,48H40a8,8,0,0,0,0,16H144a8,8,0,0,0,0-16Zm88,0H216V168a8,8,0,0,0-16,0v16H184a8,8,0,0,0,0,16h16v16a8,8,0,0,0,16,0V200h16a8,8,0,0,0,0-16Z"/></svg>
                         <span id="btn-salvar-lista-label">Salvar em uma lista</span>
                     </button>
-                    <button type="button" id="btn-roleta" class="title-action ripple" data-action="addCurrentToRoulette" aria-pressed="false">
+                    <button type="button" id="btn-roleta" class="title-action" data-action="addCurrentToRoulette" aria-pressed="false">
                         <svg class="ph icon" data-icon="roulette" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><g fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"><circle cx="128" cy="146" r="82"/><path d="M128.0,64.0L128.0,228.0M199.0,105.0L57.0,187.0M199.0,187.0L57.0,105.0"/></g><circle cx="128" cy="146" r="14"/><path d="M108,26h40l-20,34Z" stroke="currentColor" stroke-width="8.0" stroke-linejoin="round"/></svg>
                         <span id="btn-roleta-label">Roleta</span>
                     </button>
@@ -761,7 +761,7 @@
                     <button type="button" class="title-note__go" data-action="goToRoulette">Ir para a roleta</button>
                 </p>
 
-                <button type="button" id="btn-sortear-outro" class="btn-main ripple sortear-outro" data-action="sortearOutro" hidden>
+                <button type="button" id="btn-sortear-outro" class="btn-main sortear-outro" data-action="sortearOutro" hidden>
                     <svg class="ph icon icon-18" data-icon="shuffle" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M240.49,175.51a12,12,0,0,1,0,17l-24,24a12,12,0,0,1-17-17L203,196h-2.09a76.17,76.17,0,0,1-61.85-31.83L97.38,105.78A52.1,52.1,0,0,0,55.06,84H32a12,12,0,0,1,0-24H55.06a76.17,76.17,0,0,1,61.85,31.83l41.71,58.39A52.1,52.1,0,0,0,200.94,172H203l-3.52-3.51a12,12,0,0,1,17-17Zm-95.62-72.62a12,12,0,0,0,16.93-1.13A52,52,0,0,1,200.94,84H203l-3.52,3.51a12,12,0,0,0,17,17l24-24a12,12,0,0,0,0-17l-24-24a12,12,0,0,0-17,17L203,60h-2.09a76,76,0,0,0-57.2,26A12,12,0,0,0,144.87,102.89Zm-33.74,50.22a12,12,0,0,0-16.93,1.13A52,52,0,0,1,55.06,172H32a12,12,0,0,0,0,24H55.06a76,76,0,0,0,57.2-26A12,12,0,0,0,111.13,153.11Z"/></svg>
                     Sortear outro
                 </button>
@@ -816,9 +816,9 @@
                         </div>
                         <div class="episodes-section__controls">
                             <select id="episodes-season-select" class="episodes-season-select" data-change="onSeasonChange" aria-label="Selecionar temporada"></select>
-                            <button class="episodes-mark-all-btn ripple" data-action="marcarTemporadaAtual" aria-label="Marcar todos os episódios da temporada">Marcar temporada</button>
-                            <button class="episodes-mark-all-btn episodes-mark-all-btn--unmark ripple" data-action="desmarcarTemporadaAtual" aria-label="Desmarcar todos os episódios da temporada">Desmarcar temporada</button>
-                            <button class="episodes-mark-all-btn episodes-mark-all-btn--unmark ripple" data-action="desmarcarTodosEpisodios" aria-label="Desmarcar todos os episódios da série">Desmarcar série</button>
+                            <button class="episodes-mark-all-btn" data-action="marcarTemporadaAtual" aria-label="Marcar todos os episódios da temporada">Marcar temporada</button>
+                            <button class="episodes-mark-all-btn episodes-mark-all-btn--unmark" data-action="desmarcarTemporadaAtual" aria-label="Desmarcar todos os episódios da temporada">Desmarcar temporada</button>
+                            <button class="episodes-mark-all-btn episodes-mark-all-btn--unmark" data-action="desmarcarTodosEpisodios" aria-label="Desmarcar todos os episódios da série">Desmarcar série</button>
                         </div>
                     </div>
                     <div id="episodes-list" class="episodes-list" role="list" aria-live="polite">
@@ -832,15 +832,15 @@
                 </section>
 
                 <div class="title-more">
-                    <button type="button" id="btn-ingresso" class="title-more__btn ripple" data-action="gerarIngresso" data-tooltip="Baixar a imagem do ingresso">
+                    <button type="button" id="btn-ingresso" class="title-more__btn" data-action="gerarIngresso" data-tooltip="Baixar a imagem do ingresso">
                         <svg class="ph icon" data-icon="ticket" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M232,104a8,8,0,0,0,8-8V64a16,16,0,0,0-16-16H32A16,16,0,0,0,16,64V96a8,8,0,0,0,8,8,24,24,0,0,1,0,48,8,8,0,0,0-8,8v32a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V160a8,8,0,0,0-8-8,24,24,0,0,1,0-48ZM32,167.2a40,40,0,0,0,0-78.4V64H88V192H32Zm192,0V192H104V64H224V88.8a40,40,0,0,0,0,78.4Z"/></svg>
                         <span class="btn-label">Gerar ingresso</span>
                     </button>
-                    <button type="button" id="btn-compartilhar" class="title-more__btn ripple" data-action="compartilhar" aria-haspopup="dialog">
+                    <button type="button" id="btn-compartilhar" class="title-more__btn" data-action="compartilhar" aria-haspopup="dialog">
                         <svg class="ph icon" data-icon="share-network" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M176,160a39.89,39.89,0,0,0-28.62,12.09l-46.1-29.63a39.8,39.8,0,0,0,0-28.92l46.1-29.63a40,40,0,1,0-8.66-13.45l-46.1,29.63a40,40,0,1,0,0,55.82l46.1,29.63A40,40,0,1,0,176,160Zm0-128a24,24,0,1,1-24,24A24,24,0,0,1,176,32ZM64,152a24,24,0,1,1,24-24A24,24,0,0,1,64,152Zm112,72a24,24,0,1,1,24-24A24,24,0,0,1,176,224Z"/></svg>
                         Compartilhar
                     </button>
-                    <button class="title-more__btn title-more__btn--ignore ripple" data-action="adicionarBlacklist" data-tooltip="Nunca sugerir novamente" aria-label="Ignorar este título">
+                    <button class="title-more__btn title-more__btn--ignore" data-action="adicionarBlacklist" data-tooltip="Nunca sugerir novamente" aria-label="Ignorar este título">
                         <svg class="ph icon" data-icon="prohibit" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm88,104a87.56,87.56,0,0,1-20.41,56.28L71.72,60.4A88,88,0,0,1,216,128ZM40,128A87.56,87.56,0,0,1,60.41,71.72L184.28,195.6A88,88,0,0,1,40,128Z"/></svg>
                         Ignorar
                     </button>
@@ -854,9 +854,9 @@
         <div class="modal-content modal-content--panel" role="dialog" aria-modal="true" aria-labelledby="share-title" aria-describedby="share-subtitle" tabindex="-1">
             <h2 class="panel-title" id="share-title">Compartilhar</h2>
             <p id="share-subtitle" class="panel-hint text-center"></p>
-            <button type="button" id="btn-share-apps" class="btn-main ripple w-full mb-10" data-action="compartilharApps"><span id="share-apps-label" class="btn-label">WhatsApp e outros apps</span></button>
+            <button type="button" id="btn-share-apps" class="btn-main w-full mb-10" data-action="compartilharApps"><span id="share-apps-label" class="btn-label">WhatsApp e outros apps</span></button>
             <div id="share-whatsapp" hidden>
-                <button type="button" id="btn-share-whatsapp" class="btn-outline ripple w-full" data-action="compartilharWhatsapp" aria-describedby="share-whatsapp-note"><span class="btn-label">WhatsApp</span></button>
+                <button type="button" id="btn-share-whatsapp" class="btn-outline w-full" data-action="compartilharWhatsapp" aria-describedby="share-whatsapp-note"><span class="btn-label">WhatsApp</span></button>
                 <p id="share-whatsapp-note" class="section-note text-center mb-10"></p>
             </div>
             <p class="section-note text-center">Vai com o ingresso, a sinopse, o elenco, onde assistir e o link do título.</p>
@@ -866,7 +866,7 @@
                 <p class="section-note">Aparece na caixa de indicações de quem recebe.</p>
             </div>
             <p id="share-friends-hint" class="section-note text-center" hidden></p>
-            <button type="button" class="btn-outline ripple w-full mt-20" data-action="closeModal" data-arg="modal-share">Fechar</button>
+            <button type="button" class="btn-outline w-full mt-20" data-action="closeModal" data-arg="modal-share">Fechar</button>
         </div>
     </div>
 
@@ -1011,18 +1011,18 @@
                 <input type="password" id="confirm-new-password" name="confirm-new-password" class="input-dark mb-10"
                       
                        placeholder="Digite a nova senha novamente" autocomplete="new-password">
-                <button class="btn-outline ripple row-center w-full" data-action="alterarSenha">
+                <button class="btn-outline row-center w-full" data-action="alterarSenha">
                     <svg class="ph icon icon-16" data-icon="lock-key" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M128,112a28,28,0,0,0-8,54.83V184a8,8,0,0,0,16,0V166.83A28,28,0,0,0,128,112Zm0,40a12,12,0,1,1,12-12A12,12,0,0,1,128,152Zm80-72H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96ZM208,208H48V96H208V208Z"/></svg>
                     Alterar Senha
                 </button>
             </div>
 
             <div class="grid-two mt-25">
-                <button class="btn-main ripple row-center" data-action="salvarPerfil">
+                <button class="btn-main row-center" data-action="salvarPerfil">
                     <svg class="ph icon icon-16" data-icon="floppy-disk" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M219.31,72,184,36.69A15.86,15.86,0,0,0,172.69,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V83.31A15.86,15.86,0,0,0,219.31,72ZM168,208H88V152h80Zm40,0H184V152a16,16,0,0,0-16-16H88a16,16,0,0,0-16,16v56H48V48H172.69L208,83.31ZM160,72a8,8,0,0,1-8,8H96a8,8,0,0,1,0-16h56A8,8,0,0,1,160,72Z"/></svg>
                     Salvar
                 </button>
-                <button class="btn-outline ripple" data-action="closeModal" data-arg="modal-profile">Fechar</button>
+                <button class="btn-outline" data-action="closeModal" data-arg="modal-profile">Fechar</button>
             </div>
 
             <!-- Seção Deletar Conta -->
@@ -1037,7 +1037,7 @@
                             Esta ação é <strong>irreversível</strong>. Todos os seus dados serão apagados permanentemente:
                             watchlist, histórico, conquistas e preferências.
                         </p>
-                        <button class="btn-danger ripple row-center" data-action="deletarConta">
+                        <button class="btn-danger row-center" data-action="deletarConta">
                             <svg class="ph icon icon-16" data-icon="trash" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"/></svg>
                             Deletar Minha Conta
                         </button>
@@ -1082,11 +1082,11 @@
             </p>
             <div id="sorteio-history-grid" class="sorteio-history-grid"></div>
             <div class="grid-two mt-20">
-                <button class="btn-danger ripple row-center" data-action="limparHistoricoSorteios">
+                <button class="btn-danger row-center" data-action="limparHistoricoSorteios">
                     <svg class="ph icon icon-16" data-icon="trash" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"/></svg>
                     Limpar
                 </button>
-                <button class="btn-outline ripple" data-action="closeModal" data-arg="modal-sorteio-history">Fechar</button>
+                <button class="btn-outline" data-action="closeModal" data-arg="modal-sorteio-history">Fechar</button>
             </div>
         </div>
     </div>
@@ -1105,7 +1105,7 @@
                 <span class="onboarding-dot"></span>
                 <span class="onboarding-dot"></span>
             </div>
-            <button class="btn-main ripple" data-action="nextOnboarding" id="onboarding-btn">Começar</button>
+            <button class="btn-main" data-action="nextOnboarding" id="onboarding-btn">Começar</button>
         </div>
     </div>
 
@@ -1233,7 +1233,7 @@
                 <p>No celular, use "Instalar App" quando aparecer, ou "Adicionar à tela inicial" no menu do navegador. Ele abre direto, como um app.</p>
             </details>
 
-            <button type="button" class="btn-main ripple w-full help__close" data-action="closeModal" data-arg="modal-help">Entendi</button>
+            <button type="button" class="btn-main w-full help__close" data-action="closeModal" data-arg="modal-help">Entendi</button>
         </div>
     </div>
 
@@ -1251,8 +1251,8 @@
                 <img id="battle-champion-img" class="battle__champion-img" alt="" width="500" height="750">
                 <p class="battle__champion-label">Venceu a batalha</p>
                 <p id="battle-champion-name" class="battle__champion-name"></p>
-                <button type="button" id="battle-open" class="btn-main ripple" data-action="battleOpenChampion">Ver o campeão</button>
-                <button type="button" class="btn-outline btn-main ripple" data-action="abrirBatalha">Nova batalha</button>
+                <button type="button" id="battle-open" class="btn-main" data-action="battleOpenChampion">Ver o campeão</button>
+                <button type="button" class="btn-outline btn-main" data-action="abrirBatalha">Nova batalha</button>
             </div>
             <div class="battle__footer">
                 <button type="button" id="battle-undo" class="btn-clear-small" data-action="battleUndo" aria-label="Voltar: desfazer o último voto" hidden><span class="ph-slot" data-ph="arrow-u-up-left" data-weight="bold" aria-hidden="true"></span> Voltar</button>
@@ -1275,8 +1275,8 @@
             </ul>
             <p id="blind-overview" class="blind__overview"></p>
             <div class="blind__actions">
-                <button type="button" id="blind-reveal" class="btn-main ripple" data-action="blindReveal">Arriscar e revelar</button>
-                <button type="button" id="blind-another" class="btn-outline btn-main ripple" data-action="sessaoEscuras">Outro às escuras</button>
+                <button type="button" id="blind-reveal" class="btn-main" data-action="blindReveal">Arriscar e revelar</button>
+                <button type="button" id="blind-another" class="btn-outline btn-main" data-action="sessaoEscuras">Outro às escuras</button>
                 <button type="button" class="btn-clear-small" data-action="closeModal" data-arg="modal-blind">Fechar</button>
             </div>
         </div>
@@ -1293,8 +1293,8 @@
             </fieldset>
             <p id="save-list-empty" class="section-note text-center" hidden>Você ainda não tem listas. Crie a primeira, como "Maratona de Halloween" ou "Para ver com a família".</p>
             <p id="save-list-status" class="sr-only" aria-live="polite"></p>
-            <button type="button" class="btn-outline ripple w-full" data-action="openListEditor" data-arg="save">+ Nova lista</button>
-            <button type="button" class="btn-main ripple w-full mt-20" data-action="closeModal" data-arg="modal-save-list">Pronto</button>
+            <button type="button" class="btn-outline w-full" data-action="openListEditor" data-arg="save">+ Nova lista</button>
+            <button type="button" class="btn-main w-full mt-20" data-action="closeModal" data-arg="modal-save-list">Pronto</button>
         </div>
     </div>
 

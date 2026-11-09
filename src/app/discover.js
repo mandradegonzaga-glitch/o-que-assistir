@@ -338,7 +338,6 @@ export async function mostrarTop10() {
         }));
         renderResults(data.results.slice(0,10), true);
         markOpenList(btn);
-        showToast("Top 10 carregado!");
     } catch(e) {
         showToast("Erro ao carregar Top 10", "error");
     } finally {
@@ -398,7 +397,7 @@ export function renderResults(list, rank=false, { caption = '', empty = '' } = {
                 <div class="empty-state-icon">${ph('magnifying-glass', { weight: 'duotone' })}</div>
                 <h3 class="empty-state-title">${escapeHtml(empty || 'Nenhum resultado encontrado')}</h3>
                 <p class="empty-state-desc">Tente ajustar seus filtros ou fazer uma nova busca</p>
-                <button class="empty-state-cta ripple" data-action="focusSearch">
+                <button class="empty-state-cta" data-action="focusSearch">
                     ${ph('magnifying-glass', { weight: 'bold', cls: 'icon-16 icon-lead-6' })}Nova Busca
                 </button>
             </div>

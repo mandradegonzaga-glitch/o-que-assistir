@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { formatRuntime, seasonsLabel, titleFacts } from '../../src/domain/titleFacts.js';
+import { formatRuntime, seasonsLabel, titleFacts, titleSize } from '../../src/domain/titleFacts.js';
 
 describe('linha única de informações do título', () => {
   it('formata a duração do jeito brasileiro', () => {
@@ -33,5 +33,24 @@ describe('linha única de informações do título', () => {
   it('o que não existe fica de fora, sem separador sobrando', () => {
     expect(titleFacts({ date: '' })).toEqual([]);
     expect(titleFacts({ rating: 7, genres: [99999] })).toEqual([{ kind: 'rating', text: '7,0' }]);
+  });
+});
+
+describe('titleSize', () => {
+  it('título curto fica no tamanho normal', () => {
+    expect(titleSize('Duna')).toBe('');
+    expect(titleSize('Toy Story 4')).toBe('');
+  });
+  it('título médio ou com palavra de 10 a 11 letras fica um pouco menor', () => {
+    expect(titleSize('Todo Mundo em Pânico: A Volta Final')).toBe('mid');
+    expect(titleSize('Hipnotizada')).toBe('mid');
+  });
+  it('título longo ou com palavra que não cabe fica menor', () => {
+    expect(titleSize('O Senhor dos Anéis: O Retorno do Rei – Versão Estendida Remasterizada do Diretor')).toBe('long');
+    expect(titleSize('Krankenhausverwaltung')).toBe('long');
+  });
+  it('vazio ou sem texto não quebra', () => {
+    expect(titleSize()).toBe('');
+    expect(titleSize('   ')).toBe('');
   });
 });

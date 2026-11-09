@@ -86,6 +86,9 @@ window.addEventListener('pagehide', flushPendingUndo);
 
 // TOAST (Enhanced)
 
+// A entrada e a saída são a transição do .toast no CSS. Um aviso novo reinicia a contagem:
+// antes, o cronômetro do aviso anterior escondia o novo antes da hora.
+let toastTimer = null;
 export function showToast(msg, type="success") {
     const t = document.getElementById('toast');
     t.innerText = msg;
@@ -93,16 +96,8 @@ export function showToast(msg, type="success") {
     t.setAttribute('role', 'status');
     t.setAttribute('aria-live', 'polite');
 
-    // Animate entrance
-    t.style.animation = 'slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-
-    setTimeout(() => {
-        t.style.animation = 'slideOutRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-        setTimeout(() => {
-            t.classList.remove('show');
-            t.style.animation = '';
-        }, 400);
-    }, 2600);
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
 // CONFETTI EFFECT

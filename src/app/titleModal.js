@@ -13,7 +13,7 @@ import { trackChallenge } from './progress.js';
 import { session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
-import { titleFacts } from '../domain/titleFacts.js';
+import { titleFacts, titleSize } from '../domain/titleFacts.js';
 import { cinemaLabel, cinemaStatus, localDay } from '../domain/cinemaRelease.js';
 import { IMG_URL } from '../config/constants.js';
 
@@ -294,7 +294,9 @@ export async function abrirModal(f, { fromDraw = false } = {}) {
     const mediaType = f.media_type || state.type;
     const type = mediaType === 'dorama' ? 'tv' : mediaType;
 
-    document.getElementById('m-title').innerText = f.title || f.name;
+    const titleEl = document.getElementById('m-title');
+    titleEl.innerText = f.title || f.name;
+    titleEl.dataset.size = titleSize(f.title || f.name);
     document.getElementById('m-desc').innerText = f.overview || "Sem sinopse.";
 
     // Links de crítica: RT por busca no título; IMDb só se houver imdb_id (séries precisam de external_ids)

@@ -15,6 +15,10 @@ import { CLOSE_ICON } from '../ui/icons.js';
 import { STAR_ICON, TICKET_ICON, WHEEL_ICON } from '../ui/icons.js';
 
 const SPIN_MS = 4000;
+// "Reduzir movimento" no sistema: o CSS zera a transição (a roda vai direto ao vencedor),
+// então a espera encolhe para uma pausa curta em vez de 4 s com a roda parada
+const SPIN_MS_REDUCED = 800;
+const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const ITEMS_KEY = 'roulette_items';
 let spinning = false;
 
@@ -176,7 +180,9 @@ export function girarRoleta() {
     resetWheel(); // a roda ficou parada no vencedor anterior
 
     center.innerHTML = WHEEL_ICON;
-    wheel.style.transform = `rotate(${computeSpinRotation(winnerIndex, items.length, 5 + Math.random() * 3)}deg)`;
+    const reduce = prefersReducedMotion();
+    const spinMs = reduce ? SPIN_MS_REDUCED : SPIN_MS;
+    wheel.style.transform = `rotate(${computeSpinRotation(winnerIndex, items.length, reduce ? 1 : 5 + Math.random() * 3)}deg)`;
 
     setTimeout(async () => {
         center.innerHTML = STAR_ICON;
@@ -202,7 +208,7 @@ export function girarRoleta() {
 
         // Verificar conquista
         await checkAllBadges();
-    }, SPIN_MS);
+    }, spinMs);
 }
 
 export async function limparRoleta() {
