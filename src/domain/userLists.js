@@ -1,14 +1,12 @@
 // Listas personalizadas: regras puras. Quem lê e grava é src/app/userLists.js; o banco, database/user_lists.sql.
 // Formato: { id, name, emoji, items: [{ id, title, poster, type }] }
-import { MEDIA_TYPES, getTitle } from './mediaItem.js';
+import { MEDIA_TYPES, getTitle, isPosterPath } from './mediaItem.js';
 
 export const LIST_EMOJIS = ['🎬', '🍿', '❤️', '🎃', '👻', '🎄', '😂', '😭', '😱', '🚀', '🧸', '🏆', '🌙', '🔥', '📚', '🎉'];
 export const DEFAULT_EMOJI = LIST_EMOJIS[0];
 const NAME_MAX = 40;
 export const MAX_LISTS = 50;
 export const MAX_ITEMS = 500;
-
-const POSTER = /^\/[A-Za-z0-9_-]{1,100}\.(jpg|jpeg|png|webp)$/;
 
 // Espaços em volta e repetidos saem; o resto fica como a pessoa escreveu
 export function cleanListName(raw) {
@@ -69,7 +67,7 @@ export function normalizeGuestLists(raw) {
       return {
         id,
         title: String(item.title || 'Sem título').slice(0, 300),
-        poster: typeof item.poster === 'string' && POSTER.test(item.poster) ? item.poster : null,
+        poster: isPosterPath(item.poster) ? item.poster : null,
         type: MEDIA_TYPES.includes(item.type) ? item.type : 'movie',
       };
     }).filter(Boolean).slice(0, MAX_ITEMS);

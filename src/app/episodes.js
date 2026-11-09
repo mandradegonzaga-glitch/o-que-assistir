@@ -6,7 +6,7 @@ import { session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { pluralize } from '../utils/format.js';
-import { toLibraryItem } from '../domain/mediaItem.js';
+import { isSeriesType, toLibraryItem } from '../domain/mediaItem.js';
 import { emit, on } from '../state/events.js';
 import { cachedSeason, getAllSeasons, getSeason } from '../api/tmdbSeries.js';
 import { buildEpisodeKey, episodeCode, parseEpisodeKey } from '../domain/seriesProgress.js';
@@ -32,7 +32,7 @@ async function loadEpisodesSection(seriesData) {
     }
 
     const mediaType = seriesData.media_type || '';
-    if (mediaType !== 'tv' && mediaType !== 'dorama') {
+    if (!isSeriesType(mediaType)) {
         section.hidden = true;
         return;
     }

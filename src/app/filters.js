@@ -2,7 +2,7 @@
 // sessão às escuras pedem títulos com as mesmas regras.
 import { buildDiscoverUrl, getRandomPage } from '../domain/filters.js';
 import { tmdbFetch } from '../api/tmdb.js';
-import { getTmdbEndpoint } from '../domain/mediaItem.js';
+import { MEDIA_KIND, getTmdbEndpoint } from '../domain/mediaItem.js';
 import { state } from '../state/appState.js';
 import { filterField, filterValue, filterValues } from '../ui/filterFields.js';
 import { resolveProviderFilter } from './myProviders.js';
@@ -30,8 +30,6 @@ export function filtersKey() {
 }
 
 // "Filmes · Terror · Netflix": os filtros que estão valendo, para mostrar dentro dos modos que os usam
-const TYPE_NAMES = { movie: 'Filmes', tv: 'Séries', dorama: 'Doramas' };
-
 export function filtersSummary() {
   const chosen = key => {
     const el = filterField(key);
@@ -42,5 +40,5 @@ export function filtersSummary() {
   const years = from && to ? `${from} a ${to}` : from ? `desde ${from}` : to ? `até ${to}` : '';
   const person = state.personId ? state.personName : '';
   const parts = [person, chosen('mood'), chosen('genre'), chosen('provider'), chosen('duration'), chosen('country'), years].filter(Boolean);
-  return [TYPE_NAMES[state.type], ...(parts.length ? parts : ['todos os gêneros'])].join(' · ');
+  return [MEDIA_KIND[state.type].many, ...(parts.length ? parts : ['todos os gêneros'])].join(' · ');
 }

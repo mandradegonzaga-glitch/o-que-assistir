@@ -2,6 +2,7 @@
 // com histórico suficiente, pelos gêneros que a pessoa mais assiste (o DNA).
 // Lógica pura: quem busca no TMDB e desenha é src/app/dailyPicks.js.
 import { movieGenreOnTv } from './genres.js';
+import { DORAMA_PARAMS, isKorean } from './mediaItem.js';
 import { DNA_STABLE_TITLES, genreWeights } from './tasteDna.js';
 import { dayNumber } from '../utils/date.js';
 
@@ -29,7 +30,7 @@ export const PICK_KINDS = [
   },
   {
     kind: 'dorama', label: 'Dorama', endpoint: 'tv', pages: 6,
-    params: { 'vote_average.gte': 7.8, 'vote_count.gte': 100, with_origin_country: 'KR', without_genres: '16' },
+    params: { 'vote_average.gte': 7.8, 'vote_count.gte': 100, ...DORAMA_PARAMS },
   },
 ];
 
@@ -51,8 +52,6 @@ export function pickRequest(kindIndex, day) {
     index,
   };
 }
-
-const isKorean = item => Array.isArray(item?.origin_country) && item.origin_country.includes('KR');
 
 // A página pode vir menor que o previsto, com título sem pôster ou (em Série) com uma coreana:
 // anda até achar um que sirva

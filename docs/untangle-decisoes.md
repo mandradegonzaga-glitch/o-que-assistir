@@ -12,14 +12,15 @@ Status: [ ] a fazer · [x] feito · [-] descartado (com o motivo).
 - [-] `clearTmdbCache` fica: é o que isola os testes do cache.
 
 ## 2. Gêneros e tipos de mídia: uma tabela só
-- [ ] Mapa filme↔série único em `domain/genres.js` (com a lista de gêneros de série); o mesmo para "ids ou objetos {id}".
+- [x] Mapa filme↔série único em `domain/genres.js` (com a lista de gêneros de série); o mesmo para "ids ou objetos {id}".
   - `tasteDna.js:7`, `surprise.js:14`, `dailyPicks.js:18-20` têm três cópias, que já divergem (10762→10751 só no DNA).
   - `genreIdsOf` reescrito em genres, tasteDna, titleFacts, blind, challenges.
-- [ ] Rótulos, cores e regra de dorama por tipo em `domain/mediaItem.js`.
+- [x] Rótulos, cores e regra de dorama por tipo em `domain/mediaItem.js` (`MEDIA_KIND`, `DORAMA_PARAMS`, `isKorean`, `isSeriesType`).
+      A cor de cada tipo agora é testada contra o tema no CSS.
   - "dorama = série KR sem animação" em filters, collections, dailyPicks, titleShare; `collections.js:24` refaz getTmdbEndpoint.
   - Nomes Filmes/Séries/Doramas em `app/filters.js:33`, `collections.js:21`, `blindSession.js:14`, `discover.js:298`, `titleShare` KIND_LABEL/TICKET_COLORS.
   - `isSeriesType` repetido com variações em library, lifeStats, episodes.
-- [ ] Regex de `poster_path` única (titleShare.js:47, userLists.js:11).
+- [x] Regex de `poster_path` única (`isPosterPath`) (titleShare.js:47, userLists.js:11).
 
 ## 3. Busca no TMDB: um construtor e um jeito de sortear
 - [ ] `buildDiscoverUrl` devolve `{ path, params }` e recebe só o tipo do app; chamadores usam `tmdbGet`.

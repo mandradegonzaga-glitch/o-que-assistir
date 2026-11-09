@@ -10,7 +10,7 @@ import { titleFacts, titleSize } from '../domain/titleFacts.js';
 import { cinemaLabel, cinemaStatus } from '../domain/cinemaRelease.js';
 import { localDay } from '../utils/date.js';
 import { IMG_URL } from '../config/constants.js';
-import { getTmdbEndpoint, getTitle } from '../domain/mediaItem.js';
+import { getTmdbEndpoint, getTitle, isSeriesType } from '../domain/mediaItem.js';
 import { emit } from '../state/events.js';
 import { onModalClose } from '../ui/modals.js';
 import { personPhoto, posterImg } from '../ui/icons.js';
@@ -359,7 +359,7 @@ export async function abrirModal(f, { fromDraw = false } = {}) {
 async function marcarVistoAtual() {
     const movie = state.currentMovie;
     if (!movie) return;
-    const isSeries = movie.media_type === 'tv' || movie.media_type === 'dorama';
+    const isSeries = isSeriesType(movie.media_type);
     const btnV = document.getElementById('btn-visto');
     if (isSeries) btnV.disabled = true; // marcar a série inteira leva um instante: evita o segundo toque
     await salvarHistorico(movie);

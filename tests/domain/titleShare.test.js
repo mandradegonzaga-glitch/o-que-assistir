@@ -1,5 +1,7 @@
 import { describe, it, expect } from '@jest/globals';
-import { shareRow, shareText, titleKind, titleLink, truncate, TICKET_COLORS } from '../../src/domain/titleShare.js';
+import { shareRow, shareText, titleKind, titleLink, truncate } from '../../src/domain/titleShare.js';
+import { readFileSync } from 'node:fs';
+import { MEDIA_KIND } from '../../src/domain/mediaItem.js';
 
 describe('titleKind', () => {
   it('filme é filme em qualquer modo', () => {
@@ -21,8 +23,12 @@ describe('titleKind', () => {
     expect(titleKind({}, 'movie')).toBe('movie');
   });
 
-  it('cada tipo tem a cor do seu tema', () => {
-    expect(TICKET_COLORS).toEqual({ movie: '#ffc94d', tv: '#3dd6c6', dorama: '#ff8fb8' });
+  it('a cor de cada tipo é a do tema dele no CSS', () => {
+    const css = readFileSync(new URL('../../src/styles/style.css', import.meta.url), 'utf8');
+    for (const [type, { color }] of Object.entries(MEDIA_KIND)) {
+      const theme = new RegExp(`\\[data-theme="${type}"\\]\\s*\\{[^}]*--accent-primary:\\s*(#[0-9a-f]{6})`, 'i').exec(css);
+      expect({ type, color: theme?.[1] }).toEqual({ type, color });
+    }
   });
 });
 

@@ -3,7 +3,7 @@
 import { tmdbGet } from '../api/tmdb.js';
 import { IMG_URL } from '../config/constants.js';
 import { buildQrMatrix } from '../domain/qr.js';
-import { KIND_LABEL, TICKET_COLORS, shareText, titleKind, titleLink } from '../domain/titleShare.js';
+import { shareText, titleKind, titleLink } from '../domain/titleShare.js';
 import { state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { ph } from '../ui/phosphor.js';
@@ -11,7 +11,7 @@ import { formatRuntime } from '../domain/titleFacts.js';
 import { formatRating } from '../utils/format.js';
 import { refreshFriends } from './friends.js';
 import { recordSocial, trackChallenge } from './progress.js';
-import { getYear, getTitle } from '../domain/mediaItem.js';
+import { MEDIA_KIND, getYear, getTitle } from '../domain/mediaItem.js';
 import { appBase, isTouch } from '../ui/share.js';
 import { registerActions } from '../ui/actions.js';
 import { whileBusy } from '../ui/busy.js';
@@ -296,7 +296,7 @@ export async function drawTicket(movie, {
     document.fonts.load(`700 20px ${TEXT}`),
   ]).catch(() => {});
 
-  const accent = TICKET_COLORS[kind] || TICKET_COLORS.movie;
+  const accent = (MEDIA_KIND[kind] || MEDIA_KIND.movie).color;
   const canvas = document.createElement('canvas');
   canvas.width = WIDTH;
   canvas.height = HEIGHT;
@@ -424,7 +424,7 @@ export async function drawTicket(movie, {
   // Corpo: grade de dados, sinopse com o espaço que sobrar, elenco e plataformas
   const year = getYear(movie);
   const facts = [
-    ['Tipo', KIND_LABEL[kind]],
+    ['Tipo', MEDIA_KIND[kind].one],
     ['Ano', year],
     ['Nota', movie.vote_average ? formatRating(movie.vote_average) : ''],
     [kind === 'movie' ? 'Duração' : 'Temporadas', length],
@@ -575,7 +575,7 @@ function compartilhar() {
   const movie = state.currentMovie;
   if (!movie) return;
   const kind = titleKind(movie, state.type);
-  document.getElementById('share-subtitle').textContent = `${getTitle(movie)} · ${KIND_LABEL[kind]}`;
+  document.getElementById('share-subtitle').textContent = `${getTitle(movie)} · ${MEDIA_KIND[kind].one}`;
   // Celular: o compartilhar do sistema já inclui o WhatsApp, com a imagem. Computador: WhatsApp Web com o texto.
   // Celular sem esse recurso (navegador antigo ou site fora de HTTPS): baixa o ingresso para anexar da galeria.
   const native = canShareFiles(new File([''], 'ingresso.png', { type: 'image/png' }));

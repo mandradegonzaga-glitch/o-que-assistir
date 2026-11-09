@@ -1,6 +1,7 @@
 // DNA do usuário: o que a pessoa mais assiste, calculado só com o histórico salvo
 // (gêneros, tipo, ano e data de cada título). Sem rede: abre na hora e funciona offline.
 import { GENRE_NAMES, asMovieGenres, genreIds } from './genres.js';
+import { isSeriesType } from './mediaItem.js';
 
 const DNA_TOP_GENRES = 5;
 const DNA_MONTHS = 6;
@@ -80,7 +81,7 @@ export function otherNamesText(members, limit = DNA_OTHER_NAMES) {
 export function typeSplit(history) {
   const split = { movie: 0, tv: 0, dorama: 0 };
   for (const entry of history || []) {
-    const type = entry?.type === 'tv' || entry?.type === 'dorama' ? entry.type : 'movie';
+    const type = isSeriesType(entry?.type) ? entry.type : 'movie';
     split[type]++;
   }
   return split;

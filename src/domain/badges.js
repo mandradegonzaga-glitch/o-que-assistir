@@ -2,6 +2,8 @@
 // `icon` é a chave em src/ui/badgeIcons.js; `color` vai para o atributo data-color.
 // `count(history, wins, progress)` mede quanto já foi feito; a conquista sai quando chega em `goal`.
 // progress traz bestStreak e os contadores sociais (src/domain/progress.js).
+import { isSeriesType } from './mediaItem.js';
+
 
 // Madrugada = 0h às 4h59 no horário local
 export function isNightOwlWatch(entry) {
@@ -11,7 +13,7 @@ export function isNightOwlWatch(entry) {
 }
 
 const countGenre = (history, ...genres) => history.filter(h => genres.some(g => h.genres?.includes(g))).length;
-const isSeries = i => i.type === 'tv' || i.type === 'dorama';
+const isSeries = i => isSeriesType(i.type);
 const social = (p, key) => p?.social?.[key] || 0;
 const streak = p => p?.bestStreak || 0;
 const anyOf = (history, test) => (history.some(test) ? 1 : 0);

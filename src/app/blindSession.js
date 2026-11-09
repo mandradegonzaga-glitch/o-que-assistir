@@ -6,12 +6,11 @@ import { showToast } from '../ui/feedback.js';
 import { formatRating } from '../utils/format.js';
 import { pickDraw, withDetails } from './discover.js';
 import { discoverUrl, fetchRandomPage, filtersSummary } from './filters.js';
-import { getTmdbEndpoint } from '../domain/mediaItem.js';
+import { MEDIA_KIND, getTmdbEndpoint } from '../domain/mediaItem.js';
 import { registerActions } from '../ui/actions.js';
 import { openDrawn } from './sorteioHistory.js';
 import { whileBusy } from '../ui/busy.js';
 
-const KIND = { movie: 'Um filme', tv: 'Uma série', dorama: 'Um dorama' };
 let current = null;
 
 async function drawBlind() {
@@ -23,7 +22,7 @@ async function drawBlind() {
 
 function render(item) {
   const facts = blindFacts(item, state.type);
-  document.getElementById('blind-title').textContent = `${KIND[state.type]} misterioso`;
+  document.getElementById('blind-title').textContent = `${MEDIA_KIND[state.type].a} misterioso`;
   document.getElementById('blind-rating').textContent = `★ ${formatRating(facts.rating)}`;
   const rest = [['blind-length', facts.length], ['blind-decade', facts.decade], ['blind-genres', facts.genres.join(' · ')]];
   rest.forEach(([id, text]) => {

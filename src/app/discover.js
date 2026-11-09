@@ -9,7 +9,7 @@ import { session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { drawReveal, endDrawReveal } from '../ui/drawReveal.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
-import { getTmdbEndpoint, getTitle } from '../domain/mediaItem.js';
+import { MEDIA_KIND, getTmdbEndpoint, getTitle } from '../domain/mediaItem.js';
 import { debounce } from '../utils/debounce.js';
 import { personPhoto, posterImg } from '../ui/icons.js';
 import { emit } from '../state/events.js';
@@ -297,7 +297,7 @@ async function mostrarLancamentos() {
         const days = RELEASE_DAYS[endpoint];
         const caption = endpoint === 'movie'
             ? `Chegaram ao streaming e ao aluguel nos últimos ${days} dias`
-            : `${state.type === 'dorama' ? 'Doramas' : 'Séries'} que estrearam nos últimos ${days} dias`;
+            : `${MEDIA_KIND[state.type].many} que estrearam nos últimos ${days} dias`;
         renderResults((data.results || []).filter(hasLatinTitle).slice(0, 20), false, { caption, empty: 'Nenhum lançamento com esses filtros nas últimas semanas' });
         markOpenList(btn);
     } catch (e) {

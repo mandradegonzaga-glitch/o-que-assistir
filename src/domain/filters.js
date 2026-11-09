@@ -1,5 +1,6 @@
 import { BASE_URL } from '../config/constants.js';
 import { getMoodGenres } from './moods.js';
+import { DORAMA_PARAMS } from './mediaItem.js';
 import { localDay } from '../utils/date.js';
 
 export const MY_PROVIDERS_VALUE = 'minhas';
@@ -34,10 +35,10 @@ export function buildDiscoverUrl(endpoint, filters = {}) {
   const moodGenres = genre ? null : getMoodGenres(mood, endpoint);
   const special = SPECIAL_GENRES[genre];
   const withGenres = (special ? '' : genre) || moodGenres?.with;
-  const withoutGenres = [isDorama ? '16' : '', moodGenres?.without].filter(Boolean).join('|');
+  const withoutGenres = [isDorama ? DORAMA_PARAMS.without_genres : '', moodGenres?.without].filter(Boolean).join('|');
 
   // Dorama já é coreano: o país escolhido não vale aí
-  if (isDorama) url += '&with_origin_country=KR';
+  if (isDorama) url += `&with_origin_country=${DORAMA_PARAMS.with_origin_country}`;
   else if (country) url += `&with_origin_country=${country}`;
   if (withGenres)    url += `&with_genres=${withGenres}`;
   if (special)       url += `&with_keywords=${special.keywords}`;

@@ -1,6 +1,7 @@
 // Coleções prontas: listas do app, montadas com os títulos mais bem avaliados de cada tema no TMDB.
 // A pessoa abre, vê e pode copiar para as próprias listas (src/app/userLists.js).
 import { hasLatinTitle } from './filters.js';
+import { DORAMA_PARAMS, MEDIA_KIND, getTmdbEndpoint } from './mediaItem.js';
 import { toListItem } from './userLists.js';
 
 const best = (votes, extra = {}) => ({ sort_by: 'vote_average.desc', 'vote_count.gte': votes, ...extra });
@@ -13,15 +14,14 @@ export const COLLECTIONS = [
   { id: 'ficcao', name: 'Ficção científica', emoji: '🚀', type: 'movie', params: best(5000, { with_genres: '878', without_genres: '16' }) },
   { id: 'notas', name: 'Filmes mais bem avaliados', emoji: '🏆', type: 'movie', params: best(10000) },
   { id: 'series', name: 'Séries imperdíveis', emoji: '📚', type: 'tv', params: best(3000, { without_genres: '16|10764|10767|10763' }) },
-  { id: 'doramas', name: 'Doramas queridinhos', emoji: '❤️', type: 'dorama', params: best(300, { with_origin_country: 'KR', without_genres: '16|10764|10767|10763' }) },
+  { id: 'doramas', name: 'Doramas queridinhos', emoji: '❤️', type: 'dorama', params: best(300, { ...DORAMA_PARAMS, without_genres: '16|10764|10767|10763' }) },
 ];
 
 export const collectionById = id => COLLECTIONS.find(c => c.id === id) || null;
 
-export const collectionKind = c => ({ movie: 'Filmes', tv: 'Séries', dorama: 'Doramas' }[c.type]);
+export const collectionKind = c => MEDIA_KIND[c.type].many;
 
-// Onde buscar no TMDB: dorama é série
-export const collectionPath = c => `/discover/${c.type === 'movie' ? 'movie' : 'tv'}`;
+export const collectionPath = c => `/discover/${getTmdbEndpoint(c.type)}`;
 
 // Resposta do TMDB → títulos da coleção: com pôster, sem repetir e com nome legível (dorama sem tradução fica de fora)
 export function collectionItems(c, results = []) {

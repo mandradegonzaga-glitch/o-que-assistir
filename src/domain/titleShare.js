@@ -1,17 +1,14 @@
 // Regras puras do ingresso e do compartilhar: tipo do título, cor, texto da mensagem e o que vai para o banco.
 import { formatRating } from '../utils/format.js';
-import { MEDIA_TYPES, getYear, getTitle } from './mediaItem.js';
+import { MEDIA_KIND, MEDIA_TYPES, getYear, getTitle, isKorean, isPosterPath } from './mediaItem.js';
 
-export const KIND_LABEL = { movie: 'Filme', tv: 'Série', dorama: 'Dorama' };
-// Mesmas cores dos temas do app (--accent-primary em style.css)
-export const TICKET_COLORS = { movie: '#ffc94d', tv: '#3dd6c6', dorama: '#ff8fb8' };
 
 // O TMDB não tem "dorama": é uma série coreana. Os detalhes trazem origin_country;
 // os cards da busca às vezes não, e aí vale o modo em que a pessoa está.
 export function titleKind(item, appType) {
   const type = item?.media_type || appType;
   if (type === 'movie' || type === 'dorama') return type;
-  if (Array.isArray(item?.origin_country)) return item.origin_country.includes('KR') ? 'dorama' : 'tv';
+  if (Array.isArray(item?.origin_country)) return isKorean(item) ? 'dorama' : 'tv';
   if (appType === 'dorama') return 'dorama';
   return type === 'tv' || appType === 'tv' ? 'tv' : 'movie';
 }
@@ -32,7 +29,7 @@ export function titleLink(base, kind, id) {
 export function shareText({ item, kind, url, cast = [], providers = [] }) {
   const title = getTitle(item);
   const year = getYear(item);
-  const meta = [KIND_LABEL[kind], year, item.vote_average ? `Nota ${formatRating(item.vote_average)}` : ''].filter(Boolean).join(' · ');
+  const meta = [MEDIA_KIND[kind].one, year, item.vote_average ? `Nota ${formatRating(item.vote_average)}` : ''].filter(Boolean).join(' · ');
   const lines = [`Hoje é dia de: ${title}`, meta];
   const synopsis = truncate(item.overview, 220);
   if (synopsis) lines.push('', synopsis);
@@ -44,7 +41,6 @@ export function shareText({ item, kind, url, cast = [], providers = [] }) {
   return lines.join('\n');
 }
 
-const POSTER_PATTERN = /^\/[A-Za-z0-9_-]{1,100}\.(jpg|jpeg|png|webp)$/;
 
 // Linha de title_shares: só o necessário para o amigo ver o card e abrir o título.
 // As mesmas regras estão no CHECK da tabela (database/title_shares.sql).
@@ -56,6 +52,6 @@ export function shareRow(item, kind) {
     media_type: kind,
     tmdb_id: id,
     title,
-    poster_path: POSTER_PATTERN.test(item.poster_path || '') ? item.poster_path : null,
+    poster_path: isPosterPath(item.poster_path) ? item.poster_path : null,
   };
 }
