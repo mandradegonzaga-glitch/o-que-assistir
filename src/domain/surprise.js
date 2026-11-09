@@ -1,5 +1,6 @@
 // Surpreenda-me: um título bem avaliado de um gênero que a pessoa quase nunca vê.
 // Usa os mesmos pesos do DNA (cada título vale 1, dividido entre os seus gêneros).
+import { TV_GENRE_PARTS } from './genres.js';
 import { genreWeights } from './tasteDna.js';
 
 // Gêneros que valem uma surpresa (sem filme de TV, notícias, reality, talk show, novela, infantil)
@@ -9,9 +10,6 @@ export const SURPRISE_GENRES = {
   // Doramas: só os gêneros que existem de verdade entre os coreanos bem avaliados
   dorama: [10759, 35, 80, 18, 10751, 9648, 10765],
 };
-
-// Em série, os gêneros de filme do DNA contam no equivalente juntado
-const TV_FROM_MOVIE = { 10759: [28, 12], 10765: [878, 14], 10768: [10752] };
 
 // Nota mínima e votos mínimos: surpresa, sim; filme ruim, não
 export const SURPRISE_QUALITY = {
@@ -23,7 +21,7 @@ export const SURPRISE_QUALITY = {
 export function genreScores(history, type) {
   const { weights } = genreWeights(history);
   return SURPRISE_GENRES[type].map(id => {
-    const ids = type === 'movie' ? [id] : [id, ...(TV_FROM_MOVIE[id] || [])];
+    const ids = type === 'movie' ? [id] : [id, ...(TV_GENRE_PARTS[id] || [])];
     return { id, weight: ids.reduce((sum, g) => sum + (weights.get(g) || 0), 0) };
   });
 }

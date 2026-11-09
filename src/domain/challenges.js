@@ -1,10 +1,11 @@
 // Desafio do dia e meta da semana. Lógica pura: quem grava é src/app/progress.js.
 // O andamento fica em progress.challenges, junto com o XP (conta: metadados; convidado: aparelho).
 import { DAY_MS, dayFromNumber, dayNumber } from '../utils/date.js';
+import { genreIds } from './genres.js';
 
 const yearOf = detail => parseInt(String(detail?.year || detail?.release_date || detail?.first_air_date || '').slice(0, 4), 10);
 const hasGenre = (detail, ...ids) => {
-  const genres = detail?.genres?.map?.(g => (typeof g === 'object' ? g.id : g)) || detail?.genre_ids || [];
+  const genres = genreIds(detail?.genres ?? detail?.genre_ids);
   return ids.some(id => genres.includes(id));
 };
 

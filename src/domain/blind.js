@@ -1,5 +1,5 @@
 // Sessão às escuras: o que dá para mostrar sem entregar o título.
-import { GENRE_NAMES } from './genres.js';
+import { genreIds, genreNames } from './genres.js';
 
 const escapeRegExp = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -40,12 +40,11 @@ export function decadeText(details) {
 }
 
 export function blindFacts(details, type) {
-  const genreIds = Array.isArray(details?.genres) ? details.genres.map(g => g?.id ?? g) : details?.genre_ids || [];
   return {
     rating: Number(details?.vote_average) || 0,
     length: lengthText(details, type),
     decade: decadeText(details),
-    genres: [...new Set(genreIds.map(id => GENRE_NAMES[id]).filter(Boolean))].slice(0, 2),
+    genres: genreNames(genreIds(details?.genres ?? details?.genre_ids), 2),
     overview: maskTitle(details?.overview, [details?.title, details?.name, details?.original_title, details?.original_name]),
   };
 }

@@ -1,6 +1,7 @@
 // Indicações do dia: um filme, uma série e um dorama. Iguais para todo mundo no mesmo dia, ou,
 // com histórico suficiente, pelos gêneros que a pessoa mais assiste (o DNA).
 // Lógica pura: quem busca no TMDB e desenha é src/app/dailyPicks.js.
+import { movieGenreOnTv } from './genres.js';
 import { DNA_STABLE_TITLES, genreWeights } from './tasteDna.js';
 import { dayNumber } from '../utils/date.js';
 
@@ -14,10 +15,6 @@ const PERSONAL_TOP_GENRES = 3;
 const ROTATION_MIN_SHARE = 0.5;
 const PERSONAL_PAGES = 3;
 
-// Gêneros de filme que, em série, existem com outro nome (juntos com outro)
-const MOVIE_TO_TV = { 28: 10759, 12: 10759, 878: 10765, 14: 10765, 10752: 10768 };
-// Gêneros que o TMDB tem para séries (Terror, Romance, Suspense, Música, História não existem)
-const TV_GENRES = new Set([10759, 16, 35, 80, 99, 18, 10751, 10762, 9648, 10763, 10764, 10765, 10766, 10767, 10768, 37]);
 
 // Só títulos bem avaliados e conhecidos; ordenados por número de votos, que muda pouco de um dia para o outro
 export const PICK_KINDS = [
@@ -90,9 +87,8 @@ export function usableGenres(genres, kindIndex, limit = PERSONAL_TOP_GENRES) {
   const excluded = new Set(String(kind.params.without_genres || '').split('|').filter(Boolean).map(Number));
   const weights = new Map();
   for (const { id, weight } of genres || []) {
-    const mapped = kind.endpoint === 'tv' ? (MOVIE_TO_TV[id] || id) : id;
-    if (kind.endpoint === 'tv' && !TV_GENRES.has(mapped)) continue;
-    if (excluded.has(mapped)) continue;
+    const mapped = kind.endpoint === 'tv' ? movieGenreOnTv(id) : id;
+    if (mapped === null || excluded.has(mapped)) continue;
     weights.set(mapped, (weights.get(mapped) || 0) + weight);
   }
   const ranked = [...weights.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0]);

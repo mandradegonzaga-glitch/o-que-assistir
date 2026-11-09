@@ -1,5 +1,5 @@
 // Linha única de informações do título: ★ nota • ano • duração ou temporadas • até 2 gêneros
-import { genreNames } from './genres.js';
+import { genreIds, genreNames } from './genres.js';
 import { formatRating, pluralize } from '../utils/format.js';
 
 // 136 → "2h 16min"; 45 → "45min"; 120 → "2h"
@@ -20,7 +20,7 @@ export function seasonsLabel(count) {
 
 // genres: ids (genre_ids do /discover) ou objetos { id } dos detalhes; o nome sai sempre em português
 export function titleFacts({ rating, date, runtime, seasons, genres } = {}) {
-  const ids = (Array.isArray(genres) ? genres : []).map(g => (g && typeof g === 'object' ? g.id : g));
+  const ids = genreIds(genres);
   const facts = [];
   if (rating) facts.push({ kind: 'rating', text: formatRating(rating) });
   const year = String(date || '').slice(0, 4);

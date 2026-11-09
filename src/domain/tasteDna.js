@@ -1,15 +1,6 @@
 // DNA do usuário: o que a pessoa mais assiste, calculado só com o histórico salvo
 // (gêneros, tipo, ano e data de cada título). Sem rede: abre na hora e funciona offline.
-import { GENRE_NAMES } from './genres.js';
-
-// Gêneros de série que juntam dois de filme contam como os de filme, para um título de
-// "Ação e aventura" e um filme de ação somarem no mesmo lugar.
-const TV_GENRE_MERGE = {
-  10759: [28, 12],    // Ação e aventura → Ação, Aventura
-  10765: [878, 14],   // Ficção e fantasia → Ficção científica, Fantasia
-  10768: [10752],     // Guerra e política → Guerra
-  10762: [10751],     // Infantil → Família
-};
+import { GENRE_NAMES, asMovieGenres, genreIds } from './genres.js';
 
 const DNA_TOP_GENRES = 5;
 const DNA_MONTHS = 6;
@@ -20,15 +11,8 @@ const DNA_OTHER_NAMES = 5;
 
 const MONTH_NAMES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 
-// Aceita ids (genre_ids do /discover) ou objetos { id, name } (detalhes do título)
-export function genreIdsOf(entry) {
-  const raw = Array.isArray(entry?.genres) ? entry.genres : [];
-  const ids = raw
-    .map(g => (g && typeof g === 'object' ? g.id : g))
-    .map(Number)
-    .filter(id => Number.isInteger(id) && GENRE_NAMES[id]);
-  return [...new Set(ids.flatMap(id => TV_GENRE_MERGE[id] || [id]))];
-}
+// Gêneros de um título do histórico, com os de série juntados nos de filme
+export const genreIdsOf = entry => asMovieGenres(genreIds(entry?.genres));
 
 // Arredonda para inteiros que somam exatamente 100 (maior resto)
 export function roundToHundred(weights) {
