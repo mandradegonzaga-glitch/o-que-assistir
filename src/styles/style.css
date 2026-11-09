@@ -7236,21 +7236,30 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
     inset: 0;
     transition: transform 0.25s var(--ease-out), opacity 0.25s var(--ease-out);
 }
-.draw-ticket:nth-child(1) { transform: rotate(-6deg); animation: draw-riffle-left 0.6s var(--ease-in-out) infinite; }
-.draw-ticket:nth-child(2) { transform: rotate(5deg); animation: draw-riffle-right 0.6s var(--ease-in-out) infinite 0.3s; }
-.draw-ticket--top { perspective: 900px; animation: draw-bob 0.6s var(--ease-in-out) infinite; }
+/* Embaralhar como quem corta o baralho na mão: o ingresso de baixo sai pela lateral e cai por
+   cima, um de cada vez (a cada 0,3 s), alternando os lados; a ordem do monte gira o tempo todo.
+   Cada ingresso faz o mesmo ciclo de 0,9 s, defasado em um terço:
+   0–16% embaixo, saindo pela lateral · 16–33% por cima de todos, caindo · 33–66% no topo ·
+   66–100% no meio, afundando para baixo. O z-index troca enquanto ele está fora do monte. */
+.draw-ticket:nth-child(1) { transform: translate(0, 10px) rotate(-3deg); animation: draw-cut-left 0.9s var(--ease-in-out) infinite; }
+.draw-ticket:nth-child(2) { transform: translate(0, 5px) rotate(2deg); animation: draw-cut-right 0.9s var(--ease-in-out) infinite -0.6s; }
+.draw-ticket--top { perspective: 900px; animation: draw-cut-left 0.9s var(--ease-in-out) infinite -0.3s; }
 
-@keyframes draw-riffle-left {
-    0%, 100% { transform: rotate(-6deg) translateX(0); }
-    50% { transform: rotate(-12deg) translateX(-38%); }
+@keyframes draw-cut-left {
+    0%   { transform: translate(0, 10px) rotate(-3deg); z-index: 1; }
+    15%  { transform: translate(-62%, -4%) rotate(-16deg); z-index: 1; }
+    17%  { transform: translate(-62%, -4%) rotate(-16deg); z-index: 4; }
+    33%  { transform: translate(0, 0) rotate(0deg); z-index: 3; }
+    66%  { transform: translate(0, 5px) rotate(2deg); z-index: 2; }
+    100% { transform: translate(0, 10px) rotate(-3deg); z-index: 1; }
 }
-@keyframes draw-riffle-right {
-    0%, 100% { transform: rotate(5deg) translateX(0); }
-    50% { transform: rotate(12deg) translateX(38%); }
-}
-@keyframes draw-bob {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(0.96); }
+@keyframes draw-cut-right {
+    0%   { transform: translate(0, 10px) rotate(-3deg); z-index: 1; }
+    15%  { transform: translate(62%, -4%) rotate(16deg); z-index: 1; }
+    17%  { transform: translate(62%, -4%) rotate(16deg); z-index: 4; }
+    33%  { transform: translate(0, 0) rotate(0deg); z-index: 3; }
+    66%  { transform: translate(0, 5px) rotate(2deg); z-index: 2; }
+    100% { transform: translate(0, 10px) rotate(-3deg); z-index: 1; }
 }
 
 /* Faces */
@@ -7344,7 +7353,7 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
 .draw-stage.is-revealed .draw-ticket { animation: none; }
 .draw-stage.is-revealed .draw-ticket:nth-child(1) { opacity: 0; transform: rotate(-14deg) translateX(-30%); }
 .draw-stage.is-revealed .draw-ticket:nth-child(2) { opacity: 0; transform: rotate(14deg) translateX(30%); }
-.draw-stage.is-revealed .draw-ticket--top { transform: scale(1.06); }
+.draw-stage.is-revealed .draw-ticket--top { z-index: 5; transform: scale(1.06); }
 .draw-stage.is-revealed .draw-ticket__flip { transform: rotateY(180deg); }
 .draw-stage.is-revealed .draw-stage__caption { color: var(--text-primary); }
 

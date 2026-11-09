@@ -1,13 +1,14 @@
 // Etapa 5b do redesign: o sorteio vira um baralho de ingressos (decisão do usuário, 2026-11-08).
-// Enquanto a busca acontece, 3 ingressos com o verso da marca embaralham; quando o título chega,
+// Enquanto a busca acontece, 3 ingressos com o verso da marca embaralham (o de baixo sai pela lateral
+// e cai por cima, um de cada vez); quando o título chega,
 // o de cima vira e mostra o pôster (vibração curta no celular), e a página do título sobe por cima.
 // Ref.: "Cast Iron Card Back Shuffle" (Jake O'Connell) e "Movie Picker" (10Clouds), no Dribbble.
-// Tempos pela skill emil-design-eng: embaralhar no mínimo 0,7 s (abaixo disso o baralho só pisca),
+// Tempos pela skill emil-design-eng: embaralhar no mínimo 0,9 s (uma volta: os 3 ingressos passam por cima),
 // virar 450 ms (algo que já está na tela e muda: curva de entrada e saída), pausa de 250 ms para ler,
 // e o palco some em 200 ms enquanto a gaveta do título sobe.
 // Com "reduzir movimento", nada disso: o título abre direto, como antes.
 
-export const DRAW_TIMING = { shuffleMin: 700, flip: 450, hold: 250, fade: 200, posterWait: 1500 };
+export const DRAW_TIMING = { shuffleMin: 900, flip: 450, hold: 250, fade: 200, posterWait: 1500 };
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
