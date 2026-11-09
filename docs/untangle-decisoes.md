@@ -33,7 +33,8 @@ Status: [ ] a fazer · [x] feito · [-] descartado (com o motivo).
 - [x] Detalhes do título por uma função só na api (`titleDetails(type, id)`); e2e prova 1 pedido por filme aberto.
   - Filme aberto faz 2 pedidos (`titleModal.js:38` e `fetchDetails`); `ticket.js` copia os parâmetros para acertar o cache;
     `/${endpoint}/${id}` repetido em discover, match, matchHistory.
-- [ ] `media_type` normalizado quando o item entra; `withDetails` sem o parâmetro `endpoint`.
+- [x] `media_type` normalizado quando o item entra (`pickDraw`, `abrirModal`); `withDetails` sem o parâmetro `endpoint`.
+      O ingresso continua com `titleKind` (precisa distinguir dorama pelo país, que é outra regra).
 
 ## 4. Gravação conta/convidado: um store por coleção
 - [ ] Episódios ↔ biblioteca: uma `syncSeriesStatus` no store; o botão "Já Vi" só desenha.

@@ -276,10 +276,12 @@ async function loadProviders(f, type, signal, detailsPromise) {
     }
 }
 
-export async function abrirModal(f, { fromDraw = false } = {}) {
+export async function abrirModal(item, { fromDraw = false } = {}) {
+    // O tipo fica no próprio título aberto: quem o lê depois (histórico, episódios, listas) não adivinha
+    const mediaType = item.media_type || state.type;
+    const f = { ...item, media_type: mediaType };
     state.currentMovie = f;
     const signal = latestSignal('title');
-    const mediaType = f.media_type || state.type;
     const type = getTmdbEndpoint(mediaType);
 
     const titleEl = document.getElementById('m-title');

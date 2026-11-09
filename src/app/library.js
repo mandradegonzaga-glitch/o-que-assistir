@@ -38,7 +38,7 @@ export async function salvarHistorico(f) {
 
     if (session.user.history.find(h => h.id === f.id)) return;
 
-    const entry = createWatchedEntry(f, f.media_type || state.type);
+    const entry = createWatchedEntry(f, f.media_type);
 
     if (await addToHistory(entry)) {
         showToast("Marcado como visto!");
