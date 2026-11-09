@@ -1,5 +1,12 @@
 import { describe, it, expect } from '@jest/globals';
-import { computeSpinRotation, sliceAtPointer } from '../../src/domain/roulette.js';
+import { computeSpinRotation } from '../../src/domain/roulette.js';
+
+// Conferência independente: qual fatia fica sob o ponteiro (no topo) depois de girar `rotation` graus,
+// com a primeira fatia começando no topo e as seguintes em sentido horário
+function sliceAtPointer(rotation, itemCount) {
+  const angleAtPointer = ((-rotation % 360) + 360) % 360;
+  return Math.floor(angleAtPointer / (360 / itemCount));
+}
 
 describe('computeSpinRotation', () => {
   it('stops on the winner for every wheel size, slice and spin count', () => {

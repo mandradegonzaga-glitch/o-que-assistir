@@ -5,9 +5,11 @@ domain/ui/api/state/utils/sw/scripts). Cada correção vem acima dos problemas q
 Status: [ ] a fazer · [x] feito · [-] descartado (com o motivo).
 
 ## 1. Código morto
-- [ ] Apagar o que só os testes usam: `domain/history.js` inteiro, `isBadgeEarned`, `sliceAtPointer`,
-      `isSeriesCompleted`, `clearTmdbCache`, `storage.getRaw/setRaw`, wrappers `matchHistory.endpoint` e `ticket.withBusy`.
-      Testes passam a usar `computeBadgeStatuses` / `computeSpinRotation`.
+- [x] `domain/history.js` não era morto: o app refazia as mesmas regras à mão. `sorteioHistory` passou a usar
+      `createSorteioEntry`/`deduplicateHistory`/`trimHistory`; `salvarHistorico` usa `createWatchedEntry` (que ganhou `watchedAt`).
+- [x] Apagados `isBadgeEarned`, `isSeriesCompleted`, `storage.getRaw/setRaw`, `matchHistory.endpoint`, `ticket.withBusy`.
+      `sliceAtPointer` foi para o teste (é a conferência independente da roleta).
+- [-] `clearTmdbCache` fica: é o que isola os testes do cache.
 
 ## 2. Gêneros e tipos de mídia: uma tabela só
 - [ ] Mapa filme↔série único em `domain/genres.js` (com a lista de gêneros de série); o mesmo para "ids ou objetos {id}".

@@ -10,12 +10,6 @@ export const storage = {
   set(key, value) {
     try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
   },
-  getRaw(key, fallback = null) {
-    return localStorage.getItem(key) ?? fallback;
-  },
-  setRaw(key, value) {
-    localStorage.setItem(key, String(value));
-  },
   remove(key) {
     localStorage.removeItem(key);
   }

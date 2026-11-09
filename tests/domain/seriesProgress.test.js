@@ -2,7 +2,6 @@ import { describe, it, expect } from '@jest/globals';
 import {
   getNextEpisode,
   calcProgressPercent,
-  isSeriesCompleted,
   buildEpisodeKey,
   parseEpisodeKey,
 } from '../../src/domain/seriesProgress.js';
@@ -120,34 +119,5 @@ describe('calcProgressPercent', () => {
 
   it('retorna 0 para série sem episódios', () => {
     expect(calcProgressPercent(new Set(), [], 1)).toBe(0);
-  });
-});
-
-// ---------------------------------------------------------------------------
-// isSeriesCompleted
-// ---------------------------------------------------------------------------
-describe('isSeriesCompleted', () => {
-  it('retorna false se nada foi assistido', () => {
-    expect(isSeriesCompleted(new Set(), allSeasons, 1)).toBe(false);
-  });
-
-  it('retorna false se parcialmente assistido', () => {
-    const w = watched([1, 1]);
-    expect(isSeriesCompleted(w, allSeasons, 1)).toBe(false);
-  });
-
-  it('retorna true se todos os episódios foram assistidos', () => {
-    const w = watched([1, 1], [1, 2], [1, 3], [2, 1], [2, 2]);
-    expect(isSeriesCompleted(w, allSeasons, 1)).toBe(true);
-  });
-
-  it('retorna false para série sem seasons (indefinido)', () => {
-    expect(isSeriesCompleted(new Set(), [], 1)).toBe(false);
-  });
-
-  it('retorna true para série de 1 ep com esse ep assistido', () => {
-    const singleEp = [{ season_number: 1, episodes: [{ season_number: 1, episode_number: 1 }] }];
-    const w = watched([1, 1]);
-    expect(isSeriesCompleted(w, singleEp, 1)).toBe(true);
   });
 });

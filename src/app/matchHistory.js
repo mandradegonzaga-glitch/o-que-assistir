@@ -27,11 +27,10 @@ export function recordMatch({ partner, type, ids }) {
   save(addMatchEntry(load(), { at: new Date().toISOString(), with: partner, type, ids }));
 }
 
-const endpoint = type => (getTmdbEndpoint(type));
 
 // Títulos de uma partida: do cache do TMDB quando já foram vistos. Um que falhe some da linha, sem quebrar as outras.
 async function loadTitles(entry) {
-  const loaded = await Promise.all(entry.ids.map(id => tmdbGet(`/${endpoint(entry.type)}/${id}`).catch(() => null)));
+  const loaded = await Promise.all(entry.ids.map(id => tmdbGet(`/${getTmdbEndpoint(entry.type)}/${id}`).catch(() => null)));
   return loaded.filter(Boolean);
 }
 

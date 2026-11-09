@@ -16,8 +16,9 @@ import { pluralize } from '../utils/format.js';
 import { IMG_URL } from '../config/constants.js';
 import { CLOSE_ICON, posterImg } from '../ui/icons.js';
 import { TV_ICON } from '../ui/icons.js';
-import { getYear, getTitle, toLibraryItem } from '../domain/mediaItem.js';
+import { toLibraryItem } from '../domain/mediaItem.js';
 import { emit, on } from '../state/events.js';
+import { createWatchedEntry } from '../domain/history.js';
 import { registerActions } from '../ui/actions.js';
 
 // Só adiciona (nunca tira) e devolve quantos entraram. Usado pela lista do Match.
@@ -37,15 +38,7 @@ export async function salvarHistorico(f) {
 
     if (session.user.history.find(h => h.id === f.id)) return;
 
-    const entry = {
-        id: f.id,
-        title: getTitle(f),
-        poster: f.poster_path,
-        type: f.media_type || state.type,
-        year: getYear(f),
-        genres: f.genres ? f.genres.map(g => g.id) : f.genre_ids,
-        watchedAt: new Date().toISOString() // o Supabase grava o próprio watched_at; este é só para o estado local
-    };
+    const entry = createWatchedEntry(f, f.media_type || state.type);
 
     if (await addToHistory(entry)) {
         showToast("Marcado como visto!");

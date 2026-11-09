@@ -550,7 +550,6 @@ function preparedFor(movie) {
   return prepared.promise;
 }
 
-const withBusy = (button, task, label = 'Preparando…') => whileBusy(button, task, { label });
 
 // Atalho de colar de cada sistema
 const PASTE_KEYS = /Mac|iPhone|iPad/.test(navigator.userAgentData?.platform || navigator.platform || '') ? 'Cmd+V' : 'Ctrl+V';
@@ -558,7 +557,7 @@ const PASTE_KEYS = /Mac|iPhone|iPad/.test(navigator.userAgentData?.platform || n
 function gerarIngresso() {
   const movie = state.currentMovie;
   if (!movie) return Promise.resolve();
-  return withBusy(document.getElementById('btn-ingresso'), async () => {
+  return whileBusy(document.getElementById('btn-ingresso'), async () => {
     try {
       const { blob, name } = await preparedFor(movie);
       download(blob, name);
@@ -567,7 +566,7 @@ function gerarIngresso() {
       console.error('Erro ao gerar ingresso:', e);
       showToast('Não foi possível gerar o ingresso. Tente de novo.', 'error');
     }
-  }, 'Gerando…');
+  }, { label: 'Gerando…' });
 }
 
 const canShareFiles = file => isTouch() && Boolean(navigator.canShare?.({ files: [file] }));
@@ -595,7 +594,7 @@ function compartilhar() {
 function compartilharApps() {
   const movie = state.currentMovie;
   if (!movie) return Promise.resolve();
-  return withBusy(document.getElementById('btn-share-apps'), async () => {
+  return whileBusy(document.getElementById('btn-share-apps'), async () => {
     try {
       const { text, title, blob, name, file } = await preparedFor(movie);
       if (canShareFiles(file)) {
@@ -620,7 +619,7 @@ function compartilharApps() {
       console.error('Erro ao compartilhar:', e);
       showToast('Não foi possível compartilhar. Tente de novo.', 'error');
     }
-  });
+  }, { label: 'Preparando…' });
 }
 
 async function copyImage(blob) {
@@ -637,7 +636,7 @@ async function copyImage(blob) {
 function compartilharWhatsapp() {
   const movie = state.currentMovie;
   if (!movie) return Promise.resolve();
-  return withBusy(document.getElementById('btn-share-whatsapp'), async () => {
+  return whileBusy(document.getElementById('btn-share-whatsapp'), async () => {
     let ticket;
     try {
       ticket = await preparedFor(movie);
@@ -661,7 +660,7 @@ function compartilharWhatsapp() {
       : 'Ingresso baixado. Anexe a imagem na conversa do WhatsApp pelo clipe.');
     recordSocial('ticketsShared');
     trackChallenge('ticket');
-  });
+  }, { label: 'Preparando…' });
 }
 
 registerActions({

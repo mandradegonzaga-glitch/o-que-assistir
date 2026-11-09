@@ -60,12 +60,6 @@ export const BADGE_DEFINITIONS = DEFINITIONS.map(badge => ({
   check: (history, wins, progress) => badgeProgress(badge, history, wins, progress).current >= badge.goal,
 }));
 
-export function isBadgeEarned(badgeName, history, rouletteWins, progress) {
-  const badge = BADGE_DEFINITIONS.find(b => b.name === badgeName);
-  if (!badge) return false;
-  return badge.check(history, rouletteWins, progress);
-}
-
 export function computeBadgeStatuses(history, rouletteWins, progress) {
   return BADGE_DEFINITIONS.map(badge => {
     const { current, goal, counted } = badgeProgress(badge, history, rouletteWins, progress);

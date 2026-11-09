@@ -1,7 +1,10 @@
 import { describe, it, expect } from '@jest/globals';
 import {
-  isBadgeEarned, computeBadgeStatuses, BADGE_DEFINITIONS, isNightOwlWatch, badgeProgress
+  computeBadgeStatuses, BADGE_DEFINITIONS, isNightOwlWatch, badgeProgress
 } from '../../src/domain/badges.js';
+
+// Ganhou a conquista? Pelo mesmo cálculo que o perfil usa
+const isBadgeEarned = (name, ...args) => computeBadgeStatuses(...args).find(s => s.badge.name === name).unlocked;
 
 const makeHistory = (n) => Array.from({ length: n }, (_, i) => ({ id: i, genres: [], type: 'movie' }));
 
@@ -83,10 +86,6 @@ describe('isBadgeEarned', () => {
   it('Madrugador: false when everything was watched during the day', () => {
     const history = [{ id: 1, genres: [], type: 'movie', watchedAt: new Date(2026, 9, 28, 14, 0).toISOString() }];
     expect(isBadgeEarned('Madrugador', history, 0)).toBe(false);
-  });
-
-  it('returns false for unknown badge name', () => {
-    expect(isBadgeEarned('Inexistente', makeHistory(100), 100)).toBe(false);
   });
 });
 

@@ -1,12 +1,12 @@
 // Histórico de sorteios
 import { supabaseAddToSorteioHistory, supabaseClearSorteioHistory } from '../api/supabase.js';
 import { abrirModal, carregarDetalhes } from './titleModal.js';
-import { MAX_SORTEIO_HISTORY } from '../config/constants.js';
 import { isAccount, session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { confirmDialog } from '../ui/modals.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
-import { getTitle, tmdbImage } from '../domain/mediaItem.js';
+import { tmdbImage } from '../domain/mediaItem.js';
+import { createSorteioEntry, deduplicateHistory, trimHistory } from '../domain/history.js';
 import { on } from '../state/events.js';
 import { registerActions } from '../ui/actions.js';
 import { saveGuestSorteioHistory } from './guestLibrary.js';
@@ -19,23 +19,8 @@ export function openDrawn(item) {
 }
 
 async function addToSorteioHistory(item) {
-    const existingIndex = session.sorteioHistory.findIndex(h => h.id === item.id);
-    if (existingIndex !== -1) {
-        session.sorteioHistory.splice(existingIndex, 1);
-    }
-
-    const entry = {
-        id: item.id,
-        title: getTitle(item),
-        poster_path: item.poster_path,
-        media_type: item.media_type || state.type
-    };
-
-    session.sorteioHistory.unshift(entry);
-
-    if (session.sorteioHistory.length > MAX_SORTEIO_HISTORY) {
-        session.sorteioHistory.pop();
-    }
+    const entry = createSorteioEntry({ ...item, media_type: item.media_type || state.type });
+    session.sorteioHistory = trimHistory(deduplicateHistory(session.sorteioHistory, entry));
 
     session.sorteioHistoryIndex = 0;
     updateHistoryNav();

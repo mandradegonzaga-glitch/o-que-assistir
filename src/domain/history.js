@@ -19,7 +19,7 @@ export function createSorteioEntry(tmdbItem) {
   };
 }
 
-export function createWatchedEntry(tmdbItem, mediaType) {
+export function createWatchedEntry(tmdbItem, mediaType, now = new Date()) {
   const date = tmdbItem.release_date || tmdbItem.first_air_date || '';
   return {
     id: tmdbItem.id,
@@ -27,6 +27,7 @@ export function createWatchedEntry(tmdbItem, mediaType) {
     poster: tmdbItem.poster_path || null,
     type: mediaType || tmdbItem.media_type || 'movie',
     year: date.split('-')[0] || '',
-    genres: tmdbItem.genre_ids || tmdbItem.genres?.map(g => g.id) || []
+    genres: tmdbItem.genre_ids || tmdbItem.genres?.map(g => g.id) || [],
+    watchedAt: now.toISOString(),
   };
 }

@@ -39,7 +39,3 @@ export function calcProgressPercent(watchedKeys, seasons, seriesId) {
 
   return Math.floor((watched / total) * 100);
 }
-
-export function isSeriesCompleted(watchedKeys, seasons, seriesId) {
-  return calcProgressPercent(watchedKeys, seasons, seriesId) === 100;
-}
