@@ -155,3 +155,28 @@ test('no celular, tocar num resultado não deixa o hover preso', async ({ browse
   expect(hoverRules).toEqual([]);
   await context.close();
 });
+
+// Filme, Série e Dorama em pílulas numa fileira (no lugar das 3 caixas grandes)
+for (const [label, viewport] of [['celular', { width: 390, height: 844 }], ['estreito', { width: 320, height: 640 }], ['computador', { width: 1280, height: 800 }]]) {
+  test(`tipo em 3 pílulas numa fileira (${label})`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await enterAsGuest(page);
+    const pills = ['#btn-movie', '#btn-tv', '#btn-dorama'].map(id => page.locator(id));
+    const boxes = await Promise.all(pills.map(p => p.boundingBox()));
+    expect(new Set(boxes.map(b => Math.round(b.y))).size).toBe(1);
+    for (const b of boxes) expect(Math.round(b.height)).toBe(52);
+    expect(Math.abs(boxes[0].width - boxes[2].width)).toBeLessThan(1);
+    // Nenhum nome é cortado pela borda da pílula
+    for (const p of pills) {
+      const [pill, label] = [await p.boundingBox(), await p.locator('.card__label').boundingBox()];
+      expect(label.x).toBeGreaterThanOrEqual(pill.x);
+      expect(label.x + label.width).toBeLessThanOrEqual(pill.x + pill.width);
+    }
+    // A escolhida fica preenchida na cor do tipo e pode ser trocada pelas setas
+    await expect(pills[0]).toHaveCSS('background-color', 'rgb(255, 201, 77)');
+    await pills[0].focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(pills[1]).toHaveAttribute('aria-checked', 'true');
+    await expect(pills[1]).toHaveCSS('background-color', 'rgb(61, 214, 198)');
+  });
+}

@@ -3333,27 +3333,6 @@ button:focus-visible,
     outline-offset: 3px;
 }
 
-/* ==================== STAGGERED ANIMATIONS ==================== */
-.stagger-fade-in > * {
-    opacity: 0;
-    transform: translateY(8px);
-    animation: stagger-fade 0.3s var(--ease-out) forwards;
-}
-
-.stagger-fade-in > *:nth-child(1) { animation-delay: 0ms; }
-.stagger-fade-in > *:nth-child(2) { animation-delay: 40ms; }
-.stagger-fade-in > *:nth-child(3) { animation-delay: 80ms; }
-.stagger-fade-in > *:nth-child(4) { animation-delay: 120ms; }
-.stagger-fade-in > *:nth-child(5) { animation-delay: 160ms; }
-.stagger-fade-in > *:nth-child(6) { animation-delay: 200ms; }
-
-@keyframes stagger-fade {
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
 /* ==================== RESPONSIVE ==================== */
 /* iOS dá zoom automático ao focar campos com fonte < 16px */
 @media (pointer: coarse) {
@@ -7007,4 +6986,78 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
     .results-close__text {
         display: none;
     }
+}
+
+/* ===== Tipo de conteúdo em pílulas (redesign, depois da etapa 4) =====
+   Filme, Série e Dorama numa fileira de 3 colunas iguais (também no computador), no lugar das
+   3 caixas grandes: no celular, busca, tipo, filtros recolhidos e SORTEAR AGORA cabem na primeira tela.
+   A escolhida fica preenchida na cor do tipo; as outras, com o fundo dos cartões e o ícone na própria cor.
+   Seletores com os ids (:is) para vencer as regras antigas das caixas, que também usam os ids. */
+.options-grid.type-pills {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-sm);
+}
+
+.type-pills :is(#btn-movie, #btn-tv, #btn-dorama) {
+    flex-direction: row;
+    gap: var(--space-sm);
+    height: 52px;
+    min-height: 0;
+    padding: 0 var(--space-sm);
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle); /* inclusive a de baixo, que nas caixas era de 3px na cor do tipo */
+    border-radius: var(--radius-full);
+    box-shadow: none;
+    transition: background-color 0.2s var(--ease-out),
+                border-color 0.2s var(--ease-out),
+                color 0.2s var(--ease-out);
+}
+
+.type-pills :is(#btn-movie, #btn-tv, #btn-dorama)::before { content: none; }
+
+.type-pills :is(#btn-movie, #btn-tv, #btn-dorama) .icon,
+.type-pills :is(#btn-movie, #btn-tv, #btn-dorama).selected .icon {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    color: rgb(var(--type-rgb));
+    filter: none;
+}
+
+.type-pills :is(#btn-movie, #btn-tv, #btn-dorama) .card__label {
+    font-family: var(--font-family);
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.type-pills :is(#btn-movie, #btn-tv, #btn-dorama).selected {
+    background: rgb(var(--type-rgb));
+    border-color: rgb(var(--type-rgb));
+    box-shadow: none;
+}
+
+.type-pills :is(#btn-movie, #btn-tv, #btn-dorama).selected .icon,
+.type-pills :is(#btn-movie, #btn-tv, #btn-dorama).selected .card__label {
+    color: var(--accent-on);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .type-pills :is(#btn-movie, #btn-tv, #btn-dorama):not(.selected):hover {
+        transform: none;
+        background: var(--bg-elevated);
+        border-color: rgba(var(--type-rgb), 0.5);
+        box-shadow: none;
+    }
+    .type-pills :is(#btn-movie, #btn-tv, #btn-dorama):not(.selected):hover .card__label { color: var(--text-primary); }
+}
+
+/* Telas bem estreitas (até 360px): ícone em cima do nome, para "Dorama" caber sem cortar */
+@media (max-width: 360px) {
+    .type-pills :is(#btn-movie, #btn-tv, #btn-dorama) { flex-direction: column; gap: 2px; padding: 0 4px; }
+    .type-pills :is(#btn-movie, #btn-tv, #btn-dorama) .icon { width: 18px; height: 18px; }
+    .type-pills :is(#btn-movie, #btn-tv, #btn-dorama) .card__label { font-size: 0.75rem; line-height: 1.1; }
 }
