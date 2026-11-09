@@ -3,6 +3,9 @@ import { getMoodGenres } from './moods.js';
 
 export const MY_PROVIDERS_VALUE = 'minhas';
 
+// "Gêneros" que o TMDB não tem: viram palavra-chave (207317 = christmas, conferido no TMDB)
+export const SPECIAL_GENRES = { natal: { keywords: '207317' } };
+
 export function normalizeProviderIds(ids) {
   if (!Array.isArray(ids)) return [];
   return [...new Set(ids.map(String).filter(id => /^\d+$/.test(id)))];
@@ -28,13 +31,15 @@ export function buildDiscoverUrl(endpoint, filters = {}) {
 
   // Gênero escolhido à mão vence o clima
   const moodGenres = genre ? null : getMoodGenres(mood, endpoint);
-  const withGenres = genre || moodGenres?.with;
+  const special = SPECIAL_GENRES[genre];
+  const withGenres = (special ? '' : genre) || moodGenres?.with;
   const withoutGenres = [isDorama ? '16' : '', moodGenres?.without].filter(Boolean).join('|');
 
   // Dorama já é coreano: o país escolhido não vale aí
   if (isDorama) url += '&with_origin_country=KR';
   else if (country) url += `&with_origin_country=${country}`;
   if (withGenres)    url += `&with_genres=${withGenres}`;
+  if (special)       url += `&with_keywords=${special.keywords}`;
   if (withoutGenres) url += `&without_genres=${withoutGenres}`;
   if (provider) url += `&with_watch_providers=${provider}&watch_region=BR`;
   if (personId) url += `&with_people=${personId}`;

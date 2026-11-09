@@ -34,7 +34,7 @@ export function parseUrlState(search) {
   if (result.mode && !MODES.includes(result.mode)) delete result.mode;
   if (result.type && !TYPES.includes(result.type)) delete result.type;
   if (result.duration && !DURATIONS.includes(result.duration)) delete result.duration;
-  if (result.genre && !/^[\d,]+$/.test(result.genre)) delete result.genre;
+  if (result.genre && !/^([\d,]+|natal)$/.test(result.genre)) delete result.genre;
   if (result.provider && !/^(\d+|minhas)$/.test(result.provider)) delete result.provider;
   if (result.mood && !(result.mood in MOODS)) delete result.mood;
   if (result.country && !isCountry(result.country)) delete result.country;

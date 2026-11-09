@@ -114,3 +114,32 @@ export async function openLibrary(page) {
   const library = page.locator('#tab-mode-library');
   if ((await library.getAttribute('aria-selected')) !== 'true') await library.click();
 }
+
+// Filtros em pílulas (o <select> fica escondido, guardando o valor): toca na pílula do valor
+export async function pickChip(page, selectId, value) {
+  await expandFilters(page);
+  const chip = page.locator(`.chip-group[data-chips-for="${selectId}"] .chip[data-value="${value}"]`);
+  if ((await chip.count()) === 0) {
+    await page.locator(`.chip-field:has([data-chips-for="${selectId}"]) [data-chips-expand]`).click(); // "Ver todos"
+  }
+  await chip.click();
+}
+
+// Ator, parecido com, país e ano ficam em "Mais filtros"
+export async function openMoreFilters(page) {
+  await expandFilters(page);
+  const details = page.locator('#more-filters');
+  if (!(await details.evaluate(el => el.open))) await page.locator('#more-filters summary').click();
+}
+
+// Os Filtros Inteligentes começam recolhidos (o resumo mostra o que vale)
+export async function expandFilters(page) {
+  const toggle = page.locator('#filters-toggle');
+  if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
+}
+
+// Top 10 abre e fecha pela mesma pílula: só toca se a lista ainda não estiver aberta
+export async function showTop10(page) {
+  const top10 = page.locator('#btn-top10');
+  if ((await top10.getAttribute('aria-pressed')) !== 'true') await top10.click();
+}

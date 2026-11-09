@@ -1,4 +1,4 @@
-import { test, expect, enterAsGuest, lastDiscover } from './support/app.js';
+import { test, expect, enterAsGuest, lastDiscover, pickChip, openMoreFilters } from './support/app.js';
 
 test.describe('lançamentos e estreias', () => {
   test.beforeEach(async ({ page }) => {
@@ -7,7 +7,7 @@ test.describe('lançamentos e estreias', () => {
 
   test('filmes: o que chegou ao streaming no Brasil nos últimos 45 dias, com os filtros', async ({ page, tmdbUrls }) => {
     await enterAsGuest(page);
-    await page.locator('#input-genero').selectOption('27');
+    await pickChip(page, 'input-genero', '27');
     await page.locator('#btn-lancamentos').click();
     await expect(page.locator('.results-caption')).toHaveText('Chegaram ao streaming e ao aluguel nos últimos 45 dias');
     await expect(page.locator('#results-area .result-item')).toHaveCount(5);
@@ -127,6 +127,7 @@ test.describe('sessão às escuras', () => {
 test.describe('filtro por país', () => {
   test('vale no sorteio, no Top 10 e nos lançamentos, e fica no link', async ({ page, tmdbUrls }) => {
     await enterAsGuest(page);
+    await openMoreFilters(page);
     await page.locator('#input-country').selectOption('JP');
     await expect(page).toHaveURL(/[?&]pais=JP/);
     await page.locator('#btn-top10').click();
@@ -195,7 +196,7 @@ test.describe('cine-batalha', () => {
     await expect(page.locator('#modal-battle')).toBeHidden();
 
     count = 3;
-    await page.locator('#input-genero').selectOption('27'); // outro endereço: o cache do TMDB não responde
+    await pickChip(page, 'input-genero', '27'); // outro endereço: o cache do TMDB não responde
     await page.locator('#btn-batalha').click();
     await expect(page.locator('#toast')).toHaveText('Poucos títulos com esses filtros para uma batalha. Tente tirar algum filtro.');
     await expect(page.locator('#modal-battle')).toBeHidden();
@@ -279,7 +280,8 @@ test.describe('como usar', () => {
     await expect(page.locator('#battle-filters')).toHaveText('Filmes · todos os gêneros');
     await page.keyboard.press('Escape');
     await expect(page.locator('#modal-battle')).toBeHidden();
-    await page.locator('#input-genero').selectOption('27');
+    await pickChip(page, 'input-genero', '27');
+    await openMoreFilters(page);
     await page.locator('#input-country').selectOption('JP');
     await page.locator('#year-from').fill('1990');
     await page.locator('#btn-batalha').click();

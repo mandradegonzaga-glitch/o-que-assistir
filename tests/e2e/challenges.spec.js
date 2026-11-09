@@ -1,4 +1,4 @@
-import { test, expect, enterAsGuest, openApp, modal } from './support/app.js';
+import { test, expect, enterAsGuest, openApp, modal, showTop10 } from './support/app.js';
 import { dailyChallengeFor } from '../../src/domain/challenges.js';
 
 // Primeiro dia (a partir de 02/11/2026) cujo desafio é o pedido; meio-dia no horário local
@@ -13,7 +13,7 @@ function dayWith(id, guest) {
 }
 
 const openTitle = async (page, index) => {
-  await page.locator('#btn-top10').click();
+  await showTop10(page);
   await page.locator('#results-area .result-item').nth(index).click();
   await expect(modal(page)).toBeVisible();
 };

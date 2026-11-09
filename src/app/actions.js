@@ -3,7 +3,7 @@
 import { debounce } from '../utils/debounce.js';
 import { checkPasswordStrength, esqueceuSenha, loginAsGuest, loginUser, logout, registerUser, switchLoginTab } from './auth.js';
 import { adicionarBlacklist, limparBlacklist, removerBlacklist } from './blacklist.js';
-import { buscarDireto, buscarPessoa, limparPessoa, mostrarLancamentos, mostrarTop10, selectPerson, sortearFilme, sortearOutro, surpreendaMe } from './discover.js';
+import { buscarDireto, buscarPessoa, limparPessoa, mostrarLancamentos, mostrarTop10, selectPerson, sortearFilme, sortearOutro, surpreendaMe, fecharResultados } from './discover.js';
 import { matchCodeJoin, matchSendToFriend, matchContinue, matchDraw, matchEmailInvite, matchInvite, matchJoin, matchLive, matchLiveJoin, matchLiveSend, matchRestart, matchSendAnswer, matchSendInvite, matchStart, matchVote } from './match.js';
 import { filterProviders, onProviderChange, toggleMyProvider } from './myProviders.js';
 import { compartilhar, compartilharApps, compartilharWhatsapp, gerarIngresso } from './ticket.js';
@@ -127,6 +127,7 @@ const clickActions = {
   switchLoginTab: el => switchLoginTab(el.dataset.arg),
   switchMode: el => switchMode(el.dataset.arg),
   openLibraryTab: el => openLibraryTab(el.dataset.arg),
+  fecharResultados,
   switchTab: el => switchTab(el.dataset.arg),
   switchTabAndTop: el => {
     switchTab(el.dataset.arg);

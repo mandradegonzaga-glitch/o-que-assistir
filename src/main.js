@@ -16,12 +16,16 @@ import { initRoulette } from './app/roulette.js';
 import { initUrlState, openTitleFromUrl } from './app/urlSync.js';
 import { initModalA11y } from './ui/modals.js';
 import { hydrateIcons } from './ui/phosphor.js';
+import { initChipFilters, refreshMoreFilters } from './ui/chipFilters.js';
+import { initHomeSearch } from './app/discover.js';
 import { initTilt } from './ui/tilt.js';
 import { initAccessibility, initRovingGroups, initScrollButton, initYearInputs, setupInputWrappers } from './ui/navigation.js';
 import { session } from './state/appState.js';
 
 hydrateIcons();
 initActions();
+initChipFilters(); // antes de qualquer valor ser posto nos filtros: as pílulas acompanham
+initHomeSearch();
 initPwa();
 removeLegacyPasswords();
 showLegacyHint();
@@ -38,6 +42,7 @@ showLegacyHint();
   initAccessibility();
   initMyProviders(); // antes da URL: um link com filtro próprio vence a preferência
   initUrlState();
+  refreshMoreFilters({ openIfActive: true }); // link com ator, país ou ano: "Mais filtros" já aberto
   setupInputWrappers();
   if (!hasMatchInvite()) checkFirstVisit();
   initScrollButton();

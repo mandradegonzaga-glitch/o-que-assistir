@@ -1,4 +1,4 @@
-import { test, expect, enterAsGuest, modal, openApp, openLibraryTab } from './support/app.js';
+import { test, expect, enterAsGuest, modal, openApp, openLibraryTab, showTop10 } from './support/app.js';
 
 // Título da lista: ícone (o banco guarda o emoji; a tela mostra o ícone Phosphor) + nome
 const expectListTitle = async (title, icon, name) => {
@@ -12,7 +12,7 @@ const option = (page, name) => saveModal(page).locator('label', { hasText: name 
 
 const openTitle = async (page, index = 0) => {
   await page.locator('#tab-mode-discover').click(); // o Top 10 fica no Início
-  await page.locator('#btn-top10').click();
+  await showTop10(page);
   await page.locator('#results-area .result-item').nth(index).click();
   await expect(modal(page)).toBeVisible();
 };

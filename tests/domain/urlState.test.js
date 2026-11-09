@@ -45,3 +45,8 @@ describe('país na URL', () => {
     expect(serializeUrlState({ country: 'FR' })).toContain('pais=FR');
   });
 });
+
+it('o link aceita o gênero "natal" (palavra-chave)', () => {
+  expect(parseUrlState('?genero=natal').genre).toBe('natal');
+  expect(parseUrlState('?genero=natal1').genre).toBeUndefined();
+});

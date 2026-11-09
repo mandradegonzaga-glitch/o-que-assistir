@@ -265,12 +265,62 @@ export function showSkeletonLoader() {
     }
 }
 
+// Top 10 e Lançamentos são pílulas que abrem e fecham a lista: a que está aberta fica marcada,
+// e tocar nela de novo fecha. "Fechar" ao lado dos resultados faz o mesmo.
+const LIST_PILLS = ['btn-top10', 'btn-lancamentos'];
+
+// O que define a lista: tipo e filtros. Mudou algo desde que abriu? Tocar de novo atualiza em vez de fechar.
+const FILTER_IDS = ['input-genero', 'input-mood', 'input-provider', 'duration-select', 'year-from', 'year-to', 'input-country', 'input-similar'];
+let openListKey = null;
+const currentListKey = () => JSON.stringify([state.type, state.personId, ...FILTER_IDS.map(id => document.getElementById(id)?.value || '')]);
+
+function markOpenList(btn) {
+    LIST_PILLS.forEach(id => document.getElementById(id)?.setAttribute('aria-pressed', String(id === btn?.id)));
+    openListKey = btn ? currentListKey() : null;
+}
+
+function closeIfOpen(btn) {
+    if (btn.getAttribute('aria-pressed') !== 'true' || openListKey !== currentListKey()) return false;
+    fecharResultados();
+    return true;
+}
+
+// "Fechar" aparece só quando há resultados (de qualquer origem)
+export function initHomeSearch() {
+    const area = document.getElementById('results-area');
+    const close = document.getElementById('results-close');
+    if (!area || !close) return;
+    const sync = () => { close.hidden = area.children.length === 0; };
+    new MutationObserver(sync).observe(area, { childList: true });
+    sync();
+}
+
+export function fecharResultados() {
+    const open = LIST_PILLS.map(id => document.getElementById(id)).find(b => b?.getAttribute('aria-pressed') === 'true');
+    document.getElementById('results-area').innerHTML = '';
+    markOpenList(null);
+    (open || document.getElementById('direct-search'))?.focus();
+}
+
+// Carregando: só o nome muda e o ícone gira (o conteúdo do botão não é trocado)
+function setPillLoading(btn, on) {
+    const label = btn.querySelector('.list-pill__label');
+    if (on) {
+        btn.dataset.label = label.textContent;
+        label.textContent = 'Carregando...';
+    } else if (btn.dataset.label) {
+        label.textContent = btn.dataset.label;
+    }
+    btn.disabled = on;
+    btn.classList.toggle('is-loading', on);
+    btn.toggleAttribute('aria-busy', on);
+}
+
 export async function mostrarTop10() {
     const btn = document.getElementById('btn-top10');
     if (btn.disabled) return;
-    btn.innerHTML = ph('circle-notch', { weight: 'bold', cls: 'icon spin icon-16 icon-lead-6' }) + 'Carregando...';
-    btn.disabled = true;
-    btn.classList.add('loading');
+    if (closeIfOpen(btn)) return;
+    setPillLoading(btn, true);
 
     showSkeletonLoader();
 
@@ -287,13 +337,12 @@ export async function mostrarTop10() {
             minVotes: 100,
         }));
         renderResults(data.results.slice(0,10), true);
+        markOpenList(btn);
         showToast("Top 10 carregado!");
     } catch(e) {
         showToast("Erro ao carregar Top 10", "error");
     } finally {
-        btn.innerHTML = ph('fire', { weight: 'regular', cls: 'icon icon-18 icon-lead-6' }) + 'Ver Top 10';
-        btn.disabled = false;
-        btn.classList.remove('loading');
+        setPillLoading(btn, false);
     }
 }
 
@@ -301,9 +350,8 @@ export async function mostrarTop10() {
 export async function mostrarLancamentos() {
     const btn = document.getElementById('btn-lancamentos');
     if (btn.disabled) return;
-    btn.disabled = true;
-    btn.classList.add('loading');
-    btn.setAttribute('aria-busy', 'true');
+    if (closeIfOpen(btn)) return;
+    setPillLoading(btn, true);
     showSkeletonLoader();
 
     const endpoint = state.type === 'dorama' ? 'tv' : state.type;
@@ -323,14 +371,13 @@ export async function mostrarLancamentos() {
             ? `Chegaram ao streaming e ao aluguel nos últimos ${days} dias`
             : `${state.type === 'dorama' ? 'Doramas' : 'Séries'} que estrearam nos últimos ${days} dias`;
         renderResults((data.results || []).filter(hasLatinTitle).slice(0, 20), false, { caption, empty: 'Nenhum lançamento com esses filtros nas últimas semanas' });
+        markOpenList(btn);
     } catch (e) {
         console.error(e);
         document.getElementById('results-area').innerHTML = '';
         showToast('Erro ao carregar os lançamentos', 'error');
     } finally {
-        btn.disabled = false;
-        btn.classList.remove('loading');
-        btn.removeAttribute('aria-busy');
+        setPillLoading(btn, false);
     }
 }
 
@@ -393,6 +440,7 @@ export async function buscarDireto() {
         return;
     }
 
+    markOpenList(null); // a busca toma o lugar da lista que estava aberta
     area.innerHTML = '<p class="text-secondary grid-full">Buscando...</p>';
     area.style.display = 'grid';
 

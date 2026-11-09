@@ -1,7 +1,7 @@
-import { test, expect, enterAsGuest, modal, openLibrary, openLibraryTab } from './support/app.js';
+import { test, expect, enterAsGuest, modal, openLibrary, openLibraryTab, showTop10 } from './support/app.js';
 
 const openFirst = async page => {
-  await page.locator('#btn-top10').click();
+  await showTop10(page);
   await page.locator('#results-area .result-item').first().click();
   await expect(modal(page)).toBeVisible();
 };

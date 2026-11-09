@@ -483,3 +483,20 @@ Regras combinadas: cada etapa numa branch `redesign/etapa-N`, com commit e envio
 - Início · Biblioteca · Sortear · Amigos · Perfil na barra (Roleta e Match como cartões no Início) → o usuário preferiu manter Roleta e Match na barra.
 - Indicações no alto em faixa compacta, ou de volta ao botão ✨ → preferiu no fim.
 - Top 10 rolando para o lado no celular → a mesma área mostra a busca; fica para a etapa 4, quando a busca for para junto dos filtros.
+
+## D001-046 — Etapa 4: filtros em pílulas sobre os selects, recolhíveis, e busca no alto
+
+**Decisão:** escolhas do usuário em 2026-11-07, depois da captação no Dribbble.
+- À vista: Clima, Gênero (8 principais + Natal + "Ver todos"), Onde assistir com logos e Duração; ator, parecido com, país e ano em "Mais filtros", com contador.
+- A seção inteira recolhe (pedido depois da primeira versão: "fica muito poluído"); começa recolhida e mostra um resumo do que vale.
+- Busca no alto do Início, com Top 10 e Lançamentos como pílulas que abrem e fecham a lista, e um "Fechar".
+- Natal como "gênero": o TMDB não tem; usa a palavra-chave christmas (207317). Pega também filmes que só se passam no Natal (ex.: Terrifier 3).
+
+**Por que as pílulas ficam sobre os `<select>` escondidos:** a busca, o link (urlSync), as regras entre filtros e "Minhas plataformas" já liam e escreviam os selects; manter os selects como fonte do valor evitou reescrever tudo isso.
+
+**Alternativas consideradas:**
+- Tudo à vista (país com bandeiras, ano por décadas) → página longa demais.
+- Busca junto dos filtros ou onde estava → o usuário preferiu no alto.
+- Tocar de novo no Top 10 sempre fechar → se o tipo ou um filtro mudou, o toque atualiza a lista (fechar seria estranho).
+
+**Combinado para a próxima sessão:** Filme, Série e Dorama em 3 pílulas numa fileira (prévia aprovada em 2026-11-07, ver progress.md).

@@ -57,7 +57,8 @@ test.describe('listas: ordem', () => {
     await expect(page.getByRole('button', { name: 'Mover Filme Um para antes' })).toBeFocused();
     expect(await guestOrder(page)).toEqual([2, 3, 1]);
 
-    // Arrastar a alça do último (Filme Um) até o primeiro
+    // Arrastar a alça do último (Filme Um) até o primeiro. A lista no meio da tela: o mouse só alcança o que está à vista
+    await posters(page).nth(0).evaluate(el => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
     const handle = posters(page).nth(2).locator('.reorder__handle');
     const target = await posters(page).nth(0).boundingBox();
     const from = await handle.boundingBox();

@@ -1,4 +1,4 @@
-import { test, expect, enterAsGuest, modal, lastDiscover, LIST } from './support/app.js';
+import { test, expect, enterAsGuest, modal, lastDiscover, LIST, pickChip } from './support/app.js';
 
 test.describe('sorteio', () => {
   test('abre o modal e "Sortear outro" traz título novo, sem repetir', async ({ page }) => {
@@ -70,7 +70,7 @@ test.describe('sorteio', () => {
 test.describe('clima', () => {
   test('envia os gêneros do clima, por tipo', async ({ page, tmdbUrls }) => {
     await enterAsGuest(page);
-    await page.locator('#input-mood').selectOption('adrenalina');
+    await pickChip(page, 'input-mood', 'adrenalina');
     await page.locator('#btn-top10').click();
     await expect(page.locator('.result-item').first()).toBeVisible();
     expect(lastDiscover(tmdbUrls).searchParams.get('with_genres')).toBe('28|12');
@@ -86,15 +86,15 @@ test.describe('clima', () => {
     const mood = page.locator('#input-mood');
     const genre = page.locator('#input-genero');
 
-    await mood.selectOption('leve');
+    await pickChip(page, 'input-mood', 'leve');
     await expect(page).toHaveURL(/clima=leve/);
 
-    await genre.selectOption('28');
+    await pickChip(page, 'input-genero', '28');
     await expect(mood).toHaveValue('');
     await expect(page).not.toHaveURL(/clima=/);
     await expect(page).toHaveURL(/genero=28/);
 
-    await mood.selectOption('tensao');
+    await pickChip(page, 'input-mood', 'tensao');
     await expect(genre).toHaveValue('');
   });
 
@@ -190,8 +190,8 @@ test.describe('minhas plataformas', () => {
   test('"Escolher" abre o perfil, mantém o filtro e não vai para a URL', async ({ page }) => {
     await enterAsGuest(page);
     const select = page.locator('#input-provider');
-    await select.selectOption('8');
-    await select.selectOption('escolher');
+    await pickChip(page, 'input-provider', '8');
+    await page.locator('.chip-extras .chip[data-value="escolher"]').click(); // "Escolher minhas"
     await expect(page.locator('#modal-profile')).toBeVisible();
     await expect(page.locator('#my-providers')).toBeInViewport();
     await expect(select).toHaveValue('8');

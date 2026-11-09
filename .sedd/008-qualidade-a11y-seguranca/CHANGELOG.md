@@ -2,6 +2,23 @@
 
 All notable changes to this feature will be documented in this file.
 
+## [2026-11-07, redesign etapa 4] — branch `redesign/etapa-4` (ainda não publicado, sem commit)
+
+### Changed
+
+- Filtros em pílulas: clima, gênero, onde assistir (com os logos dos serviços) e duração; ator, parecido com, país e ano em "Mais filtros"
+- Os Filtros Inteligentes podem ser recolhidos e mostram um resumo do que está valendo
+- Busca, Top 10 e Lançamentos no alto do Início; a lista aberta pode ser fechada
+- Abas da Biblioteca em pílulas
+
+### Added
+
+- Gênero Natal
+
+### Fixed
+
+- O botão Top 10 ficava mais branco a cada toque
+
 ## [2026-11-07, redesign etapa 3] — branch `redesign/etapa-3` (ainda não publicado)
 
 ### Changed

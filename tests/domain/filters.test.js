@@ -129,3 +129,17 @@ describe('país de origem', () => {
     expect(dorama).not.toContain('FR');
   });
 });
+
+describe('Natal (palavra-chave, não gênero)', () => {
+  it('vira with_keywords e não manda with_genres', () => {
+    const url = buildDiscoverUrl('movie', { genre: 'natal' });
+    expect(url).toContain('&with_keywords=207317');
+    expect(url).not.toContain('with_genres');
+  });
+
+  it('vale também para séries e mantém o "sem animação" do dorama', () => {
+    const url = buildDiscoverUrl('tv', { genre: 'natal', isDorama: true });
+    expect(url).toContain('&with_keywords=207317');
+    expect(url).toContain('&without_genres=16');
+  });
+});

@@ -21,13 +21,14 @@
 ## Para retomar
 
 **REDESIGN EM ANDAMENTO (D001-042): ler isto primeiro (atualizado em 2026-11-07):**
-- **Onde está:** branches `redesign/etapa-1` (`f896607`), `redesign/etapa-2` (inclui a 1) e `redesign/etapa-3` (inclui a 2), no GitHub. Trabalhar a partir da `redesign/etapa-3` (a etapa 4 sai dela). **A produção continua no `3c0d797` (SW `v26`) e só será publicada quando as 5 etapas estiverem prontas.**
+- **Onde está:** branches `redesign/etapa-1` (`f896607`), `redesign/etapa-2` (inclui a 1) e `redesign/etapa-3` (`6c4184b`, inclui a 2), no GitHub. **A etapa 4 está na branch local `redesign/etapa-4`, SEM COMMIT** (pausa pedida em 2026-11-07): ao reabrir, perguntar se faz o commit. **A produção continua no `3c0d797` (SW `v26`) e só será publicada quando as 5 etapas estiverem prontas.**
 - **Backup:** etiqueta `backup-antes-redesign` e branch `backup/antes-redesign` (T001-123).
-- **Feito:** etapa 1 (T001-124: ícones Phosphor, linha única do título, toques de app, pôsteres), etapa 2 (T001-125: página do título) e etapa 3 (T001-128, D001-045: barra de baixo no celular, Biblioteca própria, Início com "Continue assistindo", indicações no fim).
+- **Feito:** etapa 1 (T001-124: ícones Phosphor, linha única do título, toques de app, pôsteres), etapa 2 (T001-125: página do título) etapa 3 (T001-128, D001-045: barra de baixo no celular, Biblioteca própria, Início com "Continue assistindo", indicações no fim) e etapa 4 (T001-129, D001-046: filtros em pílulas e recolhíveis, Natal, busca no alto, Top 10/Lançamentos que fecham).
 - **Próxima sessão, pedidos do usuário em 2026-11-07:**
   1. ✅ Feito em 2026-11-07 (T001-126, D001-043): barra de "Parecidos" igual à do Elenco e "Nos cinemas" / "Estreia nos cinemas em DD/MM". SW `v29`.
   2. ✅ Feito em 2026-11-07 (T001-127, D001-044): ingresso novo ("Pôster em destaque") com a imagem do topo em cadeia. SW `v30`.
-  3. ✅ Etapa 3 feita (T001-128, SW `v31`). **Etapas 4 e 5** (ver D001-042). Na etapa 4, também: abas da Biblioteca que quebram em 2 linhas no celular e, se a busca for para junto dos filtros, o Top 10 em fileira. **Antes de cada uma, fazer a captação no Dribbble** (já decidido; uma página por vez, ~10 s de pausa).
+  3. ✅ Etapas 3 e 4 feitas (T001-128, SW `v31`; T001-129, SW `v33`, sem commit).
+  4. **Próximo, já aprovado pelo usuário (prévia em 2026-11-07):** Filme, Série e Dorama em **3 pílulas numa fileira** no lugar das 3 caixas grandes (`.options-grid .card`): pílulas de 52px de altura, ícone de 22px + nome, as 3 em colunas iguais (largura toda também no computador), a escolhida preenchida na cor do tipo (`--accent-primary`, texto `--accent-on`), as outras com fundo `--bg-card` e o ícone na própria cor. Tirar a animação de entrada `stagger-fade-in` (começa com opacidade 0). Manter role="radio", setas e ids `btn-movie/tv/dorama`. Ganho: no celular, busca, tipo, filtros recolhidos e SORTEAR AGORA cabem na primeira tela. Depois: commit da etapa 4 e **etapa 5** (captação no Dribbble antes).
 - **Pendências de antes do redesign só DEPOIS do redesign inteiro** (decisão do usuário em 2026-11-07): ilustrações do vídeo, vídeo final, teste com 2 celulares.
 - **Ícones:** para acrescentar um, pôr o nome e o peso em `ICONS` de `scripts/build-icons.mjs` e rodar `node scripts/build-icons.mjs`.
 - **Testes:** a suíte e2e inteira às vezes falha 1 teste de tempo diferente por rodada com a máquina carregada; rodar o que falhou sozinho antes de concluir que quebrou algo.

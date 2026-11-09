@@ -357,6 +357,8 @@ Use este documento para verificar se todas as funcionalidades estão funcionando
 - [ ] Banner de instalação nunca cobre o FECHAR
 - [ ] Convidado: lista, vistos, roleta e episódios continuam depois de recarregar; ao criar conta, o app oferece trazer tudo (episódios inclusive)
 - [ ] Perfil mostra sequência, recorde, nível, XP e 26 conquistas em 4 categorias (Jornada, Gêneros, Hábitos, Social)
+- [ ] Filtros em pílulas (clima, gênero com Natal, logos de onde assistir, duração), "Mais filtros" com contador e seção recolhível com resumo
+- [ ] Busca, Top 10 e Lançamentos no alto do Início; a lista aberta fecha pela mesma pílula ou por "Fechar"
 - [ ] Celular: barra embaixo com Início, Roleta, Sortear (no meio, sorteia de qualquer tela), Match e Biblioteca; Biblioteca em tela própria
 - [ ] "Continue assistindo" no alto do Início, com o próximo episódio e o progresso; "Ver tudo" abre Em Andamento
 - [ ] Indicações do dia (no fim do Início; Filme, Série e Dorama, trocam à meia-noite; com 5+ títulos assistidos, pelos gêneros que a pessoa mais assiste, com "Porque você curte X"; com menos, iguais para todos) num painel com botão no canto inferior direito; abre sozinho só na primeira entrada do dia, nunca sobre login, boas-vindas ou link; bolinha quando há novas; Esc fecha; tocar abre o título
