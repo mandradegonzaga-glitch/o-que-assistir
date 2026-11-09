@@ -3,9 +3,15 @@ import { DORAMA_PARAMS, getTmdbEndpoint } from './mediaItem.js';
 import { localDay } from '../utils/date.js';
 
 export const MY_PROVIDERS_VALUE = 'minhas';
+// A última opção de "Onde assistir" não filtra: leva à escolha das plataformas no perfil
+export const CHOOSE_PROVIDERS_VALUE = 'escolher';
 
 // "Gêneros" que o TMDB não tem: viram palavra-chave (207317 = christmas, conferido no TMDB)
 const SPECIAL_GENRES = { natal: { keywords: '207317' } };
+
+// Valores que um filtro aceita (um link editado à mão pode trazer qualquer coisa)
+export const isGenreFilter = value => /^[\d,]+$/.test(value) || Object.hasOwn(SPECIAL_GENRES, value);
+export const isProviderFilter = value => /^\d+$/.test(value) || value === MY_PROVIDERS_VALUE;
 
 export function normalizeProviderIds(ids) {
   if (!Array.isArray(ids)) return [];

@@ -132,6 +132,20 @@ test.describe('Mais filtros', () => {
     await expect(page.locator('#more-filters-count')).toHaveText('1 ativo');
     await expect(page.locator('#input-country')).toBeVisible();
   });
+
+  test('link com pessoa mostra a pílula dela, conta como filtro e tirar limpa o link', async ({ page }) => {
+    await page.goto('/?pessoa=31&pessoaNome=Tom%20Hanks');
+    await loginAsGuest(page);
+    await expect(page.locator('#selected-person')).toBeVisible();
+    await expect(page.locator('#person-name')).toHaveText('Tom Hanks');
+    await expect(page.locator('#more-filters-count')).toHaveText('1 ativo');
+    await expect(page.locator('#filters-summary')).toHaveText(/Tom Hanks/);
+
+    await page.locator('#selected-person').click();
+    await expect(page.locator('#selected-person')).toBeHidden();
+    await expect(page.locator('#more-filters-count')).toBeHidden();
+    await expect(page).not.toHaveURL(/pessoa/);
+  });
 });
 
 test.describe('busca no alto do Início', () => {

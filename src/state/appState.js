@@ -2,7 +2,12 @@ import { normalizeProgress } from '../domain/progress.js';
 
 // Estado compartilhado entre os módulos. Fica em objetos porque import é somente leitura:
 // `session.currentUser = x` funciona em qualquer módulo; reatribuir um `let` importado, não.
-export const state = { mode: 'discover', type: 'movie', personId: null, personName: '', tab: 'watchlist', currentMovie: null, rouletteItems: [] };
+export const state = { mode: 'discover', type: 'movie', filters: emptyFilters(), tab: 'watchlist', currentMovie: null, rouletteItems: [] };
+
+// Os filtros de descobrir. Só app/filters.js (setFilters) troca; os outros leem.
+export function emptyFilters() {
+  return { genre: '', mood: '', provider: '', duration: '', similar: '', yearFrom: '', yearTo: '', country: '', personId: null, personName: '' };
+}
 
 // Episódios da série aberta na página do título
 export const emptyEpisodes = () => ({ seriesId: null, watchedKeys: new Set() });

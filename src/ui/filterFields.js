@@ -1,5 +1,5 @@
-// Os campos de filtro da tela de descobrir (ids no index.html). Quem lê filtros passa por aqui:
-// um campo novo entra só nesta lista.
+// Os campos de filtro da tela de descobrir (ids no index.html). Um campo novo entra nesta lista
+// e em `emptyFilters` (appState); os valores valem em `state.filters`, os campos só os mostram.
 export const FILTER_FIELDS = {
   genre: 'input-genero',
   mood: 'input-mood',
@@ -12,8 +12,3 @@ export const FILTER_FIELDS = {
 };
 
 export const filterField = key => document.getElementById(FILTER_FIELDS[key]);
-export const filterValue = key => filterField(key)?.value.trim() || '';
-
-export function filterValues() {
-  return Object.fromEntries(Object.keys(FILTER_FIELDS).map(key => [key, filterValue(key)]));
-}

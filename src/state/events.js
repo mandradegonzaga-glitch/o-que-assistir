@@ -6,7 +6,9 @@
 //   'mode:changed'    { mode }  tela principal (discover, roulette, match, library)
 //   'type:changed'    { type }  filme, série ou dorama
 //   'tab:changed'     { tab }   aba da biblioteca
-//   'filters:changed' {}        um filtro mudou por código (o que a pessoa digita a URL já escuta)
+//   'filters:changed' {}        um filtro mudou (pela pessoa, por um link ou pelo código); valores em state.filters
+//   'providers:changed' { select }  as opções de "Minhas plataformas" mudaram; select: passar a filtrar por elas
+//   'providers:choose' {}       a pessoa tocou em "Escolher/Editar minhas plataformas" no filtro
 //   'library:changed' {}        quero ver, vistos, episódios, reações ou listas mudaram
 //   'title:opened'    { item, mediaType }  a página de um título abriu (ou trocou de título)
 //   'title:closed'    {}        a página do título fechou

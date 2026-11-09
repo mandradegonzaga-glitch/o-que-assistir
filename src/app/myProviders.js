@@ -2,7 +2,7 @@
 import { readAccountData, writeAccountData } from './accountData.js';
 import { tmdbGet } from '../api/tmdb.js';
 import { isAccount } from '../state/appState.js';
-import { MY_PROVIDERS_VALUE, normalizeProviderIds } from '../domain/filters.js';
+import { CHOOSE_PROVIDERS_VALUE, MY_PROVIDERS_VALUE, normalizeProviderIds } from '../domain/filters.js';
 import { FEATURED_PROVIDERS, buildOtherProviders, matchesProviderSearch } from '../domain/providers.js';
 import { storage } from '../utils/storage.js';
 import { abrirPerfil } from './profile.js';
@@ -12,11 +12,9 @@ import { registerActions } from '../ui/actions.js';
 
 const STORAGE_KEY = 'my_providers';
 const LIST_TTL_MS = DAY_MS;
-const CHOOSE_VALUE = 'escolher';
 
 let otherProviders = [];
 let listLoaded = false;
-let lastProviderValue = '';
 let optionsReady = false;
 
 function providerSelect() {
@@ -28,34 +26,27 @@ function getMyProviders() {
 }
 
 // Valor do filtro "Onde" pronto para a busca: "minhas" vira a lista de ids
-export function resolveProviderFilter() {
-  const value = providerSelect().value;
+export function resolveProviderFilter(value) {
   return value === MY_PROVIDERS_VALUE ? getMyProviders().join('|') : value;
 }
 
-// A opção só existe com algo marcado; escolher plataformas passa a filtrar por elas
+// A opção só existe com algo marcado; escolher plataformas passa a filtrar por elas (app/filters.js)
 function syncProviderOption(selectIt) {
   const select = providerSelect();
   const existing = select.querySelector(`option[value="${MY_PROVIDERS_VALUE}"]`);
   const hasProviders = getMyProviders().length > 0;
 
-  select.querySelector(`option[value="${CHOOSE_VALUE}"]`).textContent = hasProviders ? 'Editar minhas plataformas...' : 'Escolher minhas plataformas...';
+  select.querySelector(`option[value="${CHOOSE_PROVIDERS_VALUE}"]`).textContent = hasProviders ? 'Editar minhas plataformas...' : 'Escolher minhas plataformas...';
 
   if (!hasProviders) {
-    const wasSelected = select.value === MY_PROVIDERS_VALUE;
     existing?.remove();
-    if (wasSelected) select.value = '';
-  } else {
-    if (!existing) {
-      const option = document.createElement('option');
-      option.value = MY_PROVIDERS_VALUE;
-      option.textContent = 'Minhas plataformas';
-      select.insertBefore(option, select.options[1] || null);
-    }
-    if (selectIt) select.value = MY_PROVIDERS_VALUE;
+  } else if (!existing) {
+    const option = document.createElement('option');
+    option.value = MY_PROVIDERS_VALUE;
+    option.textContent = 'Minhas plataformas';
+    select.insertBefore(option, select.options[1] || null);
   }
-  lastProviderValue = select.value;
-  emit('filters:changed');
+  emit('providers:changed', { select: selectIt && hasProviders });
 }
 
 function addProviderOption(value, label) {
@@ -65,17 +56,11 @@ function addProviderOption(value, label) {
   providerSelect().append(option);
 }
 
-// A última opção não é um filtro: leva para a escolha no perfil e mantém o filtro anterior
-function onProviderChange(select) {
-  if (select.value !== CHOOSE_VALUE) {
-    lastProviderValue = select.value;
-    return;
-  }
-  select.value = lastProviderValue;
-  emit('filters:changed');
+// "Escolher minhas plataformas" no filtro: o filtro fica como estava (app/filters.js) e o perfil abre nelas
+on('providers:choose', () => {
   abrirPerfil();
   document.getElementById('my-providers').closest('.profile-section').scrollIntoView({ block: 'start' });
-}
+});
 
 function providerChoice({ id, name }, mine) {
   const label = document.createElement('label');
@@ -174,14 +159,9 @@ function syncProvidersWithAccount() {
   }
 }
 
-// Um link pode trazer outro filtro: é ele que "Escolher..." deve manter
-export function rememberProviderValue() {
-  lastProviderValue = providerSelect().value;
-}
-
 export function initMyProviders() {
   FEATURED_PROVIDERS.forEach(p => addProviderOption(p.id, p.name));
-  addProviderOption(CHOOSE_VALUE, '');
+  addProviderOption(CHOOSE_PROVIDERS_VALUE, '');
   optionsReady = true;
   renderChoices();
   syncProviderOption(true);
@@ -192,7 +172,6 @@ registerActions({
     filterProviders,
   },
   change: {
-    onProviderChange,
     toggleMyProvider,
   },
 });

@@ -23,6 +23,7 @@ import { initModalA11y } from './ui/modals.js';
 import { hydrateIcons } from './ui/phosphor.js';
 import { initChipFilters, refreshMoreFilters } from './ui/chipFilters.js';
 import { initHomeSearch } from './app/discover.js';
+import { initFilters } from './app/filters.js';
 import { initTilt } from './ui/tilt.js';
 import { initAccessibility, initRovingGroups, initScrollButton, initYearInputs, setupInputWrappers } from './ui/navigation.js';
 import { isAccount, session } from './state/appState.js';
@@ -39,7 +40,8 @@ async function openLinksAfterEntering() {
 
 hydrateIcons();
 initActions();
-initChipFilters(); // antes de qualquer valor ser posto nos filtros: as pílulas acompanham
+initFilters();
+initChipFilters();
 initHomeSearch();
 initPwa();
 removeLegacyPasswords();

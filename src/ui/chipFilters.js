@@ -1,19 +1,17 @@
 // Filtros em pílulas (Clima, Gênero, Onde assistir, Duração) e o "Mais filtros".
-// Os <select> escondidos continuam guardando o valor: a busca, o link (urlSync) e as regras
-// que já existiam (gênero e clima se excluem, "Escolher minhas plataformas") seguem iguais.
-// As pílulas só mostram e trocam esse valor; qualquer mudança no select (pelo código ou pela
-// pessoa) redesenha as pílulas.
+// Tocar numa pílula escolhe no <select> escondido, como a pessoa faria; app/filters.js aplica as
+// regras e avisa 'filters:changed', e só aí as pílulas e o resumo se redesenham.
 import { tmdbGet } from '../api/tmdb.js';
 import { IMG_URL } from '../config/constants.js';
 import { FEATURED_PROVIDERS } from '../domain/providers.js';
 import { state } from '../state/appState.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
+import { on } from '../state/events.js';
 import { storage } from '../utils/storage.js';
 import { DAY_MS } from '../utils/date.js';
-import { FILTER_FIELDS, filterField, filterValue } from './filterFields.js';
-import { MY_PROVIDERS_VALUE } from '../domain/filters.js';
+import { FILTER_FIELDS, filterField } from './filterFields.js';
+import { CHOOSE_PROVIDERS_VALUE as CHOOSE, MY_PROVIDERS_VALUE } from '../domain/filters.js';
 
-const CHOOSE = 'escolher';
 const OPEN_KEY = 'filters_open'; // aberto ou recolhido, lembrado neste aparelho
 
 // Nomes curtos para caber na pílula; o resto usa o texto da própria opção
@@ -28,7 +26,6 @@ const LABELS = {
 const MAIN_GENRES = ['28', '35', '27', '10749', '18', '53', '878', '16', 'natal'];
 
 const providerLogos = new Map(); // id → caminho do logo no TMDB
-const valueDescriptor = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
 const renderers = new Map();
 
 function labelOf(selectId, option) {
@@ -58,7 +55,7 @@ function render(select, group) {
   } else if (id === 'input-genero') {
     more = '<button type="button" class="chip chip--more" data-chips-expand aria-expanded="true">Ver menos</button>';
   }
-  // "Escolher/Editar minhas plataformas" não é um filtro: leva ao perfil (onProviderChange cuida)
+  // "Escolher/Editar minhas plataformas" não é um filtro: leva ao perfil (app/filters.js cuida)
   const choose = options.find(o => o.value === CHOOSE);
   const chooseHtml = choose
     ? `<button type="button" class="chip chip--more" data-value="${CHOOSE}">${/^Editar/.test(choose.textContent) ? 'Editar minhas' : 'Escolher minhas'}</button>`
@@ -89,13 +86,7 @@ function enhance(group) {
   const draw = () => render(select, group);
   renderers.set(select.id, draw);
 
-  // Valor trocado pelo código (link, "gênero limpa clima", "Surpreenda-me"...): as pílulas acompanham
-  Object.defineProperty(select, 'value', {
-    configurable: true,
-    get() { return valueDescriptor.get.call(this); },
-    set(v) { valueDescriptor.set.call(this, v); draw(); },
-  });
-  select.addEventListener('change', draw);
+  // As opções mudam sozinhas ("Minhas plataformas" aparece e some)
   new MutationObserver(draw).observe(select, { childList: true, subtree: true, characterData: true });
 
   const field = group.closest('.chip-field');
@@ -137,12 +128,12 @@ async function loadProviderLogos() {
 export function refreshMoreFilters({ openIfActive = false } = {}) {
   const details = document.getElementById('more-filters');
   if (!details) return;
-  const country = filterField('country');
+  const { personId, similar, yearFrom, yearTo } = state.filters;
   const count = [
-    state.personId,
-    filterValue('similar'),
-    country && !country.disabled && country.value,
-    filterValue('yearFrom') || filterValue('yearTo'),
+    personId,
+    similar,
+    countryLabel(),
+    yearFrom || yearTo,
   ].filter(Boolean).length;
   const badge = document.getElementById('more-filters-count');
   badge.hidden = count === 0;
@@ -161,15 +152,18 @@ function activeLabels() {
     const option = filterField(key)?.selectedOptions[0];
     if (option && option.value) labels.push(labelOf(FILTER_FIELDS[key], option));
   });
-  if (state.personId) labels.push(state.personName);
-  const similar = filterValue('similar');
+  const { personName, similar, yearFrom: from, yearTo: to } = state.filters;
+  if (personName) labels.push(personName);
   if (similar) labels.push(`Parecido com ${similar}`);
-  const country = filterField('country');
-  if (country && !country.disabled && country.value) labels.push(country.selectedOptions[0].textContent.trim());
-  const from = filterValue('yearFrom');
-  const to = filterValue('yearTo');
+  labels.push(countryLabel());
   if (from || to) labels.push(`${from || '…'}–${to || '…'}`);
   return labels.filter(Boolean);
+}
+
+// Dorama já é coreano: o país fica desligado e não conta
+function countryLabel() {
+  const country = filterField('country');
+  return country && !country.disabled && country.value ? country.selectedOptions[0].textContent.trim() : '';
 }
 
 function updateSummary() {
@@ -192,26 +186,15 @@ function setFiltersOpen(open, { remember = true } = {}) {
 export function initChipFilters() {
   document.querySelectorAll('.chip-group[data-chips-for]').forEach(enhance);
 
-  const details = document.getElementById('more-filters');
-  if (details) {
-    const later = () => setTimeout(refreshMoreFilters, 0); // depois das ações da própria página
-    details.addEventListener('input', later);
-    details.addEventListener('change', later);
-    details.addEventListener('click', later);
-    const country = document.getElementById('input-country');
-    if (country) {
-      Object.defineProperty(country, 'value', {
-        configurable: true,
-        get() { return valueDescriptor.get.call(this); },
-        set(v) { valueDescriptor.set.call(this, v); later(); },
-      });
-    }
-  }
+  on('filters:changed', () => {
+    renderers.forEach(draw => draw());
+    refreshMoreFilters();
+  });
+  on('type:changed', () => refreshMoreFilters());
   // Recolhido por padrão: o resumo diz o que está valendo; abrir fica lembrado
   setFiltersOpen(storage.get(OPEN_KEY, false) === true, { remember: false });
   document.getElementById('filters-toggle')?.addEventListener('click', () => {
     setFiltersOpen(document.getElementById('filters-body').hidden);
   });
-  document.getElementById('filters-body')?.addEventListener('input', () => setTimeout(updateSummary, 0));
   loadProviderLogos();
 }

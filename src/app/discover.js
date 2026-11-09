@@ -11,10 +11,9 @@ import { escapeHtml } from '../utils/escapeHtml.js';
 import { MEDIA_KIND, getTmdbEndpoint, getTitle } from '../domain/mediaItem.js';
 import { debounce } from '../utils/debounce.js';
 import { personPhoto, posterImg } from '../ui/icons.js';
-import { emit } from '../state/events.js';
+import { on } from '../state/events.js';
 import { registerActions } from '../ui/actions.js';
-import { discoverRequest, fetchDiscover, fetchRandomPage, filtersKey } from './filters.js';
-import { filterValue } from '../ui/filterFields.js';
+import { discoverRequest, fetchDiscover, fetchRandomPage, filtersKey, setFilters } from './filters.js';
 import { openDrawn } from './sorteioHistory.js';
 import { whileBusy } from '../ui/busy.js';
 
@@ -61,22 +60,18 @@ function renderPersonSuggestions(results) {
     });
 }
 
-export function selectPerson(id, name) {
-    state.personId = id;
-    state.personName = name;
+function selectPerson(id, name) {
     document.getElementById('actor-input').value = '';
     document.getElementById('actor-list').style.display = 'none';
-    document.getElementById('selected-person').style.display = 'flex';
-    document.getElementById('person-name').innerText = name;
-    emit('filters:changed');
+    setFilters({ personId: id, personName: name });
 }
 
-function limparPessoa() {
-    state.personId = null;
-    state.personName = '';
-    document.getElementById('selected-person').style.display = 'none';
-    emit('filters:changed');
-}
+// A pílula da pessoa mostra o filtro, venha ele da busca ou de um link
+on('filters:changed', () => {
+    const { personId, personName } = state.filters;
+    document.getElementById('selected-person').style.display = personId ? 'flex' : 'none';
+    document.getElementById('person-name').innerText = personName;
+});
 
 async function sortearOutro() {
     const btn = document.getElementById('btn-sortear-outro');
@@ -141,7 +136,7 @@ function surpreendaMe() {
 // Lista para o sorteio: "Parecido com..." (recomendações do título informado) ou os filtros.
 // null quando o título de "Parecido com..." não existe (o aviso já foi dado).
 async function fetchDrawList(endpoint) {
-    const similarInput = filterValue('similar');
+    const similarInput = state.filters.similar;
 
     if (similarInput.length > 2) {
         const buscaData = await tmdbGet(`/search/${endpoint}`, { query: similarInput });
@@ -391,20 +386,11 @@ async function buscarDireto() {
     }
 }
 
-// Gênero e clima são alternativos: escolher um limpa o outro
-function clearOther(otherId) {
-    return el => {
-        if (!el.value) return;
-        document.getElementById(otherId).value = '';
-        emit('filters:changed');
-    };
-}
-
 registerActions({
     click: {
         buscarDireto,
         focusSearch: () => document.getElementById('direct-search').focus(),
-        limparPessoa,
+        limparPessoa: () => setFilters({ personId: null }),
         mostrarTop10,
         mostrarLancamentos,
         surpreendaMe,
@@ -415,10 +401,6 @@ registerActions({
     },
     input: {
         buscarPessoa: el => buscarPessoa(el.value),
-    },
-    change: {
-        clearMood: clearOther('input-mood'),
-        clearGenre: clearOther('input-genero'),
     },
     enter: {
         buscarDireto,

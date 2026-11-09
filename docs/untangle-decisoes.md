@@ -54,7 +54,10 @@ Status: [ ] a fazer · [x] feito · [-] descartado (com o motivo).
 - [x] Formato completo da sessão em `appState.js` (watchlist, lists, episodes sem `seasonData` morto, `EMPTY_PROGRESS`).
 
 ## 5. Filtros: um dono
-- [ ] `app/filters.js` com `getFilters()/setFilter()` (pessoa incluída), emite uma vez; URL, pílulas e provedores escutam.
+- [x] Valores em `state.filters` (pessoa incluída), trocados só por `setFilters` em `app/filters.js`, que aplica
+      gênero×clima, mostra nos campos e avisa `filters:changed` uma vez. Pílulas, resumo, URL e pílula da pessoa
+      escutam; "Minhas plataformas" avisa `providers:changed`/`providers:choose`. Sem remendo de `value`, sem
+      `setTimeout`, sem `rememberProviderValue`; `isGenreFilter`/`isProviderFilter` no domínio.
   - Patch de `select.value` no chipFilters + `setTimeout(0)`; ordem obrigatória em main.js; `rememberProviderValue`.
   - `urlState.js:37-38` escreve `natal`/`minhas` na regex.
 
