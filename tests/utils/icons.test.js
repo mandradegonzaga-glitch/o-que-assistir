@@ -1,4 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
+import { readFileSync } from 'node:fs';
 import { LIST_EMOJIS, LIST_TEMPLATES } from '../../src/domain/userLists.js';
 import { COLLECTIONS } from '../../src/domain/collections.js';
 import { listIcon, listIconInfo } from '../../src/ui/listIcons.js';
@@ -10,6 +11,15 @@ describe('ícones Phosphor', () => {
     expect(svg).toMatch(/^<svg class="ph" aria-hidden="true" focusable="false" viewBox="0 0 256 256"/);
     expect(ph('dice-five', { weight: 'fill' })).toBe('');
     expect(ph('nao-existe')).toBe('');
+  });
+
+  // ph() devolve vazio para nome não gerado: sem esta conferência, o ícone some sem aviso
+  it('todo ícone pedido no index.html foi gerado', () => {
+    const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
+    const missing = [...html.matchAll(/data-ph="([^"]+)"(?:\s+data-weight="([^"]+)")?/g)]
+      .filter(([, name, weight = 'duotone']) => ph(name, { weight }) === '')
+      .map(([, name, weight = 'duotone']) => `${name}:${weight}`);
+    expect(missing).toEqual([]);
   });
 
   it('todo emoji de lista, modelo e coleção tem ícone gerado, nome e cor', () => {
