@@ -1,10 +1,9 @@
 // Reações rápidas (🔥 😢 😂 🤯) no título aberto, quando ele já está em "Já assistidos".
 // Convidado guarda no aparelho; conta, no histórico do Supabase (os amigos veem no perfil).
-import { supabaseSetReaction } from '../api/supabase.js';
 import { nextReaction } from '../domain/reactions.js';
 import { isGuest, session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
-import { saveGuestHistory } from './guestLibrary.js';
+import { setReaction } from './libraryStore.js';
 import { emit, on } from '../state/events.js';
 import { registerActions } from '../ui/actions.js';
 
@@ -36,15 +35,10 @@ async function reactTitle(chosen) {
   const next = nextReaction(before, chosen);
   if (next === before) return;
 
-  entry.reaction = next;
-  emit('library:changed');
-  if (isGuest()) {
-    saveGuestHistory(session.user.history);
-    return;
-  }
-
   const mine = ++saving;
-  const result = await supabaseSetReaction(entry.id, next);
+  const pending = setReaction(entry.id, next);
+  emit('library:changed');
+  const result = await pending;
   if (result.success || mine !== saving) return;
   entry.reaction = before;
   emit('library:changed');

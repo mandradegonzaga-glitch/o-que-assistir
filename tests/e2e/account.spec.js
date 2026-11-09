@@ -38,6 +38,16 @@ test.describe('biblioteca', () => {
     expect(await page.evaluate(() => window.__db.watchlist.length)).toBe(0);
   });
 
+  test('se o banco não gravar o "ignorar", o título continua podendo ser sugerido', async ({ page }) => {
+    await openApp(page);
+    await page.evaluate(() => { window.__TEST.failInsert = true; });
+    await openFirstResult(page);
+    await page.locator('[data-action="adicionarBlacklist"]').click();
+    await expect(page.locator('#toast')).toHaveText('Não foi possível ignorar este título. Tente de novo.');
+    await expect(modal(page)).toBeVisible();
+    expect(await page.evaluate(() => window.__db.blacklist.length)).toBe(0);
+  });
+
   test('dorama sorteado aparece no próprio grupo', async ({ page }) => {
     await openApp(page);
     await page.locator('#btn-dorama').click();

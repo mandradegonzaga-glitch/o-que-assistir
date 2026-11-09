@@ -1,5 +1,5 @@
 // Cliente Supabase e todas as chamadas ao banco
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../config/constants.js';
+import { MAX_SORTEIO_HISTORY, SUPABASE_URL, SUPABASE_ANON_KEY } from '../config/constants.js';
 import { getTitle } from '../domain/mediaItem.js';
 import { buildEpisodeKey } from '../domain/seriesProgress.js';
 
@@ -514,8 +514,9 @@ export function supabaseDeleteTitleShare(shareId) {
 
 export function supabaseGetSorteioHistory(userId) {
     return run('buscar histórico de sorteios',
-        () => supabase.from(TABLE.SORTEIO).select('*').eq('user_id', userId).order('sorted_at', { ascending: false }).limit(50),
-        data => ({ history: data || [] }), { history: [] });
+        () => supabase.from(TABLE.SORTEIO).select('*').eq('user_id', userId).order('sorted_at', { ascending: false }).limit(MAX_SORTEIO_HISTORY),
+        data => ({ history: (data || []).map(h => ({ id: h.tmdb_id, title: h.title, poster_path: h.poster_path, media_type: h.media_type })) }),
+        { history: [] });
 }
 
 export function supabaseAddToSorteioHistory(userId, item) {

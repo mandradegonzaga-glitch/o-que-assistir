@@ -1,7 +1,7 @@
 // Quero Assistir e Já Assistidos. A cópia em memória (session.user) e o armazenamento (este aparelho,
 // para o convidado; o Supabase, para a conta) mudam juntos, e só depois que a gravação deu certo.
 // Quem adiciona ou tira passa por aqui. Não avisa 'library:changed': a ação da pessoa avisa uma vez, no fim.
-import { supabaseAddToHistory, supabaseAddToWatchlist, supabaseRemoveFromHistory, supabaseRemoveFromWatchlist } from '../api/supabase.js';
+import { supabaseAddToHistory, supabaseAddToWatchlist, supabaseRemoveFromHistory, supabaseRemoveFromWatchlist, supabaseSetReaction } from '../api/supabase.js';
 import { isGuest, session } from '../state/appState.js';
 import { clearSeries } from './episodeStore.js';
 import { saveGuestHistory, saveGuestWatchlist } from './guestLibrary.js';
@@ -55,4 +55,17 @@ export async function removeFromHistory(id, { clearEpisodes = false } = {}) {
   setHistory(session.user.history.filter(item => item.id !== id));
   if (clearEpisodes) await clearSeries(id);
   return true;
+}
+
+// Reação de um título de Já Assistidos. Muda na hora (a tela responde ao toque) e grava; a conta
+// devolve { success } para quem quiser desfazer se o banco recusar.
+export async function setReaction(id, reaction) {
+  const entry = session.user.history.find(item => item.id === id);
+  if (!entry) return { success: false };
+  entry.reaction = reaction;
+  if (isGuest()) {
+    saveGuestHistory(session.user.history);
+    return { success: true };
+  }
+  return supabaseSetReaction(id, reaction);
 }

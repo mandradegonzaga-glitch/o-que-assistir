@@ -46,7 +46,9 @@ Status: [ ] a fazer · [x] feito · [-] descartado (com o motivo).
 - [x] `library:changed`: a ação da pessoa avisa uma vez, no fim; stores e auxiliares não avisam.
 - [x] `listStore.js` no molde do libraryStore (create/rename/delete/setTitleInList/addTitlesToList/saveListOrder/changeList);
       limite de listas num lugar só (`canCreateList`); listShare usa `changeList`.
-- [ ] Stores para sorteios, blacklist, roleta, matchHistory, reações; cada um com `load()`; auth só chama.
+- [x] (parcial) Reações gravam pelo `libraryStore.setReaction`; "não tenho interesse" deixa de engolir falha do banco
+      (e2e novo); sorteios chegam da api já no formato do app e `useSorteioHistory` define lista e índice.
+- [-] Store separado para roleta e lista do Match: cada um tem uma gravação só, num lugar só; não compensa.
   - Três políticas diferentes de falha; reactions passa por cima do libraryStore.
   - Conversão de linha do banco (`tmdb_id→id`) repetida em supabase.js, userLists, auth → um `fromRow`.
 - [ ] Formato completo da sessão em `appState.js` (watchlist, lists, episodes sem `seasonData` morto, `EMPTY_PROGRESS`).

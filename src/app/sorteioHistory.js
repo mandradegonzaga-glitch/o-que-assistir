@@ -11,6 +11,12 @@ import { on } from '../state/events.js';
 import { registerActions } from '../ui/actions.js';
 import { saveGuestSorteioHistory } from './guestLibrary.js';
 
+// Lista carregada ao entrar (conta ou convidado): o mais recente fica selecionado
+export function useSorteioHistory(items) {
+    session.sorteioHistory = items;
+    session.sorteioHistoryIndex = items.length > 0 ? 0 : -1;
+}
+
 // Saiu num sorteio (descobrir, surpresa, batalha, sessão às escuras): entra no histórico e abre,
 // com "Sortear outro" à vista
 export function openDrawn(item) {

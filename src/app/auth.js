@@ -5,6 +5,7 @@
 import { supabaseGetBlacklist, supabaseGetCurrentUser, supabaseGetPreferences, supabaseGetProfile, supabaseGetSorteioHistory, supabaseGetWatchHistory, supabaseGetWatchlist, supabaseLogin, supabaseLogout, supabaseOnAuthStateChange, supabaseRegister, supabaseResetPassword, supabaseUpdatePreferences } from '../api/supabase.js';
 import { getGuestData } from './guestLibrary.js';
 import { loadAccountLists, loadGuestLists } from './listStore.js';
+import { useSorteioHistory } from './sorteioHistory.js';
 import { MIN_PASSWORD_LENGTH, isValidEmail, passwordLevel } from '../domain/passwordStrength.js';
 import { isAccount, isGuest, resetSession, session } from '../state/appState.js';
 import { emit } from '../state/events.js';
@@ -72,15 +73,7 @@ export async function loadUserData() {
     if (watchlistResult.success) session.user.watchlist = watchlistResult.watchlist;
     // Tela, tipo e aba de onde a pessoa parou, em qualquer aparelho
     if (prefsResult.success && prefsResult.preferences) rememberPreferences(prefsResult.preferences);
-    if (sorteioResult.success) {
-        session.sorteioHistory = sorteioResult.history.map(h => ({
-            id: h.tmdb_id,
-            title: h.title,
-            poster_path: h.poster_path,
-            media_type: h.media_type
-        }));
-        session.sorteioHistoryIndex = session.sorteioHistory.length > 0 ? 0 : -1;
-    }
+    if (sorteioResult.success) useSorteioHistory(sorteioResult.history);
     if (blacklistResult.success) session.blacklist = blacklistResult.blacklist.map(b => b.tmdb_id);
 
     emit('library:changed');
@@ -96,8 +89,7 @@ export function enterAsGuest() {
     session.user.watchlist = saved.watchlist;
     session.user.rouletteWins = saved.rouletteWins;
     loadGuestLists(saved.lists);
-    session.sorteioHistory = saved.sorteioHistory;
-    session.sorteioHistoryIndex = session.sorteioHistory.length > 0 ? 0 : -1;
+    useSorteioHistory(saved.sorteioHistory);
     session.blacklist = saved.blacklist;
 
     loginOverlay().style.display = 'none';

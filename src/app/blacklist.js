@@ -24,11 +24,14 @@ async function adicionarBlacklist() {
         return;
     }
 
-    session.blacklist.push(item.id);
-
     if (isAccount()) {
-        await supabaseAddToBlacklist(session.currentUserId, item);
+        if (!(await supabaseAddToBlacklist(session.currentUserId, item)).success) {
+            showToast('Não foi possível ignorar este título. Tente de novo.', 'error');
+            return;
+        }
+        session.blacklist.push(item.id);
     } else {
+        session.blacklist.push(item.id);
         saveGuestBlacklist(session.blacklist, [
             ...getGuestBlacklistDetails(),
             { tmdb_id: item.id, title: getTitle(item), poster_path: item.poster_path },
@@ -58,7 +61,10 @@ function removerBlacklist(tmdbId, btn) {
         },
         commit: async () => {
             if (isAccount()) {
-                await supabaseRemoveFromBlacklist(session.currentUserId, tmdbId);
+                if (!(await supabaseRemoveFromBlacklist(session.currentUserId, tmdbId)).success) {
+                    session.blacklist = before;
+                    showToast('Não foi possível voltar a sugerir este título. Tente de novo.', 'error');
+                }
             } else {
                 saveGuestBlacklist(session.blacklist, getGuestBlacklistDetails().filter(d => d.tmdb_id !== tmdbId));
             }
@@ -103,7 +109,10 @@ async function limparBlacklist() {
     if (!(await confirmDialog({ title: 'Limpar lista de ignorados', message: 'Os títulos voltarão a aparecer nos sorteios.', confirmLabel: 'Limpar', danger: true }))) return;
 
     if (isAccount()) {
-        await supabaseClearBlacklist(session.currentUserId);
+        if (!(await supabaseClearBlacklist(session.currentUserId)).success) {
+            showToast('Não foi possível limpar a lista de ignorados. Tente de novo.', 'error');
+            return;
+        }
     } else {
         saveGuestBlacklist([], []);
     }
