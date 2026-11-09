@@ -519,3 +519,19 @@ Regras combinadas: cada etapa numa branch `redesign/etapa-N`, com commit e envio
 - Trocar o "reduzir movimento" geral por regras só de esmaecer → exigiria revisar cada animação; adiado para a etapa 5.
 - Manter o aviso "Top 10 carregado!" → redundante (a lista aparece sob o dedo) e cobria os botões no celular.
 
+## D001-048 — Etapa 5a: gavetas próprias (sem biblioteca) e só a faixa do alto puxa
+
+**Data:** 2026-11-08 · **Tarefa:** T001-133
+
+**Contexto:** a skill `gestures` recomenda o Vaul para gavetas, mas ele é para React; o app é JavaScript puro.
+
+**Decisão:**
+- Gaveta própria e pequena (`src/ui/sheet.js`), seguindo as regras do Vaul: curva `cubic-bezier(0.32, 0.72, 0, 1)` em 500 ms, 1:1 durante o arraste, fecha por distância ou velocidade, fundo ligado ao progresso.
+- Abertura por transição + `@starting-style` em vez de `@keyframes`: o que o dedo pode tocar precisa ser interrompível.
+- Só a faixa do alto puxa. Arrastar a gaveta inteira exigiria `touch-action: none` no conteúdo (impede rolar) ou `touchmove` com `preventDefault` (que a skill mobile-native proíbe).
+- No celular, deslizar para o lado deixa de fechar janelas: a gaveta entra por baixo e deve sair por baixo.
+
+**Alternativas consideradas:**
+- Vaul via React só para as gavetas → peso e uma segunda forma de montar a interface.
+- Pôster do título como área de puxar → impedia rolar a página começando o gesto no pôster.
+

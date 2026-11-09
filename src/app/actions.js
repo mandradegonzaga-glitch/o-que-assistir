@@ -23,7 +23,8 @@ import { nextOnboarding } from './onboarding.js';
 import { abrirPerfil, alterarSenha, deletarConta, salvarPerfil } from './profile.js';
 import { addCurrentToRoulette, addRoletaItem, girarRoleta, goToRoulette, limparRoleta, removeRoletaItem } from './roulette.js';
 import { abrirDoHistorico, abrirHistoricoSorteios, limparHistoricoSorteios, navigateSorteio } from './sorteioHistory.js';
-import { abrirEpisodios, carregarDetalhes, fecharModal, goTitleSection, marcarVistoAtual, toggleSalvarAtual } from './titleModal.js';
+import { closeModalWithAnimation } from '../ui/modals.js';
+import { abrirEpisodios, carregarDetalhes, goTitleSection, marcarVistoAtual, toggleSalvarAtual } from './titleModal.js';
 import { openLibraryTab } from './homeRows.js';
 import { dismissInstall, installPWA } from './pwa.js';
 import { undoLast } from '../ui/feedback.js';
@@ -45,7 +46,7 @@ const clickActions = {
   carregarDetalhes: el => carregarDetalhes(Number(el.dataset.id), el.dataset.media),
   goTitleSection: el => goTitleSection(el.dataset.arg),
   clearInput: el => clearInput(el.dataset.arg),
-  closeModal: el => { document.getElementById(el.dataset.arg).style.display = 'none'; },
+  closeModal: el => closeModalWithAnimation(document.getElementById(el.dataset.arg)),
   compartilhar,
   compartilharApps,
   compartilharWhatsapp,
@@ -55,7 +56,7 @@ const clickActions = {
   desmarcarTodosEpisodios,
   dismissInstall,
   esqueceuSenha,
-  fecharModal,
+  fecharModal: () => closeModalWithAnimation(document.getElementById('modal-resultado')),
   friendAccept: el => friendAccept(el.dataset.arg),
   friendAdd,
   friendRemove: el => friendRemove(el.dataset.arg),

@@ -2,6 +2,18 @@
 
 All notable changes to this feature will be documented in this file.
 
+## [2026-11-08, redesign etapa 5a] — branch `redesign/etapa-5` (ainda não publicado)
+
+### Changed
+
+- No celular as janelas viram gavetas: sobem de baixo e fecham puxando para baixo pela alça
+- Fechar uma janela (tocar fora, Esc, Fechar) agora tem animação de saída
+- No celular, deslizar para o lado não fecha mais as janelas
+
+### Fixed
+
+- Esc logo depois de fechar uma janela por cima de outra não fechava a de baixo
+
 ## [2026-11-08, acabamento das etapas 1 a 4] — branch `redesign/etapa-4` (ainda não publicado)
 
 ### Changed

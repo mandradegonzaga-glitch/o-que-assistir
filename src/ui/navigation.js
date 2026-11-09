@@ -5,6 +5,7 @@ import { syncUrl } from '../app/urlSync.js';
 import { state } from '../state/appState.js';
 import { isHorizontalSwipe } from '../domain/gestures.js';
 import { closeModalWithAnimation, getActiveModal } from './modals.js';
+import { SHEET_QUERY } from './sheet.js';
 
 // NAVEGAÇÃO
 
@@ -215,6 +216,9 @@ document.addEventListener('touchend', (e) => {
 });
 
 export function handleSwipe() {
+    // No celular as janelas são gavetas: entram por baixo e fecham puxando para baixo (sheet.js).
+    // Deslizar para o lado fecharia por um caminho que a janela nunca fez.
+    if (window.matchMedia(SHEET_QUERY).matches) return;
     // Fecha só o diálogo do topo
     const modal = getActiveModal();
     if (modal?.classList.contains('modal-overlay')) closeModalWithAnimation(modal);

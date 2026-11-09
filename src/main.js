@@ -14,7 +14,8 @@ import { checkFirstVisit } from './app/onboarding.js';
 import { initPwa } from './app/pwa.js';
 import { initRoulette } from './app/roulette.js';
 import { initUrlState, openTitleFromUrl } from './app/urlSync.js';
-import { initModalA11y } from './ui/modals.js';
+import { closeModalWithAnimation, initModalA11y } from './ui/modals.js';
+import { initSheets } from './ui/sheet.js';
 import { hydrateIcons } from './ui/phosphor.js';
 import { initChipFilters, refreshMoreFilters } from './ui/chipFilters.js';
 import { initHomeSearch } from './app/discover.js';
@@ -37,6 +38,7 @@ showLegacyHint();
   // Quem recebe um convite de Match vota direto, sem passar pela tela de entrada
   if (!session.currentUser && hasMatchInvite()) loginAsGuest();
   initModalA11y();
+  initSheets({ onDismiss: closeModalWithAnimation });
   initTilt();
   renderLibrary();
   initAccessibility();

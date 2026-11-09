@@ -1,6 +1,7 @@
 // Modais acessíveis (foco, trap, Esc) e o diálogo de confirmação do app
 import { skipOnboarding } from '../app/onboarding.js';
 import { fecharModal } from '../app/titleModal.js';
+import { resetSheet, SHEET_QUERY } from './sheet.js';
 
 // Event listeners
 
@@ -15,8 +16,9 @@ window.addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => {
     // ESC fecha modais
     if (e.key === 'Escape') {
-        // Só o diálogo do topo: com a confirmação aberta sobre o perfil, Esc não fecha os dois
-        const top = getActiveModal();
+        // Só o diálogo do topo: com a confirmação aberta sobre o perfil, Esc não fecha os dois.
+        // Um que já está saindo (animação de fechar) não conta: o Esc vale para o de baixo.
+        const top = [...openModals].reverse().find(m => !m.classList.contains('is-closing'));
         if (top?.classList.contains('modal-overlay')) {
             closeModalWithAnimation(top);
         } else if (top?.id === 'onboarding-overlay') {
@@ -28,16 +30,29 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Tab') trapFocusInModal(e);
 });
 
+// Fechar pela pessoa (tocar fora, Esc, "Fechar", arrastar): a janela sai antes de sumir.
+// No celular a gaveta desce (sai pelo mesmo caminho por onde entrou); no computador, esmaece.
+// Saída mais curta que a entrada: quem fechou já decidiu. Fechamentos automáticos do app
+// continuam com style.display = 'none' direto (resposta do sistema não espera animação).
+// Antes: chamava uma animação "fadeOut" que não existia e só esperava 300 ms sem mexer nada.
+export const CLOSE_MS = { sheet: 280, dialog: 160 };
+
 export function closeModalWithAnimation(modal) {
-    modal.style.animation = 'fadeOut 0.3s ease';
+    if (!modal || modal.style.display !== 'flex' || modal.classList.contains('is-closing')) return;
+    const asSheet = modal.id !== 'modal-confirm' && window.matchMedia(SHEET_QUERY).matches;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const ms = reduce ? 0 : (asSheet ? CLOSE_MS.sheet : CLOSE_MS.dialog);
+    // Tira o que o arraste deixou no elemento: a saída continua de onde o dedo largou
+    resetSheet(modal);
+    modal.classList.add('is-closing');
     setTimeout(() => {
-        modal.style.animation = '';
-        if(modal.id === 'modal-resultado') {
+        modal.classList.remove('is-closing');
+        if (modal.id === 'modal-resultado') {
             fecharModal(); // também limpa trailer e estado de episódios
         } else {
             modal.style.display = 'none';
         }
-    }, 300);
+    }, ms);
 }
 
 // ================================================
