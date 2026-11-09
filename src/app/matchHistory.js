@@ -1,13 +1,13 @@
 // Lista do Match na tela inicial do Match. Conta: metadados do usuário (sincroniza entre aparelhos,
 // sem tabela nova). Convidado: neste aparelho. Cada pessoa da partida guarda a sua cópia.
 import { readAccountData, writeAccountData } from './accountData.js';
-import { tmdbGet } from '../api/tmdb.js';
+import { titleDetails } from '../api/tmdb.js';
 import { addMatchEntry, formatMatchDate, normalizeMatchHistory, removeMatchEntry } from '../domain/matchHistory.js';
 import { isAccount, session } from '../state/appState.js';
 import { isPendingRemoval, scheduleUndoable, showToast } from '../ui/feedback.js';
 import { getGuestMatchHistory, saveGuestMatchHistory } from './guestLibrary.js';
 import { addManyToWatchlist } from './library.js';
-import { getTmdbEndpoint, getTitle } from '../domain/mediaItem.js';
+import { getTitle } from '../domain/mediaItem.js';
 import { on } from '../state/events.js';
 import { registerActions } from '../ui/actions.js';
 import { posterEl } from '../ui/icons.js';
@@ -30,7 +30,7 @@ export function recordMatch({ partner, type, ids }) {
 
 // Títulos de uma partida: do cache do TMDB quando já foram vistos. Um que falhe some da linha, sem quebrar as outras.
 async function loadTitles(entry) {
-  const loaded = await Promise.all(entry.ids.map(id => tmdbGet(`/${getTmdbEndpoint(entry.type)}/${id}`).catch(() => null)));
+  const loaded = await Promise.all(entry.ids.map(id => titleDetails(entry.type, id).catch(() => null)));
   return loaded.filter(Boolean);
 }
 

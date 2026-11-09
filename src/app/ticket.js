@@ -1,6 +1,6 @@
 // Ingresso e compartilhar do título aberto no modal.
 // "Gerar ingresso" baixa só a imagem; "Compartilhar" abre as opções: outros apps (com ingresso, texto e link) e amigos do app.
-import { tmdbGet } from '../api/tmdb.js';
+import { titleDetails, tmdbGet } from '../api/tmdb.js';
 import { IMG_URL } from '../config/constants.js';
 import { buildQrMatrix } from '../domain/qr.js';
 import { shareText, titleKind, titleLink } from '../domain/titleShare.js';
@@ -199,11 +199,10 @@ function drawQr(ctx, text, x, y) {
 // Elenco, plataformas e duração: o modal já pediu os mesmos dados, então em geral vêm do cache
 export async function titleExtras(movie, kind) {
   const endpoint = kind === 'movie' ? 'movie' : 'tv';
-  const detailParams = endpoint === 'movie' ? { append_to_response: 'release_dates' } : {}; // igual ao modal
   const [credits, watch, details] = await Promise.allSettled([
     tmdbGet(`/${endpoint}/${movie.id}/credits`, {}),
     tmdbGet(`/${endpoint}/${movie.id}/watch/providers`, { language: null }),
-    tmdbGet(`/${endpoint}/${movie.id}`, detailParams),
+    titleDetails(kind, movie.id),
   ]);
   const cast = (credits.value?.cast || []).map(a => a.name).filter(Boolean).slice(0, 4);
   const providers = (watch.value?.results?.BR?.flatrate || [])

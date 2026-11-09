@@ -1,6 +1,7 @@
 // Cliente único do TMDB: monta a URL, faz cache, cancela pedidos obsoletos e padroniza erros.
 import { BASE_URL, CACHE_TTL_MS } from '../config/constants.js';
 import { MemoryCache } from '../utils/cache.js';
+import { getTmdbEndpoint } from '../domain/mediaItem.js';
 
 const responses = new MemoryCache(CACHE_TTL_MS);
 const controllers = new Map();
@@ -42,6 +43,13 @@ export async function tmdbFetch(url, { ttl = CACHE_TTL_MS, signal } = {}) {
 
 export function tmdbGet(path, params, options) {
   return tmdbFetch(buildTmdbUrl(path, params), options);
+}
+
+// Detalhes de um título (type: movie, tv ou dorama). Filmes trazem junto as datas de lançamento
+// (o aviso de cinema). Todo o app pede do mesmo jeito: o segundo pedido sai do cache.
+export function titleDetails(type, id, options) {
+  const endpoint = getTmdbEndpoint(type);
+  return tmdbGet(`/${endpoint}/${id}`, endpoint === 'movie' ? { append_to_response: 'release_dates' } : {}, options);
 }
 
 // Só o pedido mais recente de cada canal importa (ex.: digitar na busca, trocar de título no modal)

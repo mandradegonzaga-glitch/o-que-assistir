@@ -8,6 +8,14 @@ const openTitle = async (page, ref) => {
 
 // Página do título (etapa 2 do redesign): ações em ícones, abas e "Parecidos"
 test.describe('página do título', () => {
+  test('os detalhes do filme são pedidos ao TMDB uma vez só', async ({ page, tmdbUrls }) => {
+    await openTitle(page, 'movie-1');
+    await expect(page.locator('#m-facts')).toContainText('2h');
+    const details = tmdbUrls.filter(u => u.pathname.endsWith('/movie/1'));
+    expect(details).toHaveLength(1);
+    expect(details[0].searchParams.get('append_to_response')).toBe('release_dates');
+  });
+
   test('abas levam até cada parte; "Parecidos" abre outro título', async ({ page }) => {
     await openTitle(page, 'movie-1');
     await expect(page.locator('#m-title')).toHaveText('Filme Um');

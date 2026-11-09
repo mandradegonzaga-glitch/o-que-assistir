@@ -2,7 +2,7 @@
 // por link (uma de cada vez) ou ao vivo (cada uma no seu, ao mesmo tempo, via Supabase Realtime).
 // Os votos ficam só na memória: não dependem de conta nem de banco.
 import { openLiveRoom } from '../api/supabase.js';
-import { tmdbGet } from '../api/tmdb.js';
+import { titleDetails } from '../api/tmdb.js';
 import { isHorizontalSwipe } from '../domain/gestures.js';
 import { createLiveState, liveReduce, makeRoomCode, normalizeRoomCode, parseLiveMessage } from '../domain/liveMatch.js';
 import { MATCH_PARAMS, computeMatches, decodeMatchInvite, encodeMatchInvite, invitePayload, pickTitles, playerName } from '../domain/match.js';
@@ -16,7 +16,7 @@ import { recordMatch, renderMatchHistory } from './matchHistory.js';
 import { grantXp, recordSocial, trackChallenge } from './progress.js';
 import { carregarDetalhes } from './titleModal.js';
 import { selecionarTipo, switchMode } from '../ui/navigation.js';
-import { getTmdbEndpoint, getYear, getTitle } from '../domain/mediaItem.js';
+import { getYear, getTitle } from '../domain/mediaItem.js';
 import { appLink, setUrlParams, shareLink } from '../ui/share.js';
 import { registerActions } from '../ui/actions.js';
 import { posterImg } from '../ui/icons.js';
@@ -250,8 +250,7 @@ export async function openMatchFromUrl() {
   }
 
   try {
-    const endpoint = getTmdbEndpoint(invite.type);
-    const loaded = await Promise.all(invite.ids.map(id => tmdbGet(`/${endpoint}/${id}`).catch(() => null)));
+    const loaded = await Promise.all(invite.ids.map(id => titleDetails(invite.type, id).catch(() => null)));
     const titles = invite.ids.map((id, i) => ({ id, data: loaded[i] })).filter(x => x.data?.poster_path);
     if (titles.length < 2) throw new Error('títulos indisponíveis');
 
@@ -605,8 +604,7 @@ async function guestStart(msg) {
   stopJoinTimers();
   setText('match-live-join-status', 'Carregando os títulos…');
   try {
-    const endpoint = getTmdbEndpoint(msg.type);
-    const titles = await Promise.all(msg.ids.map(id => tmdbGet(`/${endpoint}/${id}`)));
+    const titles = await Promise.all(msg.ids.map(id => titleDetails(msg.type, id)));
     // Os votos são posições na lista: um título faltando desalinharia os dois lados
     if (titles.some(t => !t?.poster_path)) throw new Error('título sem pôster');
     if (!live) return; // saiu enquanto carregava

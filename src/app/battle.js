@@ -8,7 +8,7 @@ import { formatRating } from '../utils/format.js';
 import { withDetails } from './discover.js';
 import { discoverRequest, fetchRandomPage, filtersSummary } from './filters.js';
 import { shuffle } from '../utils/shuffle.js';
-import { getTmdbEndpoint, getYear, getTitle } from '../domain/mediaItem.js';
+import { getYear, getTitle } from '../domain/mediaItem.js';
 import { registerActions } from '../ui/actions.js';
 import { posterEl } from '../ui/icons.js';
 import { openDrawn } from './sorteioHistory.js';
@@ -163,8 +163,7 @@ async function battleOpenChampion() {
   const winner = champion(battle);
   if (!winner) return;
   document.getElementById('modal-battle').style.display = 'none';
-  const endpoint = getTmdbEndpoint(state.type);
-  openDrawn(await withDetails(winner, endpoint));
+  openDrawn(await withDetails(winner));
 }
 
 registerActions({

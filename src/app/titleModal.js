@@ -1,5 +1,5 @@
 // Modal de detalhes do título
-import { isAbortError, latestSignal, tmdbGet } from '../api/tmdb.js';
+import { isAbortError, latestSignal, titleDetails, tmdbGet } from '../api/tmdb.js';
 import { ph } from '../ui/phosphor.js';
 import { moveSeriesOutOfWatchlist, markWholeSeries, setSeriesSeenButton } from './episodes.js';
 import { salvarHistorico, toggleWatchlist } from './library.js';
@@ -35,7 +35,7 @@ export async function carregarDetalhes(id, type) {
     const endpoint = getTmdbEndpoint(type);
     try {
         // Dois cliques seguidos: vale o último, mesmo que a resposta do primeiro chegue depois
-        const data = await tmdbGet(`/${endpoint}/${id}`, {}, { signal: latestSignal('details') });
+        const data = await titleDetails(type, id, { signal: latestSignal('details') });
         // cópia: a resposta fica no cache. Dorama continua dorama (vai para o grupo certo em "Já assistidos")
         const f = { ...data, media_type: type === 'dorama' ? 'dorama' : endpoint };
         await abrirModal(f);
@@ -108,12 +108,6 @@ function renderFacts(f, type, details = {}) {
         : `<span>${escapeHtml(fact.text)}</span>`).join('<span class="modal-info__dot" aria-hidden="true">•</span>');
     const genres = facts.find(fact => fact.kind === 'genres');
     document.getElementById('m-facts').innerHTML = main + (genres ? `<span class="modal-info__genres">${escapeHtml(genres.text)}</span>` : '');
-}
-
-// Detalhes do TMDB, pedidos uma vez por título; filmes trazem junto as datas de lançamento (cinema)
-function fetchDetails(f, type, signal) {
-    const params = type === 'movie' ? { append_to_response: 'release_dates' } : {};
-    return tmdbGet(`/${type}/${f.id}`, params, { signal });
 }
 
 async function loadFacts(f, type, signal, detailsPromise) {
@@ -342,7 +336,7 @@ export async function abrirModal(f, { fromDraw = false } = {}) {
     document.getElementById('modal-resultado').style.display = 'flex';
     scroller().scrollTop = 0;
 
-    const detailsPromise = fetchDetails(f, type, signal);
+    const detailsPromise = titleDetails(mediaType, f.id, { signal });
     detailsPromise.catch(() => {}); // o erro é tratado por quem espera (fatos e onde assistir)
     await Promise.all([
         opened,

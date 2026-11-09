@@ -30,7 +30,7 @@ Status: [ ] a fazer · [x] feito · [-] descartado (com o motivo).
       e2e novo prova a divergência do Match (falha no código antigo).
   - `match.js:66-68` não volta à página 1 (filtros estreitos dão "Poucos títulos" e o sorteio funciona) — divergência real.
   - `battle.js:160-177` laço próprio; `domain/match.js` embaralha com sort.
-- [ ] Detalhes do título por uma função só na api (`titleDetails(type, id)`).
+- [x] Detalhes do título por uma função só na api (`titleDetails(type, id)`); e2e prova 1 pedido por filme aberto.
   - Filme aberto faz 2 pedidos (`titleModal.js:38` e `fetchDetails`); `ticket.js` copia os parâmetros para acertar o cache;
     `/${endpoint}/${id}` repetido em discover, match, matchHistory.
 - [ ] `media_type` normalizado quando o item entra; `withDetails` sem o parâmetro `endpoint`.

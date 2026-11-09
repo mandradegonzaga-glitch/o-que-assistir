@@ -1,5 +1,5 @@
 // Descobrir: filtros, sorteio, Top 10 e busca
-import { isAbortError, latestSignal, tmdbGet } from '../api/tmdb.js';
+import { isAbortError, latestSignal, titleDetails, tmdbGet } from '../api/tmdb.js';
 import { ph } from '../ui/phosphor.js';
 import { RELEASE_DAYS, hasLatinTitle } from '../domain/filters.js';
 import { GENRE_NAMES } from '../domain/genres.js';
@@ -103,9 +103,9 @@ export function pickDraw(lista, extra = () => true) {
 }
 
 // Detalhes completos (duração, temporadas, gêneros com nome); sem eles abre com o resumo
-export async function withDetails(item, endpoint) {
+export async function withDetails(item) {
     try {
-        return { ...item, ...await tmdbGet(`/${endpoint}/${item.id}`), media_type: item.media_type };
+        return { ...item, ...await titleDetails(item.media_type, item.id), media_type: item.media_type };
     } catch (e) {
         console.error('Erro ao carregar detalhes do sorteado:', e);
         return item;
@@ -115,7 +115,6 @@ export async function withDetails(item, endpoint) {
 // Surpreenda-me: gênero que a pessoa quase nunca vê, só títulos bem avaliados
 function surpreendaMe() {
     return whileBusy(document.getElementById('btn-surpresa'), async () => {
-        const endpoint = getTmdbEndpoint(state.type);
         const quality = SURPRISE_QUALITY[state.type];
         let chosenGenre = null;
         const sorteado = await drawReveal(async () => {
@@ -125,7 +124,7 @@ function surpreendaMe() {
                 const escolhido = pickDraw(await fetchRandomPage(request, { maxPage: 3 }));
                 if (!escolhido) continue;
                 chosenGenre = genre;
-                return withDetails(escolhido, endpoint);
+                return withDetails(escolhido);
             }
             return null;
         });
@@ -184,7 +183,7 @@ async function sortearFilme() {
                 showToast("Nada encontrado (ou tudo na sua blacklist)!", "error");
                 return null;
             }
-            return withDetails(escolhido, endpoint);
+            return withDetails(escolhido);
         });
         if (sorteado) {
             openDrawn(sorteado);

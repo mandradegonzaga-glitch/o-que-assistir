@@ -6,7 +6,7 @@ import { showToast } from '../ui/feedback.js';
 import { formatRating } from '../utils/format.js';
 import { pickDraw, withDetails } from './discover.js';
 import { discoverRequest, fetchRandomPage, filtersSummary } from './filters.js';
-import { MEDIA_KIND, getTmdbEndpoint } from '../domain/mediaItem.js';
+import { MEDIA_KIND } from '../domain/mediaItem.js';
 import { registerActions } from '../ui/actions.js';
 import { openDrawn } from './sorteioHistory.js';
 import { whileBusy } from '../ui/busy.js';
@@ -14,9 +14,8 @@ import { whileBusy } from '../ui/busy.js';
 let current = null;
 
 async function drawBlind() {
-  const endpoint = getTmdbEndpoint(state.type);
   const item = pickDraw(await fetchRandomPage(discoverRequest({ minVotes: 200 })), hasBlindOverview);
-  return item ? withDetails(item, endpoint) : null;
+  return item ? withDetails(item) : null;
 }
 
 function render(item) {
