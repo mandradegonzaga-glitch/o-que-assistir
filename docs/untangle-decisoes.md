@@ -51,7 +51,7 @@ Status: [ ] a fazer · [x] feito · [-] descartado (com o motivo).
 - [-] Store separado para roleta e lista do Match: cada um tem uma gravação só, num lugar só; não compensa.
   - Três políticas diferentes de falha; reactions passa por cima do libraryStore.
   - Conversão de linha do banco (`tmdb_id→id`) repetida em supabase.js, userLists, auth → um `fromRow`.
-- [ ] Formato completo da sessão em `appState.js` (watchlist, lists, episodes sem `seasonData` morto, `EMPTY_PROGRESS`).
+- [x] Formato completo da sessão em `appState.js` (watchlist, lists, episodes sem `seasonData` morto, `EMPTY_PROGRESS`).
 
 ## 5. Filtros: um dono
 - [ ] `app/filters.js` com `getFilters()/setFilter()` (pessoa incluída), emite uma vez; URL, pílulas e provedores escutam.

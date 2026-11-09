@@ -2,7 +2,7 @@
 import { ph } from '../ui/phosphor.js';
 import { canTrackEpisodes, clearSeries, getSeriesProgress, markEpisode, markEpisodes, unmarkEpisode, unmarkSeason } from './episodeStore.js';
 import { salvarHistorico } from './library.js';
-import { session, state } from '../state/appState.js';
+import { emptyEpisodes, session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { pluralize } from '../utils/format.js';
@@ -17,7 +17,7 @@ import { inHistory, inWatchlist, removeFromHistory, removeFromWatchlist } from '
 // Séries e doramas mostram a seção de episódios; fechar o título esquece o que estava carregado
 on('title:opened', ({ item }) => loadEpisodesSection(item));
 on('title:closed', () => {
-    session.episodes = { seriesId: null, watchedKeys: new Set(), seasonData: {} };
+    session.episodes = emptyEpisodes();
 });
 
 async function loadEpisodesSection(seriesData) {
