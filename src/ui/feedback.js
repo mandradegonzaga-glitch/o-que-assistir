@@ -1,59 +1,69 @@
 // Avisos: toast, "Desfazer" e confete
 import { BADGE_ICONS } from './badgeIcons.js';
+import { registerActions } from './actions.js';
+import { prefersReducedMotion } from './motion.js';
 
 
 // DESFAZER — remoção adiada: a interface tira o item na hora e a gravação definitiva só roda
-// depois de UNDO_MS (ou antes, se outra remoção começar ou a lista for redesenhada).
+// depois de UNDO_MS (ou antes, se outra remoção começar ou a página fechar).
 // "Desfazer"/Ctrl+Z cancela a gravação e restaura o item.
+//
+// scheduleUndoable({ message, hide, apply, undo, commit, after, focusAfter })
+//   hide: chave do item ('blacklist:123'), escondido de quem redesenha (isPendingRemoval) até o
+//         commit terminar ou o desfazer; o prefixo é o nome da lista, para não colidir
+//   apply: tira da tela; devolve true se o foco estava no item
+//   commit: grava de vez; after: redesenha quando o item já não está mais escondido
 
-export const UNDO_MS = 5000;
+const UNDO_MS = 5000;
+let pendingUndo = null;
+const hiddenItems = new Set();
 
-export let pendingUndo = null;
+export const isPendingRemoval = key => hiddenItems.has(key);
 
-// { commit, undo, focusAfter, timer }
-// Itens com remoção pendente: as listas os escondem ao redesenhar (os dados ainda existem no Supabase)
-
-export const pendingRemovals = new Set();
-
-// 'watchlist_obj:123', 'vistos_obj:123', 'blacklist:123'
-
-
-export function scheduleUndoable({ message, apply, undo, commit, focusAfter }) {
+export function scheduleUndoable({ message, hide, apply, undo, commit, after, focusAfter }) {
     flushPendingUndo();
-    const hadFocus = apply(); // apply devolve true se o foco estava no item removido
-    const entry = { commit, undo, focusAfter };
+    if (hide) hiddenItems.add(hide);
+    const hadFocus = apply();
+    const entry = { hide, commit, after, undo, focusAfter };
     entry.timer = setTimeout(() => {
         if (pendingUndo !== entry) return;
         pendingUndo = null;
         hideUndoToast(entry);
-        commit();
+        finish(entry);
     }, UNDO_MS);
     pendingUndo = entry;
     showUndoToast(message, hadFocus);
 }
 
-export function flushPendingUndo() {
+async function finish(entry) {
+    await entry.commit();
+    if (entry.hide) hiddenItems.delete(entry.hide);
+    entry.after?.();
+}
+
+function flushPendingUndo() {
     if (!pendingUndo) return;
     const entry = pendingUndo;
     pendingUndo = null;
     clearTimeout(entry.timer);
     hideUndoToast(entry);
-    entry.commit();
+    finish(entry);
 }
 
-export function undoLast() {
+function undoLast() {
     if (!pendingUndo) return false;
     const entry = pendingUndo;
     pendingUndo = null;
     clearTimeout(entry.timer);
     const wasOnButton = document.activeElement?.id === 'undo-toast-btn';
     document.getElementById('undo-toast').hidden = true;
+    if (entry.hide) hiddenItems.delete(entry.hide);
     entry.undo(wasOnButton);
     showToast('Remoção desfeita');
     return true;
 }
 
-export function showUndoToast(message, moveFocus) {
+function showUndoToast(message, moveFocus) {
     const box = document.getElementById('undo-toast');
     document.getElementById('undo-toast-msg').textContent = message;
     box.hidden = false;
@@ -62,7 +72,7 @@ export function showUndoToast(message, moveFocus) {
     if (moveFocus) document.getElementById('undo-toast-btn').focus();
 }
 
-export function hideUndoToast(entry) {
+function hideUndoToast(entry) {
     const box = document.getElementById('undo-toast');
     const wasOnButton = document.activeElement?.id === 'undo-toast-btn';
     box.classList.remove('show');
@@ -103,7 +113,7 @@ export function showToast(msg, type="success") {
 // CONFETTI EFFECT
 
 export function createConfetti() {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (prefersReducedMotion()) return;
     const colors = ['#ffc94d', '#3dd6c6', '#ff8fb8', '#9d8cff', '#ff9f5a'];
     const confettiCount = 50;
 
@@ -168,3 +178,9 @@ export function showAchievement({ name, desc, icon, kicker = 'Conquista desbloqu
         setTimeout(showNextAchievement, 0);
     }
 }
+
+registerActions({
+    click: {
+        undoLast,
+    },
+});

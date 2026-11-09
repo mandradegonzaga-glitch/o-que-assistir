@@ -5,23 +5,25 @@ import {
   supabaseListMatchInvites, supabaseListTitleShares, supabaseRemoveFriend, supabaseRequestFriend, supabaseSendMatchInvite, supabaseSendTitleShare,
   supabaseUpdateProfile, subscribeInbox,
 } from '../api/supabase.js';
-import { IMG_URL } from '../config/constants.js';
 import { BADGE_DEFINITIONS } from '../domain/badges.js';
 import { diffInbox, inboxSnapshot, summarizeNews } from '../domain/inbox.js';
 import { shareRow, titleKind } from '../domain/titleShare.js';
 import { MATCH_MIN_TITLES, compareTastes, joinNames } from '../domain/tasteMatch.js';
 import { reactionOf } from '../domain/reactions.js';
-import { session, state } from '../state/appState.js';
+import { isAccount, session, state } from '../state/appState.js';
 import { BADGE_ICONS } from '../ui/badgeIcons.js';
 import { switchMode } from '../ui/navigation.js';
 import { formatCount } from '../utils/format.js';
-import { shareLink } from './match.js';
-import { showToast } from '../ui/feedback.js';
-import { pendingRemovals, scheduleUndoable } from '../ui/feedback.js';
+import { isPendingRemoval, scheduleUndoable, showToast } from '../ui/feedback.js';
 import { confirmDialog } from '../ui/modals.js';
 import { notifyDevice, renderDeviceNotify } from './notifications.js';
 import { recordSocial, trackChallenge } from './progress.js';
 import { carregarDetalhes } from './titleModal.js';
+import { on } from '../state/events.js';
+import { appLink, setUrlParams, shareLink } from '../ui/share.js';
+import { registerActions } from '../ui/actions.js';
+import { parseInvitePayload } from '../domain/match.js';
+import { posterEl } from '../ui/icons.js';
 
 const FRIEND_PARAM = 'amigo';
 
@@ -36,7 +38,6 @@ let watchedUser = null;
 const INBOX_POLL_MS = 120000;
 let currentFriend = null;
 
-const hasAccount = () => Boolean(session.currentUserId) && session.currentUser !== 'guest';
 const accepted = () => friends.filter(f => f.status === 'accepted');
 const nameOf = friend => friend.display_name || friend.username;
 
@@ -74,7 +75,7 @@ function renderList(id, items) {
 }
 
 function renderFriends() {
-  const account = hasAccount();
+  const account = isAccount();
   document.getElementById('friends-guest').hidden = account;
   document.getElementById('friends-unavailable').hidden = !account || available;
   document.getElementById('friends-content').hidden = !account || !available;
@@ -118,26 +119,26 @@ function renderFriendTargets() {
   document.querySelectorAll('[data-friend-targets]').forEach(box => {
     const list = box.querySelector('.friend-targets');
     list.replaceChildren(...accepted().map(f => button(nameOf(f), 'friendSendMatch', f.other_id, 'btn-outline friend-target')));
-    box.hidden = !hasAccount() || !available || accepted().length === 0;
+    box.hidden = !isAccount() || !available || accepted().length === 0;
   });
 
-  const ready = hasAccount() && available && sharesAvailable;
+  const ready = isAccount() && available && sharesAvailable;
   const box = document.getElementById('share-friends');
   box.querySelector('.friend-targets').replaceChildren(...accepted().map(f => button(nameOf(f), 'friendSendTitle', f.other_id, 'btn-outline friend-target')));
   box.hidden = !ready || accepted().length === 0;
   const hint = document.getElementById('share-friends-hint');
   hint.hidden = ready && accepted().length > 0;
-  if (!hasAccount()) hint.textContent = 'Com uma conta, você também envia para amigos aqui do app.';
+  if (!isAccount()) hint.textContent = 'Com uma conta, você também envia para amigos aqui do app.';
   else if (!ready) hint.textContent = 'Envio para amigos indisponível no momento.';
   else hint.textContent = 'Adicione amigos para enviar títulos para eles aqui do app.';
 }
 
-export function openFriends() {
+function openFriends() {
   document.getElementById('modal-friends').style.display = 'flex';
   refreshFriends();
 }
 
-export async function toggleShareWithFriends(input) {
+async function toggleShareWithFriends(input) {
   const share = input.checked;
   const result = await supabaseUpdateProfile(session.currentUserId, { share_with_friends: share });
   if (!result.success) {
@@ -152,6 +153,10 @@ export async function toggleShareWithFriends(input) {
 // Uma atualização por vez: chamadas no meio de outra pedem mais uma rodada no fim
 let running = null;
 let queued = false;
+on('session:started', ({ kind }) => kind === 'account' && refreshFriends());
+// Sem conta: para de ouvir a caixa de entrada e limpa amigos, convites e indicações da tela
+on('session:ended', () => refreshFriends());
+
 export function refreshFriends() {
   if (running) {
     queued = true;
@@ -168,7 +173,7 @@ export function refreshFriends() {
 }
 
 async function loadFriends() {
-  if (!hasAccount()) {
+  if (!isAccount()) {
     friends = [];
     available = false;
     shares = [];
@@ -228,23 +233,18 @@ function stopWatching() {
 // Sem o SQL do tempo real (ou com a conexão caindo), as novidades aparecem ao voltar para o app
 // e numa conferência a cada 2 minutos
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && hasAccount() && available) refreshFriends();
+  if (!document.hidden && isAccount() && available) refreshFriends();
 });
+// Aba escondida não consulta: ao voltar, o visibilitychange acima já atualiza
 setInterval(() => {
-  if (hasAccount() && available) refreshFriends();
+  if (!document.hidden && isAccount() && available) refreshFriends();
 }, INBOX_POLL_MS);
 
 // Indicações recebidas: pôster, quem mandou, abrir e apagar
 function shareItem(item) {
   const row = document.createElement('li');
   row.className = 'friend-row share-row';
-  const image = document.createElement('img');
-  image.className = 'share-row__poster';
-  image.alt = '';
-  image.width = 40;
-  image.height = 60;
-  image.loading = 'lazy';
-  if (item.poster_path) image.src = IMG_URL + item.poster_path;
+  const image = posterEl(item.poster_path, { cls: 'share-row__poster', width: 40, height: 60 });
   const name = document.createElement('span');
   name.className = 'friend-row__name';
   name.textContent = item.title;
@@ -259,7 +259,7 @@ function shareItem(item) {
   return row;
 }
 
-const visibleShares = () => shares.filter(s => !pendingRemovals.has(`share:${s.id}`));
+const visibleShares = () => shares.filter(s => !isPendingRemoval(`share:${s.id}`));
 
 function renderShares() {
   const visible = visibleShares();
@@ -275,7 +275,7 @@ function focusAfterShares() {
   return heading.closest('[hidden]') ? document.querySelector('#modal-friends [role="dialog"]') : heading;
 }
 
-export async function friendSendTitle(el) {
+async function friendSendTitle(el) {
   const friendId = el.dataset.arg;
   const friend = friends.find(f => f.other_id === friendId);
   const movie = state.currentMovie;
@@ -300,7 +300,7 @@ export async function friendSendTitle(el) {
 
 // Abrir tira da caixa: o título abre por cima da lista (fechar volta para ela),
 // e de lá a pessoa salva na lista dela se quiser
-export async function friendShareOpen(id) {
+async function friendShareOpen(id) {
   const item = shares.find(s => s.id === id);
   if (!item) return;
   shares = shares.filter(s => s.id !== id);
@@ -311,35 +311,32 @@ export async function friendShareOpen(id) {
 }
 
 // Apagar tem "Desfazer" (e Ctrl+Z), como as outras remoções do app
-export function friendShareDelete(id) {
+function friendShareDelete(id) {
   const item = shares.find(s => s.id === id);
   if (!item) return;
-  const key = `share:${id}`;
   scheduleUndoable({
     message: `Indicação de ${item.title} apagada.`,
+    hide: `share:${id}`,
     apply: () => {
       const hadFocus = document.getElementById('title-shares').contains(document.activeElement);
-      pendingRemovals.add(key);
       renderShares();
       return hadFocus;
     },
     undo: (refocus) => {
-      pendingRemovals.delete(key);
       renderShares();
       if (refocus) document.querySelector(`#title-shares [data-action="friendShareOpen"][data-arg="${CSS.escape(id)}"]`)?.focus();
     },
     commit: async () => {
       const result = await supabaseDeleteTitleShare(id);
-      pendingRemovals.delete(key);
       if (result.success) shares = shares.filter(s => s.id !== id);
       else showToast('Não foi possível apagar a indicação. Tente de novo.', 'error');
-      renderShares();
     },
+    after: renderShares,
     focusAfter: focusAfterShares,
   });
 }
 
-export async function friendAdd() {
+async function friendAdd() {
   const input = document.getElementById('friend-username');
   const username = input.value.trim().replace(/^@/, '');
   if (!username) return;
@@ -371,19 +368,19 @@ async function requestFriendship(username) {
   return sent;
 }
 
-export async function friendAccept(id) {
+async function friendAccept(id) {
   const result = await supabaseAcceptFriend(id);
   showToast(result.success ? 'Amizade aceita!' : 'Não foi possível aceitar. Tente de novo.', result.success ? 'success' : 'error');
   await refreshFriends();
 }
 
-export async function friendRemove(id) {
+async function friendRemove(id) {
   const result = await supabaseRemoveFriend(id);
   if (!result.success) showToast('Não foi possível concluir. Tente de novo.', 'error');
   await refreshFriends();
 }
 
-export async function friendUnfriend(id) {
+async function friendUnfriend(id) {
   const friend = friends.find(f => f.friendship_id === id);
   const ok = await confirmDialog({
     title: 'Remover amizade',
@@ -398,24 +395,22 @@ export async function friendUnfriend(id) {
 }
 
 // Link que já chega com o usuário preenchido: é a forma mais fácil de adicionar alguém
-export function friendInvite() {
+function friendInvite() {
   const username = session.userProfile?.username;
   if (!username) return;
-  const url = `${location.origin}${location.pathname}?${FRIEND_PARAM}=${encodeURIComponent(username)}`;
+  const url = appLink(FRIEND_PARAM, username);
   shareLink(url, 'Vamos ser amigos no O Que Assistir? Assim dá para ver o que cada um assistiu e fazer Match.');
 }
 
 // Chamado depois do login: quem abriu o link confirma e pronto
 export async function openFriendLinkFromUrl() {
-  const url = new URL(location.href);
-  const username = url.searchParams.get(FRIEND_PARAM);
+  const username = new URLSearchParams(location.search).get(FRIEND_PARAM);
   if (!username) return;
   if (!session.currentUser) return; // a tela de entrada está aberta: volta aqui depois do login
 
-  url.searchParams.delete(FRIEND_PARAM);
-  history.replaceState(null, '', url);
+  setUrlParams({ [FRIEND_PARAM]: null });
   openFriends();
-  if (!hasAccount()) {
+  if (!isAccount()) {
     showToast('Crie uma conta para adicionar amigos.', 'warning');
     return;
   }
@@ -443,12 +438,7 @@ function titleCard(item) {
   // Reação do amigo (database/reactions.sql): selo no pôster e no nome lido
   const reaction = reactionOf(item.reaction);
   card.setAttribute('aria-label', reaction ? `${item.title} · ${reaction.label}` : item.title);
-  const image = document.createElement('img');
-  image.alt = '';
-  image.width = 500;
-  image.height = 750;
-  image.loading = 'lazy';
-  if (item.poster_path) image.src = IMG_URL + item.poster_path;
+  const image = posterEl(item.poster_path);
   const name = document.createElement('span');
   name.textContent = item.title;
   if (reaction) {
@@ -512,7 +502,7 @@ function renderCompatibility(name, history) {
   document.getElementById('friend-compat-text').textContent = parts.join(' ');
 }
 
-export async function friendOpen(friendId) {
+async function friendOpen(friendId) {
   const friend = friends.find(f => f.other_id === friendId);
   const result = await supabaseGetFriendProfile(friendId);
   if (!result.success || !result.profile) {
@@ -563,11 +553,11 @@ export async function friendOpen(friendId) {
   document.getElementById('modal-friend').style.display = 'flex';
 }
 
-export function friendUnfriendCurrent() {
+function friendUnfriendCurrent() {
   if (currentFriend?.friendshipId) friendUnfriend(currentFriend.friendshipId);
 }
 
-export function friendMatchCurrent() {
+function friendMatchCurrent() {
   document.getElementById('modal-friend').style.display = 'none';
   document.getElementById('modal-friends').style.display = 'none';
   switchMode('match');
@@ -587,7 +577,7 @@ function renderInbox(invites) {
     item.className = 'friend-row';
     const text = document.createElement('span');
     text.className = 'friend-row__name';
-    text.textContent = invite.payload.startsWith('ao-vivo:') ? `${invite.from_name} · ao vivo` : invite.from_name;
+    text.textContent = parseInvitePayload(invite.payload).live ? `${invite.from_name} · ao vivo` : invite.from_name;
     const open = button('Abrir', 'matchInboxOpen', invite.id);
     open.dataset.payload = invite.payload;
     item.append(text, open, button('Apagar', 'matchInboxDelete', invite.id));
@@ -595,8 +585,8 @@ function renderInbox(invites) {
   }));
 }
 
-export async function refreshInbox() {
-  if (!hasAccount() || !available) {
+async function refreshInbox() {
+  if (!isAccount() || !available) {
     renderInbox([]);
     return;
   }
@@ -605,15 +595,37 @@ export async function refreshInbox() {
   renderInbox(invites);
 }
 
-export async function matchInboxOpen(el) {
+async function matchInboxOpen(el) {
   await supabaseDeleteMatchInvite(el.dataset.arg);
-  const url = new URL(location.href);
-  const payload = el.dataset.payload;
-  url.search = payload.startsWith('ao-vivo:') ? `?ao-vivo=${encodeURIComponent(payload.slice(8))}` : `?match=${payload}`;
-  location.href = url.toString();
+  const { param, code } = parseInvitePayload(el.dataset.payload);
+  location.href = appLink(param, code);
 }
 
-export async function matchInboxDelete(id) {
+async function matchInboxDelete(id) {
   await supabaseDeleteMatchInvite(id);
   await refreshInbox();
 }
+
+registerActions({
+  click: {
+    friendAccept: el => friendAccept(el.dataset.arg),
+    friendAdd,
+    friendRemove: el => friendRemove(el.dataset.arg),
+    friendSendTitle,
+    friendShareDelete: el => friendShareDelete(el.dataset.arg),
+    friendShareOpen: el => friendShareOpen(el.dataset.arg),
+    friendInvite,
+    openFriends,
+    friendMatchCurrent,
+    friendOpen: el => friendOpen(el.dataset.arg),
+    friendUnfriendCurrent,
+    matchInboxDelete: el => matchInboxDelete(el.dataset.arg),
+    matchInboxOpen,
+  },
+  change: {
+    toggleShareWithFriends,
+  },
+  enter: {
+    friendAdd,
+  },
+});

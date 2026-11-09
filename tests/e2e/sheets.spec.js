@@ -95,7 +95,7 @@ test.describe('gavetas no celular', () => {
     await page.locator('#modal-resultado .modal-body').evaluate(el => el.insertAdjacentHTML('beforeend', '<div style="height:1200px"></div>'));
     await page.locator('#modal-resultado').evaluate(el => el.scrollTo(0, 1200));
     await expect.poll(async () => Math.round((await page.locator('.title-tabs').boundingBox()).y)).toBe(0);
-    await page.locator('[data-action="fecharModal"]').click();
+    await page.getByRole('button', { name: 'Fechar detalhes' }).click();
     await expect(modal(page)).toBeHidden();
   });
 });

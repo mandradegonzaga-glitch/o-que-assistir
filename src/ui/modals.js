@@ -1,7 +1,21 @@
 // Modais acessíveis (foco, trap, Esc) e o diálogo de confirmação do app
-import { skipOnboarding } from '../app/onboarding.js';
-import { fecharModal } from '../app/titleModal.js';
-import { resetSheet, SHEET_QUERY } from './sheet.js';
+import { initSheets, resetSheet } from './sheet.js';
+import { registerActions } from './actions.js';
+import { afterAnimations } from './motion.js';
+
+// Como cada janela fecha de verdade. Sem registro, só some (display none).
+// Ex.: a página do título também para o trailer; o onboarding grava que já foi visto.
+const closers = new Map();
+
+export function onModalClose(id, close) {
+    closers.set(id, close);
+}
+
+function hide(modal) {
+    const close = closers.get(modal.id);
+    if (close) close();
+    else modal.style.display = 'none';
+}
 
 // Event listeners
 
@@ -19,11 +33,9 @@ document.addEventListener('keydown', (e) => {
         // Só o diálogo do topo: com a confirmação aberta sobre o perfil, Esc não fecha os dois.
         // Um que já está saindo (animação de fechar) não conta: o Esc vale para o de baixo.
         const top = [...openModals].reverse().find(m => !m.classList.contains('is-closing'));
-        if (top?.classList.contains('modal-overlay')) {
-            closeModalWithAnimation(top);
-        } else if (top?.id === 'onboarding-overlay') {
-            skipOnboarding();
-        }
+        if (top?.classList.contains('modal-overlay')) closeModalWithAnimation(top);
+        // Login, por exemplo, não fecha com Esc: só quem registrou como fechar
+        else if (top && closers.has(top.id)) hide(top);
     }
 
     // TAB preso dentro do modal aberto
@@ -32,27 +44,16 @@ document.addEventListener('keydown', (e) => {
 
 // Fechar pela pessoa (tocar fora, Esc, "Fechar", arrastar): a janela sai antes de sumir.
 // No celular a gaveta desce (sai pelo mesmo caminho por onde entrou); no computador, esmaece.
-// Saída mais curta que a entrada: quem fechou já decidiu. Fechamentos automáticos do app
+// A saída (classe is-closing) e a duração dela estão no CSS. Fechamentos automáticos do app
 // continuam com style.display = 'none' direto (resposta do sistema não espera animação).
-// Antes: chamava uma animação "fadeOut" que não existia e só esperava 300 ms sem mexer nada.
-export const CLOSE_MS = { sheet: 280, dialog: 160 };
-
-export function closeModalWithAnimation(modal) {
+export async function closeModalWithAnimation(modal) {
     if (!modal || modal.style.display !== 'flex' || modal.classList.contains('is-closing')) return;
-    const asSheet = modal.id !== 'modal-confirm' && window.matchMedia(SHEET_QUERY).matches;
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const ms = reduce ? 0 : (asSheet ? CLOSE_MS.sheet : CLOSE_MS.dialog);
     // Tira o que o arraste deixou no elemento: a saída continua de onde o dedo largou
     resetSheet(modal);
     modal.classList.add('is-closing');
-    setTimeout(() => {
-        modal.classList.remove('is-closing');
-        if (modal.id === 'modal-resultado') {
-            fecharModal(); // também limpa trailer e estado de episódios
-        } else {
-            modal.style.display = 'none';
-        }
-    }, ms);
+    await afterAnimations(modal);
+    modal.classList.remove('is-closing');
+    hide(modal);
 }
 
 // ================================================
@@ -61,24 +62,22 @@ export function closeModalWithAnimation(modal) {
 // um MutationObserver centraliza o comportamento sem tocar em cada um.
 // ================================================
 
-export const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), iframe, summary, [tabindex]:not([tabindex="-1"])';
+const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), iframe, summary, [tabindex]:not([tabindex="-1"])';
 
-export const openModals = [];
-
-// pilha: o último é o modal ativo
-
+// Pilha: o último é o modal ativo
+const openModals = [];
 
 export function getActiveModal() {
     return openModals[openModals.length - 1] || null;
 }
 
-export function getFocusableIn(container) {
+function getFocusableIn(container) {
     // tabIndex >= 0: abas/radios inativos (tabindex -1, "roving") ficam fora da ordem do Tab
     return [...container.querySelectorAll(FOCUSABLE_SELECTOR)]
         .filter(el => el.offsetParent !== null && !el.closest('[hidden]') && el.tabIndex >= 0);
 }
 
-export function onModalOpened(modal) {
+function onModalOpened(modal) {
     if (openModals.includes(modal)) return;
     const opener = document.activeElement;
     modal._opener = opener && opener !== document.body ? opener : null;
@@ -88,7 +87,7 @@ export function onModalOpened(modal) {
     dialog.focus({ preventScroll: true });
 }
 
-export function onModalClosed(modal) {
+function onModalClosed(modal) {
     const idx = openModals.indexOf(modal);
     if (idx === -1) return;
     openModals.splice(idx, 1);
@@ -107,7 +106,7 @@ export function onModalClosed(modal) {
     }
 }
 
-export function trapFocusInModal(e) {
+function trapFocusInModal(e) {
     const modal = getActiveModal();
     if (!modal) return;
     const focusables = getFocusableIn(modal);
@@ -125,7 +124,9 @@ export function trapFocusInModal(e) {
     }
 }
 
+// Foco preso, fundo inerte e, no celular, janelas que viram gavetas (sheet.js)
 export function initModalA11y() {
+    initSheets({ onDismiss: closeModalWithAnimation });
     const observer = new MutationObserver(mutations => {
         mutations.forEach(({ target: modal }) => {
             if (modal.style.display === 'flex') onModalOpened(modal);
@@ -177,3 +178,9 @@ export function confirmDialog({ title, message, confirmLabel = 'Confirmar', canc
         setTimeout(() => cancelBtn.focus(), 0);
     });
 }
+
+registerActions({
+    click: {
+        closeModal: el => closeModalWithAnimation(document.getElementById(el.dataset.arg)),
+    },
+});

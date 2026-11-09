@@ -2,17 +2,22 @@
 // Convidado guarda no aparelho; conta, no histórico do Supabase (os amigos veem no perfil).
 import { supabaseSetReaction } from '../api/supabase.js';
 import { nextReaction } from '../domain/reactions.js';
-import { session, state } from '../state/appState.js';
+import { isGuest, session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { saveGuestHistory } from './guestLibrary.js';
-import { renderLibrary } from './library.js';
+import { emit, on } from '../state/events.js';
+import { registerActions } from '../ui/actions.js';
 
-const isGuest = () => session.currentUser === 'guest';
+
 const entryOf = id => (session.user?.history || []).find(h => h.id === id);
 
 let saving = 0; // cliques seguidos: só a última resposta do servidor vale
 
-export function renderReactions() {
+// O histórico mudou (marcou, desmarcou, terminou a série): o "Como foi?" do título aberto acompanha
+on('library:changed', renderReactions);
+on('title:opened', renderReactions);
+
+function renderReactions() {
   const box = document.getElementById('m-reactions');
   if (!box) return;
   const entry = state.currentMovie ? entryOf(state.currentMovie.id) : null;
@@ -24,7 +29,7 @@ export function renderReactions() {
   document.getElementById('m-reactions-note').hidden = isGuest();
 }
 
-export async function reactTitle(chosen) {
+async function reactTitle(chosen) {
   const entry = state.currentMovie ? entryOf(state.currentMovie.id) : null;
   if (!entry) return;
   const before = entry.reaction ?? null;
@@ -32,8 +37,7 @@ export async function reactTitle(chosen) {
   if (next === before) return;
 
   entry.reaction = next;
-  renderReactions();
-  renderLibrary();
+  emit('library:changed');
   if (isGuest()) {
     saveGuestHistory(session.user.history);
     return;
@@ -43,7 +47,12 @@ export async function reactTitle(chosen) {
   const result = await supabaseSetReaction(entry.id, next);
   if (result.success || mine !== saving) return;
   entry.reaction = before;
-  renderReactions();
-  renderLibrary();
+  emit('library:changed');
   showToast('Não foi possível salvar a reação. Tente de novo.', 'error');
 }
+
+registerActions({
+  click: {
+    reactTitle: el => reactTitle(el.dataset.arg),
+  },
+});

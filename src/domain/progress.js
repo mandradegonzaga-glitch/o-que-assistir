@@ -1,5 +1,6 @@
 // Sequência de dias e XP. Lógica pura: quem grava é src/app/progress.js.
 import { CHALLENGE_XP, normalizeChallenges } from './challenges.js';
+import { daysBetween, localDay } from '../utils/date.js';
 
 export const XP_REWARDS = { open: 5, watched: 20, roulette: 10, match: 15, daily: CHALLENGE_XP.daily, weekly: CHALLENGE_XP.weekly };
 
@@ -18,8 +19,8 @@ const LOG_SIZE = 5;
 
 // Contadores das conquistas sociais. friends guarda o maior número de amigos já visto:
 // desfazer uma amizade não tira a conquista.
-export const SOCIAL_KEYS = ['friends', 'sharesSent', 'ticketsShared', 'matches'];
-export const EMPTY_SOCIAL = Object.freeze(Object.fromEntries(SOCIAL_KEYS.map(key => [key, 0])));
+const SOCIAL_KEYS = ['friends', 'sharesSent', 'ticketsShared', 'matches'];
+const EMPTY_SOCIAL = Object.freeze(Object.fromEntries(SOCIAL_KEYS.map(key => [key, 0])));
 
 export const EMPTY_PROGRESS = { xp: 0, streak: 0, bestStreak: 0, lastVisit: null, log: [], social: EMPTY_SOCIAL, challenges: normalizeChallenges() };
 
@@ -47,19 +48,6 @@ export function bumpSocial(progress, key, value) {
   return { ...progress, social: { ...social, [key]: next } };
 }
 
-// Dia no fuso da pessoa: a virada é à meia-noite dela, não em UTC
-export function localDay(date = new Date()) {
-  const pad = n => String(n).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-}
-
-function daysBetween(from, to) {
-  const toDate = day => {
-    const [y, m, d] = day.split('-').map(Number);
-    return Date.UTC(y, m - 1, d);
-  };
-  return Math.round((toDate(to) - toDate(from)) / 86_400_000);
-}
 
 export function addXp(progress, action) {
   const amount = XP_REWARDS[action] || 0;
@@ -85,4 +73,20 @@ export function getLevel(xp) {
   const next = LEVELS[index + 1] || null;
   const percent = next ? Math.floor(((xp - current.minXp) / (next.minXp - current.minXp)) * 100) : 100;
   return { name: current.name, index, next, percent, missing: next ? next.minXp - xp : 0 };
+}
+
+// Convidado que cria conta: o XP soma, o recorde e os contadores ficam com o maior,
+// a sequência vem de quem visitou por último. Desafios e registro recente seguem os da conta.
+export function mergeProgress(account, guest) {
+  const a = normalizeProgress(account);
+  const g = normalizeProgress(guest);
+  const latest = (g.lastVisit || '') > (a.lastVisit || '') ? g : a;
+  return {
+    ...a,
+    xp: a.xp + g.xp,
+    bestStreak: Math.max(a.bestStreak, g.bestStreak),
+    streak: latest.streak,
+    lastVisit: latest.lastVisit,
+    social: Object.fromEntries(SOCIAL_KEYS.map(key => [key, Math.max(a.social[key], g.social[key])])),
+  };
 }

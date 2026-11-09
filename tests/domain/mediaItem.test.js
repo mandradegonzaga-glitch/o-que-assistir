@@ -1,7 +1,7 @@
 import { describe, it, expect } from '@jest/globals';
 import {
   getTitle, getYear, getTmdbEndpoint,
-  filterValidItems, pickRandom, normalizeMediaType
+  filterValidItems, pickRandom
 } from '../../src/domain/mediaItem.js';
 
 describe('getTitle', () => {
@@ -89,11 +89,3 @@ describe('pickRandom', () => {
   });
 });
 
-describe('normalizeMediaType', () => {
-  it('prefers item.media_type', () => {
-    expect(normalizeMediaType({ media_type: 'tv' }, 'movie')).toBe('tv');
-  });
-  it('falls back to stateType when media_type absent', () => {
-    expect(normalizeMediaType({}, 'movie')).toBe('movie');
-  });
-});

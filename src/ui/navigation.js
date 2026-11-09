@@ -1,15 +1,29 @@
 // Abas, tipo de conteúdo, atalhos, gestos e utilitários de campo
-import { renderLibrary } from '../app/library.js';
-import { renderMatchHistory } from '../app/matchHistory.js';
-import { syncUrl } from '../app/urlSync.js';
 import { state } from '../state/appState.js';
+import { emit } from '../state/events.js';
 import { isHorizontalSwipe } from '../domain/gestures.js';
 import { closeModalWithAnimation, getActiveModal } from './modals.js';
 import { SHEET_QUERY } from './sheet.js';
+import { MEDIA_TYPES } from '../domain/mediaItem.js';
+import { registerActions } from './actions.js';
+
+// Onde a pessoa parou (tela, tipo, aba): fica no aparelho e, com conta, também no Supabase (auth.js)
+const PREFERENCE_DEFAULTS = { last_mode: 'discover', last_type: 'movie', last_library_tab: 'watchlist' };
+
+export function savedPreferences() {
+    return Object.fromEntries(Object.entries(PREFERENCE_DEFAULTS)
+        .map(([key, fallback]) => [key, localStorage.getItem(key) || fallback]));
+}
+
+export function rememberPreferences(prefs) {
+    Object.keys(PREFERENCE_DEFAULTS).forEach(key => {
+        if (prefs[key]) localStorage.setItem(key, prefs[key]);
+    });
+}
 
 // NAVEGAÇÃO
 
-export const VIEWS = ['discover', 'roulette', 'match', 'library'];
+const VIEWS = ['discover', 'roulette', 'match', 'library'];
 
 export function switchMode(mode) {
     if (!VIEWS.includes(mode)) mode = 'discover';
@@ -26,7 +40,8 @@ export function switchMode(mode) {
         activeTab.setAttribute('tabindex', '0');
     }
 
-    const changed = document.getElementById(`view-${mode}`)?.style.display !== 'block';
+    const changed = state.mode !== mode;
+    state.mode = mode;
     VIEWS.forEach(view => {
         document.getElementById(`view-${view}`).style.display = mode === view ? 'block' : 'none';
     });
@@ -39,11 +54,8 @@ export function switchMode(mode) {
     // Trocar de tela pela barra começa do alto, como num app
     if (changed && document.activeElement?.closest('.bottom-nav')) window.scrollTo({ top: 0 });
 
-    if (mode === 'match') renderMatchHistory();
-
-    // Salvar preferência
     localStorage.setItem('last_mode', mode);
-    syncUrl();
+    emit('mode:changed', { mode });
 }
 
 // NAVEGAÇÃO POR SETAS (tabs e radiogroups com tabindex "roving")
@@ -75,7 +87,7 @@ export function selecionarTipo(t) {
     state.type = t;
 
     // Update visual and accessibility states
-    ['movie', 'tv', 'dorama'].forEach(type => {
+    MEDIA_TYPES.forEach(type => {
         const btn = document.getElementById(`btn-${type}`);
         const isSelected = t === type;
         btn.className = `card ${isSelected ? 'selected' : ''}`;
@@ -93,9 +105,8 @@ export function selecionarTipo(t) {
         document.getElementById('hint-country').hidden = t !== 'dorama';
     }
 
-    // Salvar preferência
     localStorage.setItem('last_type', t);
-    syncUrl();
+    emit('type:changed', { type: t });
 }
 
 export function switchTab(t) {
@@ -117,24 +128,20 @@ export function switchTab(t) {
 
     document.getElementById('library-content')?.setAttribute('aria-labelledby', `tab-${t}`);
     localStorage.setItem('last_library_tab', t);
-    renderLibrary();
+    return emit('tab:changed', { tab: t });
 }
 
 // UTILITY FUNCTIONS
 
-export function clearInput(inputId) {
+function clearInput(inputId) {
     const input = document.getElementById(inputId);
     input.value = '';
     input.focus();
-    const wrapper = input.closest('.input-wrapper');
-    if (wrapper) wrapper.classList.remove('has-value');
-
-    if (inputId === 'actor-input') {
-        document.getElementById('actor-list').style.display = 'none';
-    }
+    // Quem escuta o campo (sugestões de ator, URL) reage como se a pessoa tivesse apagado
+    input.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
-export function toggleClearButton(input) {
+function toggleClearButton(input) {
     const wrapper = input.closest('.input-wrapper');
     if (wrapper) {
         if (input.value.length > 0) {
@@ -157,9 +164,7 @@ export function setupInputWrappers() {
 
 export function initAccessibility() {
     // Restore last preferences
-    const lastMode = localStorage.getItem('last_mode');
-    const lastType = localStorage.getItem('last_type') || 'movie';
-    const lastTab = localStorage.getItem('last_library_tab');
+    const { last_mode: lastMode, last_type: lastType, last_library_tab: lastTab } = savedPreferences();
 
     if (lastMode && lastMode !== 'discover') {
         switchMode(lastMode);
@@ -215,7 +220,7 @@ document.addEventListener('touchend', (e) => {
     if (!ignore && isHorizontalSwipe(screenX - x, screenY - y)) handleSwipe();
 });
 
-export function handleSwipe() {
+function handleSwipe() {
     // No celular as janelas são gavetas: entram por baixo e fecham puxando para baixo (sheet.js).
     // Deslizar para o lado fecharia por um caminho que a janela nunca fez.
     if (window.matchMedia(SHEET_QUERY).matches) return;
@@ -248,9 +253,24 @@ export function initScrollButton() {
     });
 }
 
-export function scrollToTop() {
+function scrollToTop() {
     window.scrollTo({
         top: 0,
         behavior: 'smooth'
     });
 }
+
+registerActions({
+    click: {
+        clearInput: el => clearInput(el.dataset.arg),
+        scrollToTop,
+        selecionarTipo: el => selecionarTipo(el.dataset.arg),
+        switchMode: el => switchMode(el.dataset.arg),
+        switchTab: el => switchTab(el.dataset.arg),
+        // Do atalho no Início para a aba: sobe depois que a aba desenhou
+        switchTabAndTop: async el => {
+            await switchTab(el.dataset.arg);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
+    },
+});

@@ -1,15 +1,16 @@
 // Estatísticas de vida (parte 2 do DNA): horas assistidas e ator mais visto.
 // Usa um resumo pequeno dos detalhes do TMDB de cada título (ver titleFacts) e o histórico.
+import { DAY_MS } from '../utils/date.js';
 
 // Sem média de episódio no TMDB, usamos a duração do último episódio, que às vezes é um final
 // longo (Stranger Things: 129 min, e a média real fica perto de 70). O teto de 70 min cobre
 // os doramas (60 a 70 min por episódio) sem inflar as séries com final longo.
 export const MAX_EPISODE_MINUTES = 70;
-export const CAST_PER_TITLE = 5;
+const CAST_PER_TITLE = 5;
 // Ator só aparece como "mais visto" se estiver em pelo menos este número de títulos
 export const MIN_ACTOR_TITLES = 2;
 // Séries mudam (episódios novos); filmes, não
-export const TV_FACTS_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+export const TV_FACTS_TTL_MS = 30 * DAY_MS;
 
 export const factsKey = (type, id) => `${type === 'movie' || !type ? 'movie' : 'tv'}:${id}`;
 

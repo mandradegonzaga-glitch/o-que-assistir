@@ -1,7 +1,8 @@
 // Lista do Match: os matches de cada partida, com quem e quando.
 // Guarda só ids (nome, pôster e sinopse vêm do TMDB ao mostrar): cabe nos metadados da conta.
+import { MEDIA_TYPES } from './mediaItem.js';
+
 export const HISTORY_SIZE = 15;
-const TYPES = ['movie', 'tv', 'dorama'];
 const NAME_LIMIT = 45; // "Fulano e Beltrana", com os dois nomes no limite de 20
 const MAX_IDS = 20;
 
@@ -9,7 +10,7 @@ function validEntry(entry) {
   return entry && typeof entry === 'object'
     && typeof entry.at === 'string' && !Number.isNaN(Date.parse(entry.at))
     && typeof entry.with === 'string' && entry.with.trim().length > 0 && entry.with.length <= NAME_LIMIT
-    && TYPES.includes(entry.type)
+    && MEDIA_TYPES.includes(entry.type)
     && Array.isArray(entry.ids) && entry.ids.length > 0 && entry.ids.length <= MAX_IDS
     && entry.ids.every(id => Number.isInteger(id) && id > 0);
 }

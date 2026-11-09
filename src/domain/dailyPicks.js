@@ -2,6 +2,7 @@
 // com histórico suficiente, pelos gêneros que a pessoa mais assiste (o DNA).
 // Lógica pura: quem busca no TMDB e desenha é src/app/dailyPicks.js.
 import { DNA_STABLE_TITLES, genreWeights } from './tasteDna.js';
+import { dayNumber } from '../utils/date.js';
 
 const PAGE_SIZE = 20; // resultados por página do /discover
 
@@ -9,7 +10,7 @@ const PAGE_SIZE = 20; // resultados por página do /discover
 export const PERSONAL_MIN_TITLES = DNA_STABLE_TITLES;
 // Os gêneros favoritos se revezam, um por dia: até 3, e só os que pesam pelo menos metade do
 // favorito (quem vê quase só terror não ganha um suspense a cada dois dias)
-export const PERSONAL_TOP_GENRES = 3;
+const PERSONAL_TOP_GENRES = 3;
 const ROTATION_MIN_SHARE = 0.5;
 const PERSONAL_PAGES = 3;
 
@@ -34,11 +35,6 @@ export const PICK_KINDS = [
     params: { 'vote_average.gte': 7.8, 'vote_count.gte': 100, with_origin_country: 'KR', without_genres: '16' },
   },
 ];
-
-const dayNumber = day => {
-  const [y, m, d] = day.split('-').map(Number);
-  return Math.round(Date.UTC(y, m - 1, d) / 86_400_000);
-};
 
 // Passo 37 é primo com 120 e 200: o rodízio passa por todo o grupo antes de repetir,
 // e dias seguidos caem em páginas diferentes. Cada tipo começa num ponto diferente.

@@ -2,31 +2,31 @@
 // Banco: set_list_sharing e get_shared_list em database/user_lists.sql.
 import { supabaseGetSharedList, supabaseSetListSharing } from '../api/supabase.js';
 import { isShareToken, sharedListFrom } from '../domain/userLists.js';
-import { session } from '../state/appState.js';
+import { isAccount, session } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { confirmDialog } from '../ui/modals.js';
 import { listIcon } from '../ui/listIcons.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { formatCount, pluralize } from '../utils/format.js';
-import { IMG_URL } from '../config/constants.js';
-import { shareLink } from './match.js';
-import { copyAsList, findList, getOpenListId, setLists, showUserList } from './userLists.js';
-import { renderLibrary } from './library.js';
+import { cardPoster, copyAsList, findList, getOpenListId, setLists, showUserList } from './userLists.js';
+import { emit } from '../state/events.js';
+import { appLink, setUrlParams, shareLink } from '../ui/share.js';
+import { registerActions } from '../ui/actions.js';
+
 
 const PARAM = 'lista';
 let shared = null; // lista aberta pelo link
 
-const hasAccount = () => Boolean(session.currentUserId) && session.currentUser !== 'guest';
-export const listLink = token => `${location.origin}${location.pathname}?${PARAM}=${token}`;
+const listLink = token => appLink(PARAM, token);
 
 function updateList(listId, changes) {
     setLists((session.user.lists || []).map(l => (l.id === listId ? { ...l, ...changes } : l)));
 }
 
-export async function shareUserList() {
+async function shareUserList() {
     const list = findList(getOpenListId());
     if (!list) return;
-    if (!hasAccount()) {
+    if (!isAccount()) {
         showToast('Crie uma conta para compartilhar listas por link.', 'warning');
         return;
     }
@@ -45,12 +45,12 @@ export async function shareUserList() {
         }
         token = result.token;
         updateList(list.id, { shareToken: token });
-        await renderLibrary();
+        await emit('library:changed');
     }
     await shareLink(listLink(token), `${list.emoji} ${list.name}: minha lista no O Que Assistir. Dá uma olhada:`, list.name);
 }
 
-export async function stopSharingUserList() {
+async function stopSharingUserList() {
     const list = findList(getOpenListId());
     if (!list?.shareToken) return;
     const ok = await confirmDialog({
@@ -67,17 +67,15 @@ export async function stopSharingUserList() {
     }
     updateList(list.id, { shareToken: null });
     showToast('O link desta lista não funciona mais.');
-    await renderLibrary();
+    await emit('library:changed');
     document.querySelector('#library-content [data-action="shareUserList"]')?.focus();
 }
 
 // Chamado depois do login ou do "Entrar como convidado": a tela de entrada não pode ficar por cima
 export async function openSharedListFromUrl() {
-    const url = new URL(location.href);
-    const token = url.searchParams.get(PARAM);
+    const token = new URLSearchParams(location.search).get(PARAM);
     if (!token || !session.currentUser) return;
-    url.searchParams.delete(PARAM);
-    history.replaceState(null, '', url);
+    setUrlParams({ [PARAM]: null });
 
     if (!isShareToken(token)) {
         showToast('Este link de lista está incompleto. Peça o link de novo.', 'error');
@@ -109,14 +107,12 @@ function renderSharedList() {
     document.getElementById('shared-list-items').innerHTML = n === 0
         ? '<p class="library-note grid-full">Esta lista ainda está vazia.</p>'
         : shared.items.map(i => `<div class="library-item">
-            <button type="button" class="library-item__open" data-action="carregarDetalhes" data-id="${i.id}" data-media="${i.type}" aria-label="${escapeHtml(i.title)}">${i.poster
-                ? `<img src="${IMG_URL + i.poster}" alt="" width="500" height="750" loading="lazy">`
-                : `<span class="library-item__noposter">${escapeHtml(i.title)}</span>`}</button>
+            <button type="button" class="library-item__open" data-action="carregarDetalhes" data-id="${i.id}" data-media="${i.type}" aria-label="${escapeHtml(i.title)}">${cardPoster(i)}</button>
         </div>`).join('');
     document.getElementById('shared-list-copy').hidden = n === 0;
 }
 
-export async function copySharedList() {
+async function copySharedList() {
     if (!shared) return;
     const btn = document.getElementById('shared-list-copy');
     if (btn.disabled) return;
@@ -130,3 +126,11 @@ export async function copySharedList() {
         btn.disabled = false;
     }
 }
+
+registerActions({
+    click: {
+        shareUserList,
+        stopSharingUserList,
+        copySharedList,
+    },
+});

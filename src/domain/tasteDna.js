@@ -11,12 +11,12 @@ const TV_GENRE_MERGE = {
   10762: [10751],     // Infantil → Família
 };
 
-export const DNA_TOP_GENRES = 5;
-export const DNA_MONTHS = 6;
+const DNA_TOP_GENRES = 5;
+const DNA_MONTHS = 6;
 // Abaixo disto o DNA aparece, mas avisa que ainda está se formando
 export const DNA_STABLE_TITLES = 5;
 // Quantos nomes de "Outros" aparecem antes de "e mais N"
-export const DNA_OTHER_NAMES = 5;
+const DNA_OTHER_NAMES = 5;
 
 const MONTH_NAMES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 

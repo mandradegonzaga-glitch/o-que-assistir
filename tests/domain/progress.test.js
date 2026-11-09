@@ -1,5 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
-import { EMPTY_PROGRESS, LEVELS, addXp, applyDailyVisit, bumpSocial, getLevel, localDay, normalizeProgress } from '../../src/domain/progress.js';
+import { EMPTY_PROGRESS, LEVELS, addXp, applyDailyVisit, bumpSocial, getLevel, mergeProgress, normalizeProgress } from '../../src/domain/progress.js';
+import { localDay } from '../../src/utils/date.js';
 
 const visit = (progress, day) => applyDailyVisit(progress, day);
 
@@ -102,5 +103,26 @@ describe('bumpSocial', () => {
 describe('localDay', () => {
   it('uses the local calendar', () => {
     expect(localDay(new Date(2026, 0, 5, 23, 59))).toBe('2026-01-05');
+  });
+});
+
+describe('mergeProgress', () => {
+  it('soma o XP do convidado ao da conta e guarda o maior recorde e contadores', () => {
+    const account = { xp: 120, streak: 2, bestStreak: 4, lastVisit: '2026-11-01', social: { friends: 3, sharesSent: 1, ticketsShared: 0, matches: 0 } };
+    const guest = { xp: 45, streak: 6, bestStreak: 6, lastVisit: '2026-11-08', social: { friends: 0, sharesSent: 0, ticketsShared: 2, matches: 1 } };
+    const merged = mergeProgress(account, guest);
+    expect(merged.xp).toBe(165);
+    expect(merged.bestStreak).toBe(6);
+    expect(merged.streak).toBe(6);
+    expect(merged.lastVisit).toBe('2026-11-08');
+    expect(merged.social).toEqual({ friends: 3, sharesSent: 1, ticketsShared: 2, matches: 1 });
+  });
+
+  it('sem progresso de convidado, a conta fica como estava', () => {
+    const account = { xp: 120, streak: 2, bestStreak: 4, lastVisit: '2026-11-01' };
+    const merged = mergeProgress(account, undefined);
+    expect(merged.xp).toBe(120);
+    expect(merged.streak).toBe(2);
+    expect(merged.lastVisit).toBe('2026-11-01');
   });
 });

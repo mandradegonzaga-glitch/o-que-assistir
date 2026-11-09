@@ -1,5 +1,7 @@
+import { CACHE_TTL_MS } from '../config/constants.js';
+
 export class MemoryCache {
-  constructor(defaultTtl = 300_000) {
+  constructor(defaultTtl = CACHE_TTL_MS) {
     this._data = new Map();
     this._defaultTtl = defaultTtl;
   }
@@ -26,5 +28,3 @@ export class MemoryCache {
     this._data.clear();
   }
 }
-
-export const cache = new MemoryCache();

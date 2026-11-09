@@ -9,17 +9,18 @@ import { FEATURED_PROVIDERS } from '../domain/providers.js';
 import { state } from '../state/appState.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { storage } from '../utils/storage.js';
+import { DAY_MS } from '../utils/date.js';
+import { FILTER_FIELDS, filterField, filterValue } from './filterFields.js';
+import { MY_PROVIDERS_VALUE } from '../domain/filters.js';
 
-const MY_PROVIDERS = 'minhas';
 const CHOOSE = 'escolher';
-const DAY_MS = 86_400_000;
 const OPEN_KEY = 'filters_open'; // aberto ou recolhido, lembrado neste aparelho
 
 // Nomes curtos para caber na pílula; o resto usa o texto da própria opção
 const LABELS = {
   'input-mood': { '': 'Qualquer', leve: 'Leve e divertido', chorar: 'Para chorar', imaginacao: 'Imaginação' },
   'input-genero': { '': 'Todos' },
-  'input-provider': { '': 'Todas', [MY_PROVIDERS]: 'Minhas plataformas' },
+  'input-provider': { '': 'Todas', [MY_PROVIDERS_VALUE]: 'Minhas plataformas' },
   'duration-select': { '': 'Qualquer', short: 'Até 1h30', medium: '1h30 a 2h', long: 'Mais de 2h' },
 };
 
@@ -136,13 +137,12 @@ async function loadProviderLogos() {
 export function refreshMoreFilters({ openIfActive = false } = {}) {
   const details = document.getElementById('more-filters');
   if (!details) return;
-  const value = id => document.getElementById(id)?.value.trim();
-  const country = document.getElementById('input-country');
+  const country = filterField('country');
   const count = [
     state.personId,
-    value('input-similar'),
+    filterValue('similar'),
     country && !country.disabled && country.value,
-    value('year-from') || value('year-to'),
+    filterValue('yearFrom') || filterValue('yearTo'),
   ].filter(Boolean).length;
   const badge = document.getElementById('more-filters-count');
   badge.hidden = count === 0;
@@ -157,18 +157,17 @@ export function refreshMoreFilters({ openIfActive = false } = {}) {
 // Resumo do que está valendo, à vista mesmo com os filtros recolhidos
 function activeLabels() {
   const labels = [];
-  ['input-mood', 'input-genero', 'input-provider', 'duration-select'].forEach(id => {
-    const select = document.getElementById(id);
-    const option = select?.selectedOptions[0];
-    if (option && option.value) labels.push(labelOf(id, option));
+  ['mood', 'genre', 'provider', 'duration'].forEach(key => {
+    const option = filterField(key)?.selectedOptions[0];
+    if (option && option.value) labels.push(labelOf(FILTER_FIELDS[key], option));
   });
-  if (state.personId) labels.push(document.getElementById('person-name')?.textContent.trim());
-  const similar = document.getElementById('input-similar')?.value.trim();
+  if (state.personId) labels.push(state.personName);
+  const similar = filterValue('similar');
   if (similar) labels.push(`Parecido com ${similar}`);
-  const country = document.getElementById('input-country');
+  const country = filterField('country');
   if (country && !country.disabled && country.value) labels.push(country.selectedOptions[0].textContent.trim());
-  const from = document.getElementById('year-from')?.value.trim();
-  const to = document.getElementById('year-to')?.value.trim();
+  const from = filterValue('yearFrom');
+  const to = filterValue('yearTo');
   if (from || to) labels.push(`${from || '…'}–${to || '…'}`);
   return labels.filter(Boolean);
 }

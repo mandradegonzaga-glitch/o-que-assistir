@@ -1,28 +1,24 @@
 // Sequência e XP. Conta: metadados do usuário (sincroniza entre aparelhos, sem mudar o banco).
 // Convidado: neste aparelho.
-import { supabaseUpdateUserData } from '../api/supabase.js';
+import { readAccountData, writeAccountData } from './accountData.js';
 import { applyChallengeEvent, currentChallenges } from '../domain/challenges.js';
-import { EMPTY_PROGRESS, XP_LABELS, addXp, applyDailyVisit, bumpSocial, getLevel, localDay, normalizeProgress } from '../domain/progress.js';
-import { session } from '../state/appState.js';
+import { EMPTY_PROGRESS, XP_LABELS, addXp, applyDailyVisit, bumpSocial, getLevel, mergeProgress, normalizeProgress } from '../domain/progress.js';
+import { getGuestProgress, saveGuestProgress } from './guestLibrary.js';
+import { isAccount, session } from '../state/appState.js';
 import { showAchievement, showToast } from '../ui/feedback.js';
 import { formatCount, pluralize } from '../utils/format.js';
-import { storage } from '../utils/storage.js';
-import { checkAllBadges } from './profile.js';
+import { checkAllBadges } from './badges.js';
+import { localDay } from '../utils/date.js';
+import { emit, on } from '../state/events.js';
 
-const GUEST_KEY = 'guest_progress';
 let loadedFor = null;
 
-function isAccount() {
-  return Boolean(session.currentUserId) && session.currentUser !== 'guest';
-}
 
 function save() {
   if (isAccount()) {
-    // Mantém a cópia em memória igual ao que foi gravado
-    session.currentUser.user_metadata = { ...session.currentUser.user_metadata, progress: session.progress };
-    supabaseUpdateUserData({ progress: session.progress });
+    writeAccountData({ progress: session.progress });
   }
-  else storage.set(GUEST_KEY, session.progress);
+  else saveGuestProgress(session.progress);
 }
 
 function celebrateLevel(before) {
@@ -32,18 +28,30 @@ function celebrateLevel(before) {
   }
 }
 
-export function loadProgress() {
+function loadProgress() {
   // O Supabase avisa de novo o login ao voltar para a aba, com dados possivelmente antigos
   const owner = isAccount() ? session.currentUserId : 'guest';
   if (owner === loadedFor) return;
   loadedFor = owner;
   session.progress = isAccount()
-    ? normalizeProgress(session.currentUser?.user_metadata?.progress)
-    : normalizeProgress(storage.get(GUEST_KEY, EMPTY_PROGRESS));
+    ? normalizeProgress(readAccountData('progress'))
+    : normalizeProgress(getGuestProgress() ?? EMPTY_PROGRESS);
+}
+
+// Quem era convidado e criou conta leva o XP e os recordes junto (legacyImport.js)
+export function adoptGuestProgress() {
+  const guest = getGuestProgress();
+  if (!guest || !isAccount()) return;
+  loadProgress();
+  session.progress = mergeProgress(session.progress, guest);
+  save();
 }
 
 // Chamado ao entrar: conta a visita uma vez por dia
-export async function registerDailyVisit() {
+on('session:started', registerDailyVisit);
+on('session:ended', () => { loadedFor = null; });
+
+async function registerDailyVisit() {
   if (!session.currentUser) return;
   loadProgress();
   const updated = applyDailyVisit(session.progress);
@@ -61,6 +69,8 @@ export async function registerDailyVisit() {
 
 // Avisos do app para o desafio do dia e a meta da semana. Grava só quando o andamento muda.
 // event: watched, saved, opened, roulette, match, ticket, shared. detail: o título, quando houver.
+on('title:opened', ({ item }) => trackChallenge('opened', item));
+
 export function trackChallenge(event, detail) {
   if (!session.currentUser) return;
   loadProgress();
@@ -81,7 +91,7 @@ export function trackChallenge(event, detail) {
     showAchievement({ name: done.map(c => c.text).join(' · '), desc: `+${formatCount(xp)} XP`, icon: done[0].icon, kicker });
   }
   celebrateLevel(before);
-  if (document.getElementById('modal-profile')?.style.display === 'flex') renderProgress();
+  emit('progress:changed');
 }
 
 // Contadores das conquistas sociais (amigos, indicações, ingressos, matches). Grava só se mudou.
@@ -97,6 +107,7 @@ export async function recordSocial(key, value) {
 
 export function grantXp(action) {
   if (!session.currentUser) return;
+  loadProgress();
   const before = session.progress.xp;
   session.progress = addXp(session.progress, action);
   save();

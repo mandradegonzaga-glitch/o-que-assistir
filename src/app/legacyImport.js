@@ -2,17 +2,20 @@
 // Os dados locais só são apagados depois de o banco confirmar a gravação.
 import { supabaseImportLegacyData, supabaseUpdateProfile } from '../api/supabase.js';
 import { collectLegacyData, hasLegacyData, stripPasswords } from '../domain/legacyData.js';
-import { session } from '../state/appState.js';
+import { isAccount, session } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { confirmDialog } from '../ui/modals.js';
 import { formatCount, pluralize } from '../utils/format.js';
 import { storage } from '../utils/storage.js';
 import { loadUserData } from './auth.js';
+import { on } from '../state/events.js';
 import { GUEST_KEYS, getGuestData } from './guestLibrary.js';
+import { adoptGuestProgress } from './progress.js';
+import { DAY_MS } from '../utils/date.js';
 
 const LEGACY_KEYS = ['all_users', 'current_user', 'watchlist_obj', 'vistos_obj', ...GUEST_KEYS];
 const LATER_KEY = 'legacy_import_later';
-const ASK_AGAIN_MS = 7 * 24 * 60 * 60 * 1000;
+const ASK_AGAIN_MS = 7 * DAY_MS;
 
 function readLegacyData(includeGuest = true) {
   return collectLegacyData({
@@ -24,7 +27,12 @@ function readLegacyData(includeGuest = true) {
   });
 }
 
-export function legacyDataAvailable() {
+// Convidado com dados da versão antiga: só uma conta recupera
+on('session:started', ({ kind }) => {
+  if (kind === 'guest' && legacyDataAvailable()) showToast('Crie uma conta para recuperar sua lista antiga.');
+});
+
+function legacyDataAvailable() {
   return hasLegacyData(readLegacyData(false)); // só a versão antiga: o convidado já sabe o que tem
 }
 
@@ -49,7 +57,7 @@ function describe({ history, watchlist, series = [], lists = [] }) {
 }
 
 export async function offerLegacyImport() {
-  if (!session.currentUserId || session.currentUser === 'guest') return;
+  if (!isAccount()) return;
   const data = readLegacyData();
   if (!hasLegacyData(data)) return;
   if (Date.now() - Number(localStorage.getItem(LATER_KEY) || 0) < ASK_AGAIN_MS) return;
@@ -77,6 +85,7 @@ export async function offerLegacyImport() {
     await supabaseUpdateProfile(session.currentUserId, { roulette_wins: data.rouletteWins });
   }
 
+  adoptGuestProgress();
   LEGACY_KEYS.forEach(key => localStorage.removeItem(key));
   localStorage.removeItem(LATER_KEY);
   await loadUserData();

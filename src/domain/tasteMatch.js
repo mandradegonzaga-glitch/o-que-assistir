@@ -5,7 +5,7 @@ import { genreWeights } from './tasteDna.js';
 
 // Com menos títulos com gênero que isso, a porcentagem diria pouco
 export const MATCH_MIN_TITLES = 3;
-export const MATCH_SHARED_GENRES = 3;
+const MATCH_SHARED_GENRES = 3;
 // Diferença mínima (em fração do histórico) para dizer "fulano curte mais X"
 const MIN_DIFFERENCE = 0.1;
 

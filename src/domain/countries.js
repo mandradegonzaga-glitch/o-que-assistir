@@ -1,6 +1,6 @@
 // Filtro por país de origem (with_origin_country do TMDB). Coreia do Sul fica de fora em "Dorama",
 // que já é só coreano.
-export const COUNTRIES = [
+const COUNTRIES = [
   { code: 'BR', name: 'Brasil' },
   { code: 'US', name: 'Estados Unidos' },
   { code: 'GB', name: 'Reino Unido' },

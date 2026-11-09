@@ -600,7 +600,7 @@ Use este documento para verificar se todas as funcionalidades estão funcionando
 - `src/domain/`, `src/utils/` - Lógica pura com testes
 - `src/` - Módulos puros testados (`tests/`); o legacy mantém espelhos comentados
 - `manifest.json` - Configuração PWA
-- `sw.js` - Service Worker (**trocar `CACHE_VERSION` a cada deploy**)
+- `sw.js` - Service Worker (lista de arquivos e `CACHE_VERSION` gerados por `npm run sw:assets`; o teste `tests/pwa/sw.test.js` avisa quando estão desatualizados)
 - `icons/` - Ícones do app (SVG e PNG)
 
 ### Credenciais de Teste

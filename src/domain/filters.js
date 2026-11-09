@@ -1,10 +1,11 @@
 import { BASE_URL } from '../config/constants.js';
 import { getMoodGenres } from './moods.js';
+import { localDay } from '../utils/date.js';
 
 export const MY_PROVIDERS_VALUE = 'minhas';
 
 // "Gêneros" que o TMDB não tem: viram palavra-chave (207317 = christmas, conferido no TMDB)
-export const SPECIAL_GENRES = { natal: { keywords: '207317' } };
+const SPECIAL_GENRES = { natal: { keywords: '207317' } };
 
 export function normalizeProviderIds(ids) {
   if (!Array.isArray(ids)) return [];
@@ -75,13 +76,11 @@ export function getRandomPage(max = 5) {
 // Série e dorama: o que estreou nos últimos 60 dias (séries saem em ritmo mais lento).
 export const RELEASE_DAYS = { movie: 45, tv: 60 };
 
-const isoDay = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-
 // Sem nome em português o TMDB devolve o original (조선…, กฎ…): para quem lê aqui, fica de fora
 export const hasLatinTitle = item => /[A-Za-zÀ-ÿ]/.test(item?.title || item?.name || '');
 
 export function releaseWindow(endpoint, today = new Date()) {
   const days = RELEASE_DAYS[endpoint === 'tv' ? 'tv' : 'movie'];
   const from = new Date(today.getFullYear(), today.getMonth(), today.getDate() - days);
-  return { from: isoDay(from), to: isoDay(today), days };
+  return { from: localDay(from), to: localDay(today), days };
 }

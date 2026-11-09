@@ -11,3 +11,10 @@ export function scorePassword(password) {
   const level = score <= 2 ? 'weak' : score === 3 ? 'medium' : 'strong';
   return { score, level };
 }
+
+// Regras do formulário de conta (cadastro, troca de senha, recuperar senha)
+export const MIN_PASSWORD_LENGTH = 6;
+
+export function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}

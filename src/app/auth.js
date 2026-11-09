@@ -1,144 +1,138 @@
-// Login, cadastro, sessão e dados do usuário
-import { supabaseGetBlacklist, supabaseGetCurrentUser, supabaseGetPreferences, supabaseGetProfile, supabaseGetSorteioHistory, supabaseGetWatchHistory, supabaseGetWatchlist, supabaseLogin, supabaseLogout, supabaseRegister, supabaseResetPassword, supabaseUpdatePreferences, supabaseUpdateProfile } from '../api/supabase.js';
-import { legacyDataAvailable, offerLegacyImport } from './legacyImport.js';
-import { openFriendLinkFromUrl, refreshFriends } from './friends.js';
-import { openSharedListFromUrl } from './listShare.js';
+// Login, cadastro e a sessão de quem está usando o app.
+// Entrar e sair passam sempre por enterAccount / enterAsGuest / endSession. Ao terminar, avisam
+// 'session:started' { kind: 'account' | 'guest' } ou 'session:ended' { kind }: cada parte do app
+// (progresso, amigos, provedores, indicações do dia...) carrega ou limpa o que é seu.
+import { supabaseGetBlacklist, supabaseGetCurrentUser, supabaseGetPreferences, supabaseGetProfile, supabaseGetSorteioHistory, supabaseGetWatchHistory, supabaseGetWatchlist, supabaseLogin, supabaseLogout, supabaseOnAuthStateChange, supabaseRegister, supabaseResetPassword, supabaseUpdatePreferences } from '../api/supabase.js';
 import { getGuestData } from './guestLibrary.js';
 import { loadAccountLists, loadGuestLists } from './userLists.js';
-import { renderLibrary } from './library.js';
-import { clearLifeStatsCache } from './lifeStats.js';
-import { syncProvidersWithAccount } from './myProviders.js';
-import { registerDailyVisit } from './progress.js';
-import { dailyPicksAfterLogin } from './dailyPicks.js';
-import { updateHistoryButton } from './sorteioHistory.js';
-import { openTitleFromUrl } from './urlSync.js';
-import { scorePassword } from '../domain/passwordStrength.js';
-import { session } from '../state/appState.js';
+import { MIN_PASSWORD_LENGTH, isValidEmail, scorePassword } from '../domain/passwordStrength.js';
+import { isAccount, isGuest, resetSession, session } from '../state/appState.js';
+import { emit } from '../state/events.js';
 import { showToast } from '../ui/feedback.js';
 import { confirmDialog } from '../ui/modals.js';
-import { storage } from '../utils/storage.js';
+import { registerActions } from '../ui/actions.js';
+import { rememberPreferences, savedPreferences } from '../ui/navigation.js';
 
+
+const loginOverlay = () => document.getElementById('login-overlay');
+
+// Ao abrir o app: a sessão do Supabase ainda vale?
 export async function checkAuth() {
     const user = await supabaseGetCurrentUser();
-
-    if (user) {
-        session.currentUser = user;
-        session.currentUserId = user.id;
-        await loadUserData();
-        document.getElementById('login-overlay').style.display = 'none';
-        updateUserDisplay();
-    } else if (!session.currentUser) {
-        document.getElementById('login-overlay').style.display = 'flex';
-    }
+    // O aviso de login do Supabase pode ter chegado antes e já ter entrado
+    if (user && user.id !== session.currentUserId) await enterAccount(user);
+    else if (!session.currentUser) loginOverlay().style.display = 'flex';
 }
 
-export async function loadUserData() {
-    if (!session.currentUserId) return;
+// Outra aba entrou ou saiu, ou o link de confirmação de email abriu a conta
+export function watchAuthChanges() {
+    supabaseOnAuthStateChange(async (event, authSession) => {
+        // O Supabase também avisa o login que este app acabou de fazer: não carrega tudo de novo
+        if (event === 'SIGNED_IN' && authSession && authSession.user.id !== session.currentUserId) {
+            await enterAccount(authSession.user);
+        } else if (event === 'SIGNED_OUT' && isAccount()) {
+            endSession();
+        }
+    });
+}
 
-    // Carregar perfil do Supabase
-    const profileResult = await supabaseGetProfile(session.currentUserId);
+async function enterAccount(user) {
+    resetSession();
+    session.currentUser = user;
+    session.currentUserId = user.id;
+    await loadUserData();
+    loginOverlay().style.display = 'none';
+    updateUserDisplay();
+    emit('session:started', { kind: 'account' });
+}
+
+// Dados da conta. Também serve para recarregar depois de importar a lista antiga (legacyImport.js).
+export async function loadUserData() {
+    if (!isAccount()) return;
+    const id = session.currentUserId;
+
+    // Leituras independentes: vão juntas, e cada uma só vale se deu certo
+    const [profileResult, historyResult, watchlistResult, prefsResult, sorteioResult, blacklistResult] = await Promise.all([
+        supabaseGetProfile(id),
+        supabaseGetWatchHistory(id),
+        supabaseGetWatchlist(id),
+        supabaseGetPreferences(id),
+        supabaseGetSorteioHistory(id),
+        supabaseGetBlacklist(id),
+        loadAccountLists(),
+    ]);
+
     if (profileResult.success) {
         session.userProfile = profileResult.profile;
         session.user.name = session.userProfile.display_name || session.userProfile.username;
         session.user.email = session.userProfile.email || '';
         session.user.rouletteWins = session.userProfile.roulette_wins || 0;
     }
-
-    // Carregar histórico do Supabase
-    const historyResult = await supabaseGetWatchHistory(session.currentUserId);
-    if (historyResult.success) {
-        session.user.history = historyResult.history;
-    }
-
-    // Carregar watchlist do Supabase
-    const watchlistResult = await supabaseGetWatchlist(session.currentUserId);
-    if (watchlistResult.success) {
-        session.user.watchlist = watchlistResult.watchlist;
-    }
-
-    await loadAccountLists();
-
-    // Carregar preferências do Supabase
-    const prefsResult = await supabaseGetPreferences(session.currentUserId);
-    if (prefsResult.success && prefsResult.preferences) {
-        const prefs = prefsResult.preferences;
-        if (prefs.last_mode) localStorage.setItem('last_mode', prefs.last_mode);
-        if (prefs.last_type) localStorage.setItem('last_type', prefs.last_type);
-        if (prefs.last_library_tab) localStorage.setItem('last_library_tab', prefs.last_library_tab);
-    }
-
-    // Carregar histórico de sorteios
-    const histSorteioResult = await supabaseGetSorteioHistory(session.currentUserId);
-    if (histSorteioResult.success) {
-        session.sorteioHistory = histSorteioResult.history.map(h => ({
+    if (historyResult.success) session.user.history = historyResult.history;
+    if (watchlistResult.success) session.user.watchlist = watchlistResult.watchlist;
+    // Tela, tipo e aba de onde a pessoa parou, em qualquer aparelho
+    if (prefsResult.success && prefsResult.preferences) rememberPreferences(prefsResult.preferences);
+    if (sorteioResult.success) {
+        session.sorteioHistory = sorteioResult.history.map(h => ({
             id: h.tmdb_id,
             title: h.title,
             poster_path: h.poster_path,
             media_type: h.media_type
         }));
         session.sorteioHistoryIndex = session.sorteioHistory.length > 0 ? 0 : -1;
-        updateHistoryButton();
     }
+    if (blacklistResult.success) session.blacklist = blacklistResult.blacklist.map(b => b.tmdb_id);
 
-    // Carregar blacklist
-    const blResult = await supabaseGetBlacklist(session.currentUserId);
-    if (blResult.success) {
-        session.blacklist = blResult.blacklist.map(b => b.tmdb_id);
-    }
-
-    renderLibrary();
-    updateHeader();
-    syncProvidersWithAccount();
-    registerDailyVisit();
-    dailyPicksAfterLogin();
-    refreshFriends();
+    emit('library:changed');
 }
 
-export async function saveUserData() {
-    if (!session.currentUserId) return;
+export function enterAsGuest() {
+    resetSession();
+    session.currentUser = 'guest';
+    session.user.name = 'Convidado';
 
-    // Atualizar perfil no Supabase
-    await supabaseUpdateProfile(session.currentUserId, {
-        display_name: session.user.name,
-        email: session.user.email
-    });
+    const saved = getGuestData();
+    session.user.history = saved.history;
+    session.user.watchlist = saved.watchlist;
+    session.user.rouletteWins = saved.rouletteWins;
+    loadGuestLists(saved.lists);
+    session.sorteioHistory = saved.sorteioHistory;
+    session.sorteioHistoryIndex = session.sorteioHistory.length > 0 ? 0 : -1;
+    session.blacklist = saved.blacklist;
 
-    // Salvar preferências no Supabase
-    await supabaseUpdatePreferences(session.currentUserId, {
-        last_mode: localStorage.getItem('last_mode') || 'discover',
-        last_type: localStorage.getItem('last_type') || 'movie',
-        last_library_tab: localStorage.getItem('last_library_tab') || 'watchlist'
-    });
+    loginOverlay().style.display = 'none';
+    updateUserDisplay();
+    showToast('Bem-vindo(a), Convidado!');
+    emit('library:changed');
+    emit('session:started', { kind: 'guest' });
+}
+
+// Volta à tela de entrada com a memória limpa
+export function endSession() {
+    if (!session.currentUser) return; // o Supabase avisa a saída que este app acabou de fazer
+    const kind = isGuest() ? 'guest' : 'account';
+    resetSession();
+    loginOverlay().style.display = 'flex';
+    updateUserDisplay();
+    ['login-email', 'login-password', 'register-username', 'register-email', 'register-password', 'register-confirm']
+        .forEach(id => { document.getElementById(id).value = ''; });
+    emit('session:ended', { kind });
 }
 
 export function updateUserDisplay() {
     const displayEl = document.getElementById('user-display');
     const avatarEl = document.getElementById('user-avatar');
     const logoutBtn = document.getElementById('logout-btn');
-
-    if (session.currentUser === 'guest') {
-        displayEl.textContent = 'Convidado';
-        avatarEl.textContent = '?';
-        logoutBtn.style.display = 'block';
-    } else if (session.currentUser && session.userProfile) {
-        const displayName = session.userProfile.display_name || session.userProfile.username || 'Usuário';
-        displayEl.textContent = displayName;
-        avatarEl.textContent = displayName[0].toUpperCase();
-        logoutBtn.style.display = 'block';
-    } else if (session.currentUser) {
-        displayEl.textContent = 'Usuário';
-        avatarEl.textContent = '?';
-        logoutBtn.style.display = 'block';
-    } else {
-        displayEl.textContent = 'Convidado';
-        avatarEl.textContent = '?';
-        logoutBtn.style.display = 'none';
-    }
+    const name = isGuest() || !session.currentUser ? 'Convidado'
+        : (session.userProfile ? session.user.name || 'Usuário' : 'Usuário');
+    displayEl.textContent = name;
+    avatarEl.textContent = isGuest() || !session.userProfile ? '?' : name[0].toUpperCase();
+    logoutBtn.style.display = session.currentUser ? 'block' : 'none';
 }
 
 // FUNÇÕES DE LOGIN/CADASTRO
 
-export function switchLoginTab(tab) {
+function switchLoginTab(tab) {
     document.querySelectorAll('.login-tab').forEach(t => {
         t.classList.remove('active');
         t.setAttribute('aria-selected', 'false');
@@ -146,163 +140,66 @@ export function switchLoginTab(tab) {
     });
     document.querySelectorAll('.login-form').forEach(f => f.classList.remove('active'));
 
-    if (tab === 'login') {
-        const loginTab = document.querySelectorAll('.login-tab')[0];
-        loginTab.classList.add('active');
-        loginTab.setAttribute('aria-selected', 'true');
-        loginTab.setAttribute('tabindex', '0');
-        document.getElementById('login-form').classList.add('active');
-    } else {
-        const registerTab = document.querySelectorAll('.login-tab')[1];
-        registerTab.classList.add('active');
-        registerTab.setAttribute('aria-selected', 'true');
-        registerTab.setAttribute('tabindex', '0');
-        document.getElementById('register-form').classList.add('active');
-    }
+    const index = tab === 'login' ? 0 : 1;
+    const activeTab = document.querySelectorAll('.login-tab')[index];
+    activeTab.classList.add('active');
+    activeTab.setAttribute('aria-selected', 'true');
+    activeTab.setAttribute('tabindex', '0');
+    document.getElementById(tab === 'login' ? 'login-form' : 'register-form').classList.add('active');
 }
 
-// PASSWORD STRENGTH CHECKER
-
-export function checkPasswordStrength(password) {
+function checkPasswordStrength(password) {
     const bar = document.getElementById('password-strength-bar');
     if (!password) {
         bar.className = 'password-strength-bar';
         bar.style.width = '0';
         return;
     }
-
     bar.className = `password-strength-bar ${scorePassword(password).level}`;
 }
 
-export async function registerUser() {
+function showFormError(errorEl, message) {
+    errorEl.textContent = message;
+    errorEl.style.display = 'block';
+}
+
+async function registerUser() {
     const username = document.getElementById('register-username').value.trim();
     const email = document.getElementById('register-email').value.trim();
     const password = document.getElementById('register-password').value;
     const confirm = document.getElementById('register-confirm').value;
     const errorEl = document.getElementById('register-error');
 
-    if (!username || !email || !password || !confirm) {
-        errorEl.textContent = 'Preencha todos os campos!';
-        errorEl.style.display = 'block';
-        return;
-    }
-
-    // Validar email
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        errorEl.textContent = 'Digite um email válido!';
-        errorEl.style.display = 'block';
-        return;
-    }
-
-    if (password.length < 6) {
-        errorEl.textContent = 'A senha deve ter pelo menos 6 caracteres!';
-        errorEl.style.display = 'block';
-        return;
-    }
-
-    if (password !== confirm) {
-        errorEl.textContent = 'As senhas não coincidem!';
-        errorEl.style.display = 'block';
-        return;
-    }
+    if (!username || !email || !password || !confirm) return showFormError(errorEl, 'Preencha todos os campos!');
+    if (!isValidEmail(email)) return showFormError(errorEl, 'Digite um email válido!');
+    if (password.length < MIN_PASSWORD_LENGTH) return showFormError(errorEl, `A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres!`);
+    if (password !== confirm) return showFormError(errorEl, 'As senhas não coincidem!');
 
     const result = await supabaseRegister(username, email, password);
-
     if (!result.success) {
-        if (result.error.includes('already registered') || result.error.includes('already exists')) {
-            errorEl.textContent = 'Este usuário já existe!';
-        } else {
-            errorEl.textContent = `Erro: ${result.error}`;
-        }
-        errorEl.style.display = 'block';
-        return;
+        const exists = result.error.includes('already registered') || result.error.includes('already exists');
+        return showFormError(errorEl, exists ? 'Este usuário já existe!' : `Erro: ${result.error}`);
     }
 
     showToast('Conta criada com sucesso!');
-    openTitleFromUrl();
-    openFriendLinkFromUrl();
-    openSharedListFromUrl();
-
-    // Fazer login automático
-    session.currentUser = result.user;
-    session.currentUserId = result.user.id;
-    await loadUserData();
-    document.getElementById('login-overlay').style.display = 'none';
-    updateUserDisplay();
-    offerLegacyImport();
+    await enterAccount(result.user);
 }
 
-export async function loginUser() {
+async function loginUser() {
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value;
     const errorEl = document.getElementById('login-error');
 
-    if (!email || !password) {
-        errorEl.textContent = 'Preencha todos os campos!';
-        errorEl.style.display = 'block';
-        return;
-    }
+    if (!email || !password) return showFormError(errorEl, 'Preencha todos os campos!');
 
     const result = await supabaseLogin(email, password);
+    if (!result.success) return showFormError(errorEl, 'Email ou senha incorretos!');
 
-    if (!result.success) {
-        errorEl.textContent = 'Email ou senha incorretos!';
-        errorEl.style.display = 'block';
-        return;
-    }
-
-    session.currentUser = result.user;
-    session.currentUserId = result.user.id;
-    await loadUserData();
-    document.getElementById('login-overlay').style.display = 'none';
-    updateUserDisplay();
+    await enterAccount(result.user);
     showToast(`Bem-vindo(a), ${session.user.name || 'Usuário'}!`);
-    openTitleFromUrl();
-    openFriendLinkFromUrl();
-    openSharedListFromUrl();
-    offerLegacyImport();
 }
 
-function loadGuestData() {
-    const saved = getGuestData();
-    session.user.history = saved.history;
-    session.user.watchlist = saved.watchlist;
-    session.user.rouletteWins = saved.rouletteWins;
-    loadGuestLists(saved.lists);
-    const history = storage.get('sorteio_history', []);
-    const ignored = storage.get('blacklist', []);
-    session.sorteioHistory = Array.isArray(history) ? history : [];
-    session.sorteioHistoryIndex = session.sorteioHistory.length > 0 ? 0 : -1;
-    session.blacklist = Array.isArray(ignored) ? ignored : [];
-    updateHistoryButton();
-}
-
-export function loginAsGuest() {
-    session.currentUser = 'guest';
-    session.currentUserId = null; // Convidado não usa Supabase
-
-    session.user = {
-        name: 'Convidado',
-        email: '',
-        history: [],
-        rouletteWins: 0
-    };
-    loadGuestData();
-
-    document.getElementById('login-overlay').style.display = 'none';
-    updateUserDisplay();
-    showToast(legacyDataAvailable() ? 'Crie uma conta para recuperar sua lista antiga.' : 'Bem-vindo(a), Convidado!');
-    renderLibrary();
-    registerDailyVisit();
-    dailyPicksAfterLogin();
-    openTitleFromUrl();
-    openFriendLinkFromUrl();
-    openSharedListFromUrl();
-}
-
-// ESQUECI MINHA SENHA
-
-export async function esqueceuSenha() {
+async function esqueceuSenha() {
     const email = document.getElementById('login-email').value.trim();
 
     if (!email) {
@@ -311,7 +208,7 @@ export async function esqueceuSenha() {
         return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!isValidEmail(email)) {
         showToast("Digite um email válido!", "error");
         return;
     }
@@ -330,47 +227,35 @@ export async function esqueceuSenha() {
 
     if (result.success) {
         showToast("Email enviado! Verifique sua caixa de entrada.");
+    } else if (result.error.includes('rate limit')) {
+        showToast("Muitas tentativas. Aguarde alguns minutos.", "error");
     } else {
-        if (result.error.includes('rate limit')) {
-            showToast("Muitas tentativas. Aguarde alguns minutos.", "error");
-        } else {
-            showToast("Se o email existir, você receberá as instruções.");
-        }
+        showToast("Se o email existir, você receberá as instruções.");
     }
 }
 
-export async function logout() {
+async function logout() {
     const sair = await confirmDialog({ title: 'Sair da conta', message: 'Deseja realmente sair?', confirmLabel: 'Sair' });
-    if (sair) {
-        // Só salva e desloga do Supabase se NÃO for convidado
-        if (session.currentUser !== 'guest' && session.currentUserId) {
-            await saveUserData();
-            await supabaseLogout();
-            // Os detalhes guardados dizem quais títulos a conta viu: não ficam para a próxima pessoa
-            clearLifeStatsCache();
-        }
-
-        session.currentUser = null;
-        session.currentUserId = null;
-        session.userProfile = null;
-        session.user.history = [];
-
-        document.getElementById('login-overlay').style.display = 'flex';
-        updateUserDisplay();
-
-        // Limpar formulários
-        document.getElementById('login-email').value = '';
-        document.getElementById('login-password').value = '';
-        document.getElementById('register-username').value = '';
-        document.getElementById('register-email').value = '';
-        document.getElementById('register-password').value = '';
-        document.getElementById('register-confirm').value = '';
-
-        showToast('Até logo!');
+    if (!sair) return;
+    if (isAccount()) {
+        // Tela, tipo e aba ficam na conta para o próximo aparelho
+        await supabaseUpdatePreferences(session.currentUserId, savedPreferences());
+        await supabaseLogout();
     }
+    endSession();
+    showToast('Até logo!');
 }
 
-export function updateHeader() {
-    document.getElementById('user-display').innerText = session.user.name;
-    document.getElementById('user-avatar').innerText = session.user.name.charAt(0).toUpperCase();
-}
+registerActions({
+    click: {
+        esqueceuSenha,
+        loginAsGuest: enterAsGuest,
+        loginUser,
+        logout,
+        registerUser,
+        switchLoginTab: el => switchLoginTab(el.dataset.arg),
+    },
+    input: {
+        checkPasswordStrength: el => checkPasswordStrength(el.value),
+    },
+});

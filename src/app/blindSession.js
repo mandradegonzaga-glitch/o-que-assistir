@@ -1,25 +1,23 @@
 // Sessão às escuras: sorteia com os filtros escolhidos e mostra só sinopse, nota, duração, década e
 // gêneros. "Arriscar e revelar" abre o título de verdade; "Outro" sorteia de novo, ainda no escuro.
-import { tmdbFetch } from '../api/tmdb.js';
 import { blindFacts, hasBlindOverview } from '../domain/blind.js';
-import { buildDiscoverUrl, getRandomPage } from '../domain/filters.js';
 import { state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { formatRating } from '../utils/format.js';
-import { filtersSummary, getFilterOptions, pickDraw, withDetails } from './discover.js';
-import { addToSorteioHistory } from './sorteioHistory.js';
-import { abrirModal } from './titleModal.js';
+import { pickDraw, withDetails } from './discover.js';
+import { discoverUrl, fetchRandomPage, filtersSummary } from './filters.js';
+import { getTmdbEndpoint } from '../domain/mediaItem.js';
+import { registerActions } from '../ui/actions.js';
+import { openDrawn } from './sorteioHistory.js';
+import { whileBusy } from '../ui/busy.js';
 
 const KIND = { movie: 'Um filme', tv: 'Uma série', dorama: 'Um dorama' };
 let current = null;
-let loading = false;
 
 async function drawBlind() {
-  const endpoint = state.type === 'dorama' ? 'tv' : state.type;
-  const url = buildDiscoverUrl(endpoint, { ...getFilterOptions(), isDorama: state.type === 'dorama', minVotes: 200 });
-  let data = await tmdbFetch(url + `&page=${getRandomPage()}`);
-  if (!data.results?.length) data = await tmdbFetch(url + '&page=1');
-  const item = pickDraw(data.results, hasBlindOverview);
+  const endpoint = getTmdbEndpoint(state.type);
+  const url = discoverUrl({ minVotes: 200 });
+  const item = pickDraw(await fetchRandomPage(url), hasBlindOverview);
   return item ? withDetails(item, endpoint) : null;
 }
 
@@ -37,12 +35,9 @@ function render(item) {
   document.getElementById('blind-filters').textContent = filtersSummary();
 }
 
-export async function sessaoEscuras() {
-  if (loading) return;
-  loading = true;
+function sessaoEscuras() {
   const buttons = [document.getElementById('btn-escuras'), document.getElementById('blind-another')];
-  buttons.forEach(b => b?.setAttribute('aria-busy', 'true'));
-  try {
+  return whileBusy(buttons, async () => {
     const item = await drawBlind();
     if (!item) {
       showToast('Nada encontrado com esses filtros.', 'error');
@@ -53,20 +48,20 @@ export async function sessaoEscuras() {
     const modal = document.getElementById('modal-blind');
     if (modal.style.display === 'flex') document.getElementById('blind-reveal').focus();
     else modal.style.display = 'flex';
-  } catch (e) {
-    console.error(e);
-    showToast('Erro na API.', 'error');
-  } finally {
-    loading = false;
-    buttons.forEach(b => b?.removeAttribute('aria-busy'));
-  }
+  }, { failure: 'Erro na API.' });
 }
 
-export function blindReveal() {
+function blindReveal() {
   if (!current) return;
   const item = current;
   current = null;
   document.getElementById('modal-blind').style.display = 'none';
-  abrirModal(item, { fromDraw: true });
-  addToSorteioHistory(item);
+  openDrawn(item);
 }
+
+registerActions({
+  click: {
+    sessaoEscuras,
+    blindReveal,
+  },
+});

@@ -2,6 +2,7 @@
 import { confirmDialog } from '../ui/modals.js';
 import { ph } from '../ui/phosphor.js';
 import { showToast } from '../ui/feedback.js';
+import { registerActions } from '../ui/actions.js';
 
 let deferredPrompt;
 
@@ -13,13 +14,13 @@ function promptUpdate(newWorker) {
     cancelLabel: 'Depois'
   }).then(ok => {
     if (!ok) return;
+    navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload(), { once: true });
     newWorker.postMessage('SKIP_WAITING');
-    window.location.reload();
   });
 }
 
 function showInstallPrompt() {
-  if (!deferredPrompt) return;
+  if (!deferredPrompt || document.getElementById('pwa-install-banner')) return;
 
   const installBanner = document.createElement('div');
   installBanner.id = 'pwa-install-banner';
@@ -52,7 +53,7 @@ function removeInstallBanner() {
 
 window.addEventListener('resize', syncInstallBannerHeight);
 
-export async function installPWA() {
+async function installPWA() {
   if (!deferredPrompt) return;
 
   deferredPrompt.prompt();
@@ -66,7 +67,7 @@ export async function installPWA() {
   removeInstallBanner();
 }
 
-export function dismissInstall() {
+function dismissInstall() {
   localStorage.setItem('pwa_install_dismissed', 'true');
   removeInstallBanner();
 }
@@ -108,3 +109,10 @@ export function initPwa() {
     removeInstallBanner();
   });
 }
+
+registerActions({
+  click: {
+    dismissInstall,
+    installPWA,
+  },
+});

@@ -7141,12 +7141,12 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
 .sheet-handle { display: none; }
 
 @media (max-width: 640px) {
-    .modal-overlay:not(#modal-confirm) {
+    .modal-overlay:not(.modal-overlay--alert) {
         align-items: flex-end;
         padding: var(--space-md) 0 0; /* o respiro do alto continua (as abas do título contam com ele) */
     }
 
-    .modal-overlay:not(#modal-confirm) > .modal-content {
+    .modal-overlay:not(.modal-overlay--alert) > .modal-content {
         width: 100%;
         max-width: 100%;
         margin: auto 0 0; /* curta: encosta embaixo; comprida: começa no alto e rola */
@@ -7155,15 +7155,15 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
         padding-bottom: calc(var(--panel-pad-bottom, 0px) + env(safe-area-inset-bottom, 0px));
         transition: transform 0.5s var(--ease-drawer);
     }
-    .modal-overlay:not(#modal-confirm) > .modal-content--panel {
+    .modal-overlay:not(.modal-overlay--alert) > .modal-content--panel {
         --panel-pad-bottom: 25px;
     }
 
     @starting-style {
-        .modal-overlay:not(#modal-confirm) > .modal-content { opacity: 1; transform: translateY(100%); }
+        .modal-overlay:not(.modal-overlay--alert) > .modal-content { opacity: 1; transform: translateY(100%); }
     }
 
-    .modal-overlay:not(#modal-confirm).is-closing > .modal-content {
+    .modal-overlay:not(.modal-overlay--alert).is-closing > .modal-content {
         opacity: 1;
         transform: translateY(100%);
         transition: transform 0.28s var(--ease-drawer);

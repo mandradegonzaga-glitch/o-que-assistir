@@ -12,7 +12,7 @@ const OVERLAY_ALPHA = 0.95;
 const isSheet = () => window.matchMedia(SHEET_QUERY).matches;
 
 export function initSheets({ onDismiss }) {
-  document.querySelectorAll('.modal-overlay:not(#modal-confirm)').forEach(overlay => {
+  document.querySelectorAll('.modal-overlay:not(.modal-overlay--alert)').forEach(overlay => {
     const sheet = overlay.querySelector('.modal-content');
     if (!sheet || sheet.querySelector(':scope > .sheet-handle')) return;
     const handle = document.createElement('div');
@@ -62,7 +62,7 @@ function bindDrag(overlay, sheet, onDismiss) {
     sheet.style.transition = '';
     overlay.style.transition = '';
     if (e.type !== 'pointercancel' && shouldDismissSheet({ distance: offset, height, velocity })) {
-      onDismiss(overlay, { fromDrag: true });
+      onDismiss(overlay);
     } else {
       // Volta rápido (devagar parece que a interface discorda de quem arrastou)
       sheet.style.transform = '';

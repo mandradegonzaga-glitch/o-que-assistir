@@ -7,8 +7,8 @@ export function isHorizontalSwipe(deltaX, deltaY) {
 
 // Gavetas (src/ui/sheet.js). Fecha se passou de 30% da altura OU se o dedo saiu rápido:
 // só a distância faria um "peteleco" curto ser ignorado.
-export const SHEET_DISMISS_RATIO = 0.3;
-export const SHEET_DISMISS_VELOCITY = 0.5; // px por ms
+const SHEET_DISMISS_RATIO = 0.3;
+const SHEET_DISMISS_VELOCITY = 0.5; // px por ms
 const SHEET_RUBBER = 0.15;
 
 export function shouldDismissSheet({ distance, height, velocity }) {

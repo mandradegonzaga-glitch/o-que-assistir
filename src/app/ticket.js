@@ -11,6 +11,10 @@ import { formatRuntime } from '../domain/titleFacts.js';
 import { formatRating } from '../utils/format.js';
 import { refreshFriends } from './friends.js';
 import { recordSocial, trackChallenge } from './progress.js';
+import { getYear, getTitle } from '../domain/mediaItem.js';
+import { appBase, isTouch } from '../ui/share.js';
+import { registerActions } from '../ui/actions.js';
+import { whileBusy } from '../ui/busy.js';
 
 const WIDTH = 1080;
 const HEIGHT = 1350;
@@ -173,7 +177,7 @@ function fitTitleSize(ctx, text, maxWidth, startSize) {
 }
 
 // Link curto e limpo: quanto menor o texto, mais fácil de ler pela câmera
-const titleUrl = (movie, kind) => titleLink(`${location.origin}${location.pathname}`, kind, movie.id);
+const titleUrl = (movie, kind) => titleLink(appBase(), kind, movie.id);
 
 // Cartão branco com margem: a câmera precisa de contraste e de uma borda livre em volta
 function drawQr(ctx, text, x, y) {
@@ -329,7 +333,7 @@ export async function drawTicket(movie, {
 
   // Título em até 2 linhas (3 ao lado do pôster), diminuindo a fonte; só um nome enorme passa disso
   ctx.textBaseline = 'top';
-  const name = glueShortWords((movie.title || movie.name || '').toUpperCase());
+  const name = glueShortWords(getTitle(movie).toUpperCase());
   const [preferred, maxLines, minSize] = hero.mode === 'poster' ? [3, 4, 64] : [2, 3, 76];
   let titleSize = fitTitleSize(ctx, name, titleWidth, 112);
   let titleLines = wrapLines(ctx, name, titleWidth, maxLines);
@@ -418,7 +422,7 @@ export async function drawTicket(movie, {
   if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
 
   // Corpo: grade de dados, sinopse com o espaço que sobrar, elenco e plataformas
-  const year = (movie.release_date || movie.first_air_date || '').split('-')[0];
+  const year = getYear(movie);
   const facts = [
     ['Tipo', KIND_LABEL[kind]],
     ['Ano', year],
@@ -529,7 +533,7 @@ async function copyText(text) {
 async function prepare(movie) {
   const kind = titleKind(movie, state.type);
   const extras = await titleExtras(movie, kind);
-  const title = movie.title || movie.name || '';
+  const title = getTitle(movie);
   const text = shareText({
     item: movie, kind, url: titleUrl(movie, kind), cast: extras.cast, providers: extras.providers.map(p => p.name),
   });
@@ -546,28 +550,12 @@ function preparedFor(movie) {
   return prepared.promise;
 }
 
-// Ocupado sem `disabled`: um botão desabilitado perde o foco do teclado no meio da ação.
-// O rótulo vira "Gerando…" e volta ao fim.
-async function withBusy(button, task, busyText = 'Preparando…') {
-  if (!button || button.getAttribute('aria-disabled') === 'true') return;
-  const label = button.querySelector('.btn-label');
-  const original = label?.textContent;
-  button.setAttribute('aria-disabled', 'true');
-  button.setAttribute('aria-busy', 'true');
-  if (label) label.textContent = busyText;
-  try {
-    await task();
-  } finally {
-    button.removeAttribute('aria-disabled');
-    button.removeAttribute('aria-busy');
-    if (label && label.textContent === busyText) label.textContent = original;
-  }
-}
+const withBusy = (button, task, label = 'Preparando…') => whileBusy(button, task, { label });
 
 // Atalho de colar de cada sistema
 const PASTE_KEYS = /Mac|iPhone|iPad/.test(navigator.userAgentData?.platform || navigator.platform || '') ? 'Cmd+V' : 'Ctrl+V';
 
-export function gerarIngresso() {
+function gerarIngresso() {
   const movie = state.currentMovie;
   if (!movie) return Promise.resolve();
   return withBusy(document.getElementById('btn-ingresso'), async () => {
@@ -582,14 +570,13 @@ export function gerarIngresso() {
   }, 'Gerando…');
 }
 
-const isTouch = () => window.matchMedia('(pointer: coarse)').matches;
 const canShareFiles = file => isTouch() && Boolean(navigator.canShare?.({ files: [file] }));
 
-export function compartilhar() {
+function compartilhar() {
   const movie = state.currentMovie;
   if (!movie) return;
   const kind = titleKind(movie, state.type);
-  document.getElementById('share-subtitle').textContent = `${movie.title || movie.name || ''} · ${KIND_LABEL[kind]}`;
+  document.getElementById('share-subtitle').textContent = `${getTitle(movie)} · ${KIND_LABEL[kind]}`;
   // Celular: o compartilhar do sistema já inclui o WhatsApp, com a imagem. Computador: WhatsApp Web com o texto.
   // Celular sem esse recurso (navegador antigo ou site fora de HTTPS): baixa o ingresso para anexar da galeria.
   const native = canShareFiles(new File([''], 'ingresso.png', { type: 'image/png' }));
@@ -605,7 +592,7 @@ export function compartilhar() {
 
 // No celular, o compartilhar do sistema leva imagem, texto e link juntos (WhatsApp incluído).
 // No computador não há para onde mandar a imagem: baixa o ingresso e copia o texto para colar.
-export function compartilharApps() {
+function compartilharApps() {
   const movie = state.currentMovie;
   if (!movie) return Promise.resolve();
   return withBusy(document.getElementById('btn-share-apps'), async () => {
@@ -647,7 +634,7 @@ async function copyImage(blob) {
 
 // WhatsApp no computador: o link do WhatsApp só aceita texto, então o ingresso vai para a área de
 // transferência e a pessoa cola na conversa. Sem permissão para copiar imagem, baixa o arquivo para anexar.
-export function compartilharWhatsapp() {
+function compartilharWhatsapp() {
   const movie = state.currentMovie;
   if (!movie) return Promise.resolve();
   return withBusy(document.getElementById('btn-share-whatsapp'), async () => {
@@ -676,3 +663,12 @@ export function compartilharWhatsapp() {
     trackChallenge('ticket');
   });
 }
+
+registerActions({
+  click: {
+    compartilhar,
+    compartilharApps,
+    compartilharWhatsapp,
+    gerarIngresso,
+  },
+});

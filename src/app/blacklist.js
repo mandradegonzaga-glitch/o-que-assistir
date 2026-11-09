@@ -1,18 +1,21 @@
 // Títulos ignorados ("Não tenho interesse")
 import { supabaseAddToBlacklist, supabaseClearBlacklist, supabaseGetBlacklist, supabaseRemoveFromBlacklist } from '../api/supabase.js';
 import { fecharModal } from './titleModal.js';
-import { session, state } from '../state/appState.js';
-import { pendingRemovals, scheduleUndoable, showToast } from '../ui/feedback.js';
+import { isAccount, session, state } from '../state/appState.js';
+import { isPendingRemoval, scheduleUndoable, showToast } from '../ui/feedback.js';
 import { confirmDialog } from '../ui/modals.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { CLOSE_ICON } from '../ui/icons.js';
+import { getTitle, tmdbImage } from '../domain/mediaItem.js';
+import { registerActions } from '../ui/actions.js';
+import { getGuestBlacklistDetails, saveGuestBlacklist } from './guestLibrary.js';
 
 // ================================================
 // BLACKLIST (NÃO TENHO INTERESSE)
 // ================================================
 
 
-export async function adicionarBlacklist() {
+async function adicionarBlacklist() {
     const item = state.currentMovie;
     if (!item) return;
 
@@ -23,51 +26,41 @@ export async function adicionarBlacklist() {
 
     session.blacklist.push(item.id);
 
-    if (session.currentUserId && session.currentUser !== 'guest') {
+    if (isAccount()) {
         await supabaseAddToBlacklist(session.currentUserId, item);
     } else {
-        localStorage.setItem('blacklist', JSON.stringify(session.blacklist));
-        // Salvar detalhes também para exibição
-        let details = JSON.parse(localStorage.getItem('blacklist_details') || '[]');
-        details.push({
-            tmdb_id: item.id,
-            title: item.title || item.name,
-            poster_path: item.poster_path
-        });
-        localStorage.setItem('blacklist_details', JSON.stringify(details));
+        saveGuestBlacklist(session.blacklist, [
+            ...getGuestBlacklistDetails(),
+            { tmdb_id: item.id, title: getTitle(item), poster_path: item.poster_path },
+        ]);
     }
 
     showToast('Adicionado à lista de ignorados. Não será mais sugerido!');
     fecharModal();
 }
 
-export function removerBlacklist(tmdbId, btn) {
+function removerBlacklist(tmdbId, btn) {
     const row = btn?.closest('.blacklist-item');
     const before = session.blacklist.slice();
     scheduleUndoable({
         message: 'Título voltará a ser sugerido.',
+        hide: `blacklist:${tmdbId}`,
         apply: () => {
             const hadFocus = !!row?.contains(document.activeElement);
             session.blacklist = session.blacklist.filter(id => id !== tmdbId);
-            pendingRemovals.add(`blacklist:${tmdbId}`);
             if (row) row.hidden = true;
             return hadFocus;
         },
         undo: (refocus) => {
             session.blacklist = before;
-            pendingRemovals.delete(`blacklist:${tmdbId}`);
             if (row?.isConnected) { row.hidden = false; if (refocus) row.querySelector('button')?.focus(); }
             else renderBlacklist();
         },
         commit: async () => {
-            pendingRemovals.delete(`blacklist:${tmdbId}`);
-            if (session.currentUserId && session.currentUser !== 'guest') {
+            if (isAccount()) {
                 await supabaseRemoveFromBlacklist(session.currentUserId, tmdbId);
             } else {
-                localStorage.setItem('blacklist', JSON.stringify(session.blacklist));
-                let details = JSON.parse(localStorage.getItem('blacklist_details') || '[]');
-                details = details.filter(d => d.tmdb_id !== tmdbId);
-                localStorage.setItem('blacklist_details', JSON.stringify(details));
+                saveGuestBlacklist(session.blacklist, getGuestBlacklistDetails().filter(d => d.tmdb_id !== tmdbId));
             }
             renderBlacklist();
         },
@@ -87,17 +80,17 @@ export async function renderBlacklist() {
     }
 
     let items;
-    if (session.currentUserId && session.currentUser !== 'guest') {
+    if (isAccount()) {
         const result = await supabaseGetBlacklist(session.currentUserId);
         items = result.blacklist || [];
     } else {
-        items = JSON.parse(localStorage.getItem('blacklist_details') || '[]');
+        items = getGuestBlacklistDetails();
     }
-    items = items.filter(i => !pendingRemovals.has(`blacklist:${i.tmdb_id}`));
+    items = items.filter(i => !isPendingRemoval(`blacklist:${i.tmdb_id}`));
 
     container.innerHTML = items.map(item => `
         <div class="blacklist-item">
-            <img src="https://image.tmdb.org/t/p/w92${item.poster_path}" alt="" width="40" height="60" loading="lazy">
+            <img src="${tmdbImage(item.poster_path, 'w92')}" alt="" width="40" height="60" loading="lazy">
             <span>${escapeHtml(item.title)}</span>
             <button type="button" data-action="removerBlacklist" data-arg="${item.tmdb_id}" title="Remover" aria-label="Voltar a sugerir ${escapeHtml(item.title)}">${CLOSE_ICON}</button>
         </div>
@@ -106,17 +99,24 @@ export async function renderBlacklist() {
     if (clearBtn) clearBtn.style.display = 'block';
 }
 
-export async function limparBlacklist() {
+async function limparBlacklist() {
     if (!(await confirmDialog({ title: 'Limpar lista de ignorados', message: 'Os títulos voltarão a aparecer nos sorteios.', confirmLabel: 'Limpar', danger: true }))) return;
 
-    if (session.currentUserId && session.currentUser !== 'guest') {
+    if (isAccount()) {
         await supabaseClearBlacklist(session.currentUserId);
     } else {
-        localStorage.removeItem('blacklist');
-        localStorage.removeItem('blacklist_details');
+        saveGuestBlacklist([], []);
     }
 
     session.blacklist = [];
     renderBlacklist();
     showToast('Lista de ignorados limpa!');
 }
+
+registerActions({
+    click: {
+        adicionarBlacklist,
+        limparBlacklist,
+        removerBlacklist: el => removerBlacklist(Number(el.dataset.arg), el),
+    },
+});

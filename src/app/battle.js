@@ -3,25 +3,25 @@
 import { tmdbFetch } from '../api/tmdb.js';
 import { IMG_URL } from '../config/constants.js';
 import { champion, choose, currentPair, isDone, stageLabel, stageTrack, startBattle } from '../domain/battle.js';
-import { buildDiscoverUrl, getRandomPage } from '../domain/filters.js';
+import { getRandomPage } from '../domain/filters.js';
 import { session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { formatRating } from '../utils/format.js';
-import { filtersSummary, getFilterOptions, withDetails } from './discover.js';
-import { addToSorteioHistory } from './sorteioHistory.js';
-import { abrirModal } from './titleModal.js';
+import { withDetails } from './discover.js';
+import { discoverUrl, filtersSummary } from './filters.js';
+import { getTmdbEndpoint, getYear, getTitle } from '../domain/mediaItem.js';
+import { registerActions } from '../ui/actions.js';
+import { posterEl } from '../ui/icons.js';
+import { openDrawn } from './sorteioHistory.js';
+import { whileBusy } from '../ui/busy.js';
 
 let battle = null;
 let past = []; // como estava antes de cada voto: "Voltar" desfaz um por vez, até o começo
-let loading = false;
 
-const yearOf = item => (item.release_date || item.first_air_date || '').slice(0, 4);
-const nameOf = item => item.title || item.name;
 
 // Títulos bons e conhecidos, sem o que a pessoa já viu ou bloqueou, em ordem aleatória
 async function loadPool() {
-  const endpoint = state.type === 'dorama' ? 'tv' : state.type;
-  const url = buildDiscoverUrl(endpoint, { ...getFilterOptions(), isDorama: state.type === 'dorama', minVotes: 300 });
+  const url = discoverUrl({ minVotes: 300 });
   const seen = new Set([...(session.user?.history || []).map(h => h.id), ...session.blacklist]);
   const pool = new Map();
   for (const page of [getRandomPage(), 1]) {
@@ -51,15 +51,11 @@ function fighter(item, side) {
   btn.className = 'battle__fighter';
   btn.dataset.action = 'battleChoose';
   btn.dataset.arg = String(side);
-  btn.setAttribute('aria-label', `Escolher ${nameOf(item)}`);
+  btn.setAttribute('aria-label', `Escolher ${getTitle(item)}`);
   btn.setAttribute('aria-describedby', synopsisId);
   const poster = document.createElement('span');
   poster.className = 'battle__poster';
-  const img = document.createElement('img');
-  img.src = IMG_URL + item.poster_path;
-  img.alt = '';
-  img.width = 500;
-  img.height = 750;
+  const img = posterEl(item.poster_path, { lazy: false });
   const synopsis = document.createElement('span');
   synopsis.className = 'battle__synopsis';
   synopsis.id = synopsisId;
@@ -67,10 +63,10 @@ function fighter(item, side) {
   poster.append(img, synopsis);
   const name = document.createElement('span');
   name.className = 'battle__name';
-  name.textContent = nameOf(item);
+  name.textContent = getTitle(item);
   const meta = document.createElement('span');
   meta.className = 'battle__meta';
-  meta.textContent = [yearOf(item), `★ ${formatRating(item.vote_average)}`].filter(Boolean).join(' · ');
+  meta.textContent = [getYear(item), `★ ${formatRating(item.vote_average)}`].filter(Boolean).join(' · ');
   btn.append(poster, name, meta);
 
   const info = document.createElement('button');
@@ -80,7 +76,7 @@ function fighter(item, side) {
   info.dataset.arg = String(side);
   info.setAttribute('aria-expanded', 'false');
   info.setAttribute('aria-controls', synopsisId);
-  info.setAttribute('aria-label', `Sinopse de ${nameOf(item)}`);
+  info.setAttribute('aria-label', `Sinopse de ${getTitle(item)}`);
   info.textContent = 'Sinopse';
 
   card.append(btn, info);
@@ -88,7 +84,7 @@ function fighter(item, side) {
 }
 
 // Toque: mostra ou esconde a sinopse daquele lado, sem votar
-export function battleSynopsis(side) {
+function battleSynopsis(side) {
   const info = document.querySelector(`#battle-arena .battle__info[data-arg="${side}"]`);
   if (!info) return;
   const open = info.getAttribute('aria-expanded') !== 'true';
@@ -131,7 +127,7 @@ function render({ focus = true } = {}) {
   if (done) {
     const winner = champion(battle);
     document.getElementById('battle-champion-img').src = IMG_URL + winner.poster_path;
-    document.getElementById('battle-champion-name').textContent = nameOf(winner);
+    document.getElementById('battle-champion-name').textContent = getTitle(winner);
     if (focus) document.getElementById('battle-open').focus();
     return;
   }
@@ -144,12 +140,8 @@ function render({ focus = true } = {}) {
   if (focus) arena.querySelector('.battle__fighter').focus();
 }
 
-export async function abrirBatalha() {
-  if (loading) return;
-  loading = true;
-  const btn = document.getElementById('btn-batalha');
-  btn.setAttribute('aria-busy', 'true');
-  try {
+function abrirBatalha() {
+  return whileBusy(document.getElementById('btn-batalha'), async () => {
     const next = startBattle(await loadPool());
     if (!next) {
       showToast('Poucos títulos com esses filtros para uma batalha. Tente tirar algum filtro.', 'error');
@@ -162,16 +154,10 @@ export async function abrirBatalha() {
     const wasOpen = modal.style.display === 'flex';
     render({ focus: wasOpen });
     if (!wasOpen) modal.style.display = 'flex';
-  } catch (e) {
-    console.error(e);
-    showToast('Erro na API.', 'error');
-  } finally {
-    loading = false;
-    btn.removeAttribute('aria-busy');
-  }
+  }, { failure: 'Erro na API.' });
 }
 
-export function battleChoose(side) {
+function battleChoose(side) {
   if (!battle || isDone(battle)) return;
   const next = choose(battle, Number(side));
   if (next === battle) return;
@@ -181,17 +167,26 @@ export function battleChoose(side) {
 }
 
 // Desfaz o último voto (também depois do campeão, ou entre fases); o foco volta ao primeiro pôster
-export function battleUndo() {
+function battleUndo() {
   if (!past.length) return;
   battle = past.pop();
   render(); // o foco vai para o primeiro pôster da dupla que voltou, e a fase é anunciada
 }
 
-export async function battleOpenChampion() {
+async function battleOpenChampion() {
   const winner = champion(battle);
   if (!winner) return;
   document.getElementById('modal-battle').style.display = 'none';
-  const endpoint = state.type === 'dorama' ? 'tv' : state.type;
-  abrirModal(await withDetails(winner, endpoint), { fromDraw: true });
-  addToSorteioHistory(winner);
+  const endpoint = getTmdbEndpoint(state.type);
+  openDrawn(await withDetails(winner, endpoint));
 }
+
+registerActions({
+  click: {
+    abrirBatalha,
+    battleOpenChampion,
+    battleChoose: el => battleChoose(el.dataset.arg),
+    battleSynopsis: el => battleSynopsis(el.dataset.arg),
+    battleUndo,
+  },
+});

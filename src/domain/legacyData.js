@@ -1,16 +1,17 @@
 // Dados da versão antiga, que guardava tudo no navegador. Lógica pura: quem lê e grava é src/app/legacyImport.js.
 import { normalizeGuestLists } from './userLists.js';
+import { MEDIA_TYPES, getTitle } from './mediaItem.js';
+import { parseEpisodeKey } from './seriesProgress.js';
 
-const TYPES = ['movie', 'tv', 'dorama'];
 
 function normalizeItem(item) {
   const id = Number(item?.id);
   if (!Number.isInteger(id) || id <= 0) return null;
   return {
     id,
-    title: item.title || item.name || 'Sem título',
+    title: getTitle(item) || 'Sem título',
     poster: item.poster || null,
-    type: TYPES.includes(item.type) ? item.type : 'movie',
+    type: MEDIA_TYPES.includes(item.type) ? item.type : 'movie',
     year: item.year ? String(item.year) : null,
     genres: Array.isArray(item.genres) ? item.genres : [],
   };
@@ -27,8 +28,6 @@ function normalizeList(list) {
 
 // Episódios do convidado ({ [id]: { title, poster, type, keys: ["1396-s1-e2"] } }) viram séries com a lista de episódios.
 // Chave fora do formato ou de outra série é descartada; temporada 0 (especiais) também entra, se tiver sido marcada.
-const EPISODE_KEY = /^(\d+)-s(\d+)-e(\d+)$/;
-
 export function normalizeEpisodes(data) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) return [];
   return Object.values(data).map(entry => {
@@ -37,10 +36,10 @@ export function normalizeEpisodes(data) {
     const seen = new Set();
     const episodes = [];
     entry.keys.forEach(key => {
-      const m = EPISODE_KEY.exec(String(key));
-      if (!m || Number(m[1]) !== id || seen.has(key)) return;
+      const parsed = parseEpisodeKey(String(key));
+      if (!parsed || parsed.seriesId !== id || seen.has(key)) return;
       seen.add(key);
-      episodes.push({ season_number: Number(m[2]), episode_number: Number(m[3]) });
+      episodes.push({ season_number: parsed.season, episode_number: parsed.episode });
     });
     if (episodes.length === 0) return null;
     return {

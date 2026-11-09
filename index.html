@@ -846,7 +846,7 @@
                     </button>
                 </div>
             </div>
-            <button class="close-btn" data-action="fecharModal" aria-label="Fechar detalhes">FECHAR</button>
+            <button class="close-btn" data-action="closeModal" data-arg="modal-resultado" aria-label="Fechar detalhes">FECHAR</button>
         </div>
     </div>
 
@@ -1314,7 +1314,7 @@
         </div>
     </div>
 
-    <div id="modal-confirm" class="modal-overlay">
+    <div id="modal-confirm" class="modal-overlay modal-overlay--alert">
         <div class="modal-content confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message" tabindex="-1">
             <h2 id="confirm-title" class="confirm-dialog__title"></h2>
             <p id="confirm-message" class="confirm-dialog__message"></p>

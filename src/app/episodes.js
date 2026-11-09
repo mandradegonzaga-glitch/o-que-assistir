@@ -1,61 +1,26 @@
 // Rastreamento de episódios (004-series-tracking)
-import { supabaseRemoveFromHistory, supabaseRemoveFromWatchlist } from '../api/supabase.js';
 import { ph } from '../ui/phosphor.js';
 import { canTrackEpisodes, getSeriesProgress, markEpisode, markEpisodes, unmarkEpisode } from './episodeStore.js';
-import { saveGuestHistory, saveGuestWatchlist } from './guestLibrary.js';
-import { tmdbGet } from '../api/tmdb.js';
-import { renderLibrary, salvarHistorico } from './library.js';
+import { salvarHistorico } from './library.js';
 import { session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
-import { cache } from '../utils/cache.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { pluralize } from '../utils/format.js';
+import { toLibraryItem } from '../domain/mediaItem.js';
+import { emit, on } from '../state/events.js';
+import { cachedSeason, getAllSeasons, getSeason } from '../api/tmdbSeries.js';
+import { buildEpisodeKey, episodeCode, parseEpisodeKey } from '../domain/seriesProgress.js';
+import { registerActions } from '../ui/actions.js';
+import { inHistory, inWatchlist, removeFromHistory, removeFromWatchlist } from './libraryStore.js';
 
-// ================================================
-// UP NEXT — helpers da aba "Em Andamento" (004-series-tracking)
-// O widget do topo foi removido na 004; restam cache de temporadas e funções puras.
-// ================================================
 
-// Cache local para seasons (TTL 1h) — evita duplicar lógica do src/api/tmdbSeries.js
+// Séries e doramas mostram a seção de episódios; fechar o título esquece o que estava carregado
+on('title:opened', ({ item }) => loadEpisodesSection(item));
+on('title:closed', () => {
+    session.episodes = { seriesId: null, watchedKeys: new Set(), seasonData: {} };
+});
 
-export async function fetchAllSeasonsLocal(seriesId, numberOfSeasons) {
-    const seasonNumbers = Array.from({ length: numberOfSeasons }, (_, i) => i + 1);
-    const results = await Promise.all(seasonNumbers.map(async n => {
-        const key = `season-${seriesId}-${n}`;
-        let data = cache.get(key);
-        if (!data) {
-            let json;
-            try {
-                json = await tmdbGet(`/tv/${seriesId}/season/${n}`);
-            } catch {
-                return null;
-            }
-            data = {
-                season_number: json.season_number,
-                // Mesmo formato da lista de episódios: a lista reaproveita este cache e precisa dos nomes
-                episodes: (json.episodes || []).map(ep => ({
-                    season_number: ep.season_number,
-                    episode_number: ep.episode_number,
-                    name: ep.name || `Episódio ${ep.episode_number}`,
-                })),
-            };
-            cache.set(key, data, 3_600_000); // 1h
-        }
-        return data;
-    }));
-    // Filtrar nulls e Season 0
-    return results.filter(s => s && s.season_number !== 0);
-}
-
-// Atualiza a aba Em Andamento se estiver visível
-
-export function refreshUpNextWidget() {
-    if (state.tab === 'andando') {
-        renderLibrary();
-    }
-}
-
-export async function loadEpisodesSection(seriesData) {
+async function loadEpisodesSection(seriesData) {
     const section = document.getElementById('episodes-section');
     const select = document.getElementById('episodes-season-select');
     const list = document.getElementById('episodes-list');
@@ -103,31 +68,18 @@ export async function loadEpisodesSection(seriesData) {
     }
 }
 
-export async function renderEpisodeList(seriesId, seasonNumber) {
+async function renderEpisodeList(seriesId, seasonNumber) {
     const list = document.getElementById('episodes-list');
     if (!list) return;
 
     list.innerHTML = '<div class="episodes-loading">Carregando...</div>';
 
-    // Usar cache local (fetchAllSeasonsLocal já existe, mas precisamos de uma season só)
-    const cacheKey = `season-${seriesId}-${seasonNumber}`;
-    let seasonData = cache.get(cacheKey);
-    if (!seasonData) {
-        try {
-            const json = await tmdbGet(`/tv/${seriesId}/season/${seasonNumber}`);
-            seasonData = {
-                season_number: json.season_number,
-                episodes: (json.episodes || []).map(ep => ({
-                    season_number: ep.season_number,
-                    episode_number: ep.episode_number,
-                    name: ep.name || `Episódio ${ep.episode_number}`,
-                })),
-            };
-            cache.set(cacheKey, seasonData, 3_600_000);
-        } catch {
-            list.innerHTML = '<div class="episodes-loading">Erro ao carregar episódios.</div>';
-            return;
-        }
+    let seasonData;
+    try {
+        seasonData = await getSeason(seriesId, seasonNumber);
+    } catch {
+        list.innerHTML = '<div class="episodes-loading">Erro ao carregar episódios.</div>';
+        return;
     }
 
     const episodes = seasonData.episodes || [];
@@ -136,20 +88,10 @@ export async function renderEpisodeList(seriesId, seasonNumber) {
         return;
     }
 
-    const watchedInSeason = episodes.filter(ep =>
-        session.episodes.watchedKeys.has(`${seriesId}-s${ep.season_number}-e${ep.episode_number}`)
-    ).length;
-    const remainingInSeason = episodes.length - watchedInSeason;
-    const seasonCounterHtml = `
-        <div class="episodes-season-counter">
-            ${watchedInSeason}/${episodes.length} assistidos
-            ${remainingInSeason > 0 ? `· <strong>${remainingInSeason} ${pluralize(remainingInSeason, 'restante', 'restantes')}</strong>` : '· <strong class="text-success">Concluída!</strong>'}
-        </div>`;
-
-    list.innerHTML = seasonCounterHtml + episodes.map(ep => {
-        const key = `${seriesId}-s${ep.season_number}-e${ep.episode_number}`;
+    list.innerHTML = `<div class="episodes-season-counter">${seasonCounter(seriesId, episodes)}</div>` + episodes.map(ep => {
+        const key = buildEpisodeKey(seriesId, ep.season_number, ep.episode_number);
         const watched = session.episodes.watchedKeys.has(key);
-        const code = `T${String(ep.season_number).padStart(2,'0')}E${String(ep.episode_number).padStart(2,'0')}`;
+        const code = episodeCode(ep.season_number, ep.episode_number);
         const name = ep.name || `Episódio ${ep.episode_number}`; // cache antigo sem nome
         return `
             <div class="episode-item ${watched ? 'is-watched' : ''}" role="listitem">
@@ -168,15 +110,15 @@ export async function renderEpisodeList(seriesId, seasonNumber) {
     }).join('');
 }
 
-export async function onSeasonChange(seasonNumber) {
+async function onSeasonChange(seasonNumber) {
     if (!session.episodes.seriesId) return;
     await renderEpisodeList(session.episodes.seriesId, Number(seasonNumber));
 }
 
-export async function toggleEpisode(seriesId, seasonNumber, episodeNumber, checked) {
+async function toggleEpisode(seriesId, seasonNumber, episodeNumber, checked) {
     if (!canTrackEpisodes()) return;
 
-    const key = `${seriesId}-s${seasonNumber}-e${episodeNumber}`;
+    const key = buildEpisodeKey(seriesId, seasonNumber, episodeNumber);
 
     // Atualizar estado local imediatamente (otimista)
     if (checked) {
@@ -190,18 +132,12 @@ export async function toggleEpisode(seriesId, seasonNumber, episodeNumber, check
     if (checkbox) {
         checkbox.closest('.episode-item')?.classList.toggle('is-watched', checked);
     }
-    _updateSeasonCounter(seriesId, seasonNumber);
+    updateSeasonCounter(seriesId, seasonNumber);
 
     // Persistir no Supabase
     let result;
     if (checked) {
-        const seriesData = state.currentMovie;
-        result = await markEpisode({
-            id: seriesId,
-            title: seriesData?.name || seriesData?.title || '',
-            poster: seriesData?.poster_path || null,
-            type: seriesData?.media_type || 'tv',
-        }, seasonNumber, episodeNumber);
+        result = await markEpisode(seriesRef({ ...state.currentMovie, id: seriesId }), seasonNumber, episodeNumber);
     } else {
         result = await unmarkEpisode(seriesId, seasonNumber, episodeNumber);
     }
@@ -220,58 +156,46 @@ export async function toggleEpisode(seriesId, seasonNumber, episodeNumber, check
     // Se marcou um episódio e série está no Quero Assistir → mover para Em Andamento
     if (checked) {
         const wasInWatchlist = (session.user.watchlist || []).find(i => i.id === seriesId);
-        await _moveFromWatchlistIfNeeded(seriesId);
+        await moveSeriesOutOfWatchlist(seriesId);
         if (wasInWatchlist) showToast('Movido para Em Andamento');
     }
 
     // Atualizar status badge e btn-visto (pode acionar Já Assistido se completo)
     updateSeriesWatchButton(state.currentMovie, session.episodes.watchedKeys);
 
-    // Wiring T001-010: atualizar Up Next após mudança
-    refreshUpNextWidget();
+    emit('library:changed'); // Em Andamento e o "Continue assistindo" do Início acompanham
 }
 
-export async function _moveFromWatchlistIfNeeded(seriesId) {
-    if (!canTrackEpisodes()) return;
-    const inWatchlist = (session.user.watchlist || []).find(i => i.id === seriesId);
-    if (inWatchlist) {
-        if (session.currentUser !== 'guest') await supabaseRemoveFromWatchlist(session.currentUserId, seriesId);
-        session.user.watchlist = (session.user.watchlist || []).filter(i => i.id !== seriesId);
-        if (session.currentUser === 'guest') saveGuestWatchlist(session.user.watchlist);
-    }
+// Começou a assistir: a série sai de "Quero Assistir" (vai para Em Andamento)
+export async function moveSeriesOutOfWatchlist(seriesId) {
+    if (inWatchlist(seriesId) && await removeFromWatchlist(seriesId)) emit('library:changed');
 }
 
 // Desmarcar episódios tira a série de "Já assistidos" (conta e convidado)
 async function removeSeriesFromHistory(seriesId) {
-    if (!session.user.history.find(h => h.id === seriesId)) return;
-    if (session.currentUser === 'guest') {
-        session.user.history = session.user.history.filter(h => h.id !== seriesId);
-        saveGuestHistory(session.user.history);
-    } else {
-        await supabaseRemoveFromHistory(session.currentUserId, seriesId);
-        session.user.history = session.user.history.filter(h => h.id !== seriesId);
-    }
-    renderLibrary(); // "Já assistidos" e o "Como foi?" do título aberto acompanham
+    if (!inHistory(seriesId)) return;
+    await removeFromHistory(seriesId);
+    emit('library:changed'); // "Já assistidos" e o "Como foi?" do título aberto acompanham
 }
 
-export function _updateSeasonCounter(seriesId, seasonNumber) {
-    const counter = document.querySelector('.episodes-season-counter');
-    if (!counter) return;
-    const cacheKey = `season-${seriesId}-${seasonNumber}`;
-    const seasonData = cache.get(cacheKey);
-    if (!seasonData) return;
-    const episodes = seasonData.episodes || [];
-    const watchedInSeason = episodes.filter(ep =>
-        session.episodes.watchedKeys.has(`${seriesId}-s${ep.season_number}-e${ep.episode_number}`)
+// "3/10 assistidos · 7 restantes" (ou "Concluída!") da temporada mostrada
+function seasonCounter(seriesId, episodes) {
+    const watched = episodes.filter(ep =>
+        session.episodes.watchedKeys.has(buildEpisodeKey(seriesId, ep.season_number, ep.episode_number))
     ).length;
-    const remaining = episodes.length - watchedInSeason;
-    counter.innerHTML = `${watchedInSeason}/${episodes.length} assistidos · ` +
-        (remaining > 0
-            ? `<strong>${remaining} ${pluralize(remaining, 'restante', 'restantes')}</strong>`
-            : `<strong class="text-success">Concluída!</strong>`);
+    const remaining = episodes.length - watched;
+    return `${watched}/${episodes.length} assistidos · ` + (remaining > 0
+        ? `<strong>${remaining} ${pluralize(remaining, 'restante', 'restantes')}</strong>`
+        : '<strong class="text-success">Concluída!</strong>');
 }
 
-export function updateSeriesWatchButton(seriesData, watchedKeys) {
+function updateSeasonCounter(seriesId, seasonNumber) {
+    const counter = document.querySelector('.episodes-season-counter');
+    const seasonData = cachedSeason(seriesId, seasonNumber);
+    if (counter && seasonData) counter.innerHTML = seasonCounter(seriesId, seasonData.episodes);
+}
+
+function updateSeriesWatchButton(seriesData, watchedKeys) {
     if (!seriesData) return;
     const btnV = document.getElementById('btn-visto');
     const badge = document.getElementById('episodes-status-badge');
@@ -297,7 +221,7 @@ export function updateSeriesWatchButton(seriesData, watchedKeys) {
             salvarHistorico(seriesData);
         }
         // Remover do Quero Assistir se ainda estiver lá
-        _moveFromWatchlistIfNeeded(seriesData.id);
+        moveSeriesOutOfWatchlist(seriesData.id);
     } else if (isStarted) {
         if (badge) {
             badge.textContent = 'Assistindo';
@@ -317,7 +241,7 @@ export function setSeriesSeenButton(btnV, seen) {
     btnV.disabled = seen;
 }
 
-export async function desmarcarTemporadaAtual() {
+async function desmarcarTemporadaAtual() {
     if (!canTrackEpisodes() || !state.currentMovie) return;
 
     const seriesId = state.currentMovie.id;
@@ -328,13 +252,11 @@ export async function desmarcarTemporadaAtual() {
 
     // Coletar chaves da temporada atual que estão marcadas
     const toUnmark = [...session.episodes.watchedKeys].filter(k =>
-        k.startsWith(`${seriesId}-s${currentSeason}-`)
+        parseEpisodeKey(k)?.seriesId === seriesId && parseEpisodeKey(k).season === currentSeason
     );
 
     for (const key of toUnmark) {
-        const parts = key.split('-');
-        const epNum = Number(parts[parts.length - 1].replace('e', ''));
-        await unmarkEpisode(seriesId, currentSeason, epNum);
+        await unmarkEpisode(seriesId, currentSeason, parseEpisodeKey(key).episode);
         session.episodes.watchedKeys.delete(key);
     }
 
@@ -343,13 +265,13 @@ export async function desmarcarTemporadaAtual() {
 
     await renderEpisodeList(seriesId, currentSeason);
     updateSeriesWatchButton(state.currentMovie, session.episodes.watchedKeys);
-    refreshUpNextWidget();
+    emit('library:changed');
 
     btns.forEach(b => { b.disabled = false; });
     showToast(`Temporada ${currentSeason} desmarcada`);
 }
 
-export async function desmarcarTodosEpisodios() {
+async function desmarcarTodosEpisodios() {
     if (!canTrackEpisodes() || !state.currentMovie) return;
 
     const seriesData = state.currentMovie;
@@ -361,10 +283,8 @@ export async function desmarcarTodosEpisodios() {
     // Desmarcar todos os episódios assistidos dessa série
     const toUnmark = [...session.episodes.watchedKeys];
     for (const key of toUnmark) {
-        const parts = key.split('-');
-        const seasonNum = Number(parts[1].replace('s', ''));
-        const epNum = Number(parts[2].replace('e', ''));
-        await unmarkEpisode(seriesId, seasonNum, epNum);
+        const { season, episode } = parseEpisodeKey(key);
+        await unmarkEpisode(seriesId, season, episode);
     }
     session.episodes.watchedKeys.clear();
 
@@ -374,54 +294,35 @@ export async function desmarcarTodosEpisodios() {
     const currentSeason = Number(document.getElementById('episodes-season-select')?.value || 1);
     await renderEpisodeList(seriesId, currentSeason);
     updateSeriesWatchButton(seriesData, session.episodes.watchedKeys);
-    refreshUpNextWidget();
+    emit('library:changed');
 
     btns.forEach(b => { b.disabled = false; });
     showToast('Série desmarcada');
 }
 
-const seriesRef = seriesData => ({
-    id: seriesData.id,
-    title: seriesData.name || seriesData.title || '',
-    poster: seriesData.poster_path || null,
-    type: seriesData.media_type || 'tv',
-});
+const seriesRef = seriesData => toLibraryItem(seriesData, 'tv');
 
 // Marca de uma vez os episódios que faltam; devolve false se não gravou
 async function markMissing(seriesData, episodes) {
     const missing = episodes.filter(ep =>
-        !session.episodes.watchedKeys.has(`${seriesData.id}-s${ep.season_number}-e${ep.episode_number}`));
+        !session.episodes.watchedKeys.has(buildEpisodeKey(seriesData.id, ep.season_number, ep.episode_number)));
     if (missing.length === 0) return true;
     const result = await markEpisodes(seriesRef(seriesData), missing);
     if (!result.success) {
         showToast('Erro ao salvar episódios', 'error');
         return false;
     }
-    missing.forEach(ep => session.episodes.watchedKeys.add(`${seriesData.id}-s${ep.season_number}-e${ep.episode_number}`));
+    missing.forEach(ep => session.episodes.watchedKeys.add(buildEpisodeKey(seriesData.id, ep.season_number, ep.episode_number)));
     return true;
 }
 
 async function seasonEpisodes(seriesId, seasonNumber) {
-    const cacheKey = `season-${seriesId}-${seasonNumber}`;
-    let seasonData = cache.get(cacheKey);
-    if (!seasonData) {
-        const json = await tmdbGet(`/tv/${seriesId}/season/${seasonNumber}`);
-        seasonData = {
-            season_number: json.season_number,
-            episodes: (json.episodes || []).map(ep => ({
-                season_number: ep.season_number,
-                episode_number: ep.episode_number,
-                name: ep.name || `Episódio ${ep.episode_number}`,
-            })),
-        };
-        cache.set(cacheKey, seasonData, 3_600_000);
-    }
-    return seasonData.episodes || [];
+    return (await getSeason(seriesId, seasonNumber)).episodes;
 }
 
 const markButtons = disabled => document.querySelectorAll('.episodes-mark-all-btn').forEach(b => { b.disabled = disabled; });
 
-export async function marcarTemporadaAtual() {
+async function marcarTemporadaAtual() {
     if (!canTrackEpisodes() || !state.currentMovie) return;
 
     const seriesData = state.currentMovie;
@@ -435,10 +336,10 @@ export async function marcarTemporadaAtual() {
     } catch {
         showToast('Erro ao carregar episódios', 'error');
     }
-    if (ok) await _moveFromWatchlistIfNeeded(seriesId);
+    if (ok) await moveSeriesOutOfWatchlist(seriesId);
     await renderEpisodeList(seriesId, currentSeason);
     updateSeriesWatchButton(seriesData, session.episodes.watchedKeys);
-    refreshUpNextWidget();
+    emit('library:changed');
     markButtons(false);
     if (ok) showToast(`Temporada ${currentSeason} marcada!`);
 }
@@ -449,7 +350,7 @@ export async function markWholeSeries(seriesData) {
     const numberOfSeasons = seriesData.number_of_seasons || 0;
     if (numberOfSeasons === 0) return false;
 
-    const allSeasons = await fetchAllSeasonsLocal(seriesData.id, numberOfSeasons);
+    const allSeasons = await getAllSeasons(seriesData.id, numberOfSeasons);
     const ok = await markMissing(seriesData, allSeasons.flatMap(season => season.episodes));
 
     // O título aberto pode ter mudado enquanto gravava: só redesenha se ainda for esta série
@@ -458,23 +359,23 @@ export async function markWholeSeries(seriesData) {
         await renderEpisodeList(seriesData.id, currentSeason);
         updateSeriesWatchButton(state.currentMovie, session.episodes.watchedKeys);
     }
-    refreshUpNextWidget();
+    emit('library:changed');
     return ok;
 }
 
 // "Vi até aqui": marca este episódio e todos os anteriores (temporadas passadas inclusive).
 // Não desmarca nada: o que vem depois continua como estava.
 let markingUpTo = false;
-export async function marcarAteAqui(seasonNumber, episodeNumber) {
+async function marcarAteAqui(seasonNumber, episodeNumber) {
     if (!canTrackEpisodes() || !state.currentMovie || markingUpTo) return;
     const seriesData = state.currentMovie;
-    const code = `T${String(seasonNumber).padStart(2,'0')}E${String(episodeNumber).padStart(2,'0')}`;
+    const code = episodeCode(seasonNumber, episodeNumber);
 
     markingUpTo = true;
     markButtons(true);
     let ok = false;
     try {
-        const seasons = await fetchAllSeasonsLocal(seriesData.id, seasonNumber);
+        const seasons = await getAllSeasons(seriesData.id, seasonNumber);
         const upTo = seasons.flatMap(season => season.episodes)
             .filter(ep => ep.season_number < seasonNumber || ep.episode_number <= episodeNumber);
         ok = upTo.length > 0 && await markMissing(seriesData, upTo);
@@ -485,11 +386,24 @@ export async function marcarAteAqui(seasonNumber, episodeNumber) {
     markButtons(false);
     if (state.currentMovie !== seriesData) return;
 
-    if (ok) await _moveFromWatchlistIfNeeded(seriesData.id);
+    if (ok) await moveSeriesOutOfWatchlist(seriesData.id);
     await renderEpisodeList(seriesData.id, seasonNumber);
     updateSeriesWatchButton(seriesData, session.episodes.watchedKeys);
-    refreshUpNextWidget();
+    emit('library:changed');
     // A lista foi redesenhada: o foco volta para o mesmo episódio
     document.querySelector(`.episode-item__upto[data-season="${seasonNumber}"][data-episode="${episodeNumber}"]`)?.focus();
     if (ok) showToast(`Marcado até ${code}`);
 }
+
+registerActions({
+    click: {
+        desmarcarTemporadaAtual,
+        desmarcarTodosEpisodios,
+        marcarTemporadaAtual,
+        marcarAteAqui: el => marcarAteAqui(Number(el.dataset.season), Number(el.dataset.episode)),
+    },
+    change: {
+        onSeasonChange: el => onSeasonChange(el.value),
+        toggleEpisode: el => toggleEpisode(Number(el.dataset.series), Number(el.dataset.season), Number(el.dataset.episode), el.checked),
+    },
+});

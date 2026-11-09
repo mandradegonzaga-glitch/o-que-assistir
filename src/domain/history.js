@@ -1,4 +1,5 @@
 import { MAX_SORTEIO_HISTORY } from '../config/constants.js';
+import { getTitle } from './mediaItem.js';
 
 export function deduplicateHistory(history, newItem) {
   const filtered = history.filter(item => item.id !== newItem.id);
@@ -12,7 +13,7 @@ export function trimHistory(history, maxSize = MAX_SORTEIO_HISTORY) {
 export function createSorteioEntry(tmdbItem) {
   return {
     id: tmdbItem.id,
-    title: tmdbItem.title || tmdbItem.name || '',
+    title: getTitle(tmdbItem),
     poster_path: tmdbItem.poster_path || null,
     media_type: tmdbItem.media_type || 'movie'
   };
@@ -22,7 +23,7 @@ export function createWatchedEntry(tmdbItem, mediaType) {
   const date = tmdbItem.release_date || tmdbItem.first_air_date || '';
   return {
     id: tmdbItem.id,
-    title: tmdbItem.title || tmdbItem.name || '',
+    title: getTitle(tmdbItem),
     poster: tmdbItem.poster_path || null,
     type: mediaType || tmdbItem.media_type || 'movie',
     year: date.split('-')[0] || '',

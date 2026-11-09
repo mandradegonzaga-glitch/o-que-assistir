@@ -1,7 +1,8 @@
 // Guia "Como usar": abre no tópico pedido (ex.: "Como funcionam?" dos filtros abre direto nos filtros)
-const OPEN_ANIMATION_MS = 350; // o painel entra deslizando: rolar antes disso erra a posição
+import { registerActions } from '../ui/actions.js';
+import { afterAnimations } from '../ui/motion.js';
 
-export function openHelp(topic) {
+function openHelp(topic) {
   const modal = document.getElementById('modal-help');
   if (!modal) return;
   const target = topic ? document.getElementById(topic) : null;
@@ -10,9 +11,16 @@ export function openHelp(topic) {
   modal.style.display = 'flex';
   if (!target) return;
   const summary = target.querySelector('summary');
-  // Depois que o diálogo recebe o foco (initModalA11y), o foco vai para o tópico aberto
-  setTimeout(() => summary.focus({ preventScroll: true }), 0);
-  setTimeout(() => {
+  // O diálogo recebe o foco ao abrir (initModalA11y, que roda antes desta microtarefa); depois, o tópico
+  queueMicrotask(() => summary.focus({ preventScroll: true }));
+  // O painel entra deslizando: rolar antes de ele parar erra a posição
+  afterAnimations(modal).then(() => {
     if (modal.style.display === 'flex') summary.scrollIntoView({ block: 'start' }); // com folga (scroll-margin-top)
-  }, OPEN_ANIMATION_MS);
+  });
 }
+
+registerActions({
+  click: {
+    openHelp: el => openHelp(el.dataset.arg),
+  },
+});

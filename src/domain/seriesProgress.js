@@ -18,6 +18,17 @@ export function buildEpisodeKey(seriesId, seasonNumber, episodeNumber) {
   return `${seriesId}-s${seasonNumber}-e${episodeNumber}`;
 }
 
+// 2, 5 → "T02E05"
+export function episodeCode(season, episode) {
+  return `T${String(season).padStart(2, '0')}E${String(episode).padStart(2, '0')}`;
+}
+
+// "123-s2-e5" → { seriesId: 123, season: 2, episode: 5 }
+export function parseEpisodeKey(key) {
+  const [, seriesId, season, episode] = /^(\d+)-s(\d+)-e(\d+)$/.exec(key) || [];
+  return seriesId ? { seriesId: Number(seriesId), season: Number(season), episode: Number(episode) } : null;
+}
+
 /**
  * Remove Season 0 (especiais/OVAs do TMDB) da lista de seasons.
  * Não muta o array original.

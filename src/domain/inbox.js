@@ -1,5 +1,6 @@
 // Avisos de Amigos: compara a caixa antes e depois de atualizar e diz o que é novidade.
 // Só o que chega de outra pessoa vira aviso; o que a própria pessoa fez (aceitar, apagar) não.
+import { parseInvitePayload } from './match.js';
 
 const nameOf = friend => friend.display_name || friend.username || 'Alguém';
 
@@ -9,7 +10,7 @@ export function inboxSnapshot({ friends = [], shares = [], invites = [] }) {
     sentPending: new Set(friends.filter(f => f.status === 'pending' && f.direction === 'sent').map(f => f.friendship_id)),
     accepted: new Map(friends.filter(f => f.status === 'accepted').map(f => [f.friendship_id, nameOf(f)])),
     shares: new Map(shares.map(s => [s.id, { from: s.from_name, title: s.title }])),
-    invites: new Map(invites.map(i => [i.id, { from: i.from_name, live: String(i.payload || '').startsWith('ao-vivo:') }])),
+    invites: new Map(invites.map(i => [i.id, { from: i.from_name, live: parseInvitePayload(i.payload).live }])),
   };
 }
 

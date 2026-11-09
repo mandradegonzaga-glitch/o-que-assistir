@@ -1,13 +1,13 @@
 // Listas personalizadas: regras puras. Quem lê e grava é src/app/userLists.js; o banco, database/user_lists.sql.
 // Formato: { id, name, emoji, items: [{ id, title, poster, type }] }
+import { MEDIA_TYPES, getTitle } from './mediaItem.js';
 
 export const LIST_EMOJIS = ['🎬', '🍿', '❤️', '🎃', '👻', '🎄', '😂', '😭', '😱', '🚀', '🧸', '🏆', '🌙', '🔥', '📚', '🎉'];
 export const DEFAULT_EMOJI = LIST_EMOJIS[0];
-export const NAME_MAX = 40;
+const NAME_MAX = 40;
 export const MAX_LISTS = 50;
 export const MAX_ITEMS = 500;
 
-const TYPES = ['movie', 'tv', 'dorama'];
 const POSTER = /^\/[A-Za-z0-9_-]{1,100}\.(jpg|jpeg|png|webp)$/;
 
 // Espaços em volta e repetidos saem; o resto fica como a pessoa escreveu
@@ -35,9 +35,9 @@ export function toListItem(title, fallbackType = 'movie') {
   const type = title.media_type || title.type || fallbackType;
   return {
     id: title.id,
-    title: title.title || title.name || 'Sem título',
+    title: getTitle(title) || 'Sem título',
     poster: title.poster_path ?? title.poster ?? null,
-    type: TYPES.includes(type) ? type : 'movie',
+    type: MEDIA_TYPES.includes(type) ? type : 'movie',
   };
 }
 
@@ -70,7 +70,7 @@ export function normalizeGuestLists(raw) {
         id,
         title: String(item.title || 'Sem título').slice(0, 300),
         poster: typeof item.poster === 'string' && POSTER.test(item.poster) ? item.poster : null,
-        type: TYPES.includes(item.type) ? item.type : 'movie',
+        type: MEDIA_TYPES.includes(item.type) ? item.type : 'movie',
       };
     }).filter(Boolean).slice(0, MAX_ITEMS);
     return { id: String(list.id || name), name, emoji: pickEmoji(list.emoji), items };

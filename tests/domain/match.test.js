@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { computeMatches, decodeMatchInvite, encodeMatchInvite, pickTitles, playerName } from '../../src/domain/match.js';
+import { computeMatches, decodeMatchInvite, encodeMatchInvite, invitePayload, parseInvitePayload, pickTitles, playerName } from '../../src/domain/match.js';
 
 const titles = [1, 2, 3, 4].map(id => ({ id, poster_path: `/${id}.jpg` }));
 
@@ -67,5 +67,17 @@ describe('match invite link', () => {
     const long = decodeMatchInvite(encode({ t: 'tv', i: [1, 2], a: 'x'.repeat(99), x: [] }));
     expect(long.nameA).toHaveLength(20);
     expect(decodeMatchInvite(encode({ t: 'tv', i: [1, 2], a: 5, x: [] })).nameA).toBe('Pessoa 1');
+  });
+});
+
+describe('convite pela caixa de amigos', () => {
+  it('ao vivo vai com o prefixo e volta para o parâmetro ao-vivo', () => {
+    expect(invitePayload({ code: 'K7Q2', live: true })).toBe('ao-vivo:K7Q2');
+    expect(parseInvitePayload('ao-vivo:K7Q2')).toEqual({ live: true, code: 'K7Q2', param: 'ao-vivo' });
+  });
+
+  it('o convite por link vai só com o código e volta para o parâmetro match', () => {
+    expect(invitePayload({ code: 'abc123' })).toBe('abc123');
+    expect(parseInvitePayload('abc123')).toEqual({ live: false, code: 'abc123', param: 'match' });
   });
 });

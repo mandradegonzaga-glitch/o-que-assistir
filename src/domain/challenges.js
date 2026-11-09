@@ -1,5 +1,6 @@
 // Desafio do dia e meta da semana. Lógica pura: quem grava é src/app/progress.js.
 // O andamento fica em progress.challenges, junto com o XP (conta: metadados; convidado: aparelho).
+import { DAY_MS, dayFromNumber, dayNumber } from '../utils/date.js';
 
 const yearOf = detail => parseInt(String(detail?.year || detail?.release_date || detail?.first_air_date || '').slice(0, 4), 10);
 const hasGenre = (detail, ...ids) => {
@@ -26,12 +27,6 @@ export const WEEKLY_GOAL = { id: 'week-watch3', text: 'Assista 3 títulos esta s
 
 export const CHALLENGE_XP = { daily: 25, weekly: 50 };
 
-const dayNumber = day => {
-  const [y, m, d] = day.split('-').map(Number);
-  return Math.round(Date.UTC(y, m - 1, d) / 86_400_000);
-};
-
-const dayString = n => new Date(n * 86_400_000).toISOString().slice(0, 10);
 
 // Passo 7: dias seguidos nunca caem no mesmo desafio (7 não divide 9 nem 10)
 export function dailyChallengeFor(day, { guest = false } = {}) {
@@ -43,8 +38,8 @@ export function dailyChallengeFor(day, { guest = false } = {}) {
 // Semana de segunda a domingo; a chave é a segunda-feira
 export function weekKey(day) {
   const n = dayNumber(day);
-  const weekday = (new Date(n * 86_400_000).getUTCDay() + 6) % 7; // segunda = 0
-  return dayString(n - weekday);
+  const weekday = (new Date(n * DAY_MS).getUTCDay() + 6) % 7; // segunda = 0
+  return dayFromNumber(n - weekday);
 }
 
 const count = value => (Number.isInteger(value) && value >= 0 ? value : 0);

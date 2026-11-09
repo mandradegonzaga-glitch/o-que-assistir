@@ -41,8 +41,10 @@ test.describe('gerar ingresso', () => {
   });
 
   test('pelo teclado, mostra que está gerando e o foco fica no botão', async ({ page }) => {
-    // Segura o elenco para dar tempo de ver o "Gerando…" com a máquina ocupada (400 ms falhava na suíte inteira)
-    await page.route(/\/credits$/, async route => { await new Promise(r => setTimeout(r, 1500)); await route.fallback(); });
+    // O elenco só chega depois que o teste viu o "Gerando…": um atraso fixo perdia a corrida com a máquina ocupada
+    let releaseCredits;
+    const creditsHeld = new Promise(resolve => { releaseCredits = resolve; });
+    await page.route(/\/credits$/, async route => { await creditsHeld; await route.fallback(); });
     await enterAsGuest(page);
     await drawTitle(page);
     const button = page.locator('#btn-ingresso');
@@ -51,6 +53,7 @@ test.describe('gerar ingresso', () => {
     await page.keyboard.press('Enter');
     await expect(button).toHaveAttribute('aria-busy', 'true');
     await expect(button).toContainText('Gerando…');
+    releaseCredits();
     await downloaded;
     await expect(button).not.toHaveAttribute('aria-busy');
     await expect(button).toContainText('Gerar ingresso');

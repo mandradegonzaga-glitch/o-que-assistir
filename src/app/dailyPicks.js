@@ -2,15 +2,16 @@
 // Celular: 3 colunas de pôster. Computador: 3 cartões deitados na largura toda, com um trecho da sinopse.
 // A escolha é de src/domain/dailyPicks.js.
 import { tmdbGet } from '../api/tmdb.js';
-import { IMG_URL } from '../config/constants.js';
 import { PICK_KINDS, choosePick, msUntilMidnight, personalRequest, pickProfile, pickRequest, profileKey } from '../domain/dailyPicks.js';
 import { GENRE_NAMES, genreNames } from '../domain/genres.js';
-import { localDay } from '../domain/progress.js';
+import { DAY_MS, localDay } from '../utils/date.js';
 import { session } from '../state/appState.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { formatRating } from '../utils/format.js';
+import { getYear, getTitle } from '../domain/mediaItem.js';
+import { on } from '../state/events.js';
+import { posterImg } from '../ui/icons.js';
 
-const DAY_MS = 86_400_000;
 
 let shownDay = null;
 let shownKey = null; // dia + gêneros que contam: outra pessoa (ou o gosto mudou) refaz o painel
@@ -59,14 +60,14 @@ function shortOverview(text, max = 180) {
 
 function cardHtml({ kind, item, genre }) {
   const why = genre ? `<span class="home-card__why">Porque você curte ${escapeHtml(GENRE_NAMES[genre])}</span>` : '';
-  const title = escapeHtml(item.title || item.name);
-  const year = (item.release_date || item.first_air_date || '').slice(0, 4);
+  const title = escapeHtml(getTitle(item));
+  const year = getYear(item);
   // O gênero que trouxe a indicação aparece primeiro, para combinar com o "Porque você curte"
   const ids = genre ? [genre, ...(item.genre_ids || []).filter(id => id !== genre)] : item.genre_ids;
   const meta = [year, `★ ${formatRating(item.vote_average)}`, genreNames(ids, 1)[0]].filter(Boolean).join(' · ');
   return `<li>
       <button type="button" class="home-card home-card--pick" data-kind="${kind.kind}" data-action="carregarDetalhes" data-id="${item.id}" data-media="${kind.kind}" aria-label="${kind.label} do dia: ${title}">
-        <img class="home-card__poster" src="${IMG_URL + item.poster_path}" alt="" width="500" height="750" loading="lazy">
+        ${posterImg(item.poster_path, { cls: 'home-card__poster' })}
         <span class="home-card__kind">${kind.label}</span>
         <span class="home-card__title">${title}</span>
         <span class="home-card__meta">${escapeHtml(meta)}</span>
@@ -76,7 +77,7 @@ function cardHtml({ kind, item, genre }) {
     </li>`;
 }
 
-export async function renderDailyPicks() {
+async function renderDailyPicks() {
   const day = localDay();
   // Antes de entrar não há histórico: as de todo mundo
   const profile = session.currentUser ? pickProfile(session.user?.history) : null;
@@ -110,7 +111,14 @@ export async function renderDailyPicks() {
 }
 
 // Depois de entrar (conta ou convidado): as indicações passam a valer pelo gosto da pessoa
-export async function dailyPicksAfterLogin() {
+on('session:started', dailyPicksAfterLogin);
+// As indicações eram pelo gosto de quem saiu: somem com a pessoa
+on('session:ended', () => {
+  const { row } = els();
+  if (row) row.hidden = true;
+});
+
+async function dailyPicksAfterLogin() {
   await renderDailyPicks();
   const { row } = els();
   if (shownDay && row) row.hidden = false;

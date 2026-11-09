@@ -1,34 +1,43 @@
 // Descobrir: filtros, sorteio, Top 10 e busca
 import { isAbortError, latestSignal, tmdbFetch, tmdbGet } from '../api/tmdb.js';
 import { ph } from '../ui/phosphor.js';
-import { addToSorteioHistory } from './sorteioHistory.js';
-import { abrirModal } from './titleModal.js';
-import { syncUrl } from './urlSync.js';
 import { resolveProviderFilter } from './myProviders.js';
-import { RELEASE_DAYS, buildDiscoverUrl, getRandomPage, hasLatinTitle } from '../domain/filters.js';
+import { RELEASE_DAYS, buildDiscoverUrl, hasLatinTitle } from '../domain/filters.js';
 import { GENRE_NAMES } from '../domain/genres.js';
 import { SURPRISE_QUALITY, surpriseGenres } from '../domain/surprise.js';
 import { session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { drawReveal, endDrawReveal } from '../ui/drawReveal.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
-import { IMG_URL } from '../config/constants.js';
+import { getTmdbEndpoint, getTitle } from '../domain/mediaItem.js';
+import { debounce } from '../utils/debounce.js';
+import { personPhoto, posterImg } from '../ui/icons.js';
+import { emit } from '../state/events.js';
+import { registerActions } from '../ui/actions.js';
+import { discoverUrl, fetchRandomPage, filtersKey } from './filters.js';
+import { filterValue } from '../ui/filterFields.js';
+import { openDrawn } from './sorteioHistory.js';
+import { whileBusy } from '../ui/busy.js';
 
 const RECENT_DRAWS = 20;
 
 
-// Foto padrão de pessoa (local: evita requisição a serviço de terceiros por pessoa sem foto)
 
-export const PERSON_PLACEHOLDER = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60"><rect width="60" height="60" fill="#1f1f1f"/><circle cx="30" cy="23" r="11" fill="#555"/><path d="M10 56c3-11 11-17 20-17s17 6 20 17" fill="#555"/></svg>');
+// FILTRO ATOR: some na hora quando o campo fica curto; busca 300 ms depois da última tecla
 
-// FILTRO ATOR (com debounce implementado via input)
+const searchPersonSoon = debounce(searchPerson, 300);
 
-export async function buscarPessoa(val) {
-    if(val.length < 3) {
+function buscarPessoa(val) {
+    if (val.length < 3) {
+        searchPersonSoon.cancel();
+        latestSignal('person'); // descarta uma busca que ainda estava a caminho
         document.getElementById('actor-list').style.display = 'none';
         return;
     }
+    searchPersonSoon(val);
+}
 
+async function searchPerson(val) {
     try {
         const data = await tmdbGet('/search/person', { query: val }, { signal: latestSignal('person') });
         renderPersonSuggestions(data.results);
@@ -37,7 +46,7 @@ export async function buscarPessoa(val) {
     }
 }
 
-export function renderPersonSuggestions(results) {
+function renderPersonSuggestions(results) {
     const box = document.getElementById('actor-list');
     box.innerHTML = '';
     box.style.display = 'block';
@@ -50,57 +59,31 @@ export function renderPersonSuggestions(results) {
         item.dataset.action = 'selectPerson';
         item.dataset.id = p.id;
         item.dataset.name = p.name;
-        item.innerHTML = `<img class="suggestion-img" src="${p.profile_path ? IMG_URL+p.profile_path : PERSON_PLACEHOLDER}" alt="" width="36" height="36" loading="lazy"> ${escapeHtml(p.name)}`;
+        item.innerHTML = `<img class="suggestion-img" src="${personPhoto(p.profile_path)}" alt="" width="36" height="36" loading="lazy"> ${escapeHtml(p.name)}`;
         box.appendChild(item);
     });
 }
 
 export function selectPerson(id, name) {
     state.personId = id;
+    state.personName = name;
     document.getElementById('actor-input').value = '';
     document.getElementById('actor-list').style.display = 'none';
     document.getElementById('selected-person').style.display = 'flex';
     document.getElementById('person-name').innerText = name;
-    syncUrl();
+    emit('filters:changed');
 }
 
-export function limparPessoa() {
+function limparPessoa() {
     state.personId = null;
+    state.personName = '';
     document.getElementById('selected-person').style.display = 'none';
-    syncUrl();
+    emit('filters:changed');
 }
 
 // LÓGICA PRINCIPAL
 
-export function getFilterOptions() {
-    return {
-        genre: document.getElementById('input-genero').value,
-        mood: document.getElementById('input-mood').value,
-        provider: resolveProviderFilter(),
-        duration: document.getElementById('duration-select').value,
-        yearFrom: document.getElementById('year-from').value,
-        yearTo: document.getElementById('year-to').value,
-        personId: state.personId,
-        country: document.getElementById('input-country').value,
-    };
-}
-
-// "Filmes · Terror · Netflix": os filtros que estão valendo, para mostrar dentro dos modos que os usam
-const TYPE_NAMES = { movie: 'Filmes', tv: 'Séries', dorama: 'Doramas' };
-export function filtersSummary() {
-    const chosen = id => {
-        const el = document.getElementById(id);
-        return el && el.value && !el.disabled ? el.selectedOptions[0].textContent.trim() : '';
-    };
-    const from = document.getElementById('year-from').value.trim();
-    const to = document.getElementById('year-to').value.trim();
-    const years = from && to ? `${from} a ${to}` : from ? `desde ${from}` : to ? `até ${to}` : '';
-    const person = state.personId ? document.getElementById('person-name').textContent : '';
-    const parts = [person, chosen('input-mood'), chosen('input-genero'), chosen('input-provider'), chosen('duration-select'), chosen('input-country'), years].filter(Boolean);
-    return [TYPE_NAMES[state.type], ...(parts.length ? parts : ['todos os gêneros'])].join(' · ');
-}
-
-export async function sortearOutro() {
+async function sortearOutro() {
     const btn = document.getElementById('btn-sortear-outro');
     if (btn.disabled) return;
     btn.disabled = true;
@@ -134,63 +117,42 @@ export async function withDetails(item, endpoint) {
     }
 }
 
-const busy = async (id, task) => {
-    const btn = document.getElementById(id);
-    if (btn.disabled) return;
-    btn.disabled = true;
-    btn.setAttribute('aria-busy', 'true');
-    try {
-        await task();
-    } finally {
-        btn.disabled = false;
-        btn.removeAttribute('aria-busy');
-    }
-};
-
 // Surpreenda-me: gênero que a pessoa quase nunca vê, só títulos bem avaliados
-export function surpreendaMe() {
-    return busy('btn-surpresa', async () => {
-        const endpoint = state.type === 'dorama' ? 'tv' : state.type;
+function surpreendaMe() {
+    return whileBusy(document.getElementById('btn-surpresa'), async () => {
+        const endpoint = getTmdbEndpoint(state.type);
         const quality = SURPRISE_QUALITY[state.type];
-        try {
-            let chosenGenre = null;
-            const sorteado = await drawReveal(async () => {
-                for (const genre of surpriseGenres(session.user?.history, state.type).slice(0, 4)) {
-                    const url = buildDiscoverUrl(endpoint, {
-                        genre: String(genre),
-                        provider: resolveProviderFilter(),
-                        country: document.getElementById('input-country').value,
-                        isDorama: state.type === 'dorama',
-                        minVotes: quality['vote_count.gte'],
-                    }) + `&vote_average.gte=${quality['vote_average.gte']}`;
-                    let data = await tmdbFetch(url + `&page=${getRandomPage(3)}`);
-                    if (!data.results?.length) data = await tmdbFetch(url + '&page=1');
-                    const escolhido = pickDraw(data.results);
-                    if (!escolhido) continue;
-                    chosenGenre = genre;
-                    addToSorteioHistory(escolhido);
-                    return withDetails(escolhido, endpoint);
-                }
-                return null;
-            }, { posterBase: IMG_URL });
-            if (!sorteado) {
-                showToast('Não achei uma surpresa com esses filtros. Tente outra plataforma.', 'error');
-                return;
+        let chosenGenre = null;
+        const sorteado = await drawReveal(async () => {
+            for (const genre of surpriseGenres(session.user?.history, state.type).slice(0, 4)) {
+                const url = buildDiscoverUrl(endpoint, {
+                    genre: String(genre),
+                    provider: resolveProviderFilter(),
+                    country: filterValue('country'),
+                    isDorama: state.type === 'dorama',
+                    minVotes: quality['vote_count.gte'],
+                }) + `&vote_average.gte=${quality['vote_average.gte']}`;
+                const escolhido = pickDraw(await fetchRandomPage(url, 3));
+                if (!escolhido) continue;
+                chosenGenre = genre;
+                return withDetails(escolhido, endpoint);
             }
-            abrirModal(sorteado, { fromDraw: true });
-            endDrawReveal();
-            showToast(`Fora da sua zona de conforto: ${GENRE_NAMES[chosenGenre]}`);
-        } catch (e) {
-            console.error(e);
-            showToast('Erro na API.', 'error');
+            return null;
+        });
+        if (!sorteado) {
+            showToast('Não achei uma surpresa com esses filtros. Tente outra plataforma.', 'error');
+            return;
         }
-    });
+        openDrawn(sorteado);
+        endDrawReveal();
+        showToast(`Fora da sua zona de conforto: ${GENRE_NAMES[chosenGenre]}`);
+    }, { failure: 'Erro na API.' });
 }
 
 // Lista para o sorteio: "Parecido com..." (recomendações do título informado) ou os filtros.
 // null quando o título de "Parecido com..." não existe (o aviso já foi dado).
 async function fetchDrawList(endpoint) {
-    const similarInput = document.getElementById('input-similar').value.trim();
+    const similarInput = filterValue('similar');
 
     if (similarInput.length > 2) {
         const buscaData = await tmdbGet(`/search/${endpoint}`, { query: similarInput });
@@ -202,39 +164,25 @@ async function fetchDrawList(endpoint) {
         const tituloEncontrado = buscaData.results[0];
         const recData = await tmdbGet(`/${endpoint}/${tituloEncontrado.id}/recommendations`);
         if (recData.results?.length) {
-            showToast(`Buscando similares a "${tituloEncontrado.title || tituloEncontrado.name}"...`);
+            showToast(`Buscando similares a "${getTitle(tituloEncontrado)}"...`);
             return recData.results;
         }
         const simData = await tmdbGet(`/${endpoint}/${tituloEncontrado.id}/similar`);
         return simData.results || [];
     }
 
-    const url = buildDiscoverUrl(endpoint, {
-        genre: document.getElementById('input-genero').value,
-        mood: document.getElementById('input-mood').value,
-        provider: resolveProviderFilter(),
-        duration: document.getElementById('duration-select').value,
-        yearFrom: document.getElementById('year-from').value,
-        yearTo: document.getElementById('year-to').value,
-        personId: state.personId,
-        country: document.getElementById('input-country').value,
-        isDorama: state.type === 'dorama',
-    });
-    let data = await tmdbFetch(url + `&page=${getRandomPage()}`);
-    if (!data.results || data.results.length === 0) {
-        data = await tmdbFetch(url + '&page=1');
-    }
-    return data.results || [];
+    return fetchRandomPage(discoverUrl());
 }
 
-export async function sortearFilme() {
+async function sortearFilme() {
     const btn = document.getElementById('btn-sortear');
     if (btn.disabled) return; // evita sorteios duplicados com cliques repetidos
+    const idle = btn.innerHTML;
     btn.innerHTML = ph('circle-notch', { weight: 'bold', cls: 'icon spin icon-16 icon-lead-6' }) + 'Buscando...';
     btn.disabled = true;
     btn.classList.add('loading');
 
-    const endpoint = state.type === 'dorama' ? 'tv' : state.type;
+    const endpoint = getTmdbEndpoint(state.type);
 
     try {
         // O baralho de ingressos embaralha enquanto a busca acontece e vira no sorteado (src/ui/drawReveal.js)
@@ -246,25 +194,25 @@ export async function sortearFilme() {
                 showToast("Nada encontrado (ou tudo na sua blacklist)!", "error");
                 return null;
             }
-            addToSorteioHistory(escolhido);
             return withDetails(escolhido, endpoint);
-        }, { posterBase: IMG_URL });
+        });
         if (sorteado) {
-            abrirModal(sorteado, { fromDraw: true });
+            openDrawn(sorteado);
             endDrawReveal();
         }
     } catch(e) {
         console.error(e);
         showToast("Erro na API.", "error");
+    } finally {
+        btn.innerHTML = idle;
+        btn.disabled = false;
+        btn.classList.remove('loading');
     }
-    btn.innerHTML = ph('shuffle', { weight: 'bold', cls: 'icon icon-18 icon-lead-6' }) + 'Sortear Agora';
-    btn.disabled = false;
-    btn.classList.remove('loading');
 }
 
 // SKELETON LOADERS
 
-export function showSkeletonLoader() {
+function showSkeletonLoader() {
     const area = document.getElementById('results-area');
     area.innerHTML = '';
     area.style.display = 'grid';
@@ -278,17 +226,15 @@ export function showSkeletonLoader() {
 const LIST_PILLS = ['btn-top10', 'btn-lancamentos'];
 
 // O que define a lista: tipo e filtros. Mudou algo desde que abriu? Tocar de novo atualiza em vez de fechar.
-const FILTER_IDS = ['input-genero', 'input-mood', 'input-provider', 'duration-select', 'year-from', 'year-to', 'input-country', 'input-similar'];
 let openListKey = null;
-const currentListKey = () => JSON.stringify([state.type, state.personId, ...FILTER_IDS.map(id => document.getElementById(id)?.value || '')]);
 
 function markOpenList(btn) {
     LIST_PILLS.forEach(id => document.getElementById(id)?.setAttribute('aria-pressed', String(id === btn?.id)));
-    openListKey = btn ? currentListKey() : null;
+    openListKey = btn ? filtersKey() : null;
 }
 
 function closeIfOpen(btn) {
-    if (btn.getAttribute('aria-pressed') !== 'true' || openListKey !== currentListKey()) return false;
+    if (btn.getAttribute('aria-pressed') !== 'true' || openListKey !== filtersKey()) return false;
     fecharResultados();
     return true;
 }
@@ -303,7 +249,7 @@ export function initHomeSearch() {
     sync();
 }
 
-export function fecharResultados() {
+function fecharResultados() {
     const open = LIST_PILLS.map(id => document.getElementById(id)).find(b => b?.getAttribute('aria-pressed') === 'true');
     document.getElementById('results-area').innerHTML = '';
     markOpenList(null);
@@ -324,7 +270,7 @@ function setPillLoading(btn, on) {
     btn.toggleAttribute('aria-busy', on);
 }
 
-export async function mostrarTop10() {
+async function mostrarTop10() {
     const btn = document.getElementById('btn-top10');
     if (btn.disabled) return;
     if (closeIfOpen(btn)) return;
@@ -333,17 +279,7 @@ export async function mostrarTop10() {
     showSkeletonLoader();
 
     try {
-        const endpoint = state.type === 'dorama' ? 'tv' : state.type;
-        const data = await tmdbFetch(buildDiscoverUrl(endpoint, {
-            genre: document.getElementById('input-genero').value,
-            mood: document.getElementById('input-mood').value,
-            provider: resolveProviderFilter(),
-            yearFrom: document.getElementById('year-from').value,
-            yearTo: document.getElementById('year-to').value,
-            country: document.getElementById('input-country').value,
-            isDorama: state.type === 'dorama',
-            minVotes: 100,
-        }));
+        const data = await tmdbFetch(discoverUrl({ duration: '', personId: null, minVotes: 100 }));
         renderResults(data.results.slice(0,10), true);
         markOpenList(btn);
     } catch(e) {
@@ -354,25 +290,16 @@ export async function mostrarTop10() {
 }
 
 // Lançamentos: o que chegou nas últimas semanas, com os mesmos filtros de gênero, clima e plataforma
-export async function mostrarLancamentos() {
+async function mostrarLancamentos() {
     const btn = document.getElementById('btn-lancamentos');
     if (btn.disabled) return;
     if (closeIfOpen(btn)) return;
     setPillLoading(btn, true);
     showSkeletonLoader();
 
-    const endpoint = state.type === 'dorama' ? 'tv' : state.type;
+    const endpoint = getTmdbEndpoint(state.type);
     try {
-        const data = await tmdbFetch(buildDiscoverUrl(endpoint, {
-            genre: document.getElementById('input-genero').value,
-            mood: document.getElementById('input-mood').value,
-            provider: resolveProviderFilter(),
-            personId: state.personId,
-            country: document.getElementById('input-country').value,
-            isDorama: state.type === 'dorama',
-            minVotes: 0,
-            releases: { today: new Date() },
-        }));
+        const data = await tmdbFetch(discoverUrl({ duration: '', yearFrom: '', yearTo: '', minVotes: 0, releases: { today: new Date() } }));
         const days = RELEASE_DAYS[endpoint];
         const caption = endpoint === 'movie'
             ? `Chegaram ao streaming e ao aluguel nos últimos ${days} dias`
@@ -388,7 +315,7 @@ export async function mostrarLancamentos() {
     }
 }
 
-export function renderResults(list, rank=false, { caption = '', empty = '' } = {}) {
+function renderResults(list, rank=false, { caption = '', empty = '' } = {}) {
     const area = document.getElementById('results-area');
     area.innerHTML = '';
     area.style.display = 'grid';
@@ -415,7 +342,7 @@ export function renderResults(list, rank=false, { caption = '', empty = '' } = {
 
     list.forEach((f, i) => {
         if(f.poster_path) {
-            const title = f.title || f.name;
+            const title = getTitle(f);
             const item = document.createElement('button');
             item.type = 'button';
             item.className = 'result-item';
@@ -426,7 +353,7 @@ export function renderResults(list, rank=false, { caption = '', empty = '' } = {
 
             item.innerHTML = `
                 ${rank ? `<span class="result-rank">${i+1}º</span>` : ''}
-                <img src="${IMG_URL + f.poster_path}" alt="${escapeHtml(title)}" width="500" height="750" loading="lazy">
+                ${posterImg(f.poster_path, { alt: escapeHtml(title) })}
                 <span class="result-title-preview">${escapeHtml(title)}</span>
             `;
 
@@ -438,7 +365,7 @@ export function renderResults(list, rank=false, { caption = '', empty = '' } = {
 // SEARCH HISTORY
 
 
-export async function buscarDireto() {
+async function buscarDireto() {
     const query = document.getElementById('direct-search').value;
     const area = document.getElementById('results-area');
 
@@ -448,13 +375,12 @@ export async function buscarDireto() {
     }
 
     markOpenList(null); // a busca toma o lugar da lista que estava aberta
-    area.innerHTML = '<p class="text-secondary grid-full">Buscando...</p>';
     area.style.display = 'grid';
 
     showSkeletonLoader();
 
     try {
-        const endpoint = state.type === 'dorama' ? 'tv' : state.type;
+        const endpoint = getTmdbEndpoint(state.type);
 
         const data = await tmdbGet(`/search/${endpoint}`, { query }, { signal: latestSignal('search') });
 
@@ -478,3 +404,37 @@ export async function buscarDireto() {
         showToast("Erro na busca", "error");
     }
 }
+
+// Gênero e clima são alternativos: escolher um limpa o outro
+function clearOther(otherId) {
+    return el => {
+        if (!el.value) return;
+        document.getElementById(otherId).value = '';
+        emit('filters:changed');
+    };
+}
+
+registerActions({
+    click: {
+        buscarDireto,
+        focusSearch: () => document.getElementById('direct-search').focus(),
+        limparPessoa,
+        mostrarTop10,
+        mostrarLancamentos,
+        surpreendaMe,
+        selectPerson: el => selectPerson(Number(el.dataset.id), el.dataset.name),
+        sortearFilme,
+        sortearOutro,
+        fecharResultados,
+    },
+    input: {
+        buscarPessoa: el => buscarPessoa(el.value),
+    },
+    change: {
+        clearMood: clearOther('input-mood'),
+        clearGenre: clearOther('input-genero'),
+    },
+    enter: {
+        buscarDireto,
+    },
+});

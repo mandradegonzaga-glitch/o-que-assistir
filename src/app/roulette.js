@@ -1,11 +1,11 @@
 // Roleta personalizada
 import { supabaseIncrementRouletteWins } from '../api/supabase.js';
 import { saveGuestWins } from './guestLibrary.js';
-import { checkAllBadges } from './profile.js';
+import { checkAllBadges } from './badges.js';
 import { grantXp, trackChallenge } from './progress.js';
 import { fecharModal } from './titleModal.js';
 import { computeSpinRotation } from '../domain/roulette.js';
-import { session, state } from '../state/appState.js';
+import { isGuest, session, state } from '../state/appState.js';
 import { createConfetti, scheduleUndoable, showToast } from '../ui/feedback.js';
 import { confirmDialog } from '../ui/modals.js';
 import { switchMode } from '../ui/navigation.js';
@@ -13,12 +13,14 @@ import { escapeHtml } from '../utils/escapeHtml.js';
 import { storage } from '../utils/storage.js';
 import { CLOSE_ICON } from '../ui/icons.js';
 import { STAR_ICON, TICKET_ICON, WHEEL_ICON } from '../ui/icons.js';
+import { getTitle } from '../domain/mediaItem.js';
+import { on } from '../state/events.js';
+import { registerActions } from '../ui/actions.js';
+import { afterAnimations, prefersReducedMotion } from '../ui/motion.js';
 
-const SPIN_MS = 4000;
-// "Reduzir movimento" no sistema: o CSS zera a transição (a roda vai direto ao vencedor),
-// então a espera encolhe para uma pausa curta em vez de 4 s com a roda parada
-const SPIN_MS_REDUCED = 800;
-const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// "Reduzir movimento" no sistema: o CSS zera a transição (a roda vai direto ao vencedor);
+// uma pausa curta ainda dá tempo de ver onde parou antes do resultado
+const REDUCED_PAUSE_MS = 800;
 const ITEMS_KEY = 'roulette_items';
 let spinning = false;
 
@@ -32,7 +34,7 @@ export function initRoulette() {
     renderRoleta();
 }
 
-export function addRoletaItem() {
+function addRoletaItem() {
     if (spinning) return;
     const val = document.getElementById('roulette-input').value.trim();
     if(val) {
@@ -44,9 +46,14 @@ export function addRoletaItem() {
 }
 
 // No título: põe (ou tira) da roleta sem sair dali; quem quiser vai para a roleta pelo aviso
-const titleName = () => state.currentMovie && (state.currentMovie.title || state.currentMovie.name);
+const titleName = () => state.currentMovie && getTitle(state.currentMovie);
 
-export function updateRouletteButton() {
+on('title:opened', () => {
+    updateRouletteButton();
+    hideRouletteNote();
+});
+
+function updateRouletteButton() {
     const btn = document.getElementById('btn-roleta');
     const name = titleName();
     if (!btn || !name) return;
@@ -56,12 +63,12 @@ export function updateRouletteButton() {
     document.getElementById('btn-roleta-label').textContent = inWheel ? 'Na roleta' : 'Roleta';
 }
 
-export function hideRouletteNote() {
+function hideRouletteNote() {
     const note = document.getElementById('m-roulette-note');
     if (note) note.hidden = true;
 }
 
-export function addCurrentToRoulette() {
+function addCurrentToRoulette() {
     if (spinning) return;
     const name = titleName();
     if (!name) return;
@@ -81,12 +88,12 @@ export function addCurrentToRoulette() {
     updateRouletteButton();
 }
 
-export function goToRoulette() {
+function goToRoulette() {
     fecharModal();
     switchMode('roulette');
 }
 
-export function renderRoleta() {
+function renderRoleta() {
     const pool = document.getElementById('roulette-pool');
     pool.innerHTML = state.rouletteItems.map((i, idx) =>
         `<div class="pool-tag">${escapeHtml(i)} <button type="button" class="pool-tag__remove" data-action="removeRoletaItem" data-arg="${idx}" aria-label="Remover ${escapeHtml(i)} da roleta">${CLOSE_ICON}</button></div>`
@@ -100,7 +107,7 @@ export function renderRoleta() {
     updateRouletteControls();
 }
 
-export function removeRoletaItem(idx) {
+function removeRoletaItem(idx) {
     if (spinning) return;
     const name = state.rouletteItems[idx];
     scheduleUndoable({
@@ -121,7 +128,7 @@ export function removeRoletaItem(idx) {
     });
 }
 
-export function desenharRoleta() {
+function desenharRoleta() {
     const wheel = document.getElementById('roulette-wheel');
     wheel.innerHTML = '';
 
@@ -164,7 +171,7 @@ export function desenharRoleta() {
     });
 }
 
-export function girarRoleta() {
+async function girarRoleta() {
     if (spinning || state.rouletteItems.length < 2) return;
 
     const wheel = document.getElementById('roulette-wheel');
@@ -181,37 +188,36 @@ export function girarRoleta() {
 
     center.innerHTML = WHEEL_ICON;
     const reduce = prefersReducedMotion();
-    const spinMs = reduce ? SPIN_MS_REDUCED : SPIN_MS;
     wheel.style.transform = `rotate(${computeSpinRotation(winnerIndex, items.length, reduce ? 1 : 5 + Math.random() * 3)}deg)`;
+    // O giro dura o que a transição do CSS disser
+    await (reduce ? new Promise(resolve => setTimeout(resolve, REDUCED_PAUSE_MS)) : afterAnimations(wheel));
 
-    setTimeout(async () => {
-        center.innerHTML = STAR_ICON;
-        const winnerBox = document.getElementById('roulette-winner');
-        winnerBox.textContent = `Hoje é dia de: ${winner}`;
-        winnerBox.hidden = false;
-        spinning = false;
-        updateRouletteControls();
-        createConfetti();
+    center.innerHTML = STAR_ICON;
+    const winnerBox = document.getElementById('roulette-winner');
+    winnerBox.textContent = `Hoje é dia de: ${winner}`;
+    winnerBox.hidden = false;
+    spinning = false;
+    updateRouletteControls();
+    createConfetti();
 
-        grantXp('roulette');
-        trackChallenge('roulette');
-        if (session.currentUser === 'guest') {
-            session.user.rouletteWins = (session.user.rouletteWins || 0) + 1;
-            saveGuestWins(session.user.rouletteWins);
-        } else if (session.currentUserId) {
-            // Incrementar vitórias no Supabase
-            const result = await supabaseIncrementRouletteWins(session.currentUserId);
-            if (result.success) {
-                session.user.rouletteWins = result.wins;
-            }
+    grantXp('roulette');
+    trackChallenge('roulette');
+    if (isGuest()) {
+        session.user.rouletteWins = (session.user.rouletteWins || 0) + 1;
+        saveGuestWins(session.user.rouletteWins);
+    } else if (session.currentUserId) {
+        // Incrementar vitórias no Supabase
+        const result = await supabaseIncrementRouletteWins(session.currentUserId);
+        if (result.success) {
+            session.user.rouletteWins = result.wins;
         }
+    }
 
-        // Verificar conquista
-        await checkAllBadges();
-    }, spinMs);
+    // Verificar conquista
+    await checkAllBadges();
 }
 
-export async function limparRoleta() {
+async function limparRoleta() {
     if (spinning || state.rouletteItems.length === 0) return;
     if (await confirmDialog({ title: 'Limpar roleta', message: 'Deseja limpar toda a lista da roleta?', confirmLabel: 'Limpar', danger: true })) {
         state.rouletteItems = [];
@@ -235,3 +241,17 @@ function updateRouletteControls() {
     document.getElementById('btn-limpar-roleta').hidden = count === 0;
     document.getElementById('roulette-hint').hidden = count >= 2;
 }
+
+registerActions({
+    click: {
+        addCurrentToRoulette,
+        goToRoulette,
+        addRoletaItem,
+        girarRoleta,
+        limparRoleta,
+        removeRoletaItem: el => removeRoletaItem(Number(el.dataset.arg)),
+    },
+    enter: {
+        addRoletaItem,
+    },
+});

@@ -2,6 +2,7 @@
 // Funciona com o app aberto em alguma aba ou minimizado; com tudo fechado não há aviso
 // (isso exigiria push pelo servidor). A escolha fica neste aparelho.
 import { showToast } from '../ui/feedback.js';
+import { registerActions } from '../ui/actions.js';
 
 const KEY = 'notify_device';
 const TITLE = 'O Que Assistir?';
@@ -22,14 +23,14 @@ function store(on) {
   } catch { /* sem armazenamento: vale só nesta visita */ }
 }
 
-export const deviceNotifyEnabled = () => supported() && stored() && Notification.permission === 'granted';
+const deviceNotifyEnabled = () => supported() && stored() && Notification.permission === 'granted';
 
 export function renderDeviceNotify() {
   const input = document.getElementById('friends-notify');
   if (input) input.checked = deviceNotifyEnabled();
 }
 
-export async function toggleDeviceNotify(input) {
+async function toggleDeviceNotify(input) {
   if (!input.checked) {
     store(false);
     showToast('Avisos neste aparelho desligados.');
@@ -67,3 +68,9 @@ export async function notifyDevice(text) {
     notification.onclick = () => { window.focus(); notification.close(); };
   } catch { /* alguns celulares só aceitam pelo service worker */ }
 }
+
+registerActions({
+  change: {
+    toggleDeviceNotify,
+  },
+});

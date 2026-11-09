@@ -1,17 +1,15 @@
 // Boas-vindas na primeira visita
 import { ph } from '../ui/phosphor.js';
 import { TICKET_ICON } from '../ui/icons.js';
+import { onModalClose } from '../ui/modals.js';
+import { registerActions } from '../ui/actions.js';
 
-
-// ONBOARDING SYSTEM
-
-export let onboardingStep = 0;
-
-export const onboardingSteps = [
+// Os passos moram só aqui: o HTML traz a moldura e cada passo é desenhado a partir desta lista
+const steps = [
     {
         icon: TICKET_ICON, // a marca do app abre as boas-vindas
         title: 'Bem-vindo!',
-        desc: 'Descubra filmes e séries de forma inteligente com filtros personalizados'
+        desc: 'Descubra filmes e séries de forma inteligente'
     },
     {
         icon: ph('shuffle', { weight: 'bold' }),
@@ -30,48 +28,42 @@ export const onboardingSteps = [
     }
 ];
 
-export function checkFirstVisit() {
-    const hasVisited = localStorage.getItem('has_visited');
-    if (!hasVisited) {
-        setTimeout(() => {
-            document.getElementById('onboarding-overlay').style.display = 'flex';
-        }, 500);
-    }
-}
+let current = 0;
 
-export function nextOnboarding() {
-    onboardingStep++;
-
-    if (onboardingStep >= onboardingSteps.length) {
-        finishOnboarding();
-        return;
-    }
-
-    const step = onboardingSteps[onboardingStep];
+function showStep(index) {
+    current = index;
+    const step = steps[index];
     document.getElementById('onboarding-icon').innerHTML = step.icon;
     document.getElementById('onboarding-title').innerText = step.title;
     document.getElementById('onboarding-desc').innerText = step.desc;
-
-    // Update dots
-    document.querySelectorAll('.onboarding-dot').forEach((dot, i) => {
-        dot.classList.toggle('active', i === onboardingStep);
-    });
-
-    if (onboardingStep === onboardingSteps.length - 1) {
-        document.getElementById('onboarding-btn').innerText = 'Começar Agora!';
-    }
+    document.querySelector('.onboarding-dots').innerHTML = steps
+        .map((_, i) => `<span class="onboarding-dot${i === index ? ' active' : ''}"></span>`).join('');
+    document.getElementById('onboarding-btn').innerText = index === steps.length - 1 ? 'Começar Agora!' : 'Começar';
 }
 
-export function finishOnboarding() {
+function finishOnboarding() {
     localStorage.setItem('has_visited', 'true');
-    const overlay = document.getElementById('onboarding-overlay');
-    overlay.style.animation = 'fadeOut 0.3s ease';
-    setTimeout(() => {
-        overlay.style.display = 'none';
-        overlay.style.animation = '';
-    }, 300);
+    document.getElementById('onboarding-overlay').style.display = 'none';
 }
 
-export function skipOnboarding() {
-    finishOnboarding();
+// Esc também encerra as boas-vindas
+onModalClose('onboarding-overlay', finishOnboarding);
+
+export function checkFirstVisit() {
+    if (localStorage.getItem('has_visited')) return;
+    showStep(0);
+    setTimeout(() => {
+        document.getElementById('onboarding-overlay').style.display = 'flex';
+    }, 500);
 }
+
+function nextOnboarding() {
+    if (current + 1 >= steps.length) finishOnboarding();
+    else showStep(current + 1);
+}
+
+registerActions({
+    click: {
+        nextOnboarding,
+    },
+});

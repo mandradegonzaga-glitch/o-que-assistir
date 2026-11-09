@@ -1,13 +1,14 @@
 // Horas assistidas e ator mais visto no perfil (parte 2 do DNA).
 // Os detalhes de cada título vêm do TMDB uma vez e ficam guardados no aparelho.
-import { supabaseGetAllSeriesInProgress } from '../api/supabase.js';
 import { tmdbGet } from '../api/tmdb.js';
 import { MIN_ACTOR_TITLES, computeLifeStats, factsKey, formatWatchTime, missingFacts, titleFacts } from '../domain/lifeStats.js';
 import { session } from '../state/appState.js';
 import { formatCount, pluralize } from '../utils/format.js';
 import { storage } from '../utils/storage.js';
+import { on } from '../state/events.js';
+import { getAllSeriesInProgress } from './episodeStore.js';
 
-export const FACTS_STORAGE_KEY = 'title_facts';
+const FACTS_STORAGE_KEY = 'title_facts';
 const CONCURRENCY = 4;
 let renderToken = 0;
 // Muda ao sair da conta: uma busca que ainda estava rodando não grava mais nada
@@ -18,9 +19,10 @@ const readFacts = () => {
   return facts && typeof facts === 'object' && !Array.isArray(facts) ? facts : {};
 };
 
+// Convidado e conta: as séries em andamento contam nas horas
 async function loadInProgress() {
-  if (!session.currentUserId || session.currentUser === 'guest') return [];
-  const result = await supabaseGetAllSeriesInProgress(session.currentUserId);
+  if (!session.currentUser) return [];
+  const result = await getAllSeriesInProgress();
   return result.success ? result.series.map(s => ({ id: s.id, type: s.type, episodes: s.watchedKeys.size })) : [];
 }
 
@@ -50,7 +52,7 @@ function saveFacts(titles, facts) {
   storage.set(FACTS_STORAGE_KEY, Object.fromEntries(Object.entries(facts).filter(([k]) => keep.has(k))));
 }
 
-export async function loadLifeStats(history) {
+async function loadLifeStats(history) {
   const gen = generation;
   const inProgress = await loadInProgress();
   const titles = [...history, ...inProgress];
@@ -109,7 +111,10 @@ export async function renderLifeStats(history = session.user.history) {
   box.removeAttribute('aria-busy');
 }
 
-export function clearLifeStatsCache() {
+// Os detalhes guardados dizem quais títulos a conta viu: não ficam para a próxima pessoa
+on('session:ended', ({ kind }) => kind === 'account' && clearLifeStatsCache());
+
+function clearLifeStatsCache() {
   renderToken++;
   generation++;
   try { storage.remove(FACTS_STORAGE_KEY); } catch { /* sem localStorage: nada a apagar */ }

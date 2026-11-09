@@ -7,12 +7,12 @@
 // virar 450 ms (algo que já está na tela e muda: curva de entrada e saída), pausa de 250 ms para ler,
 // e o palco some em 200 ms enquanto a gaveta do título sobe.
 // Com "reduzir movimento", nada disso: o título abre direto, como antes.
+import { getTitle, tmdbImage } from '../domain/mediaItem.js';
+import { prefersReducedMotion } from './motion.js';
 
-export const DRAW_TIMING = { shuffleMin: 900, flip: 450, hold: 250, fade: 200, posterWait: 1500 };
+const DRAW_TIMING = { shuffleMin: 900, flip: 450, hold: 250, fade: 200, posterWait: 1500 };
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // Verso do ingresso: o bilhete da marca, grande, e o letreiro
 const TICKET_BACK = `
@@ -59,7 +59,7 @@ function hideStage(stage) {
 
 // pick(): busca e devolve o título sorteado (ou null se não achou nada; quem chama avisa).
 // Devolve o título depois da revelação; chame endDrawReveal() quando a página dele já estiver abrindo.
-export async function drawReveal(pick, { posterBase }) {
+export async function drawReveal(pick) {
   if (prefersReducedMotion()) return pick();
 
   const stage = ensureStage();
@@ -83,12 +83,12 @@ export async function drawReveal(pick, { posterBase }) {
     return null;
   }
 
-  const url = item.poster_path ? posterBase + item.poster_path : '';
+  const url = tmdbImage(item.poster_path);
   await Promise.race([preload(url), wait(DRAW_TIMING.posterWait)]);
   await wait(Math.max(0, DRAW_TIMING.shuffleMin - (performance.now() - started)));
 
   if (url) poster.src = url;
-  caption.textContent = item.title || item.name || '';
+  caption.textContent = getTitle(item);
   stage.classList.add('is-revealed');
   navigator.vibrate?.(15);
   await wait(DRAW_TIMING.flip + DRAW_TIMING.hold);

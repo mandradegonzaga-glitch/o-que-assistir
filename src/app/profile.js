@@ -1,24 +1,28 @@
 // Perfil, conta e conquistas
-import { supabaseChangePassword, supabaseCheckBadge, supabaseDeleteAccount, supabaseUnlockBadge, supabaseUpdateProfile } from '../api/supabase.js';
-import { updateHeader, updateUserDisplay } from './auth.js';
+import { supabaseChangePassword, supabaseDeleteAccount, supabaseUpdateProfile } from '../api/supabase.js';
+import { endSession, updateUserDisplay } from './auth.js';
 import { renderBlacklist } from './blacklist.js';
 import { BADGE_CATEGORIES, computeBadgeStatuses } from '../domain/badges.js';
-import { session } from '../state/appState.js';
+import { isAccount, isGuest, session } from '../state/appState.js';
 import { BADGE_ICONS } from '../ui/badgeIcons.js';
-import { showAchievement, showToast } from '../ui/feedback.js';
+import { showToast } from '../ui/feedback.js';
 import { confirmDialog } from '../ui/modals.js';
 import { formatCount } from '../utils/format.js';
-import { BADGE_DEFINITIONS } from '../domain/badges.js';
-import { addGuestBadge, getGuestBadges } from './guestLibrary.js';
 import { renderProgress } from './progress.js';
-import { loadAllProviders } from './myProviders.js';
 import { renderTasteDna } from './tasteDna.js';
-import { clearLifeStatsCache } from './lifeStats.js';
+import { MIN_PASSWORD_LENGTH } from '../domain/passwordStrength.js';
+import { emit, on } from '../state/events.js';
+import { registerActions } from '../ui/actions.js';
 
 // PERFIL
 
+// XP e desafios mudaram com o perfil aberto: acompanha
+on('progress:changed', () => {
+    if (document.getElementById('modal-profile').style.display === 'flex') renderProgress();
+});
+
 export function abrirPerfil() {
-    loadAllProviders();
+    emit('profile:opened');
     renderProgress();
     document.getElementById('profile-name').value = session.user.name;
     document.getElementById('profile-email').value = session.user.email || '';
@@ -30,22 +34,22 @@ export function abrirPerfil() {
     renderBlacklist();
 
     // Ocultar seções de senha/deletar para convidados
-    const isGuest = session.currentUser === 'guest';
+    const guest = isGuest();
     const changePasswordSection = document.getElementById('change-password-section');
     const deleteAccountSection = document.getElementById('delete-account-section');
 
     if (changePasswordSection) {
-        changePasswordSection.style.display = isGuest ? 'none' : 'block';
+        changePasswordSection.style.display = guest ? 'none' : 'block';
     }
     if (deleteAccountSection) {
-        deleteAccountSection.style.display = isGuest ? 'none' : 'block';
+        deleteAccountSection.style.display = guest ? 'none' : 'block';
     }
 
     document.getElementById('modal-profile').style.display = 'flex';
 }
 
-export async function salvarPerfil() {
-    if (session.currentUser === 'guest') {
+async function salvarPerfil() {
+    if (isGuest()) {
         document.getElementById('modal-profile').style.display = 'none';
         return;
     }
@@ -69,7 +73,7 @@ export async function salvarPerfil() {
 
     if (result.success) {
         session.userProfile = result.profile;
-        updateHeader();
+        updateUserDisplay();
         document.getElementById('modal-profile').style.display = 'none';
         showToast("Perfil salvo com sucesso!");
     } else {
@@ -79,8 +83,8 @@ export async function salvarPerfil() {
 
 // ALTERAR SENHA
 
-export async function alterarSenha() {
-    if (!session.currentUserId || session.currentUser === 'guest') {
+async function alterarSenha() {
+    if (!isAccount()) {
         showToast("Convidados não podem alterar senha!", "error");
         return;
     }
@@ -93,8 +97,8 @@ export async function alterarSenha() {
         return;
     }
 
-    if (newPassword.length < 6) {
-        showToast("A senha deve ter pelo menos 6 caracteres!", "error");
+    if (newPassword.length < MIN_PASSWORD_LENGTH) {
+        showToast(`A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres!`, "error");
         return;
     }
 
@@ -116,8 +120,8 @@ export async function alterarSenha() {
 
 // DELETAR CONTA
 
-export async function deletarConta() {
-    if (!session.currentUserId || session.currentUser === 'guest') {
+async function deletarConta() {
+    if (!isAccount()) {
         showToast("Convidados não têm conta para deletar!", "error");
         return;
     }
@@ -146,15 +150,8 @@ export async function deletarConta() {
     const result = await supabaseDeleteAccount();
 
     if (result.success) {
-        session.currentUser = null;
-        session.currentUserId = null;
-        session.userProfile = null;
-        session.user.history = [];
-        clearLifeStatsCache();
-
         document.getElementById('modal-profile').style.display = 'none';
-        document.getElementById('login-overlay').style.display = 'flex';
-        updateUserDisplay();
+        endSession();
 
         showToast("Conta deletada com sucesso. Até mais!");
     } else {
@@ -162,7 +159,7 @@ export async function deletarConta() {
     }
 }
 
-export function renderBadges() {
+function renderBadges() {
     const container = document.getElementById('badges-container');
     container.innerHTML = '';
     const statuses = computeBadgeStatuses(session.user.history, session.user.rouletteWins, session.progress);
@@ -191,27 +188,11 @@ export function renderBadges() {
     });
 }
 
-// BADGE UNLOCK CHECKER
-
-// Avalia todas as conquistas e comemora as novas
-export async function checkAllBadges() {
-    if (!session.currentUser) return;
-    const earned = BADGE_DEFINITIONS.filter(b => b.check(session.user.history, session.user.rouletteWins, session.progress));
-    if (earned.length === 0) return;
-
-    if (session.currentUser === 'guest') {
-        const known = getGuestBadges();
-        earned.filter(b => !known.includes(b.name)).forEach(b => {
-            addGuestBadge(b.name);
-            showAchievement(b);
-        });
-        return;
-    }
-
-    for (const badge of earned) {
-        const { unlocked } = await supabaseCheckBadge(session.currentUserId, badge.name);
-        if (unlocked) continue;
-        const result = await supabaseUnlockBadge(session.currentUserId, badge.name);
-        if (result.success) showAchievement(badge);
-    }
-}
+registerActions({
+    click: {
+        abrirPerfil,
+        alterarSenha,
+        deletarConta,
+        salvarPerfil,
+    },
+});

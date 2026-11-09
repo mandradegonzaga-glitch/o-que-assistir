@@ -1,42 +1,38 @@
 // Modal de detalhes do título
 import { isAbortError, latestSignal, tmdbGet } from '../api/tmdb.js';
 import { ph } from '../ui/phosphor.js';
-import { PERSON_PLACEHOLDER } from './discover.js';
-import { _moveFromWatchlistIfNeeded, loadEpisodesSection, markWholeSeries, setSeriesSeenButton } from './episodes.js';
+import { moveSeriesOutOfWatchlist, markWholeSeries, setSeriesSeenButton } from './episodes.js';
 import { salvarHistorico, toggleWatchlist } from './library.js';
-import { renderReactions } from './reactions.js';
-import { hideRouletteNote, updateRouletteButton } from './roulette.js';
-import { updateSaveListButton } from './userLists.js';
-import { updateHistoryNav } from './sorteioHistory.js';
-import { setUrlTitle } from './urlSync.js';
-import { trackChallenge } from './progress.js';
 import { session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { titleFacts, titleSize } from '../domain/titleFacts.js';
-import { cinemaLabel, cinemaStatus, localDay } from '../domain/cinemaRelease.js';
+import { cinemaLabel, cinemaStatus } from '../domain/cinemaRelease.js';
+import { localDay } from '../utils/date.js';
 import { IMG_URL } from '../config/constants.js';
+import { getTmdbEndpoint, getTitle } from '../domain/mediaItem.js';
+import { emit } from '../state/events.js';
+import { onModalClose } from '../ui/modals.js';
+import { personPhoto, posterImg } from '../ui/icons.js';
+import { registerActions } from '../ui/actions.js';
+import { afterAnimations, prefersReducedMotion } from '../ui/motion.js';
 
 // ================================================
 // EPISÓDIOS — abre modal de tracking (T001-009)
 // ================================================
 
 
-export async function abrirEpisodios(seriesId, mediaType) {
-    await carregarDetalhes(seriesId, mediaType);
-    // Rolar até a seção de episódios após o modal abrir
-    setTimeout(() => {
-        const section = document.getElementById('episodes-section');
-        if (section && !section.hidden) {
-            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }, 300);
+async function abrirEpisodios(seriesId, mediaType) {
+    await carregarDetalhes(seriesId, mediaType); // já com a seção de episódios carregada
+    await afterAnimations(document.getElementById('modal-resultado')); // a janela parou de entrar
+    const section = document.getElementById('episodes-section');
+    if (section && !section.hidden) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // MODAL
 
 export async function carregarDetalhes(id, type) {
-    const endpoint = type === 'dorama' ? 'tv' : type;
+    const endpoint = getTmdbEndpoint(type);
     try {
         // Dois cliques seguidos: vale o último, mesmo que a resposta do primeiro chegue depois
         const data = await tmdbGet(`/${endpoint}/${id}`, {}, { signal: latestSignal('details') });
@@ -52,7 +48,7 @@ export async function carregarDetalhes(id, type) {
 
 // Substitui o conteúdo de uma seção do modal por um aviso (evita mostrar dados do título anterior)
 
-export function showSectionError(containerId, message) {
+function showSectionError(containerId, message) {
     const container = document.getElementById(containerId);
     if (!container) return;
     const note = document.createElement('span');
@@ -143,9 +139,9 @@ async function loadSimilar(f, type, mediaType, signal) {
         const items = (data.results || []).filter(i => i.poster_path).slice(0, 10);
         section.hidden = tab.hidden = items.length === 0;
         document.getElementById('m-similar').innerHTML = items.map(i => {
-            const name = i.title || i.name;
+            const name = getTitle(i);
             return `<button type="button" class="similar-item" data-action="carregarDetalhes" data-id="${i.id}" data-media="${mediaType}" aria-label="${escapeHtml(name)}">
-                <img src="${IMG_URL + i.poster_path}" alt="" width="500" height="750" loading="lazy">
+                ${posterImg(i.poster_path)}
                 <span class="similar-item__name" aria-hidden="true">${escapeHtml(name)}</span></button>`;
         }).join('');
     } catch (e) {
@@ -158,12 +154,12 @@ async function loadSimilar(f, type, mediaType, signal) {
 const scroller = () => document.getElementById('modal-resultado');
 // Depois de tocar numa aba, ela fica marcada até a rolagem parar (a marcação automática não a desfaz no caminho)
 let tabLockUntil = 0;
-export function goTitleSection(id) {
+function goTitleSection(id) {
     const target = document.getElementById(id);
     if (!target || target.hidden) return;
     const nav = document.querySelector('.title-tabs');
     const top = target.getBoundingClientRect().top - scroller().getBoundingClientRect().top + scroller().scrollTop - (nav?.offsetHeight || 0) - 8;
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduce = prefersReducedMotion();
     scroller().scrollTo({ top, behavior: reduce ? 'auto' : 'smooth' });
     tabLockUntil = performance.now() + 1000;
     setActiveTab(id);
@@ -215,7 +211,7 @@ async function loadCast(f, type, signal) {
         const castDiv = document.getElementById('cast-list');
         castDiv.innerHTML = '';
         cData.cast.slice(0,8).forEach(a => {
-            castDiv.innerHTML += `<div class="cast-item"><img src="${a.profile_path ? IMG_URL+a.profile_path : PERSON_PLACEHOLDER}" class="cast-photo" alt="" width="60" height="60" loading="lazy"><br>${escapeHtml(a.name)}</div>`;
+            castDiv.innerHTML += `<div class="cast-item"><img src="${personPhoto(a.profile_path)}" class="cast-photo" alt="" width="60" height="60" loading="lazy"><br>${escapeHtml(a.name)}</div>`;
         });
     } catch(e) {
         if (isAbortError(e)) return;
@@ -288,21 +284,19 @@ async function loadProviders(f, type, signal, detailsPromise) {
 
 export async function abrirModal(f, { fromDraw = false } = {}) {
     state.currentMovie = f;
-    trackChallenge('opened', f);
     const signal = latestSignal('title');
-    setUrlTitle({ type: f.media_type === 'dorama' ? 'dorama' : (f.media_type || state.type), id: f.id });
     const mediaType = f.media_type || state.type;
-    const type = mediaType === 'dorama' ? 'tv' : mediaType;
+    const type = getTmdbEndpoint(mediaType);
 
     const titleEl = document.getElementById('m-title');
-    titleEl.innerText = f.title || f.name;
-    titleEl.dataset.size = titleSize(f.title || f.name);
+    titleEl.innerText = getTitle(f);
+    titleEl.dataset.size = titleSize(getTitle(f));
     document.getElementById('m-desc').innerText = f.overview || "Sem sinopse.";
 
     // Links de crítica: RT por busca no título; IMDb só se houver imdb_id (séries precisam de external_ids)
     const linkImdb = document.getElementById('link-imdb');
     const linkRt = document.getElementById('link-rt');
-    linkRt.href = `https://www.rottentomatoes.com/search?search=${encodeURIComponent(f.original_title || f.original_name || f.title || f.name)}`;
+    linkRt.href = `https://www.rottentomatoes.com/search?search=${encodeURIComponent(f.original_title || f.original_name || getTitle(f))}`;
     linkImdb.hidden = true;
     renderFacts(f, type);
     const ambient = document.getElementById('m-ambient');
@@ -324,7 +318,7 @@ export async function abrirModal(f, { fromDraw = false } = {}) {
     const btnV = document.getElementById('btn-visto');
     const btnS = document.getElementById('btn-salvar');
 
-    const isSeries = (f.media_type === 'tv' || f.media_type === 'dorama' || state.type === 'tv' || state.type === 'dorama');
+    const isSeries = type === 'tv';
 
     if (isSeries) {
         // Séries também têm "Já Vi"; ao terminar todos os episódios, a série é marcada sozinha
@@ -341,16 +335,8 @@ export async function abrirModal(f, { fromDraw = false } = {}) {
     btnS.innerHTML = inWatchlist ? `${removeIcon}Remover da Lista` : `${starIcon}${watchlistLabel}`;
     btnS.classList.toggle('is-on', inWatchlist);
 
-    renderReactions();
-    updateSaveListButton();
-    updateRouletteButton();
-    hideRouletteNote();
-
-    // Atualizar navegação do histórico de sorteios
-    updateHistoryNav();
-
-    // Carregar seção de episódios (TV/Dorama only — T001-009)
-    loadEpisodesSection(f);
+    // Reações, listas, roleta, histórico de sorteios, episódios, URL e desafios acompanham o título aberto
+    const opened = emit('title:opened', { item: f, mediaType });
 
     initTitleTabs();
     setActiveTab('sec-sobre');
@@ -360,6 +346,7 @@ export async function abrirModal(f, { fromDraw = false } = {}) {
     const detailsPromise = fetchDetails(f, type, signal);
     detailsPromise.catch(() => {}); // o erro é tratado por quem espera (fatos e onde assistir)
     await Promise.all([
+        opened,
         loadImdbLink(f, type, signal),
         loadFacts(f, type, signal, detailsPromise),
         loadSimilar(f, type, mediaType, signal),
@@ -370,7 +357,7 @@ export async function abrirModal(f, { fromDraw = false } = {}) {
 }
 
 // Fica aberto: o botão vira "JÁ VISTO" e aparece o "Como foi?", com o foco na primeira reação
-export async function marcarVistoAtual() {
+async function marcarVistoAtual() {
     const movie = state.currentMovie;
     if (!movie) return;
     const isSeries = movie.media_type === 'tv' || movie.media_type === 'dorama';
@@ -384,30 +371,39 @@ export async function marcarVistoAtual() {
     if (isSeries) {
         // "Já Vi" numa série marca todas as temporadas e sai do "Quero Assistir"
         await markWholeSeries(movie);
-        await _moveFromWatchlistIfNeeded(movie.id);
+        await moveSeriesOutOfWatchlist(movie.id);
     }
     if (state.currentMovie !== movie) return;
     btnV.innerHTML = CHECK_ICON + 'JÁ VISTO';
     btnV.disabled = true;
-    renderReactions();
     if (document.getElementById('modal-resultado').style.display !== 'none') {
         document.querySelector('#m-reactions [data-action="reactTitle"]')?.focus();
     }
 }
 
-export async function toggleSalvarAtual() {
+async function toggleSalvarAtual() {
     await toggleWatchlist(state.currentMovie);
     fecharModal();
 }
+
+// Fechar pela pessoa (Esc, tocar fora, "Fechar", arrastar) também para o trailer e o carregamento
+onModalClose('modal-resultado', fecharModal);
 
 export function fecharModal() {
     document.getElementById('modal-resultado').style.display = 'none';
     document.getElementById('trailer-frame').src = "";
     latestSignal('title'); // cancela o que ainda estava carregando
-    setUrlTitle(null);
-    // Limpar estado de episódios
-    session.episodes = { seriesId: null, watchedKeys: new Set(), seasonData: {} };
+    emit('title:closed');
 }
 
 // COMPARTILHAR
 
+registerActions({
+    click: {
+        abrirEpisodios: el => abrirEpisodios(Number(el.dataset.id), el.dataset.media),
+        carregarDetalhes: el => carregarDetalhes(Number(el.dataset.id), el.dataset.media),
+        goTitleSection: el => goTitleSection(el.dataset.arg),
+        marcarVistoAtual,
+        toggleSalvarAtual,
+    },
+});

@@ -1,5 +1,5 @@
 // Cine-batalha: mata-mata entre títulos, de dois em dois, até sobrar um. Lógica pura e imutável.
-export const BATTLE_SIZES = [8, 4]; // com menos de 8 bons títulos, uma batalha de 4
+const BATTLE_SIZES = [8, 4]; // com menos de 8 bons títulos, uma batalha de 4
 
 export function battleSize(available) {
   return BATTLE_SIZES.find(size => available >= size) || 0;

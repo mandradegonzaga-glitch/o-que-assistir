@@ -1,15 +1,17 @@
 // "Minhas plataformas": os streamings que a pessoa assina, guardados neste aparelho.
-import { supabaseUpdateUserData } from '../api/supabase.js';
+import { readAccountData, writeAccountData } from './accountData.js';
 import { tmdbGet } from '../api/tmdb.js';
-import { session } from '../state/appState.js';
+import { isAccount } from '../state/appState.js';
 import { MY_PROVIDERS_VALUE, normalizeProviderIds } from '../domain/filters.js';
 import { FEATURED_PROVIDERS, buildOtherProviders, matchesProviderSearch } from '../domain/providers.js';
 import { storage } from '../utils/storage.js';
 import { abrirPerfil } from './profile.js';
-import { syncUrl } from './urlSync.js';
+import { DAY_MS } from '../utils/date.js';
+import { emit, on } from '../state/events.js';
+import { registerActions } from '../ui/actions.js';
 
 const STORAGE_KEY = 'my_providers';
-const LIST_TTL_MS = 24 * 60 * 60 * 1000;
+const LIST_TTL_MS = DAY_MS;
 const CHOOSE_VALUE = 'escolher';
 
 let otherProviders = [];
@@ -21,7 +23,7 @@ function providerSelect() {
   return document.getElementById('input-provider');
 }
 
-export function getMyProviders() {
+function getMyProviders() {
   return normalizeProviderIds(storage.get(STORAGE_KEY, []));
 }
 
@@ -53,7 +55,7 @@ function syncProviderOption(selectIt) {
     if (selectIt) select.value = MY_PROVIDERS_VALUE;
   }
   lastProviderValue = select.value;
-  syncUrl();
+  emit('filters:changed');
 }
 
 function addProviderOption(value, label) {
@@ -64,13 +66,13 @@ function addProviderOption(value, label) {
 }
 
 // A última opção não é um filtro: leva para a escolha no perfil e mantém o filtro anterior
-export function onProviderChange(select) {
+function onProviderChange(select) {
   if (select.value !== CHOOSE_VALUE) {
     lastProviderValue = select.value;
     return;
   }
   select.value = lastProviderValue;
-  syncUrl();
+  emit('filters:changed');
   abrirPerfil();
   document.getElementById('my-providers').closest('.profile-section').scrollIntoView({ block: 'start' });
 }
@@ -104,7 +106,7 @@ function renderChoices() {
   filterProviders(document.getElementById('provider-search'));
 }
 
-export function filterProviders(input) {
+function filterProviders(input) {
   const query = input.value;
   let visible = 0;
   document.querySelectorAll('#all-providers .provider-choice').forEach(label => {
@@ -116,7 +118,10 @@ export function filterProviders(input) {
 }
 
 // Sem resposta do TMDB, os destaques continuam funcionando; tenta de novo ao reabrir o perfil
-export async function loadAllProviders() {
+// O perfil mostra a escolha de provedores com a lista completa
+on('profile:opened', loadAllProviders);
+
+async function loadAllProviders() {
   if (listLoaded) return;
   try {
     const options = { language: 'pt-BR', watch_region: 'BR' };
@@ -133,23 +138,31 @@ export async function loadAllProviders() {
   }
 }
 
-export function toggleMyProvider(input) {
+function toggleMyProvider(input) {
   const mine = new Set(getMyProviders());
   if (input.checked) mine.add(input.value);
   else mine.delete(input.value);
   storage.set(STORAGE_KEY, [...mine]);
   syncProviderOption(input.checked);
-  if (hasAccount()) supabaseUpdateUserData({ my_providers: [...mine] });
+  writeAccountData({ my_providers: [...mine] });
 }
 
-function hasAccount() {
-  return Boolean(session.currentUserId) && session.currentUser !== 'guest';
-}
+// A conta guarda os provedores: entrar em outro aparelho traz os mesmos.
+// A conta vence o aparelho; a primeira vez, o que já estava marcado aqui sobe para a conta.
+on('session:started', ({ kind }) => kind === 'account' && syncProvidersWithAccount());
+// Os da conta não ficam no aparelho: a próxima conta a entrar receberia os provedores de outra pessoa
+on('session:ended', ({ kind }) => {
+  if (kind !== 'account') return;
+  storage.set(STORAGE_KEY, []);
+  if (optionsReady) {
+    renderChoices();
+    syncProviderOption(false);
+  }
+});
 
-// A conta vence o aparelho; a primeira vez, o que já estava marcado aqui sobe para a conta
-export function syncProvidersWithAccount() {
-  if (!hasAccount()) return;
-  const saved = session.currentUser?.user_metadata?.my_providers;
+function syncProvidersWithAccount() {
+  if (!isAccount()) return;
+  const saved = readAccountData('my_providers');
   if (Array.isArray(saved)) {
     storage.set(STORAGE_KEY, normalizeProviderIds(saved));
     if (optionsReady) {
@@ -157,7 +170,7 @@ export function syncProvidersWithAccount() {
       syncProviderOption(false);
     }
   } else if (getMyProviders().length > 0) {
-    supabaseUpdateUserData({ my_providers: getMyProviders() });
+    writeAccountData({ my_providers: getMyProviders() });
   }
 }
 
@@ -173,3 +186,13 @@ export function initMyProviders() {
   renderChoices();
   syncProviderOption(true);
 }
+
+registerActions({
+  input: {
+    filterProviders,
+  },
+  change: {
+    onProviderChange,
+    toggleMyProvider,
+  },
+});

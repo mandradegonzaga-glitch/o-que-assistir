@@ -1,6 +1,7 @@
 // Estado compartilhável na URL (modo, tipo, filtros e título aberto) em português, sem depender do DOM.
 import { MOODS } from './moods.js';
 import { isCountry } from './countries.js';
+import { MEDIA_TYPES } from './mediaItem.js';
 
 const FIELDS = {
   mode: 'modo',
@@ -18,7 +19,6 @@ const FIELDS = {
 };
 const DEFAULTS = { mode: 'discover', type: 'movie' };
 const MODES = ['discover', 'roulette', 'match', 'library'];
-const TYPES = ['movie', 'tv', 'dorama'];
 const DURATIONS = ['short', 'medium', 'long'];
 const TITLE_PATTERN = /^(movie|tv|dorama)-(\d+)$/;
 
@@ -32,7 +32,7 @@ export function parseUrlState(search) {
   });
 
   if (result.mode && !MODES.includes(result.mode)) delete result.mode;
-  if (result.type && !TYPES.includes(result.type)) delete result.type;
+  if (result.type && !MEDIA_TYPES.includes(result.type)) delete result.type;
   if (result.duration && !DURATIONS.includes(result.duration)) delete result.duration;
   if (result.genre && !/^([\d,]+|natal)$/.test(result.genre)) delete result.genre;
   if (result.provider && !/^(\d+|minhas)$/.test(result.provider)) delete result.provider;

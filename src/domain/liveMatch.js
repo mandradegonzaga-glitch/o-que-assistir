@@ -1,14 +1,14 @@
 // Match ao vivo: duas pessoas, cada uma no seu aparelho, votando ao mesmo tempo.
 // As mensagens passam por um canal de broadcast (Supabase Realtime), sem banco.
 // Regra de privacidade: os votos só saem do aparelho depois que as duas pessoas terminaram.
+import { MEDIA_TYPES } from './mediaItem.js';
 
 // Sem 0/O e 1/I/L: o código pode ser ditado ou digitado
 export const ROOM_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-export const ROOM_LENGTH = 6;
+const ROOM_LENGTH = 6;
 const ROOM_PATTERN = new RegExp(`^[${ROOM_ALPHABET}]{${ROOM_LENGTH}}$`);
 const ID_PATTERN = /^[A-Za-z0-9-]{8,64}$/;
 const NAME_LIMIT = 20;
-const TYPES = ['movie', 'tv', 'dorama'];
 
 export function makeRoomCode(random = Math.random) {
   return Array.from({ length: ROOM_LENGTH }, () => ROOM_ALPHABET[Math.floor(random() * ROOM_ALPHABET.length)]).join('');
@@ -35,7 +35,7 @@ export function parseLiveMessage(raw, size) {
       const ids = raw.ids;
       const validIds = Array.isArray(ids) && ids.length >= 2 && ids.length <= 20 && ids.every(id => Number.isInteger(id) && id > 0);
       const validNames = Array.isArray(raw.names) && raw.names.length === 2 && raw.names.every(isName);
-      if (!isId(raw.to) || !TYPES.includes(raw.type) || !validIds || !validNames) return null;
+      if (!isId(raw.to) || !MEDIA_TYPES.includes(raw.type) || !validIds || !validNames) return null;
       return { event, from, to: raw.to, type: raw.type, ids, names: raw.names.map(n => n.trim()) };
     }
     case 'full':

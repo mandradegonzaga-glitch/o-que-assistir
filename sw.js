@@ -1,29 +1,39 @@
 // Service Worker - O Que Assistir? PWA
-// Trocar CACHE_VERSION a cada deploy: o activate apaga os caches de versões anteriores.
-const CACHE_VERSION = 'v39';
+// CACHE_VERSION e a lista abaixo são gerados por scripts/sw-assets.mjs (npm run sw:assets).
+// O activate apaga os caches de versões anteriores.
+const CACHE_VERSION = '6b8f6f53d9';
 const STATIC_CACHE = `oqueassistir-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `oqueassistir-dynamic-${CACHE_VERSION}`;
 
 // Recursos estáticos para cache offline
 const STATIC_ASSETS = [
+    // <assets>
     '/',
     '/index.html',
-    '/src/styles/style.css',
+    '/manifest.json',
     '/src/api/supabase.js',
     '/src/api/tmdb.js',
-    '/src/app/actions.js',
+    '/src/api/tmdbSeries.js',
+    '/src/app/accountData.js',
     '/src/app/auth.js',
-    '/src/app/dailyPicks.js',
+    '/src/app/badges.js',
+    '/src/app/battle.js',
     '/src/app/blacklist.js',
+    '/src/app/blindSession.js',
+    '/src/app/dailyPicks.js',
     '/src/app/discover.js',
-    '/src/app/episodes.js',
-    '/src/app/homeRows.js',
     '/src/app/episodeStore.js',
-    '/src/app/legacyImport.js',
+    '/src/app/episodes.js',
+    '/src/app/filters.js',
     '/src/app/friends.js',
     '/src/app/guestLibrary.js',
+    '/src/app/help.js',
+    '/src/app/homeRows.js',
+    '/src/app/legacyImport.js',
     '/src/app/library.js',
+    '/src/app/libraryStore.js',
     '/src/app/lifeStats.js',
+    '/src/app/listShare.js',
     '/src/app/match.js',
     '/src/app/matchHistory.js',
     '/src/app/myProviders.js',
@@ -32,21 +42,22 @@ const STATIC_ASSETS = [
     '/src/app/profile.js',
     '/src/app/progress.js',
     '/src/app/pwa.js',
+    '/src/app/reactions.js',
     '/src/app/roulette.js',
     '/src/app/sorteioHistory.js',
     '/src/app/tasteDna.js',
-    '/src/app/titleModal.js',
     '/src/app/ticket.js',
+    '/src/app/titleModal.js',
     '/src/app/urlSync.js',
     '/src/app/userLists.js',
-    '/src/app/listShare.js',
-    '/src/ui/chipFilters.js',
-    '/src/ui/sheet.js',
-    '/src/ui/drawReveal.js',
-    '/src/ui/dragReorder.js',
     '/src/config/constants.js',
     '/src/domain/badges.js',
+    '/src/domain/battle.js',
+    '/src/domain/blind.js',
     '/src/domain/challenges.js',
+    '/src/domain/cinemaRelease.js',
+    '/src/domain/collections.js',
+    '/src/domain/countries.js',
     '/src/domain/dailyPicks.js',
     '/src/domain/filters.js',
     '/src/domain/genres.js',
@@ -55,50 +66,55 @@ const STATIC_ASSETS = [
     '/src/domain/inbox.js',
     '/src/domain/legacyData.js',
     '/src/domain/lifeStats.js',
-    '/src/domain/matchHistory.js',
     '/src/domain/liveMatch.js',
     '/src/domain/match.js',
+    '/src/domain/matchHistory.js',
     '/src/domain/mediaItem.js',
     '/src/domain/moods.js',
     '/src/domain/passwordStrength.js',
     '/src/domain/progress.js',
     '/src/domain/providers.js',
-    '/src/domain/roulette.js',
     '/src/domain/qr.js',
+    '/src/domain/reactions.js',
+    '/src/domain/roulette.js',
     '/src/domain/seriesProgress.js',
+    '/src/domain/surprise.js',
     '/src/domain/tasteDna.js',
     '/src/domain/tasteMatch.js',
-    '/src/domain/reactions.js',
-    '/src/app/reactions.js',
-    '/src/domain/surprise.js',
-    '/src/domain/blind.js',
-    '/src/app/blindSession.js',
-    '/src/domain/countries.js',
-    '/src/domain/battle.js',
-    '/src/app/battle.js',
-    '/src/ui/tilt.js',
-    '/src/app/help.js',
+    '/src/domain/titleFacts.js',
     '/src/domain/titleShare.js',
     '/src/domain/urlState.js',
     '/src/domain/userLists.js',
-    '/src/domain/collections.js',
     '/src/main.js',
     '/src/state/appState.js',
+    '/src/state/events.js',
+    '/src/styles/style.css',
+    '/src/ui/actions.js',
     '/src/ui/badgeIcons.js',
+    '/src/ui/busy.js',
+    '/src/ui/chipFilters.js',
+    '/src/ui/dragReorder.js',
+    '/src/ui/drawReveal.js',
     '/src/ui/feedback.js',
+    '/src/ui/filterFields.js',
     '/src/ui/icons.js',
     '/src/ui/listIcons.js',
-    '/src/ui/phosphor.js',
     '/src/ui/modals.js',
+    '/src/ui/motion.js',
     '/src/ui/navigation.js',
-    '/src/vendor/qrcode.js',
+    '/src/ui/phosphor.js',
+    '/src/ui/share.js',
+    '/src/ui/sheet.js',
+    '/src/ui/tilt.js',
     '/src/utils/cache.js',
+    '/src/utils/date.js',
     '/src/utils/debounce.js',
     '/src/utils/escapeHtml.js',
     '/src/utils/format.js',
     '/src/utils/storage.js',
-    '/manifest.json',
-    'https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,400;0,500;0,700;1,400&family=Big+Shoulders+Display:wght@700;800;900&display=swap'
+    '/src/vendor/qrcode.js',
+    'https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,400;0,500;0,700;1,400&family=Big+Shoulders+Display:wght@700;800;900&display=swap',
+    // </assets>
 ];
 
 // Instalar Service Worker
@@ -110,7 +126,6 @@ self.addEventListener('install', (event) => {
                 console.log('[SW] Cacheando recursos estáticos');
                 return cache.addAll(STATIC_ASSETS);
             })
-            .then(() => self.skipWaiting())
             .catch((err) => console.log('[SW] Erro ao cachear:', err))
     );
 });
@@ -211,29 +226,9 @@ async function networkFirst(request) {
     }
 }
 
-// Limpar caches antigos periodicamente
+// A versão nova espera a pessoa escolher "Atualizar agora" (src/app/pwa.js)
 self.addEventListener('message', (event) => {
-    if (event.data === 'CLEAR_OLD_CACHES') {
-        caches.keys().then((cacheNames) => {
-            cacheNames.forEach((name) => {
-                if (name !== STATIC_CACHE && name !== DYNAMIC_CACHE) {
-                    caches.delete(name);
-                }
-            });
-        });
-    }
-
-    if (event.data === 'SKIP_WAITING') {
-        self.skipWaiting();
-    }
-});
-
-// Background Sync para ações offline (futuro)
-self.addEventListener('sync', (event) => {
-    if (event.tag === 'sync-watchlist') {
-        console.log('[SW] Sincronizando watchlist...');
-        // Implementar sincronização de watchlist quando voltar online
-    }
+    if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
 
 // Push Notifications (futuro)

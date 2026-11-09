@@ -1,5 +1,7 @@
 // Match no mesmo aparelho: cada pessoa vota sem ver os votos da outra.
-export const MATCH_SIZE = 12;
+import { MEDIA_TYPES } from './mediaItem.js';
+
+const MATCH_SIZE = 12;
 
 // Só títulos que as duas pessoas quiseram, na ordem em que apareceram
 export function computeMatches(titles, votesA, votesB) {
@@ -16,7 +18,6 @@ export function playerName(name, index) {
   return name.trim() || `Pessoa ${index + 1}`;
 }
 
-const TYPES = ['movie', 'tv', 'dorama'];
 const NAME_LIMIT = 20;
 
 const toBase64Url = text => btoa(String.fromCharCode(...new TextEncoder().encode(text)))
@@ -41,7 +42,7 @@ export function decodeMatchInvite(code) {
   try {
     const { t, i, a, x, b, y } = JSON.parse(fromBase64Url(code));
     const validIds = Array.isArray(i) && i.length >= 2 && i.length <= MATCH_SIZE && i.every(id => Number.isInteger(id) && id > 0);
-    if (!TYPES.includes(t) || !validIds || !validIndexes(x, i.length)) return null;
+    if (!MEDIA_TYPES.includes(t) || !validIds || !validIndexes(x, i.length)) return null;
     if (y !== undefined && !validIndexes(y, i.length)) return null;
     return {
       type: t,
@@ -54,4 +55,17 @@ export function decodeMatchInvite(code) {
   } catch {
     return null;
   }
+}
+
+// Convite de Match: no link (?match=código ou ?ao-vivo=código) e pela caixa de amigos, onde
+// o convite ao vivo vai como "ao-vivo:código" e o outro, só como o código
+export const MATCH_PARAMS = { invite: 'match', live: 'ao-vivo' };
+const LIVE_PREFIX = `${MATCH_PARAMS.live}:`;
+
+export const invitePayload = ({ code, live = false }) => (live ? LIVE_PREFIX + code : code);
+
+export function parseInvitePayload(payload) {
+  const text = String(payload || '');
+  const live = text.startsWith(LIVE_PREFIX);
+  return { live, code: live ? text.slice(LIVE_PREFIX.length) : text, param: live ? MATCH_PARAMS.live : MATCH_PARAMS.invite };
 }

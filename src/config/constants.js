@@ -1,4 +1,5 @@
-export const IMG_URL = 'https://image.tmdb.org/t/p/w500';
+export const IMG_BASE = 'https://image.tmdb.org/t/p/';
+export const IMG_URL = `${IMG_BASE}w500`;
 export const SUPABASE_URL = 'https://wzelzstndxtqnboravze.supabase.co';
 // Proxy do TMDB (supabase/functions/tmdb): a chave fica só no servidor
 export const BASE_URL = `${SUPABASE_URL}/functions/v1/tmdb`;

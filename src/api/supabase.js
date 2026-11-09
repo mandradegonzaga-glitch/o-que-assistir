@@ -1,5 +1,7 @@
 // Cliente Supabase e todas as chamadas ao banco
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../config/constants.js';
+import { getTitle } from '../domain/mediaItem.js';
+import { buildEpisodeKey } from '../domain/seriesProgress.js';
 
 // Aviso de erro fatal na própria página (ainda não há interface pronta nesse ponto)
 function showFatalError(message) {
@@ -10,7 +12,6 @@ function showFatalError(message) {
     document.body.prepend(box);
 }
 
-// Verificar se SDK do Supabase está carregado
 if (typeof window.supabase === 'undefined') {
     showFatalError('Não foi possível carregar o app.\nVerifique a conexão com a internet e se algum bloqueador (AdBlock/firewall) está impedindo o carregamento, depois recarregue a página.');
     throw new Error('Supabase SDK não carregou');
@@ -27,502 +28,336 @@ try {
     throw error;
 }
 
+// Códigos de erro do Postgres/PostgREST que mudam o resultado
+const PG = {
+    UNIQUE: '23505',           // linha repetida
+    UNDEFINED_TABLE: '42P01',  // SQL opcional ainda não rodado
+    NO_TABLE: 'PGRST205',      // idem, visto pelo PostgREST
+    NO_ROWS: 'PGRST116',       // .single() sem linha
+};
+
+const TABLE = {
+    PROFILES: 'profiles',
+    HISTORY: 'watch_history',
+    WATCHLIST: 'watchlist',
+    LISTS: 'user_lists',
+    LIST_ITEMS: 'user_list_items',
+    PREFERENCES: 'user_preferences',
+    BADGES: 'user_badges',
+    SORTEIO: 'sorteio_history',
+    BLACKLIST: 'blacklist',
+    EPISODES: 'episode_progress',
+    FRIENDSHIPS: 'friendships',
+    MATCH_INVITES: 'match_invites',
+    TITLE_SHARES: 'title_shares',
+};
+
+// Chaves únicas usadas no upsert
+const ON_CONFLICT = {
+    TITLE: 'user_id,tmdb_id',
+    LIST_ITEM: 'list_id,tmdb_id',
+    EPISODE: 'user_id,series_id,season_number,episode_number',
+};
+
+/**
+ * Roda um pedido ao Supabase e devolve sempre { success, ... } em vez de lançar erro.
+ * - request: função que devolve { data, error } (a query é montada dentro dela, então erro ao montar também vira falha)
+ * - onData: campos extras do sucesso, a partir de data
+ * - fallback: campos extras da falha (objeto, ou função que recebe o erro)
+ * Sem label não loga: a falha é esperada (ex.: SQL opcional ainda não rodado e a tela fica oculta).
+ */
+async function run(label, request, onData = () => ({}), fallback = {}) {
+    try {
+        const { data, error } = await request();
+        if (error) throw error;
+        return { success: true, ...onData(data) };
+    } catch (error) {
+        if (label) console.error(`Erro ao ${label}:`, error);
+        const extra = typeof fallback === 'function' ? fallback(error) : fallback;
+        return { success: false, error: error.message, code: error.code, ...extra };
+    }
+}
+
+// Linha que já existia conta como sucesso; o data vira ALREADY para quem precisa diferenciar
+const ALREADY = Symbol('já existia');
+const allowDuplicate = request => async () => {
+    const response = await request();
+    return response.error?.code === PG.UNIQUE ? { data: ALREADY, error: null } : response;
+};
+
+// Inserção idempotente que devolve a linha criada, ou `message` se ela já existia
+const insertOnce = (label, request, message) =>
+    run(label, allowDuplicate(request), data => (data === ALREADY ? { message } : { data }));
+
+// Título do app ({ id, title, poster, type }) como colunas do banco
+const titleRow = item => ({ tmdb_id: item.id, title: item.title, poster_path: item.poster, media_type: item.type });
+
+// Título cru do TMDB (sorteio e blacklist guardam o item como veio da API)
+const tmdbTitleRow = item => ({ tmdb_id: item.id, title: getTitle(item), poster_path: item.poster_path, media_type: item.media_type || 'movie' });
+
+const listItemRow = (userId, listId, item) => ({ list_id: listId, user_id: userId, ...titleRow(item) });
+
+const episodeRow = (userId, series, seasonNumber, episodeNumber) => ({
+    user_id: userId,
+    series_id: series.id,
+    series_title: series.title,
+    series_poster: series.poster || null,
+    media_type: series.type || 'tv',
+    season_number: seasonNumber,
+    episode_number: episodeNumber,
+});
+
 // ================================================
-// FUNÇÕES DE AUTENTICAÇÃO
+// AUTENTICAÇÃO
 // ================================================
 
-/**
- * Registrar novo usuário
- * @param {string} username - Nome de usuário
- * @param {string} email - Email do usuário
- * @param {string} password - Senha
- */
-export async function supabaseRegister(username, email, password) {
-    try {
-        const { data, error } = await supabase.auth.signUp({
-            email: email,
-            password: password,
-            options: {
-                data: {
-                    username: username,
-                    display_name: username
-                }
-            }
-        });
-
-        if (error) throw error;
-
-        return { success: true, user: data.user };
-    } catch (error) {
-        console.error('Erro ao registrar:', error);
-        return { success: false, error: error.message };
-    }
+export function supabaseRegister(username, email, password) {
+    return run('registrar',
+        () => supabase.auth.signUp({ email, password, options: { data: { username, display_name: username } } }),
+        data => ({ user: data.user }));
 }
 
-/**
- * Login de usuário
- * @param {string} email - Email do usuário
- * @param {string} password - Senha
- */
-export async function supabaseLogin(email, password) {
-    try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
-
-        if (error) throw error;
-
-        return { success: true, user: data.user };
-    } catch (error) {
-        console.error('Erro ao fazer login:', error);
-        return { success: false, error: error.message };
-    }
+export function supabaseLogin(email, password) {
+    return run('fazer login', () => supabase.auth.signInWithPassword({ email, password }), data => ({ user: data.user }));
 }
 
-/**
- * Logout do usuário
- */
-export async function supabaseLogout() {
-    try {
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
-        return { success: true };
-    } catch (error) {
-        console.error('Erro ao fazer logout:', error);
-        return { success: false, error: error.message };
-    }
+export function supabaseLogout() {
+    return run('fazer logout', () => supabase.auth.signOut());
 }
 
-/**
- * Obter usuário atual
- */
+// Devolve o usuário (ou null), não o formato { success }
 export async function supabaseGetCurrentUser() {
-    try {
-        const { data: { user }, error } = await supabase.auth.getUser();
-        if (error) throw error;
-        return user;
-    } catch (error) {
-        console.error('Erro ao obter usuário:', error);
-        return null;
-    }
+    const { user = null } = await run('obter usuário', () => supabase.auth.getUser(), data => ({ user: data.user }));
+    return user;
+}
+
+export function supabaseOnAuthStateChange(callback) {
+    return supabase.auth.onAuthStateChange((event, session) => {
+        callback(event, session);
+    });
+}
+
+export function supabaseChangePassword(newPassword) {
+    return run('alterar senha', () => supabase.auth.updateUser({ password: newPassword }), data => ({ data }));
+}
+
+export function supabaseResetPassword(email) {
+    return run('enviar email de recuperação',
+        () => supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + window.location.pathname }),
+        data => ({ data }));
+}
+
+// Dados nos metadados da conta: sincroniza entre aparelhos sem tabela nova
+export function supabaseUpdateUserData(data) {
+    return run('salvar dados da conta', () => supabase.auth.updateUser({ data }));
+}
+
+// Apaga login e todos os dados pela Edge Function delete-account; só informa sucesso depois de o servidor confirmar
+export function supabaseDeleteAccount() {
+    return run('deletar conta', async () => {
+        const { data, error } = await supabase.functions.invoke('delete-account', { method: 'POST' });
+        if (error) return { error };
+        if (!data?.deleted) throw new Error('Resposta inesperada do servidor');
+
+        // O usuário não existe mais, então o signOut responde 403 e mantém a sessão salva: limpa à mão
+        const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' });
+        if (signOutError) localStorage.removeItem(AUTH_STORAGE_KEY);
+        return {};
+    });
 }
 
 // ================================================
-// FUNÇÕES DE PERFIL
+// PERFIL
 // ================================================
 
-/**
- * Obter perfil do usuário
- * @param {string} userId - ID do usuário
- */
-export async function supabaseGetProfile(userId) {
-    try {
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single();
-
-        if (error) throw error;
-        return { success: true, profile: data };
-    } catch (error) {
-        console.error('Erro ao obter perfil:', error);
-        return { success: false, error: error.message };
-    }
+export function supabaseGetProfile(userId) {
+    return run('obter perfil',
+        () => supabase.from(TABLE.PROFILES).select('*').eq('id', userId).single(),
+        data => ({ profile: data }));
 }
 
-/**
- * Atualizar perfil do usuário
- * @param {string} userId - ID do usuário
- * @param {Object} updates - Dados para atualizar
- */
-export async function supabaseUpdateProfile(userId, updates) {
-    try {
-        const { data, error } = await supabase
-            .from('profiles')
-            .update(updates)
-            .eq('id', userId)
-            .select()
-            .single();
+export function supabaseUpdateProfile(userId, updates) {
+    return run('atualizar perfil',
+        () => supabase.from(TABLE.PROFILES).update(updates).eq('id', userId).select().single(),
+        data => ({ profile: data }));
+}
 
-        if (error) throw error;
-        return { success: true, profile: data };
-    } catch (error) {
-        console.error('Erro ao atualizar perfil:', error);
-        return { success: false, error: error.message };
-    }
+// Lê e grava em seguida (não é atômico; duas vitórias simultâneas contariam uma)
+export function supabaseIncrementRouletteWins(userId) {
+    return run('incrementar vitórias', async () => {
+        const read = await supabase.from(TABLE.PROFILES).select('roulette_wins').eq('id', userId).single();
+        if (read.error) return read;
+        return supabase.from(TABLE.PROFILES)
+            .update({ roulette_wins: (read.data?.roulette_wins || 0) + 1 })
+            .eq('id', userId).select().single();
+    }, data => ({ wins: data.roulette_wins }));
 }
 
 // ================================================
-// FUNÇÕES DE HISTÓRICO (WATCH HISTORY)
+// HISTÓRICO (ASSISTIDOS)
 // ================================================
 
-/**
- * Obter histórico de filmes/séries assistidos
- * @param {string} userId - ID do usuário
- */
-export async function supabaseGetWatchHistory(userId) {
-    try {
-        const { data, error } = await supabase
-            .from('watch_history')
-            .select('*')
-            .eq('user_id', userId)
-            .order('watched_at', { ascending: false });
-
-        if (error) throw error;
-
-        // Converter para formato compatível com o código atual
-        const history = data.map(item => ({
-            id: item.tmdb_id,
-            title: item.title,
-            poster: item.poster_path,
-            type: item.media_type,
-            year: item.release_year,
-            genres: item.genres,
-            reaction: item.reaction || null,
-            watchedAt: item.watched_at
-        }));
-
-        return { success: true, history };
-    } catch (error) {
-        console.error('Erro ao obter histórico:', error);
-        return { success: false, error: error.message, history: [] };
-    }
-}
-
-/**
- * Adicionar filme/série ao histórico
- * @param {string} userId - ID do usuário
- * @param {Object} item - Dados do filme/série
- */
-export async function supabaseAddToHistory(userId, item) {
-    try {
-        const { data, error } = await supabase
-            .from('watch_history')
-            .insert({
-                user_id: userId,
-                tmdb_id: item.id,
+export function supabaseGetWatchHistory(userId) {
+    return run('obter histórico',
+        () => supabase.from(TABLE.HISTORY).select('*').eq('user_id', userId).order('watched_at', { ascending: false }),
+        data => ({
+            history: data.map(item => ({
+                id: item.tmdb_id,
                 title: item.title,
-                poster_path: item.poster,
-                media_type: item.type,
-                release_year: item.year,
-                genres: item.genres
-            })
-            .select()
-            .single();
+                poster: item.poster_path,
+                type: item.media_type,
+                year: item.release_year,
+                genres: item.genres,
+                reaction: item.reaction || null,
+                watchedAt: item.watched_at,
+            })),
+        }),
+        { history: [] });
+}
 
-        if (error) {
-            // Se for erro de duplicação, é ok
-            if (error.code === '23505') {
-                return { success: true, message: 'Item já existe no histórico' };
-            }
-            throw error;
-        }
-
-        return { success: true, data };
-    } catch (error) {
-        console.error('Erro ao adicionar ao histórico:', error);
-        return { success: false, error: error.message };
-    }
+export function supabaseAddToHistory(userId, item) {
+    return insertOnce('adicionar ao histórico',
+        () => supabase.from(TABLE.HISTORY)
+            .insert({ user_id: userId, ...titleRow(item), release_year: item.year, genres: item.genres })
+            .select().single(),
+        'Item já existe no histórico');
 }
 
 // Reação rápida (database/reactions.sql). null tira. Sem o SQL, ou título fora do histórico: success false.
-export async function supabaseSetReaction(tmdbId, reaction) {
-    const { data, error } = await supabase.rpc('set_title_reaction', { p_tmdb_id: tmdbId, p_reaction: reaction });
-    return { success: !error && data === true };
+export function supabaseSetReaction(tmdbId, reaction) {
+    return run(null, () => supabase.rpc('set_title_reaction', { p_tmdb_id: tmdbId, p_reaction: reaction }), data => {
+        if (data !== true) throw new Error('reação não gravada');
+        return {};
+    });
 }
 
-/**
- * Remover item do histórico
- * @param {string} userId - ID do usuário
- * @param {number} tmdbId - ID do TMDB
- */
-export async function supabaseRemoveFromHistory(userId, tmdbId) {
-    try {
-        const { error } = await supabase
-            .from('watch_history')
-            .delete()
-            .eq('user_id', userId)
-            .eq('tmdb_id', tmdbId);
-
-        if (error) throw error;
-        return { success: true };
-    } catch (error) {
-        console.error('Erro ao remover do histórico:', error);
-        return { success: false, error: error.message };
-    }
+export function supabaseRemoveFromHistory(userId, tmdbId) {
+    return run('remover do histórico', () => supabase.from(TABLE.HISTORY).delete().eq('user_id', userId).eq('tmdb_id', tmdbId));
 }
 
 // ================================================
-// FUNÇÕES DE WATCHLIST (LISTA DE DESEJOS)
+// WATCHLIST
 // ================================================
 
-/**
- * Obter watchlist do usuário
- * @param {string} userId - ID do usuário
- */
-export async function supabaseGetWatchlist(userId) {
-    try {
-        const { data, error } = await supabase
-            .from('watchlist')
-            .select('*')
-            .eq('user_id', userId)
-            .order('added_at', { ascending: false });
+export function supabaseGetWatchlist(userId) {
+    return run('obter watchlist',
+        () => supabase.from(TABLE.WATCHLIST).select('*').eq('user_id', userId).order('added_at', { ascending: false }),
+        data => ({ watchlist: data.map(item => ({ id: item.tmdb_id, title: item.title, poster: item.poster_path, type: item.media_type })) }),
+        { watchlist: [] });
+}
 
-        if (error) throw error;
+export function supabaseAddToWatchlist(userId, item) {
+    return insertOnce('adicionar à watchlist',
+        () => supabase.from(TABLE.WATCHLIST).insert({ user_id: userId, ...titleRow(item) }).select().single(),
+        'Item já existe na watchlist');
+}
 
-        // Converter para formato compatível
-        const watchlist = data.map(item => ({
-            id: item.tmdb_id,
-            title: item.title,
-            poster: item.poster_path,
-            type: item.media_type
-        }));
-
-        return { success: true, watchlist };
-    } catch (error) {
-        console.error('Erro ao obter watchlist:', error);
-        return { success: false, error: error.message, watchlist: [] };
-    }
+export function supabaseRemoveFromWatchlist(userId, tmdbId) {
+    return run('remover da watchlist', () => supabase.from(TABLE.WATCHLIST).delete().eq('user_id', userId).eq('tmdb_id', tmdbId));
 }
 
 /**
- * Adicionar à watchlist
- * @param {string} userId - ID do usuário
- * @param {Object} item - Dados do filme/série
- */
-export async function supabaseAddToWatchlist(userId, item) {
-    try {
-        const { data, error } = await supabase
-            .from('watchlist')
-            .insert({
-                user_id: userId,
-                tmdb_id: item.id,
-                title: item.title,
-                poster_path: item.poster,
-                media_type: item.type
-            })
-            .select()
-            .single();
-
-        if (error) {
-            if (error.code === '23505') {
-                return { success: true, message: 'Item já existe na watchlist' };
-            }
-            throw error;
-        }
-
-        return { success: true, data };
-    } catch (error) {
-        console.error('Erro ao adicionar à watchlist:', error);
-        return { success: false, error: error.message };
-    }
-}
-
-/**
- * Importar dados da versão antiga. Upsert ignora o que já existe, então repetir não duplica.
+ * Importar dados do convidado / versão antiga. Upsert ignora o que já existe, então repetir não duplica.
  * A data real não existe nos dados antigos: meio-dia evita desbloquear "Madrugador" por acidente.
- * @param {string} userId - ID do usuário
- * @param {{history: Array, watchlist: Array}} data - Itens normalizados
  */
-export async function supabaseImportLegacyData(userId, { history, watchlist, series = [], lists = [] }) {
-    try {
+export function supabaseImportLegacyData(userId, { history, watchlist, series = [], lists = [] }) {
+    return run('importar dados antigos', async () => {
         const noon = new Date();
         noon.setHours(12, 0, 0, 0);
+        const keep = { onConflict: ON_CONFLICT.TITLE, ignoreDuplicates: true };
 
         if (watchlist.length > 0) {
-            const { error } = await supabase.from('watchlist').upsert(
-                watchlist.map(i => ({ user_id: userId, tmdb_id: i.id, title: i.title, poster_path: i.poster, media_type: i.type })),
-                { onConflict: 'user_id,tmdb_id', ignoreDuplicates: true }
-            );
-            if (error) throw error;
+            const { error } = await supabase.from(TABLE.WATCHLIST).upsert(
+                watchlist.map(i => ({ user_id: userId, ...titleRow(i) })), keep);
+            if (error) return { error };
         }
 
         if (history.length > 0) {
-            const { error } = await supabase.from('watch_history').upsert(
-                history.map(i => ({ user_id: userId, tmdb_id: i.id, title: i.title, poster_path: i.poster, media_type: i.type, release_year: i.year, genres: i.genres, watched_at: noon.toISOString() })),
-                { onConflict: 'user_id,tmdb_id', ignoreDuplicates: true }
-            );
-            if (error) throw error;
+            const { error } = await supabase.from(TABLE.HISTORY).upsert(
+                history.map(i => ({ user_id: userId, ...titleRow(i), release_year: i.year, genres: i.genres, watched_at: noon.toISOString() })), keep);
+            if (error) return { error };
         }
 
         // Episódios marcados como convidado; os que a conta já tinha ficam como estão
-        const episodes = series.flatMap(s => s.episodes.map(ep => ({
-            user_id: userId, series_id: s.id, series_title: s.title, series_poster: s.poster, media_type: s.type,
-            season_number: ep.season_number, episode_number: ep.episode_number,
-        })));
+        const episodes = series.flatMap(s => s.episodes.map(ep => episodeRow(userId, s, ep.season_number, ep.episode_number)));
         if (episodes.length > 0) {
-            const { error } = await supabase.from('episode_progress').upsert(
-                episodes,
-                { onConflict: 'user_id,series_id,season_number,episode_number', ignoreDuplicates: true }
-            );
-            if (error) throw error;
+            const { error } = await supabase.from(TABLE.EPISODES).upsert(episodes, { onConflict: ON_CONFLICT.EPISODE, ignoreDuplicates: true });
+            if (error) return { error };
         }
 
         await importLists(userId, lists);
-
-        return { success: true };
-    } catch (error) {
-        console.error('Erro ao importar dados antigos:', error);
-        return { success: false };
-    }
-}
-
-/**
- * Remover da watchlist
- * @param {string} userId - ID do usuário
- * @param {number} tmdbId - ID do TMDB
- */
-export async function supabaseRemoveFromWatchlist(userId, tmdbId) {
-    try {
-        const { error } = await supabase
-            .from('watchlist')
-            .delete()
-            .eq('user_id', userId)
-            .eq('tmdb_id', tmdbId);
-
-        if (error) throw error;
-        return { success: true };
-    } catch (error) {
-        console.error('Erro ao remover da watchlist:', error);
-        return { success: false, error: error.message };
-    }
+        return {};
+    });
 }
 
 // ================================================
 // LISTAS PERSONALIZADAS (database/user_lists.sql)
 // ================================================
 
-const listItemRow = (userId, listId, item) => ({
-    list_id: listId, user_id: userId, tmdb_id: item.id, media_type: item.type, title: item.title, poster_path: item.poster,
-});
-
 /** Listas e títulos de uma vez; `missing` quando o SQL ainda não foi rodado no projeto */
-export async function supabaseGetLists(userId) {
-    try {
+export function supabaseGetLists(userId) {
+    return run('obter listas', async () => {
         const [lists, items] = await Promise.all([
-            supabase.from('user_lists').select('id, name, emoji, share_token').eq('user_id', userId).order('created_at', { ascending: true }),
-            supabase.from('user_list_items').select('list_id, tmdb_id, title, poster_path, media_type, position').eq('user_id', userId).order('added_at', { ascending: true }),
+            supabase.from(TABLE.LISTS).select('id, name, emoji, share_token').eq('user_id', userId).order('created_at', { ascending: true }),
+            supabase.from(TABLE.LIST_ITEMS).select('list_id, tmdb_id, title, poster_path, media_type, position').eq('user_id', userId).order('added_at', { ascending: true }),
         ]);
-        const error = lists.error || items.error;
-        if (error) throw error;
-        return { success: true, lists: lists.data, items: items.data };
-    } catch (error) {
-        console.error('Erro ao obter listas:', error);
-        return { success: false, missing: error.code === '42P01' || error.code === 'PGRST205', lists: [], items: [] };
-    }
+        return { data: { lists: lists.data, items: items.data }, error: lists.error || items.error };
+    }, data => data, error => ({
+        missing: error.code === PG.UNDEFINED_TABLE || error.code === PG.NO_TABLE, lists: [], items: [],
+    }));
 }
+
+const duplicateName = error => ({ duplicate: error.code === PG.UNIQUE });
 
 /** Cria a lista e devolve o id; `duplicate` quando já existe uma com o mesmo nome */
-export async function supabaseCreateList(userId, { name, emoji }) {
-    try {
-        const { data, error } = await supabase.from('user_lists')
-            .insert({ user_id: userId, name, emoji }).select('id').single();
-        if (error) throw error;
-        return { success: true, id: data.id };
-    } catch (error) {
-        console.error('Erro ao criar lista:', error);
-        return { success: false, duplicate: error.code === '23505' };
-    }
+export function supabaseCreateList(userId, { name, emoji }) {
+    return run('criar lista',
+        () => supabase.from(TABLE.LISTS).insert({ user_id: userId, name, emoji }).select('id').single(),
+        data => ({ id: data.id }), duplicateName);
 }
 
-export async function supabaseUpdateList(listId, { name, emoji }) {
-    try {
-        const { error } = await supabase.from('user_lists').update({ name, emoji }).eq('id', listId);
-        if (error) throw error;
-        return { success: true };
-    } catch (error) {
-        console.error('Erro ao renomear lista:', error);
-        return { success: false, duplicate: error.code === '23505' };
-    }
+export function supabaseUpdateList(listId, { name, emoji }) {
+    return run('renomear lista', () => supabase.from(TABLE.LISTS).update({ name, emoji }).eq('id', listId), undefined, duplicateName);
 }
 
 /** Os títulos da lista saem junto (ON DELETE CASCADE) */
-export async function supabaseDeleteList(listId) {
-    try {
-        const { error } = await supabase.from('user_lists').delete().eq('id', listId);
-        if (error) throw error;
-        return { success: true };
-    } catch (error) {
-        console.error('Erro ao apagar lista:', error);
-        return { success: false };
-    }
+export function supabaseDeleteList(listId) {
+    return run('apagar lista', () => supabase.from(TABLE.LISTS).delete().eq('id', listId));
 }
 
-export async function supabaseAddListItem(userId, listId, item) {
-    try {
-        const { error } = await supabase.from('user_list_items').insert(listItemRow(userId, listId, item));
-        if (error && error.code !== '23505') throw error; // já estava na lista: tudo certo
-        return { success: true };
-    } catch (error) {
-        console.error('Erro ao pôr na lista:', error);
-        return { success: false };
-    }
+export function supabaseAddListItem(userId, listId, item) {
+    return run('pôr na lista', allowDuplicate(() => supabase.from(TABLE.LIST_ITEMS).insert(listItemRow(userId, listId, item))));
 }
 
 /** Vários títulos de uma vez (coleção copiada, importação); os que já estavam na lista ficam como estão */
 export async function supabaseAddListItems(userId, listId, items) {
-    try {
-        if (items.length === 0) return { success: true };
-        const { error } = await supabase.from('user_list_items').upsert(
-            items.map(item => listItemRow(userId, listId, item)),
-            { onConflict: 'list_id,tmdb_id', ignoreDuplicates: true }
-        );
-        if (error) throw error;
-        return { success: true };
-    } catch (error) {
-        console.error('Erro ao pôr títulos na lista:', error);
-        return { success: false };
-    }
+    if (items.length === 0) return { success: true };
+    return run('pôr títulos na lista', () => supabase.from(TABLE.LIST_ITEMS).upsert(
+        items.map(item => listItemRow(userId, listId, item)),
+        { onConflict: ON_CONFLICT.LIST_ITEM, ignoreDuplicates: true }
+    ));
 }
 
 /** Grava a ordem inteira da lista (ids na ordem nova) */
-export async function supabaseReorderList(listId, tmdbIds) {
-    try {
-        const { error } = await supabase.rpc('reorder_list_items', { p_list_id: listId, p_tmdb_ids: tmdbIds });
-        if (error) throw error;
-        return { success: true };
-    } catch (error) {
-        console.error('Erro ao ordenar lista:', error);
-        return { success: false };
-    }
+export function supabaseReorderList(listId, tmdbIds) {
+    return run('ordenar lista', () => supabase.rpc('reorder_list_items', { p_list_id: listId, p_tmdb_ids: tmdbIds }));
 }
 
 /** Liga (devolve o token do link) ou desliga o link público da lista */
-export async function supabaseSetListSharing(listId, on) {
-    try {
-        const { data, error } = await supabase.rpc('set_list_sharing', { p_list_id: listId, p_on: on });
-        if (error) throw error;
+export function supabaseSetListSharing(listId, on) {
+    return run('mudar o compartilhamento da lista', () => supabase.rpc('set_list_sharing', { p_list_id: listId, p_on: on }), data => {
         if (on && !data) throw new Error('lista não encontrada');
-        return { success: true, token: data || null };
-    } catch (error) {
-        console.error('Erro ao mudar o compartilhamento da lista:', error);
-        return { success: false };
-    }
+        return { token: data || null };
+    });
 }
 
 /** Lista aberta pelo link público; funciona sem login */
-export async function supabaseGetSharedList(token) {
-    try {
-        const { data, error } = await supabase.rpc('get_shared_list', { p_token: token });
-        if (error) throw error;
-        return { success: true, list: data };
-    } catch (error) {
-        console.error('Erro ao abrir lista compartilhada:', error);
-        return { success: false };
-    }
+export function supabaseGetSharedList(token) {
+    return run('abrir lista compartilhada', () => supabase.rpc('get_shared_list', { p_token: token }), data => ({ list: data }));
 }
 
-export async function supabaseRemoveListItem(listId, tmdbId) {
-    try {
-        const { error } = await supabase.from('user_list_items').delete().eq('list_id', listId).eq('tmdb_id', tmdbId);
-        if (error) throw error;
-        return { success: true };
-    } catch (error) {
-        console.error('Erro ao tirar da lista:', error);
-        return { success: false };
-    }
+export function supabaseRemoveListItem(listId, tmdbId) {
+    return run('tirar da lista', () => supabase.from(TABLE.LIST_ITEMS).delete().eq('list_id', listId).eq('tmdb_id', tmdbId));
 }
 
 // Listas do convidado indo para a conta: uma com o mesmo nome recebe os títulos, em vez de virar repetida
@@ -544,280 +379,79 @@ async function importLists(userId, lists) {
 }
 
 // ================================================
-// FUNÇÕES DE PREFERÊNCIAS
+// PREFERÊNCIAS
 // ================================================
 
-/**
- * Obter preferências do usuário
- * @param {string} userId - ID do usuário
- */
-export async function supabaseGetPreferences(userId) {
-    try {
-        const { data, error } = await supabase
-            .from('user_preferences')
-            .select('*')
-            .eq('user_id', userId)
-            .single();
-
-        if (error) throw error;
-        return { success: true, preferences: data };
-    } catch (error) {
-        console.error('Erro ao obter preferências:', error);
-        return { success: false, error: error.message };
-    }
+export function supabaseGetPreferences(userId) {
+    return run('obter preferências',
+        () => supabase.from(TABLE.PREFERENCES).select('*').eq('user_id', userId).single(),
+        data => ({ preferences: data }));
 }
 
-/**
- * Atualizar preferências do usuário
- * @param {string} userId - ID do usuário
- * @param {Object} preferences - Preferências
- */
-export async function supabaseUpdatePreferences(userId, preferences) {
-    try {
-        const { data, error } = await supabase
-            .from('user_preferences')
-            .upsert({
-                user_id: userId,
-                ...preferences
-            })
-            .select()
-            .single();
-
-        if (error) throw error;
-        return { success: true, preferences: data };
-    } catch (error) {
-        console.error('Erro ao atualizar preferências:', error);
-        return { success: false, error: error.message };
-    }
+export function supabaseUpdatePreferences(userId, preferences) {
+    return run('atualizar preferências',
+        () => supabase.from(TABLE.PREFERENCES).upsert({ user_id: userId, ...preferences }).select().single(),
+        data => ({ preferences: data }));
 }
 
 // ================================================
-// FUNÇÕES DE BADGES/CONQUISTAS
+// BADGES
 // ================================================
 
-/**
- * Obter badges do usuário
- * @param {string} userId - ID do usuário
- */
-export async function supabaseGetBadges(userId) {
-    try {
-        const { data, error } = await supabase
-            .from('user_badges')
-            .select('*')
-            .eq('user_id', userId);
-
-        if (error) throw error;
-        return { success: true, badges: data };
-    } catch (error) {
-        console.error('Erro ao obter badges:', error);
-        return { success: false, error: error.message, badges: [] };
-    }
+export function supabaseUnlockBadge(userId, badgeName) {
+    return insertOnce('desbloquear badge',
+        () => supabase.from(TABLE.BADGES).insert({ user_id: userId, badge_name: badgeName }).select().single(),
+        'Badge já desbloqueado');
 }
 
-/**
- * Desbloquear badge
- * @param {string} userId - ID do usuário
- * @param {string} badgeName - Nome do badge
- */
-export async function supabaseUnlockBadge(userId, badgeName) {
-    try {
-        const { data, error } = await supabase
-            .from('user_badges')
-            .insert({
-                user_id: userId,
-                badge_name: badgeName
-            })
-            .select()
-            .single();
-
-        if (error) {
-            if (error.code === '23505') {
-                return { success: true, message: 'Badge já desbloqueado' };
-            }
-            throw error;
-        }
-
-        return { success: true, data };
-    } catch (error) {
-        console.error('Erro ao desbloquear badge:', error);
-        return { success: false, error: error.message };
-    }
+export function supabaseCheckBadge(userId, badgeName) {
+    return run('verificar badge', async () => {
+        const response = await supabase.from(TABLE.BADGES).select('*').eq('user_id', userId).eq('badge_name', badgeName).single();
+        return response.error?.code === PG.NO_ROWS ? { data: null, error: null } : response;
+    }, data => ({ unlocked: !!data }), { unlocked: false });
 }
-
-/**
- * Verificar se badge está desbloqueado
- * @param {string} userId - ID do usuário
- * @param {string} badgeName - Nome do badge
- */
-export async function supabaseCheckBadge(userId, badgeName) {
-    try {
-        const { data, error } = await supabase
-            .from('user_badges')
-            .select('*')
-            .eq('user_id', userId)
-            .eq('badge_name', badgeName)
-            .single();
-
-        if (error && error.code !== 'PGRST116') throw error;
-        return { success: true, unlocked: !!data };
-    } catch (error) {
-        console.error('Erro ao verificar badge:', error);
-        return { success: false, error: error.message, unlocked: false };
-    }
-}
-
-// ================================================
-// FUNÇÃO DE INCREMENTO DE VITÓRIAS DA ROLETA
-// ================================================
-
-/**
- * Incrementar vitórias da roleta
- * @param {string} userId - ID do usuário
- */
-export async function supabaseIncrementRouletteWins(userId) {
-    try {
-        // Obter contagem atual
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('roulette_wins')
-            .eq('id', userId)
-            .single();
-
-        const currentWins = profile?.roulette_wins || 0;
-
-        // Incrementar
-        const { data, error } = await supabase
-            .from('profiles')
-            .update({ roulette_wins: currentWins + 1 })
-            .eq('id', userId)
-            .select()
-            .single();
-
-        if (error) throw error;
-        return { success: true, wins: data.roulette_wins };
-    } catch (error) {
-        console.error('Erro ao incrementar vitórias:', error);
-        return { success: false, error: error.message };
-    }
-}
-
-// ================================================
-// LISTENER DE MUDANÇAS DE AUTENTICAÇÃO
-// ================================================
-
-/**
- * Observar mudanças de autenticação
- * @param {Function} callback - Função chamada quando autenticação muda
- */
-export function supabaseOnAuthStateChange(callback) {
-    return supabase.auth.onAuthStateChange((event, session) => {
-        callback(event, session);
-    });
-}
-
-// ================================================
-// ALTERAR SENHA
-// ================================================
-
-/**
- * Alterar senha do usuário
- * @param {string} newPassword - Nova senha
- */
-export async function supabaseChangePassword(newPassword) {
-    try {
-        const { data, error } = await supabase.auth.updateUser({
-            password: newPassword
-        });
-
-        if (error) throw error;
-
-        return { success: true, data };
-    } catch (error) {
-        console.error('Erro ao alterar senha:', error);
-        return { success: false, error: error.message };
-    }
-}
-
-// ================================================
-// RECUPERAR SENHA (ESQUECI MINHA SENHA)
-// ================================================
-
-/**
- * Enviar email de recuperação de senha
- * @param {string} email - Email do usuário
- */
-export async function supabaseResetPassword(email) {
-    try {
-        const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin + window.location.pathname
-        });
-
-        if (error) throw error;
-
-        return { success: true, data };
-    } catch (error) {
-        console.error('Erro ao enviar email de recuperação:', error);
-        return { success: false, error: error.message };
-    }
-}
-
-// ================================================
-// DELETAR CONTA
-// ================================================
 
 // ================================================
 // AMIZADES E CONVITES (database/friends.sql)
+// Sem log: sem as tabelas no banco a falha é esperada, e a tela de amigos fica oculta
 // ================================================
 
-export async function supabaseFindUser(username) {
-    const { data, error } = await supabase.rpc('find_user_by_username', { p_username: username });
-    if (error) return { success: false };
-    return { success: true, user: data?.[0] || null };
+const duplicateRequest = error => (error.code === PG.UNIQUE ? { duplicate: true } : {});
+
+export function supabaseFindUser(username) {
+    return run(null, () => supabase.rpc('find_user_by_username', { p_username: username }), data => ({ user: data?.[0] || null }));
 }
 
-// Sem as tabelas no banco devolve success: false, e a tela de amigos fica oculta
-export async function supabaseListFriends() {
-    const { data, error } = await supabase.rpc('list_friends');
-    if (error) return { success: false, friends: [] };
-    return { success: true, friends: data || [] };
+export function supabaseListFriends() {
+    return run(null, () => supabase.rpc('list_friends'), data => ({ friends: data || [] }), { friends: [] });
 }
 
-export async function supabaseGetFriendProfile(friendId) {
-    const { data, error } = await supabase.rpc('get_friend_profile', { p_friend: friendId });
-    if (error) return { success: false };
-    return { success: true, profile: data };
+export function supabaseGetFriendProfile(friendId) {
+    return run(null, () => supabase.rpc('get_friend_profile', { p_friend: friendId }), data => ({ profile: data }));
 }
 
-export async function supabaseRequestFriend(userId, friendId) {
-    const { error } = await supabase.from('friendships').insert({ requester_id: userId, addressee_id: friendId });
-    if (error?.code === '23505') return { success: false, duplicate: true };
-    return { success: !error };
+export function supabaseRequestFriend(userId, friendId) {
+    return run(null, () => supabase.from(TABLE.FRIENDSHIPS).insert({ requester_id: userId, addressee_id: friendId }), undefined, duplicateRequest);
 }
 
-export async function supabaseAcceptFriend(friendshipId) {
-    const { error } = await supabase.from('friendships').update({ status: 'accepted' }).eq('id', friendshipId);
-    return { success: !error };
+export function supabaseAcceptFriend(friendshipId) {
+    return run(null, () => supabase.from(TABLE.FRIENDSHIPS).update({ status: 'accepted' }).eq('id', friendshipId));
 }
 
-export async function supabaseRemoveFriend(friendshipId) {
-    const { error } = await supabase.from('friendships').delete().eq('id', friendshipId);
-    return { success: !error };
+export function supabaseRemoveFriend(friendshipId) {
+    return run(null, () => supabase.from(TABLE.FRIENDSHIPS).delete().eq('id', friendshipId));
 }
 
-export async function supabaseSendMatchInvite(userId, friendId, payload) {
-    const { error } = await supabase.from('match_invites').insert({ from_user: userId, to_user: friendId, payload });
-    return { success: !error };
+export function supabaseSendMatchInvite(userId, friendId, payload) {
+    return run(null, () => supabase.from(TABLE.MATCH_INVITES).insert({ from_user: userId, to_user: friendId, payload }));
 }
 
-export async function supabaseListMatchInvites() {
-    const { data, error } = await supabase.rpc('list_match_invites');
-    if (error) return { success: false, invites: [] };
-    return { success: true, invites: data || [] };
+export function supabaseListMatchInvites() {
+    return run(null, () => supabase.rpc('list_match_invites'), data => ({ invites: data || [] }), { invites: [] });
 }
 
-export async function supabaseDeleteMatchInvite(inviteId) {
-    const { error } = await supabase.from('match_invites').delete().eq('id', inviteId);
-    return { success: !error };
+export function supabaseDeleteMatchInvite(inviteId) {
+    return run(null, () => supabase.from(TABLE.MATCH_INVITES).delete().eq('id', inviteId));
 }
 
 // Avisos: o Supabase manda um sinal quando chega algo para esta pessoa (database/realtime_inbox.sql).
@@ -825,10 +459,10 @@ export async function supabaseDeleteMatchInvite(inviteId) {
 export function subscribeInbox(userId, onChange) {
     const channel = supabase.channel(`caixa:${userId}`);
     [
-        ['INSERT', 'title_shares', `to_user=eq.${userId}`],
-        ['INSERT', 'match_invites', `to_user=eq.${userId}`],
-        ['INSERT', 'friendships', `addressee_id=eq.${userId}`],
-        ['UPDATE', 'friendships', `requester_id=eq.${userId}`],
+        ['INSERT', TABLE.TITLE_SHARES, `to_user=eq.${userId}`],
+        ['INSERT', TABLE.MATCH_INVITES, `to_user=eq.${userId}`],
+        ['INSERT', TABLE.FRIENDSHIPS, `addressee_id=eq.${userId}`],
+        ['UPDATE', TABLE.FRIENDSHIPS, `requester_id=eq.${userId}`],
     ].forEach(([event, table, filter]) => {
         channel.on('postgres_changes', { event, schema: 'public', table, filter }, () => onChange(table));
     });
@@ -862,387 +496,126 @@ export function openLiveRoom(code, clientId, { onMessage, onLeave, onStatus }) {
 }
 
 // Indicações de títulos (database/title_shares.sql). Sem a tabela, a caixa fica oculta.
-export async function supabaseSendTitleShare(userId, friendId, row) {
-    const { error } = await supabase.from('title_shares').insert({ from_user: userId, to_user: friendId, ...row });
-    if (error?.code === '23505') return { success: false, duplicate: true };
-    return { success: !error };
+export function supabaseSendTitleShare(userId, friendId, row) {
+    return run(null, () => supabase.from(TABLE.TITLE_SHARES).insert({ from_user: userId, to_user: friendId, ...row }), undefined, duplicateRequest);
 }
 
-export async function supabaseListTitleShares() {
-    const { data, error } = await supabase.rpc('list_title_shares');
-    if (error) return { success: false, shares: [] };
-    return { success: true, shares: data || [] };
+export function supabaseListTitleShares() {
+    return run(null, () => supabase.rpc('list_title_shares'), data => ({ shares: data || [] }), { shares: [] });
 }
 
-export async function supabaseDeleteTitleShare(shareId) {
-    const { error } = await supabase.from('title_shares').delete().eq('id', shareId);
-    return { success: !error };
-}
-
-/**
- * Guardar dados do usuário nos metadados da conta (sincroniza entre aparelhos sem tabela nova)
- * @param {Object} data - Campos a gravar
- */
-export async function supabaseUpdateUserData(data) {
-    try {
-        const { error } = await supabase.auth.updateUser({ data });
-        if (error) throw error;
-        return { success: true };
-    } catch (error) {
-        console.error('Erro ao salvar dados da conta:', error);
-        return { success: false };
-    }
-}
-
-/**
- * Deletar a conta do usuário logado (login e todos os dados) pela Edge Function delete-account.
- * Só informa sucesso depois de o servidor confirmar.
- */
-export async function supabaseDeleteAccount() {
-    try {
-        const { data, error } = await supabase.functions.invoke('delete-account', { method: 'POST' });
-        if (error) throw error;
-        if (!data?.deleted) throw new Error('Resposta inesperada do servidor');
-
-        // O usuário não existe mais, então o signOut responde 403 e mantém a sessão salva: limpa à mão
-        const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' });
-        if (signOutError) localStorage.removeItem(AUTH_STORAGE_KEY);
-
-        return { success: true };
-    } catch (error) {
-        console.error('Erro ao deletar conta:', error);
-        return { success: false };
-    }
+export function supabaseDeleteTitleShare(shareId) {
+    return run(null, () => supabase.from(TABLE.TITLE_SHARES).delete().eq('id', shareId));
 }
 
 // ================================================
 // HISTÓRICO DE SORTEIOS
 // ================================================
 
-/**
- * Obter histórico de sorteios
- * @param {string} userId - ID do usuário
- */
-export async function supabaseGetSorteioHistory(userId) {
-    try {
-        const { data, error } = await supabase
-            .from('sorteio_history')
-            .select('*')
-            .eq('user_id', userId)
-            .order('sorted_at', { ascending: false })
-            .limit(50);
-
-        if (error) throw error;
-        return { success: true, history: data || [] };
-    } catch (error) {
-        console.error('Erro ao buscar histórico de sorteios:', error);
-        return { success: false, history: [] };
-    }
+export function supabaseGetSorteioHistory(userId) {
+    return run('buscar histórico de sorteios',
+        () => supabase.from(TABLE.SORTEIO).select('*').eq('user_id', userId).order('sorted_at', { ascending: false }).limit(50),
+        data => ({ history: data || [] }), { history: [] });
 }
 
-/**
- * Adicionar ao histórico de sorteios
- * @param {string} userId - ID do usuário
- * @param {Object} item - Dados do filme/série
- */
-export async function supabaseAddToSorteioHistory(userId, item) {
-    try {
-        const { error } = await supabase
-            .from('sorteio_history')
-            .upsert({
-                user_id: userId,
-                tmdb_id: item.id,
-                title: item.title || item.name,
-                poster_path: item.poster_path,
-                media_type: item.media_type || 'movie',
-                sorted_at: new Date().toISOString()
-            }, { onConflict: 'user_id,tmdb_id' });
-
-        if (error) throw error;
-        return { success: true };
-    } catch (error) {
-        console.error('Erro ao salvar no histórico de sorteios:', error);
-        return { success: false };
-    }
+export function supabaseAddToSorteioHistory(userId, item) {
+    return run('salvar no histórico de sorteios', () => supabase.from(TABLE.SORTEIO).upsert(
+        { user_id: userId, ...tmdbTitleRow(item), sorted_at: new Date().toISOString() },
+        { onConflict: ON_CONFLICT.TITLE }
+    ));
 }
 
-/**
- * Limpar histórico de sorteios
- * @param {string} userId - ID do usuário
- */
-export async function supabaseClearSorteioHistory(userId) {
-    try {
-        const { error } = await supabase
-            .from('sorteio_history')
-            .delete()
-            .eq('user_id', userId);
-
-        if (error) throw error;
-        return { success: true };
-    } catch (error) {
-        console.error('Erro ao limpar histórico de sorteios:', error);
-        return { success: false };
-    }
+export function supabaseClearSorteioHistory(userId) {
+    return run('limpar histórico de sorteios', () => supabase.from(TABLE.SORTEIO).delete().eq('user_id', userId));
 }
 
 // ================================================
 // BLACKLIST (NÃO TENHO INTERESSE)
 // ================================================
 
-/**
- * Obter blacklist do usuário
- * @param {string} userId - ID do usuário
- */
-export async function supabaseGetBlacklist(userId) {
-    try {
-        const { data, error } = await supabase
-            .from('blacklist')
-            .select('*')
-            .eq('user_id', userId)
-            .order('added_at', { ascending: false });
-
-        if (error) throw error;
-        return { success: true, blacklist: data || [] };
-    } catch (error) {
-        console.error('Erro ao buscar blacklist:', error);
-        return { success: false, blacklist: [] };
-    }
+export function supabaseGetBlacklist(userId) {
+    return run('buscar blacklist',
+        () => supabase.from(TABLE.BLACKLIST).select('*').eq('user_id', userId).order('added_at', { ascending: false }),
+        data => ({ blacklist: data || [] }), { blacklist: [] });
 }
 
-/**
- * Adicionar à blacklist
- * @param {string} userId - ID do usuário
- * @param {Object} item - Dados do filme/série
- */
-export async function supabaseAddToBlacklist(userId, item) {
-    try {
-        const { error } = await supabase
-            .from('blacklist')
-            .insert({
-                user_id: userId,
-                tmdb_id: item.id,
-                title: item.title || item.name,
-                poster_path: item.poster_path,
-                media_type: item.media_type || 'movie'
-            });
-
-        if (error) {
-            if (error.code === '23505') {
-                return { success: true, alreadyExists: true };
-            }
-            throw error;
-        }
-        return { success: true };
-    } catch (error) {
-        console.error('Erro ao adicionar à blacklist:', error);
-        return { success: false };
-    }
+export function supabaseAddToBlacklist(userId, item) {
+    return run('adicionar à blacklist',
+        allowDuplicate(() => supabase.from(TABLE.BLACKLIST).insert({ user_id: userId, ...tmdbTitleRow(item) })),
+        data => (data === ALREADY ? { alreadyExists: true } : {}));
 }
 
-/**
- * Remover da blacklist
- * @param {string} userId - ID do usuário
- * @param {number} tmdbId - ID do TMDB
- */
-export async function supabaseRemoveFromBlacklist(userId, tmdbId) {
-    try {
-        const { error } = await supabase
-            .from('blacklist')
-            .delete()
-            .eq('user_id', userId)
-            .eq('tmdb_id', tmdbId);
-
-        if (error) throw error;
-        return { success: true };
-    } catch (error) {
-        console.error('Erro ao remover da blacklist:', error);
-        return { success: false };
-    }
+export function supabaseRemoveFromBlacklist(userId, tmdbId) {
+    return run('remover da blacklist', () => supabase.from(TABLE.BLACKLIST).delete().eq('user_id', userId).eq('tmdb_id', tmdbId));
 }
 
-/**
- * Limpar toda a blacklist
- * @param {string} userId - ID do usuário
- */
-export async function supabaseClearBlacklist(userId) {
-    try {
-        const { error } = await supabase
-            .from('blacklist')
-            .delete()
-            .eq('user_id', userId);
-
-        if (error) throw error;
-        return { success: true };
-    } catch (error) {
-        console.error('Erro ao limpar blacklist:', error);
-        return { success: false };
-    }
+export function supabaseClearBlacklist(userId) {
+    return run('limpar blacklist', () => supabase.from(TABLE.BLACKLIST).delete().eq('user_id', userId));
 }
 
 // ================================================
 // PROGRESSO DE EPISÓDIOS (004-series-tracking)
 // ================================================
 
-/**
- * Marcar episódio como assistido.
- * Idempotente: chamar duas vezes não duplica o registro.
- *
- * @param {string} userId - ID do usuário
- * @param {Object} series - { id, title, poster, type }
- * @param {number} seasonNumber
- * @param {number} episodeNumber
- */
-export async function supabaseMarkEpisodeWatched(userId, series, seasonNumber, episodeNumber) {
-    try {
-        const { data, error } = await supabase
-            .from('episode_progress')
-            .insert({
-                user_id: userId,
-                series_id: series.id,
-                series_title: series.title,
-                series_poster: series.poster || null,
-                media_type: series.type || 'tv',
-                season_number: seasonNumber,
-                episode_number: episodeNumber,
-            })
-            .select()
-            .single();
-
-        if (error) {
-            if (error.code === '23505') {
-                return { success: true, message: 'Episódio já marcado' };
-            }
-            throw error;
-        }
-
-        return { success: true, data };
-    } catch (error) {
-        console.error('Erro ao marcar episódio:', error);
-        return { success: false, error: error.message };
-    }
+// Idempotente: marcar duas vezes não duplica
+export function supabaseMarkEpisodeWatched(userId, series, seasonNumber, episodeNumber) {
+    return insertOnce('marcar episódio',
+        () => supabase.from(TABLE.EPISODES).insert(episodeRow(userId, series, seasonNumber, episodeNumber)).select().single(),
+        'Episódio já marcado');
 }
 
-/**
- * Marcar vários episódios de uma vez (temporada ou série inteira): um pedido só.
- * Os que já estavam marcados são ignorados.
- *
- * @param {string} userId
- * @param {Object} series - { id, title, poster, type }
- * @param {Array<{season_number: number, episode_number: number}>} episodes
- */
+/** Temporada ou série inteira num pedido só; os que já estavam marcados ficam como estão */
 export async function supabaseMarkEpisodesWatched(userId, series, episodes) {
     if (!episodes.length) return { success: true };
-    try {
-        const { error } = await supabase
-            .from('episode_progress')
-            .upsert(episodes.map(ep => ({
-                user_id: userId,
-                series_id: series.id,
-                series_title: series.title,
-                series_poster: series.poster || null,
-                media_type: series.type || 'tv',
-                season_number: ep.season_number,
-                episode_number: ep.episode_number,
-            })), { onConflict: 'user_id,series_id,season_number,episode_number', ignoreDuplicates: true });
-        if (error) throw error;
-        return { success: true };
-    } catch (error) {
-        console.error('Erro ao marcar episódios:', error);
-        return { success: false, error: error.message };
-    }
+    return run('marcar episódios', () => supabase.from(TABLE.EPISODES).upsert(
+        episodes.map(ep => episodeRow(userId, series, ep.season_number, ep.episode_number)),
+        { onConflict: ON_CONFLICT.EPISODE, ignoreDuplicates: true }
+    ));
 }
 
-/**
- * Desmarcar episódio como assistido.
- *
- * @param {string} userId - ID do usuário
- * @param {number} seriesId
- * @param {number} seasonNumber
- * @param {number} episodeNumber
- */
-export async function supabaseUnmarkEpisodeWatched(userId, seriesId, seasonNumber, episodeNumber) {
-    try {
-        const { error } = await supabase
-            .from('episode_progress')
-            .delete()
-            .eq('user_id', userId)
-            .eq('series_id', seriesId)
-            .eq('season_number', seasonNumber)
-            .eq('episode_number', episodeNumber);
-
-        if (error) throw error;
-        return { success: true };
-    } catch (error) {
-        console.error('Erro ao desmarcar episódio:', error);
-        return { success: false, error: error.message };
-    }
+export function supabaseUnmarkEpisodeWatched(userId, seriesId, seasonNumber, episodeNumber) {
+    return run('desmarcar episódio', () => supabase.from(TABLE.EPISODES).delete()
+        .eq('user_id', userId)
+        .eq('series_id', seriesId)
+        .eq('season_number', seasonNumber)
+        .eq('episode_number', episodeNumber));
 }
 
-/**
- * Buscar todos os episódios assistidos de uma série específica.
- * Retorna Set de chaves no formato "{seriesId}-s{season}-e{episode}".
- *
- * @param {string} userId - ID do usuário
- * @param {number} seriesId
- * @returns {{ success: boolean, watchedKeys: Set<string> }}
- */
-export async function supabaseGetSeriesProgress(userId, seriesId) {
-    try {
-        const { data, error } = await supabase
-            .from('episode_progress')
-            .select('series_id, season_number, episode_number')
-            .eq('user_id', userId)
-            .eq('series_id', seriesId);
-
-        if (error) throw error;
-
-        const watchedKeys = new Set(
-            (data || []).map(r => `${r.series_id}-s${r.season_number}-e${r.episode_number}`)
-        );
-
-        return { success: true, watchedKeys };
-    } catch (error) {
-        console.error('Erro ao buscar progresso da série:', error);
-        return { success: false, watchedKeys: new Set() };
-    }
+/** Todos os episódios da série, de uma vez (série removida da biblioteca volta do zero) */
+export function supabaseClearSeriesProgress(userId, seriesId) {
+    return run('limpar progresso da série', () => supabase.from(TABLE.EPISODES).delete().eq('user_id', userId).eq('series_id', seriesId));
 }
 
-/**
- * Buscar todas as séries com pelo menos 1 episódio assistido.
- * Usado pelo widget Up Next.
- *
- * @param {string} userId - ID do usuário
- * @returns {{ success: boolean, series: Array }}
- */
-export async function supabaseGetAllSeriesInProgress(userId) {
-    try {
-        const { data, error } = await supabase
-            .from('episode_progress')
+/** Episódios assistidos de uma série, como Set de chaves "{seriesId}-s{season}-e{episode}" */
+export function supabaseGetSeriesProgress(userId, seriesId) {
+    return run('buscar progresso da série',
+        () => supabase.from(TABLE.EPISODES).select('series_id, season_number, episode_number').eq('user_id', userId).eq('series_id', seriesId),
+        data => ({ watchedKeys: new Set((data || []).map(r => buildEpisodeKey(r.series_id, r.season_number, r.episode_number))) }),
+        () => ({ watchedKeys: new Set() }));
+}
+
+/** Séries com pelo menos 1 episódio assistido (widget Up Next), da mais recente para a mais antiga */
+export function supabaseGetAllSeriesInProgress(userId) {
+    return run('buscar séries em progresso',
+        () => supabase.from(TABLE.EPISODES)
             .select('series_id, series_title, series_poster, media_type, season_number, episode_number')
             .eq('user_id', userId)
-            .order('watched_at', { ascending: false });
-
-        if (error) throw error;
-
-        // Agrupar por série e montar Set de chaves por série
-        const seriesMap = new Map();
-        for (const row of (data || [])) {
-            if (!seriesMap.has(row.series_id)) {
-                seriesMap.set(row.series_id, {
-                    id: row.series_id,
-                    title: row.series_title,
-                    poster: row.series_poster,
-                    type: row.media_type,
-                    watchedKeys: new Set(),
-                });
+            .order('watched_at', { ascending: false }),
+        data => {
+            const seriesMap = new Map();
+            for (const row of (data || [])) {
+                if (!seriesMap.has(row.series_id)) {
+                    seriesMap.set(row.series_id, {
+                        id: row.series_id,
+                        title: row.series_title,
+                        poster: row.series_poster,
+                        type: row.media_type,
+                        watchedKeys: new Set(),
+                    });
+                }
+                seriesMap.get(row.series_id).watchedKeys.add(buildEpisodeKey(row.series_id, row.season_number, row.episode_number));
             }
-            const key = `${row.series_id}-s${row.season_number}-e${row.episode_number}`;
-            seriesMap.get(row.series_id).watchedKeys.add(key);
-        }
-
-        return { success: true, series: [...seriesMap.values()] };
-    } catch (error) {
-        console.error('Erro ao buscar séries em progresso:', error);
-        return { success: false, series: [] };
-    }
+            return { series: [...seriesMap.values()] };
+        },
+        { series: [] });
 }

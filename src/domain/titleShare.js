@@ -1,7 +1,7 @@
 // Regras puras do ingresso e do compartilhar: tipo do título, cor, texto da mensagem e o que vai para o banco.
 import { formatRating } from '../utils/format.js';
+import { MEDIA_TYPES, getYear, getTitle } from './mediaItem.js';
 
-export const KINDS = ['movie', 'tv', 'dorama'];
 export const KIND_LABEL = { movie: 'Filme', tv: 'Série', dorama: 'Dorama' };
 // Mesmas cores dos temas do app (--accent-primary em style.css)
 export const TICKET_COLORS = { movie: '#ffc94d', tv: '#3dd6c6', dorama: '#ff8fb8' };
@@ -30,8 +30,8 @@ export function titleLink(base, kind, id) {
 }
 
 export function shareText({ item, kind, url, cast = [], providers = [] }) {
-  const title = item.title || item.name || '';
-  const year = (item.release_date || item.first_air_date || '').split('-')[0];
+  const title = getTitle(item);
+  const year = getYear(item);
   const meta = [KIND_LABEL[kind], year, item.vote_average ? `Nota ${formatRating(item.vote_average)}` : ''].filter(Boolean).join(' · ');
   const lines = [`Hoje é dia de: ${title}`, meta];
   const synopsis = truncate(item.overview, 220);
@@ -51,7 +51,7 @@ const POSTER_PATTERN = /^\/[A-Za-z0-9_-]{1,100}\.(jpg|jpeg|png|webp)$/;
 export function shareRow(item, kind) {
   const id = Number(item?.id);
   const title = (item?.title || item?.name || '').trim().slice(0, 300);
-  if (!KINDS.includes(kind) || !Number.isInteger(id) || id <= 0 || !title) return null;
+  if (!MEDIA_TYPES.includes(kind) || !Number.isInteger(id) || id <= 0 || !title) return null;
   return {
     media_type: kind,
     tmdb_id: id,

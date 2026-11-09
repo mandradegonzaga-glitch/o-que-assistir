@@ -3,29 +3,31 @@
 // Os votos ficam só na memória: não dependem de conta nem de banco.
 import { openLiveRoom } from '../api/supabase.js';
 import { tmdbFetch, tmdbGet } from '../api/tmdb.js';
-import { IMG_URL } from '../config/constants.js';
-import { buildDiscoverUrl, getRandomPage } from '../domain/filters.js';
+import { getRandomPage } from '../domain/filters.js';
 import { isHorizontalSwipe } from '../domain/gestures.js';
 import { createLiveState, liveReduce, makeRoomCode, normalizeRoomCode, parseLiveMessage } from '../domain/liveMatch.js';
-import { computeMatches, decodeMatchInvite, encodeMatchInvite, pickTitles, playerName } from '../domain/match.js';
+import { MATCH_PARAMS, computeMatches, decodeMatchInvite, encodeMatchInvite, invitePayload, pickTitles, playerName } from '../domain/match.js';
 import { session, state } from '../state/appState.js';
 import { createConfetti, showToast } from '../ui/feedback.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { formatRating } from '../utils/format.js';
-import { getFilterOptions } from './discover.js';
+import { discoverUrl } from './filters.js';
 import { sendInviteToFriend } from './friends.js';
 import { recordMatch, renderMatchHistory } from './matchHistory.js';
 import { grantXp, recordSocial, trackChallenge } from './progress.js';
 import { carregarDetalhes } from './titleModal.js';
 import { selecionarTipo, switchMode } from '../ui/navigation.js';
+import { getTmdbEndpoint, getYear, getTitle } from '../domain/mediaItem.js';
+import { appLink, setUrlParams, shareLink } from '../ui/share.js';
+import { registerActions } from '../ui/actions.js';
+import { posterImg } from '../ui/icons.js';
 
 let game = null; // { titles, type, names, votes: [Set, Set], player, index, mode: 'local' | 'invite' | 'guest' | 'answer' | 'live' }
-let live = null; // { code, clientId, name, room, state, retry, giveUp }
+let live = null; // { code, clientId, name, room, state, helloTimer, resyncTimer, giveUp }
 
 const STEPS = ['match-setup', 'match-voting', 'match-pass', 'match-invite', 'match-joined', 'match-result',
   'match-live-lobby', 'match-live-join', 'match-live-wait'];
-const INVITE_PARAM = 'match';
-const LIVE_PARAM = 'ao-vivo';
+const { invite: INVITE_PARAM, live: LIVE_PARAM } = MATCH_PARAMS;
 const HELLO_RETRY_MS = 2000;
 const JOIN_TIMEOUT_MS = 15000;
 
@@ -35,15 +37,15 @@ function showStep(id) {
 
 function renderCard() {
   const title = game.titles[game.index];
-  const name = title.title || title.name;
-  const year = (title.release_date || title.first_air_date || '').split('-')[0];
+  const name = getTitle(title);
+  const year = getYear(title);
 
   document.getElementById('match-player').textContent = game.names[game.player];
   document.getElementById('match-counter').textContent = `${game.index + 1} de ${game.titles.length}`;
   document.getElementById('match-fill').style.width = `${(game.index / game.titles.length) * 100}%`;
   renderPartnerProgress();
   document.getElementById('match-card').innerHTML = `
-    <img class="match-card__poster" src="${IMG_URL + title.poster_path}" alt="" width="500" height="750">
+    ${posterImg(title.poster_path, { cls: 'match-card__poster', lazy: false })}
     <div class="match-card__info">
       <h3 class="match-card__title">${escapeHtml(name)}</h3>
       <p class="match-card__meta">${escapeHtml(year)} · Nota ${formatRating(title.vote_average)}</p>
@@ -51,9 +53,9 @@ function renderCard() {
     </div>`;
 }
 
-export const matchStart = () => beginGame('local', 'btn-match-start');
-export const matchInvite = () => beginGame('invite', 'btn-match-invite');
-export const matchLive = () => beginGame('live', 'btn-match-live');
+const matchStart = () => beginGame('local', 'btn-match-start');
+const matchInvite = () => beginGame('invite', 'btn-match-invite');
+const matchLive = () => beginGame('live', 'btn-match-live');
 
 async function beginGame(mode, buttonId) {
   const btn = document.getElementById(buttonId);
@@ -61,8 +63,7 @@ async function beginGame(mode, buttonId) {
   btn.disabled = true;
 
   try {
-    const endpoint = state.type === 'dorama' ? 'tv' : state.type;
-    const url = buildDiscoverUrl(endpoint, { ...getFilterOptions(), isDorama: state.type === 'dorama' });
+    const url = discoverUrl();
     const data = await tmdbFetch(`${url}&page=${getRandomPage()}`);
     const titles = pickTitles(data.results || [], session.blacklist);
 
@@ -84,8 +85,7 @@ async function beginGame(mode, buttonId) {
       startHosting();
       return;
     }
-    showStep('match-voting');
-    renderCard();
+    enterVoting({ focus: false });
   } catch (e) {
     console.error('Erro ao iniciar o Match:', e);
     showToast('Não foi possível carregar os títulos. Verifique a conexão e tente de novo.', 'error');
@@ -94,7 +94,7 @@ async function beginGame(mode, buttonId) {
   }
 }
 
-export function matchVote(wanted) {
+function matchVote(wanted) {
   if (!game || document.getElementById('match-voting').hidden) return;
   if (wanted) game.votes[game.player].add(game.titles[game.index].id);
   game.index++;
@@ -127,10 +127,8 @@ export function matchVote(wanted) {
   showResult();
 }
 
-export function matchContinue() {
-  showStep('match-voting');
-  renderCard();
-  document.querySelector('[data-action="matchYes"]').focus();
+function matchContinue() {
+  enterVoting();
 }
 
 function showResult() {
@@ -148,9 +146,9 @@ function showResult() {
     heading.textContent = matches.length === 1 ? 'Deu match!' : `${matches.length} matches!`;
     const type = game.type;
     list.innerHTML = matches.map(title => {
-      const name = escapeHtml(title.title || title.name);
+      const name = escapeHtml(getTitle(title));
       return `<button type="button" class="match-result-item" data-action="carregarDetalhes" data-id="${title.id}" data-media="${type}" aria-label="Abrir ${name}">
-        <img src="${IMG_URL + title.poster_path}" alt="" width="500" height="750" loading="lazy">
+        ${posterImg(title.poster_path)}
         <span>${name}</span>
       </button>`;
     }).join('');
@@ -181,16 +179,17 @@ function votedIndexes(player) {
   return game.titles.map((title, i) => (game.votes[player].has(title.id) ? i : -1)).filter(i => i >= 0);
 }
 
-function inviteLink() {
-  const code = encodeMatchInvite({
+function inviteCode() {
+  return encodeMatchInvite({
     type: game.type,
     ids: game.titles.map(t => t.id),
     nameA: game.names[0],
     votesA: votedIndexes(0),
     ...(game.mode === 'guest' ? { nameB: game.names[1], votesB: votedIndexes(1) } : {}),
   });
-  return `${location.origin}${location.pathname}?${INVITE_PARAM}=${code}`;
 }
+
+const inviteLink = () => appLink(INVITE_PARAM, inviteCode());
 
 function showInviteStep() {
   document.getElementById('match-link').value = inviteLink();
@@ -198,32 +197,16 @@ function showInviteStep() {
   document.getElementById('btn-match-send').focus();
 }
 
-export async function shareLink(url, text, title = 'Match no O Que Assistir?') {
-  const isTouch = window.matchMedia('(pointer: coarse)').matches;
-  if (isTouch && navigator.share) {
-    try {
-      await navigator.share({ title, text, url });
-    } catch (e) {
-      if (e.name !== 'AbortError') showToast('Não foi possível abrir o compartilhar. Copie o link.', 'error');
-    }
-    return;
-  }
-  try {
-    await navigator.clipboard.writeText(`${text}\n${url}`);
-    showToast('Link copiado! Cole na conversa.');
-  } catch {
-    showToast('Não foi possível copiar. Selecione o link e copie.', 'error');
-  }
-}
+const MATCH_SHARE_TITLE = 'Match no O Que Assistir?';
 
 const inviteText = () => `${game.names[0]} quer decidir com você o que assistir. Vote nos títulos e veja o que deu match:`;
 
-export const matchSendInvite = () => shareLink(document.getElementById('match-link').value, inviteText());
+const matchSendInvite = () => shareLink(document.getElementById('match-link').value, inviteText(), MATCH_SHARE_TITLE);
 
-export const matchSendAnswer = () => shareLink(document.getElementById('match-answer-link').value, `${game.names[1]} respondeu ao seu Match. Veja o resultado:`);
+const matchSendAnswer = () => shareLink(document.getElementById('match-answer-link').value, `${game.names[1]} respondeu ao seu Match. Veja o resultado:`, MATCH_SHARE_TITLE);
 
 // Abre o programa de email da pessoa: não passa por servidor nenhum
-export function matchEmailInvite() {
+function matchEmailInvite() {
   const to = document.getElementById('match-email').value.trim();
   const subject = encodeURIComponent(`${game.names[0]} te chamou para um Match`);
   const body = encodeURIComponent(`${inviteText()}\n\n${document.getElementById('match-link').value}`);
@@ -234,19 +217,17 @@ export function matchEmailInvite() {
   link.remove();
 }
 
-export function matchSendToFriend(friendId) {
+function matchSendToFriend(friendId) {
   if (live && game?.mode === 'live') {
-    sendInviteToFriend(friendId, `${LIVE_PARAM}:${live.code}`);
+    sendInviteToFriend(friendId, invitePayload({ code: live.code, live: true }));
     return;
   }
-  const link = game.mode === 'guest' ? document.getElementById('match-answer-link').value : document.getElementById('match-link').value;
-  sendInviteToFriend(friendId, new URL(link).searchParams.get(INVITE_PARAM));
+  sendInviteToFriend(friendId, invitePayload({ code: inviteCode() }));
 }
 
-export function matchJoin() {
+function matchJoin() {
   game.names[1] = playerName(document.getElementById('match-joined-name').value, 1);
-  showStep('match-voting');
-  renderCard();
+  enterVoting({ focus: false });
 }
 
 const hasInvite = () => [INVITE_PARAM, LIVE_PARAM].some(p => new URLSearchParams(location.search).has(p));
@@ -271,7 +252,7 @@ export async function openMatchFromUrl() {
   }
 
   try {
-    const endpoint = invite.type === 'dorama' ? 'tv' : invite.type;
+    const endpoint = getTmdbEndpoint(invite.type);
     const loaded = await Promise.all(invite.ids.map(id => tmdbGet(`/${endpoint}/${id}`).catch(() => null)));
     const titles = invite.ids.map((id, i) => ({ id, data: loaded[i] })).filter(x => x.data?.poster_path);
     if (titles.length < 2) throw new Error('títulos indisponíveis');
@@ -301,22 +282,19 @@ export async function openMatchFromUrl() {
   }
 }
 
-export function matchDraw() {
+function matchDraw() {
   const matches = game?.matches || [];
   if (matches.length === 0) return;
   const chosen = matches[Math.floor(Math.random() * matches.length)];
   carregarDetalhes(chosen.id, game.type);
 }
 
-export function matchRestart() {
+function matchRestart() {
   if (live) clearLiveSession(live.code);
   closeLive();
   game = null;
   // O convite já cumpriu seu papel: sair do link evita abrir o mesmo jogo ao recarregar
-  const url = new URL(location.href);
-  url.searchParams.delete(INVITE_PARAM);
-  url.searchParams.delete(LIVE_PARAM);
-  history.replaceState(null, '', url);
+  setUrlParams({ [INVITE_PARAM]: null, [LIVE_PARAM]: null });
   showStep('match-setup');
   renderMatchHistory();
 }
@@ -330,12 +308,14 @@ export function matchRestart() {
 
 const selfIndex = () => (live?.state.role === 'guest' ? 1 : 0);
 const partnerIndex = () => 1 - selfIndex();
-const liveLink = code => `${location.origin}${location.pathname}?${LIVE_PARAM}=${code}`;
+const liveLink = code => appLink(LIVE_PARAM, code);
 const partnerName = () => live?.state.partnerName || (selfIndex() === 0 ? 'a outra pessoa' : 'quem te chamou');
 
 // O mesmo aparelho volta com o mesmo id ao recarregar: a sala reconhece e manda os títulos de novo
+const clientKey = code => `match-ao-vivo:${code}`;
+
 function clientIdFor(code) {
-  const key = `match-ao-vivo:${code}`;
+  const key = clientKey(code);
   try {
     const saved = sessionStorage.getItem(key);
     if (saved) return saved;
@@ -345,6 +325,21 @@ function clientIdFor(code) {
   } catch {
     return crypto.randomUUID();
   }
+}
+
+// Mostra o primeiro título a votar; com o teclado, o foco já fica no "Sim"
+function enterVoting({ focus = true } = {}) {
+  showStep('match-voting');
+  renderCard();
+  if (focus) document.querySelector('[data-action="matchYes"]').focus();
+}
+
+// Não deu para entrar na sala: fecha, libera o botão e explica
+function failLiveJoin(message) {
+  closeLive();
+  setJoinBusy(false);
+  setText('match-live-join-status', '');
+  showToast(message, 'error');
 }
 
 function setText(id, text) {
@@ -384,7 +379,7 @@ function loadLive(code) {
 function clearLiveSession(code) {
   try {
     sessionStorage.removeItem(sessionKey(code));
-    sessionStorage.removeItem(`match-ao-vivo:${code}`);
+    sessionStorage.removeItem(clientKey(code));
   } catch { /* nada a apagar */ }
 }
 
@@ -401,17 +396,15 @@ function resumeLive(code, saved) {
   } else if (live.state.selfDone) {
     showLiveWait();
   } else {
-    showStep('match-voting');
-    renderCard();
-    document.querySelector('[data-action="matchYes"]').focus();
+    enterVoting();
   }
   showToast('Match ao vivo retomado.');
 }
 
 function stopJoinTimers() {
   if (!live) return;
-  clearInterval(live.retry);
-  clearTimeout(live.retry);
+  clearInterval(live.helloTimer);
+  clearTimeout(live.resyncTimer);
   clearTimeout(live.giveUp);
 }
 
@@ -451,7 +444,7 @@ function onLiveStatus(status) {
     // Voltou depois de recarregar: pede ao outro até onde ele chegou (uma segunda vez, se a primeira se perder)
     const resync = () => live?.room.send({ event: 'resync' });
     resync();
-    live.retry = setTimeout(resync, HELLO_RETRY_MS);
+    live.resyncTimer = setTimeout(resync, HELLO_RETRY_MS);
     return;
   }
   if (host) {
@@ -461,12 +454,9 @@ function onLiveStatus(status) {
   // Quem entra repete o "oi" até a sala responder: a primeira mensagem pode se perder
   const hello = () => live?.room.send({ event: 'hello', name: live.name });
   hello();
-  live.retry = setInterval(hello, HELLO_RETRY_MS);
+  live.helloTimer = setInterval(hello, HELLO_RETRY_MS);
   live.giveUp = setTimeout(() => {
-    closeLive();
-    setJoinBusy(false);
-    setText('match-live-join-status', '');
-    showToast('Não encontramos esse Match. Ele pode ter terminado: peça um novo link.', 'error');
+    failLiveJoin('Não encontramos esse Match. Ele pode ter terminado: peça um novo link.');
   }, JOIN_TIMEOUT_MS);
 }
 
@@ -494,16 +484,11 @@ function runLiveAction(action, msg) {
     showToast(`${live.state.partnerName} entrou! Podem votar.`);
     game.player = 0;
     game.index = 0;
-    showStep('match-voting');
-    renderCard();
-    document.querySelector('[data-action="matchYes"]').focus();
+    enterVoting();
   } else if (action === 'start') {
     guestStart(msg);
   } else if (action === 'full') {
-    closeLive();
-    setJoinBusy(false);
-    setText('match-live-join-status', '');
-    showToast('Este Match já tem duas pessoas. Peça um novo link.', 'error');
+    failLiveJoin('Este Match já tem duas pessoas. Peça um novo link.');
   } else if (action === 'progress') {
     renderPartnerProgress();
   } else if (action === 'finish') {
@@ -550,18 +535,16 @@ function startHosting() {
   game.names[1] = 'Pessoa 2';
   connectLive(code, 'host', game.names[0]);
   // O código no endereço é o que permite retomar a sala depois de recarregar
-  const url = new URL(location.href);
-  url.searchParams.set(LIVE_PARAM, code);
-  history.replaceState(null, '', url);
+  setUrlParams({ [LIVE_PARAM]: code });
   saveLive();
   showLobby(code);
 }
 
 const liveInviteText = () => `${game.names[0]} quer escolher com você o que assistir, ao vivo. Entre e vote junto (código ${live.code}):`;
 
-export function matchLiveSend() {
+function matchLiveSend() {
   if (!live) return;
-  shareLink(liveLink(live.code), liveInviteText());
+  shareLink(liveLink(live.code), liveInviteText(), MATCH_SHARE_TITLE);
 }
 
 function openLiveJoin(rawCode) {
@@ -588,7 +571,7 @@ function openLiveJoin(rawCode) {
 let pendingCode = null;
 
 // Código digitado na tela inicial do Match: vale o mesmo que abrir o link
-export function matchCodeJoin() {
+function matchCodeJoin() {
   const input = document.getElementById('match-code-input');
   const code = normalizeRoomCode(input.value);
   if (!code) {
@@ -596,9 +579,7 @@ export function matchCodeJoin() {
     input.focus();
     return;
   }
-  const url = new URL(location.href);
-  url.searchParams.set(LIVE_PARAM, code);
-  history.replaceState(null, '', url);
+  setUrlParams({ [LIVE_PARAM]: code });
   input.value = '';
   openLiveJoin(code);
 }
@@ -614,7 +595,7 @@ function setJoinBusy(busy) {
   }
 }
 
-export function matchLiveJoin() {
+function matchLiveJoin() {
   const button = document.getElementById('btn-match-live-join');
   if (!pendingCode || button.getAttribute('aria-disabled') === 'true') return;
   setJoinBusy(true);
@@ -626,7 +607,7 @@ async function guestStart(msg) {
   stopJoinTimers();
   setText('match-live-join-status', 'Carregando os títulos…');
   try {
-    const endpoint = msg.type === 'dorama' ? 'tv' : msg.type;
+    const endpoint = getTmdbEndpoint(msg.type);
     const titles = await Promise.all(msg.ids.map(id => tmdbGet(`/${endpoint}/${id}`)));
     // Os votos são posições na lista: um título faltando desalinharia os dois lados
     if (titles.some(t => !t?.poster_path)) throw new Error('título sem pôster');
@@ -635,15 +616,10 @@ async function guestStart(msg) {
     game = { mode: 'live', type: msg.type, titles, names: [msg.names[0], live.name], votes: [new Set(), new Set()], player: 1, index: 0 };
     saveLive();
     setJoinBusy(false);
-    showStep('match-voting');
-    renderCard();
-    document.querySelector('[data-action="matchYes"]').focus();
+    enterVoting();
   } catch (e) {
     console.error('Erro ao carregar o Match ao vivo:', e);
-    closeLive();
-    setJoinBusy(false);
-    setText('match-live-join-status', '');
-    showToast('Não foi possível carregar os títulos deste Match. Tente entrar de novo.', 'error');
+    failLiveJoin('Não foi possível carregar os títulos deste Match. Tente entrar de novo.');
   }
 }
 
@@ -659,9 +635,7 @@ function finishLive() {
   game.votes[partnerIndex()] = new Set(ids);
   game.names[partnerIndex()] = partnerName();
   clearLiveSession(live.code); // acabou: recarregar não reabre esta partida
-  const url = new URL(location.href);
-  url.searchParams.delete(LIVE_PARAM);
-  history.replaceState(null, '', url);
+  setUrlParams({ [LIVE_PARAM]: null });
   showResult();
   // Fecha depois de um respiro: a outra pessoa ainda pode estar recebendo os votos daqui
   const done = live;
@@ -695,3 +669,28 @@ export function initMatch() {
     if (e.key === 'ArrowLeft') matchVote(false);
   });
 }
+
+registerActions({
+  click: {
+    friendSendMatch: el => matchSendToFriend(el.dataset.arg),
+    matchContinue,
+    matchDraw,
+    matchEmailInvite,
+    matchInvite,
+    matchJoin,
+    matchCodeJoin,
+    matchLive,
+    matchLiveJoin,
+    matchLiveSend,
+    matchSendAnswer,
+    matchSendInvite,
+    matchNo: () => matchVote(false),
+    matchRestart,
+    matchStart,
+    matchYes: () => matchVote(true),
+  },
+  enter: {
+    matchCodeJoin,
+    matchLiveJoin,
+  },
+});
