@@ -1,5 +1,5 @@
 // Substitui o SDK do Supabase no navegador: banco em memória, guardado em sessionStorage para sobreviver ao reload.
-// Controlado por window.__TEST = { logged: boolean, failUpsert: boolean, failInsert: boolean, failDelete: boolean, failListsRead: boolean }.
+// Controlado por window.__TEST = { logged: boolean, failUpsert: boolean, failInsert: boolean, failDeleteRows: boolean, failDelete: boolean, failListsRead: boolean }.
 (() => {
   const empty = () => ({
     profiles: [{ id: 'u1', username: 'teste', display_name: 'Pessoa Teste', email: 't@t.dev', roulette_wins: 0 }],
@@ -27,6 +27,7 @@
     run() {
       if (this.op === 'upsert' && window.__TEST?.failUpsert) return { data: null, error: { message: 'falha simulada' } };
       if (this.op === 'insert' && window.__TEST?.failInsert) return { data: null, error: { message: 'falha simulada' } };
+      if (this.op === 'delete' && window.__TEST?.failDeleteRows) return { data: null, error: { message: 'falha simulada' } };
       const rows = store[this.table] = store[this.table] || [];
       const matched = rows.filter(row => this.filters.every(f => f(row)));
       let out = matched;

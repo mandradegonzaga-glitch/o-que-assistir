@@ -59,6 +59,20 @@ test.describe('episódios', () => {
     await expect(page.locator('.episodes-season-counter')).toContainText('1/3 assistidos');
     await expect(page.locator('.episode-item').first()).toHaveClass(/is-watched/);
   });
+
+  test('se o banco não desmarcar a temporada, avisa e os episódios continuam marcados', async ({ page }) => {
+    await openApp(page);
+    await page.locator('#btn-tv').click();
+    await page.locator('#btn-sortear').click();
+    await page.locator('.episode-checkbox').first().check();
+    await expect(page.locator('.episodes-season-counter')).toContainText('1/3 assistidos');
+
+    await page.evaluate(() => { window.__TEST.failDeleteRows = true; });
+    await page.locator('[data-action="desmarcarTemporadaAtual"]').click();
+    await expect(page.locator('#toast')).toHaveText('Erro ao desmarcar episódios');
+    await expect(page.locator('.episodes-season-counter')).toContainText('1/3 assistidos');
+    expect(await page.evaluate(() => window.__db.episode_progress.length)).toBe(1);
+  });
 });
 
 test.describe('roleta', () => {
