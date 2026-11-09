@@ -182,6 +182,13 @@ test.describe('listas: link público', () => {
       await page.locator('#confirm-cancel').click();
       expect(await page.evaluate(() => window.__db.user_lists[0].share_token)).toBeNull();
 
+      // Esc também é "cancelar", e a confirmação abre de novo normalmente
+      await page.getByRole('button', { name: 'Compartilhar', exact: true }).click();
+      await expect(page.locator('#confirm-cancel')).toBeFocused();
+      await page.keyboard.press('Escape');
+      await expect(page.locator('#modal-confirm')).toBeHidden();
+      expect(await page.evaluate(() => window.__db.user_lists[0].share_token)).toBeNull();
+
       await page.getByRole('button', { name: 'Compartilhar', exact: true }).click();
       await page.locator('#confirm-ok').click();
       await expect(page.locator('#toast')).toContainText('Link copiado');

@@ -1,5 +1,6 @@
 // Ingresso e compartilhar do título aberto no modal.
 // "Gerar ingresso" baixa só a imagem; "Compartilhar" abre as opções: outros apps (com ingresso, texto e link) e amigos do app.
+import { openModal } from '../ui/modals.js';
 import { titleDetails, tmdbGet } from '../api/tmdb.js';
 import { IMG_URL } from '../config/constants.js';
 import { buildQrMatrix } from '../domain/qr.js';
@@ -583,7 +584,7 @@ function compartilhar() {
   document.getElementById('share-whatsapp-note').textContent = isTouch()
     ? 'O WhatsApp não recebe imagem por link: o ingresso é baixado, e você anexa na conversa pelo clipe.'
     : `O WhatsApp não recebe imagem por link: o ingresso vai copiado, e você cola na conversa com ${PASTE_KEYS}.`;
-  document.getElementById('modal-share').style.display = 'flex';
+  openModal('modal-share');
   preparedFor(movie).catch(() => {}); // já vai gerando enquanto a pessoa escolhe
   refreshFriends();
 }

@@ -1,7 +1,7 @@
 // Boas-vindas na primeira visita
 import { ph } from '../ui/phosphor.js';
 import { TICKET_ICON } from '../ui/icons.js';
-import { onModalClose } from '../ui/modals.js';
+import { closeModal, onModalClose, openModal } from '../ui/modals.js';
 import { registerActions } from '../ui/actions.js';
 
 // Os passos moram só aqui: o HTML traz a moldura e cada passo é desenhado a partir desta lista
@@ -43,7 +43,7 @@ function showStep(index) {
 
 function finishOnboarding() {
     localStorage.setItem('has_visited', 'true');
-    document.getElementById('onboarding-overlay').style.display = 'none';
+    closeModal('onboarding-overlay');
 }
 
 // Esc também encerra as boas-vindas
@@ -53,7 +53,7 @@ export function checkFirstVisit() {
     if (localStorage.getItem('has_visited')) return;
     showStep(0);
     setTimeout(() => {
-        document.getElementById('onboarding-overlay').style.display = 'flex';
+        openModal('onboarding-overlay');
     }, 500);
 }
 

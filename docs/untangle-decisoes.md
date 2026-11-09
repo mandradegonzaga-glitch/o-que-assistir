@@ -62,7 +62,9 @@ Status: [ ] a fazer · [x] feito · [-] descartado (com o motivo).
   - `urlState.js:37-38` escreve `natal`/`minhas` na regex.
 
 ## 6. Modais
-- [ ] `openModal(id)/closeModal(id)` em ui/modals.js; `getActiveModal()` em vez de ler `style.display`.
+- [x] `openModal(id)/closeModal(id)/isModalOpen(id)` em ui/modals.js cuidam do foco, do fundo inerte e da pilha
+      na hora (sem MutationObserver); a confirmação cancela pelo registro de fechar (Esc, tocar fora); match.js
+      usa `getActiveModal()`; o guia foca o tópico logo depois de abrir, sem `queueMicrotask`.
   - 24 `style.display='flex'`; match.js detecta modal por `[style*="flex"]`; help.js `queueMicrotask`.
 
 ## 7. Menores

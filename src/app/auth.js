@@ -10,19 +10,16 @@ import { MIN_PASSWORD_LENGTH, isValidEmail, passwordLevel } from '../domain/pass
 import { isAccount, isGuest, resetSession, session } from '../state/appState.js';
 import { emit } from '../state/events.js';
 import { showToast } from '../ui/feedback.js';
-import { confirmDialog } from '../ui/modals.js';
+import { closeModal, confirmDialog, openModal } from '../ui/modals.js';
 import { registerActions } from '../ui/actions.js';
 import { rememberPreferences, savedPreferences } from '../ui/navigation.js';
-
-
-const loginOverlay = () => document.getElementById('login-overlay');
 
 // Ao abrir o app: a sessão do Supabase ainda vale?
 export async function checkAuth() {
     const user = await supabaseGetCurrentUser();
     // O aviso de login do Supabase pode ter chegado antes e já ter entrado
     if (user && user.id !== session.currentUserId) await enterAccount(user);
-    else if (!session.currentUser) loginOverlay().style.display = 'flex';
+    else if (!session.currentUser) openModal('login-overlay');
 }
 
 // Outra aba entrou ou saiu, ou o link de confirmação de email abriu a conta
@@ -42,7 +39,7 @@ async function enterAccount(user) {
     session.currentUser = user;
     session.currentUserId = user.id;
     await loadUserData();
-    loginOverlay().style.display = 'none';
+    closeModal('login-overlay');
     updateUserDisplay();
     emit('session:started', { kind: 'account' });
 }
@@ -92,7 +89,7 @@ export function enterAsGuest() {
     useSorteioHistory(saved.sorteioHistory);
     session.blacklist = saved.blacklist;
 
-    loginOverlay().style.display = 'none';
+    closeModal('login-overlay');
     updateUserDisplay();
     showToast('Bem-vindo(a), Convidado!');
     emit('library:changed');
@@ -104,7 +101,7 @@ export function endSession() {
     if (!session.currentUser) return; // o Supabase avisa a saída que este app acabou de fazer
     const kind = isGuest() ? 'guest' : 'account';
     resetSession();
-    loginOverlay().style.display = 'flex';
+    openModal('login-overlay');
     updateUserDisplay();
     ['login-email', 'login-password', 'register-username', 'register-email', 'register-password', 'register-confirm']
         .forEach(id => { document.getElementById(id).value = ''; });

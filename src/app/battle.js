@@ -1,5 +1,6 @@
 // Cine-batalha: 8 títulos dos filtros escolhidos, de dois em dois, até sobrar um.
 // O campeão abre como um sorteio (vai para o histórico de sorteios).
+import { openModal, closeModal, isModalOpen } from '../ui/modals.js';
 import { IMG_URL } from '../config/constants.js';
 import { champion, choose, currentPair, isDone, stageLabel, stageTrack, startBattle } from '../domain/battle.js';
 import { session, state } from '../state/appState.js';
@@ -136,10 +137,9 @@ function abrirBatalha() {
     battle = next;
     past = [];
     document.getElementById('battle-filters').textContent = filtersSummary();
-    const modal = document.getElementById('modal-battle');
-    const wasOpen = modal.style.display === 'flex';
+    const wasOpen = isModalOpen('modal-battle');
     render({ focus: wasOpen });
-    if (!wasOpen) modal.style.display = 'flex';
+    if (!wasOpen) openModal('modal-battle');
   }, { failure: 'Erro na API.' });
 }
 
@@ -162,7 +162,7 @@ function battleUndo() {
 async function battleOpenChampion() {
   const winner = champion(battle);
   if (!winner) return;
-  document.getElementById('modal-battle').style.display = 'none';
+  closeModal('modal-battle');
   openDrawn(await withDetails(winner));
 }
 

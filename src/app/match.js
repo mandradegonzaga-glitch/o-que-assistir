@@ -1,6 +1,7 @@
 // Match Mode: duas pessoas votam nos mesmos títulos. No mesmo celular (passando o aparelho),
 // por link (uma de cada vez) ou ao vivo (cada uma no seu, ao mesmo tempo, via Supabase Realtime).
 // Os votos ficam só na memória: não dependem de conta nem de banco.
+import { getActiveModal } from '../ui/modals.js';
 import { openLiveRoom } from '../api/supabase.js';
 import { titleDetails } from '../api/tmdb.js';
 import { isHorizontalSwipe } from '../domain/gestures.js';
@@ -660,7 +661,7 @@ export function initMatch() {
 
   document.addEventListener('keydown', (e) => {
     if (document.getElementById('match-voting').hidden || document.getElementById('view-match').style.display !== 'block') return;
-    if (e.target.closest('input, select, textarea') || document.querySelector('.modal-overlay[style*="flex"]')) return;
+    if (e.target.closest('input, select, textarea') || getActiveModal()) return;
     if (e.key === 'ArrowRight') matchVote(true);
     if (e.key === 'ArrowLeft') matchVote(false);
   });

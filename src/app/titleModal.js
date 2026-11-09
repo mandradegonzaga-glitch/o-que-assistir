@@ -12,7 +12,7 @@ import { localDay } from '../utils/date.js';
 import { IMG_URL } from '../config/constants.js';
 import { getTmdbEndpoint, getTitle, isSeriesType } from '../domain/mediaItem.js';
 import { emit } from '../state/events.js';
-import { onModalClose } from '../ui/modals.js';
+import { closeModal, isModalOpen, onModalClose, openModal } from '../ui/modals.js';
 import { personPhoto, posterImg } from '../ui/icons.js';
 import { registerActions } from '../ui/actions.js';
 import { afterAnimations, prefersReducedMotion } from '../ui/motion.js';
@@ -329,7 +329,7 @@ export async function abrirModal(item, { fromDraw = false } = {}) {
 
     initTitleTabs();
     setActiveTab('sec-sobre');
-    document.getElementById('modal-resultado').style.display = 'flex';
+    openModal('modal-resultado');
     scroller().scrollTop = 0;
 
     const detailsPromise = titleDetails(mediaType, f.id, { signal });
@@ -362,7 +362,7 @@ async function marcarVistoAtual() {
     if (!(isSeries && await markWholeSeries(movie))) await emit('library:changed');
     if (state.currentMovie !== movie) return;
     setSeenButton(btnV, true);
-    if (document.getElementById('modal-resultado').style.display !== 'none') {
+    if (isModalOpen('modal-resultado')) {
         document.querySelector('#m-reactions [data-action="reactTitle"]')?.focus();
     }
 }
@@ -376,7 +376,7 @@ async function toggleSalvarAtual() {
 onModalClose('modal-resultado', fecharModal);
 
 export function fecharModal() {
-    document.getElementById('modal-resultado').style.display = 'none';
+    closeModal('modal-resultado');
     document.getElementById('trailer-frame').src = "";
     latestSignal('title'); // cancela o que ainda estava carregando
     emit('title:closed');

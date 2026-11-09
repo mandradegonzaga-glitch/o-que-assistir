@@ -4,7 +4,7 @@ import { supabaseGetSharedList, supabaseSetListSharing } from '../api/supabase.j
 import { isShareToken, sharedListFrom } from '../domain/userLists.js';
 import { isAccount, session } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
-import { confirmDialog } from '../ui/modals.js';
+import { closeModal, confirmDialog, openModal } from '../ui/modals.js';
 import { listIcon } from '../ui/listIcons.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { formatCount, pluralize } from '../utils/format.js';
@@ -93,7 +93,7 @@ export async function openSharedListFromUrl() {
         return;
     }
     renderSharedList();
-    document.getElementById('modal-shared-list').style.display = 'flex';
+    openModal('modal-shared-list');
 }
 
 function renderSharedList() {
@@ -117,7 +117,7 @@ async function copySharedList() {
     try {
         const listId = await copyAsList(shared);
         if (!listId) return;
-        document.getElementById('modal-shared-list').style.display = 'none';
+        closeModal('modal-shared-list');
         await showUserList(listId);
     } finally {
         btn.disabled = false;

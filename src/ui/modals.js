@@ -3,7 +3,7 @@ import { initSheets, resetSheet } from './sheet.js';
 import { registerActions } from './actions.js';
 import { afterAnimations } from './motion.js';
 
-// Como cada janela fecha de verdade. Sem registro, só some (display none).
+// Como cada janela fecha de verdade. Sem registro, só some (closeModal).
 // Ex.: a página do título também para o trailer; o onboarding grava que já foi visto.
 const closers = new Map();
 
@@ -14,8 +14,25 @@ export function onModalClose(id, close) {
 function hide(modal) {
     const close = closers.get(modal.id);
     if (close) close();
-    else modal.style.display = 'none';
+    else closeModal(modal.id);
 }
+
+// Toda janela abre e fecha por aqui: foco preso, fundo inerte e a pilha de abertas ficam certos
+export function openModal(id) {
+    const modal = document.getElementById(id);
+    modal.style.display = 'flex';
+    onModalOpened(modal);
+    return modal;
+}
+
+// Fecha na hora (respostas do app); fechar pela pessoa é closeModalWithAnimation
+export function closeModal(id) {
+    const modal = document.getElementById(id);
+    modal.style.display = 'none';
+    onModalClosed(modal);
+}
+
+export const isModalOpen = id => openModals.some(modal => modal.id === id);
 
 window.addEventListener('click', (e) => {
     if (e.target.classList?.contains('modal-overlay')) {
@@ -38,10 +55,9 @@ document.addEventListener('keydown', (e) => {
 
 // Fechar pela pessoa (tocar fora, Esc, "Fechar", arrastar): a janela sai antes de sumir.
 // No celular a gaveta desce (sai pelo mesmo caminho por onde entrou); no computador, esmaece.
-// A saída (classe is-closing) e a duração dela estão no CSS. Fechamentos automáticos do app
-// continuam com style.display = 'none' direto (resposta do sistema não espera animação).
+// A saída (classe is-closing) e a duração dela estão no CSS.
 export async function closeModalWithAnimation(modal) {
-    if (!modal || modal.style.display !== 'flex' || modal.classList.contains('is-closing')) return;
+    if (!modal || !openModals.includes(modal) || modal.classList.contains('is-closing')) return;
     // Tira o que o arraste deixou no elemento: a saída continua de onde o dedo largou
     resetSheet(modal);
     modal.classList.add('is-closing');
@@ -52,8 +68,6 @@ export async function closeModalWithAnimation(modal) {
 
 // ================================================
 // MODAIS ACESSÍVEIS — foco, trap e retorno
-// Os modais abrem/fecham via style.display em vários pontos;
-// um MutationObserver centraliza o comportamento sem tocar em cada um.
 // ================================================
 
 const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), iframe, summary, [tabindex]:not([tabindex="-1"])';
@@ -121,25 +135,15 @@ function trapFocusInModal(e) {
 // Foco preso, fundo inerte e, no celular, janelas que viram gavetas (sheet.js)
 export function initModalA11y() {
     initSheets({ onDismiss: closeModalWithAnimation });
-    const observer = new MutationObserver(mutations => {
-        mutations.forEach(({ target: modal }) => {
-            if (modal.style.display === 'flex') onModalOpened(modal);
-            else if (modal.style.display === 'none') onModalClosed(modal);
-        });
-    });
-    // Login e onboarding também são diálogos: mesmo foco preso e fundo inerte
-    document.querySelectorAll('.modal-overlay, .login-overlay, .onboarding-overlay').forEach(modal => {
-        observer.observe(modal, { attributes: true, attributeFilter: ['style'] });
-        // O login já nasce visível pelo CSS (sem style inline): registrar como aberto
-        if (getComputedStyle(modal).display !== 'none') onModalOpened(modal);
-    });
+    // O login já nasce visível pelo CSS, sem passar por openModal: registrar como aberto
+    const login = document.getElementById('login-overlay');
+    if (login && getComputedStyle(login).display !== 'none') onModalOpened(login);
 }
 
 // CONFIRMAÇÃO — substitui confirm() nativo (bloqueava a página e fugia do visual/acessibilidade do app).
-// Resolve true/false; Esc e clique fora contam como "cancelar". O foco/trap vêm de initModalA11y().
+// Resolve true/false; Esc e clique fora contam como "cancelar".
 
 export function confirmDialog({ title, message, confirmLabel = 'Confirmar', cancelLabel = 'Cancelar', danger = false }) {
-    const overlay = document.getElementById('modal-confirm');
     const okBtn = document.getElementById('confirm-ok');
     const cancelBtn = document.getElementById('confirm-cancel');
     document.getElementById('confirm-title').textContent = title;
@@ -155,19 +159,16 @@ export function confirmDialog({ title, message, confirmLabel = 'Confirmar', canc
         const finish = value => {
             if (settled) return;
             settled = true;
-            observer.disconnect();
+            closers.delete('modal-confirm');
             okBtn.removeEventListener('click', onOk);
             cancelBtn.removeEventListener('click', onCancel);
-            if (overlay.style.display !== 'none') overlay.style.display = 'none';
+            closeModal('modal-confirm');
             resolve(value);
         };
-        const observer = new MutationObserver(() => {
-            if (overlay.style.display === 'none') finish(false);
-        });
-        observer.observe(overlay, { attributes: true, attributeFilter: ['style'] });
+        onModalClose('modal-confirm', onCancel); // Esc, tocar fora
         okBtn.addEventListener('click', onOk);
         cancelBtn.addEventListener('click', onCancel);
-        overlay.style.display = 'flex';
+        openModal('modal-confirm');
         // Foco na opção menos destrutiva (padrão de alertdialog)
         setTimeout(() => cancelBtn.focus(), 0);
     });

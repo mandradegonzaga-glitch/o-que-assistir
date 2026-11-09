@@ -15,7 +15,7 @@ import { BADGE_ICONS } from '../ui/badgeIcons.js';
 import { switchMode } from '../ui/navigation.js';
 import { formatCount } from '../utils/format.js';
 import { isPendingRemoval, scheduleUndoable, showToast } from '../ui/feedback.js';
-import { confirmDialog } from '../ui/modals.js';
+import { closeModal, confirmDialog, openModal } from '../ui/modals.js';
 import { notifyDevice, renderDeviceNotify } from './notifications.js';
 import { recordSocial, trackChallenge } from './progress.js';
 import { carregarDetalhes } from './titleModal.js';
@@ -134,7 +134,7 @@ function renderFriendTargets() {
 }
 
 function openFriends() {
-  document.getElementById('modal-friends').style.display = 'flex';
+  openModal('modal-friends');
   refreshFriends();
 }
 
@@ -390,7 +390,7 @@ async function friendUnfriend(id) {
   });
   if (ok) {
     await friendRemove(id);
-    document.getElementById('modal-friend').style.display = 'none';
+    closeModal('modal-friend');
   }
 }
 
@@ -550,7 +550,7 @@ async function friendOpen(friendId) {
   }));
   document.getElementById('friend-badges-box').hidden = earned.length === 0;
 
-  document.getElementById('modal-friend').style.display = 'flex';
+  openModal('modal-friend');
 }
 
 function friendUnfriendCurrent() {
@@ -558,8 +558,8 @@ function friendUnfriendCurrent() {
 }
 
 function friendMatchCurrent() {
-  document.getElementById('modal-friend').style.display = 'none';
-  document.getElementById('modal-friends').style.display = 'none';
+  closeModal('modal-friend');
+  closeModal('modal-friends');
   switchMode('match');
 }
 

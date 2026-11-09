@@ -6,7 +6,7 @@ import { BADGE_CATEGORIES, computeBadgeStatuses } from '../domain/badges.js';
 import { isAccount, isGuest, session } from '../state/appState.js';
 import { BADGE_ICONS } from '../ui/badgeIcons.js';
 import { showToast } from '../ui/feedback.js';
-import { confirmDialog } from '../ui/modals.js';
+import { closeModal, confirmDialog, isModalOpen, openModal } from '../ui/modals.js';
 import { formatCount } from '../utils/format.js';
 import { renderProgress } from './progress.js';
 import { renderTasteDna } from './tasteDna.js';
@@ -16,7 +16,7 @@ import { registerActions } from '../ui/actions.js';
 
 // XP e desafios mudaram com o perfil aberto: acompanha
 on('progress:changed', () => {
-    if (document.getElementById('modal-profile').style.display === 'flex') renderProgress();
+    if (isModalOpen('modal-profile')) renderProgress();
 });
 
 export function abrirPerfil() {
@@ -42,12 +42,12 @@ export function abrirPerfil() {
         deleteAccountSection.style.display = guest ? 'none' : 'block';
     }
 
-    document.getElementById('modal-profile').style.display = 'flex';
+    openModal('modal-profile');
 }
 
 async function salvarPerfil() {
     if (isGuest()) {
-        document.getElementById('modal-profile').style.display = 'none';
+        closeModal('modal-profile');
         return;
     }
     if (!session.currentUserId) return;
@@ -71,7 +71,7 @@ async function salvarPerfil() {
     if (result.success) {
         session.userProfile = result.profile;
         updateUserDisplay();
-        document.getElementById('modal-profile').style.display = 'none';
+        closeModal('modal-profile');
         showToast("Perfil salvo com sucesso!");
     } else {
         showToast("Erro ao salvar perfil!", "error");
@@ -146,7 +146,7 @@ async function deletarConta() {
     const result = await supabaseDeleteAccount();
 
     if (result.success) {
-        document.getElementById('modal-profile').style.display = 'none';
+        closeModal('modal-profile');
         endSession();
 
         showToast("Conta deletada com sucesso. Até mais!");

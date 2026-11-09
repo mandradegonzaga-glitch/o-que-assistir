@@ -8,7 +8,7 @@ import {
 import { COLLECTIONS, collectionById, collectionItems, collectionKind, collectionPath } from '../domain/collections.js';
 import { isGuest, session, state } from '../state/appState.js';
 import { isPendingRemoval, scheduleUndoable, showToast } from '../ui/feedback.js';
-import { confirmDialog } from '../ui/modals.js';
+import { closeModal, confirmDialog, openModal } from '../ui/modals.js';
 import { setDragReorder } from '../ui/dragReorder.js';
 import { CLOSE_ICON, posterImg } from '../ui/icons.js';
 import { listIcon, listIconInfo } from '../ui/listIcons.js';
@@ -454,7 +454,7 @@ function openSaveToList() {
     }
     document.getElementById('save-list-status').textContent = '';
     renderSaveOptions();
-    document.getElementById('modal-save-list').style.display = 'flex';
+    openModal('modal-save-list');
 }
 
 async function toggleTitleInList(input) {
@@ -525,7 +525,7 @@ function openListEditor(mode) {
     showNameError(null);
     renderEmojiPicker();
     document.getElementById('list-templates').innerHTML = list ? '' : templateChips('useListTemplate', 'Ou use um modelo:');
-    document.getElementById('modal-list-edit').style.display = 'flex';
+    openModal('modal-list-edit');
     setTimeout(() => input.focus(), 0);
 }
 
@@ -563,7 +563,7 @@ async function saveListEditor() {
         saveBtn.disabled = false;
     }
 
-    document.getElementById('modal-list-edit').style.display = 'none';
+    closeModal('modal-list-edit');
     if (fromSave) {
         renderSaveOptions();
         updateSaveListButton();

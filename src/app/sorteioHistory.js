@@ -3,7 +3,7 @@ import { supabaseAddToSorteioHistory, supabaseClearSorteioHistory } from '../api
 import { abrirModal, carregarDetalhes } from './titleModal.js';
 import { isAccount, session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
-import { confirmDialog } from '../ui/modals.js';
+import { closeModal, confirmDialog, openModal } from '../ui/modals.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { tmdbImage } from '../domain/mediaItem.js';
 import { createSorteioEntry, deduplicateHistory, trimHistory } from '../domain/history.js';
@@ -95,12 +95,12 @@ function abrirHistoricoSorteios() {
         `).join('');
     }
 
-    document.getElementById('modal-sorteio-history').style.display = 'flex';
+    openModal('modal-sorteio-history');
 }
 
 function abrirDoHistorico(index) {
     session.sorteioHistoryIndex = index;
-    document.getElementById('modal-sorteio-history').style.display = 'none';
+    closeModal('modal-sorteio-history');
     const item = session.sorteioHistory[index];
     carregarDetalhes(item.id, item.media_type);
 }
@@ -119,7 +119,7 @@ async function limparHistoricoSorteios() {
     }
 
     showToast('Histórico limpo!');
-    document.getElementById('modal-sorteio-history').style.display = 'none';
+    closeModal('modal-sorteio-history');
 }
 
 registerActions({

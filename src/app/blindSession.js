@@ -1,5 +1,6 @@
 // Sessão às escuras: sorteia com os filtros escolhidos e mostra só sinopse, nota, duração, década e
 // gêneros. "Arriscar e revelar" abre o título de verdade; "Outro" sorteia de novo, ainda no escuro.
+import { openModal, closeModal, isModalOpen } from '../ui/modals.js';
 import { blindFacts, hasBlindOverview } from '../domain/blind.js';
 import { state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
@@ -42,9 +43,8 @@ function sessaoEscuras() {
     }
     current = item;
     render(item);
-    const modal = document.getElementById('modal-blind');
-    if (modal.style.display === 'flex') document.getElementById('blind-reveal').focus();
-    else modal.style.display = 'flex';
+    if (isModalOpen('modal-blind')) document.getElementById('blind-reveal').focus();
+    else openModal('modal-blind');
   }, { failure: 'Erro na API.' });
 }
 
@@ -52,7 +52,7 @@ function blindReveal() {
   if (!current) return;
   const item = current;
   current = null;
-  document.getElementById('modal-blind').style.display = 'none';
+  closeModal('modal-blind');
   openDrawn(item);
 }
 
