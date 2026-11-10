@@ -16,6 +16,7 @@ import { MEDIA_KIND, getYear, getTitle } from '../domain/mediaItem.js';
 import { appBase, isTouch } from '../ui/share.js';
 import { registerActions } from '../ui/actions.js';
 import { whileBusy } from '../ui/busy.js';
+import { themeColor } from '../ui/themeColor.js';
 
 const WIDTH = 1080;
 const HEIGHT = 1350;
@@ -24,10 +25,11 @@ const PAD = 52;
 const STUB = 230;
 const HERO = 520;
 const HERO_SMALL = 390;
+// Fundo, cartão e tinta seguem os tokens do app; o resto é próprio da imagem
 const COLORS = {
-  background: '#0d0a14',
-  card: '#16111f',
-  ink: '#17121f',
+  get background() { return themeColor('--bg-deep'); },
+  get card() { return themeColor('--bg-primary'); },
+  get ink() { return themeColor('--accent-on'); },
   text: '#f4f1fa',
   muted: 'rgba(244, 241, 250, 0.72)',
   line: 'rgba(255, 255, 255, 0.14)',

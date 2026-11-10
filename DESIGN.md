@@ -16,7 +16,7 @@ Direção decidida nas varreduras do Dribbble (2026-11-06 a 08) e nas etapas 1 a
 
 ## Cor
 
-- **Fundo roxo-noite (decisão do dono, 2026-11-10).** `--bg-primary` → `--bg-secondary` → `--bg-tertiary` → `--bg-card` → `--bg-elevated` formam a rampa. É a "sala escura" e fica, mesmo que uma auditoria peça cinza neutro.
+- **Fundo azul-noite (decisão do dono, 2026-11-10, depois de comparar roxo, grafite e azul no app).** `--bg-deep` (sombras e véus) → `--bg-primary` → `--bg-secondary` → `--bg-tertiary` → `--bg-card` → `--bg-elevated` formam a rampa: azul bem escuro e pouco saturado, com tom, não cinza puro. Transparências usam `color-mix()` sobre esses tokens, nunca a cor escrita. Exceções fora do CSS: `theme-color` no `index.html` e as cores do `manifest.json` repetem `--bg-primary`, porque ali não existe variável; o canvas (roleta, ingresso) lê os tokens por `src/ui/themeColor.js`. Se o azul parecer forte, baixar a saturação de 30% para ~15%.
 - **Texto:** `--text-primary`, `--text-secondary`, `--text-tertiary`, `--text-muted` (o muted só para metadados, sempre ≥ 4,5:1).
 - **Um destaque por tipo**, trocado por `[data-theme]`: filme = amarelo de bilheteria, série = luz de tela (turquesa), dorama = flor de cerejeira (rosa). Usar sempre `--accent-primary` / `--accent-text` / `--accent-on`, nunca a cor escrita. O destaque marca a ação principal, a seleção e o número que importa. Não pinta superfícies.
 - **Verde** (`--accent-success`) só para estado bom ("Já vi" marcado, sucesso).

@@ -13,6 +13,7 @@ import { escapeHtml } from '../utils/escapeHtml.js';
 import { storage } from '../utils/storage.js';
 import { CLOSE_ICON } from '../ui/icons.js';
 import { STAR_ICON, TICKET_ICON, WHEEL_ICON } from '../ui/icons.js';
+import { themeColor } from '../ui/themeColor.js';
 import { getTitle } from '../domain/mediaItem.js';
 import { on } from '../state/events.js';
 import { registerActions } from '../ui/actions.js';
@@ -153,7 +154,7 @@ function desenharRoleta() {
         ctx.lineTo(160, 160);
         ctx.fillStyle = colors[i % colors.length];
         ctx.fill();
-        ctx.strokeStyle = '#14101f';
+        ctx.strokeStyle = themeColor('--bg-primary');
         ctx.lineWidth = 3;
         ctx.stroke();
 
@@ -161,7 +162,7 @@ function desenharRoleta() {
         ctx.translate(160, 160);
         ctx.rotate(startAngle + sliceAngle / 2);
         ctx.textAlign = 'center';
-        ctx.fillStyle = '#17121f'; // texto escuro: todas as fatias são claras
+        ctx.fillStyle = themeColor('--accent-on'); // texto escuro: todas as fatias são claras
         ctx.font = "800 16px 'Big Shoulders Display', sans-serif";
         const text = item.length > 20 ? item.substring(0, 18) + '...' : item;
         ctx.fillText(text, 110, 5);
