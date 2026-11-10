@@ -298,7 +298,7 @@ export async function drawTicket(movie, {
     document.fonts.load(`700 20px ${TEXT}`),
   ]).catch(() => {});
 
-  const accent = (MEDIA_KIND[kind] || MEDIA_KIND.movie).color;
+  const accent = themeColor(`--type-${MEDIA_KIND[kind] ? kind : 'movie'}`);
   const canvas = document.createElement('canvas');
   canvas.width = WIDTH;
   canvas.height = HEIGHT;

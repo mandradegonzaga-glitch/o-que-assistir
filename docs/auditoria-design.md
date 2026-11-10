@@ -41,6 +41,7 @@ Marque `[x]` quando aplicado.
 - "App ocupa a tela toda" (unslop): o app é celular primeiro, container de 960px.
 - Boas-vindas ("Bem-vindo!", "Começar" em todo passo): vai ser trocada na 5d (primeira visita); só o texto da A5 entra antes, se quiser.
 
-## Adiar
+## Cores fora dos tokens (feito em parte)
 
-- 137 cores escritas fora dos tokens (FAIL 48), quase todas brancos translúcidos. Vale juntar em tokens (`--border-*`, `--overlay-*`) numa passada própria, sem mudar o visual.
+- [x] Cores com significado ganharam dono no `:root`: `--type-movie/tv/dorama` (os temas e o ingresso leem daí), `--danger`, `--danger-text`, `--warning`; verde de sucesso, amarelo e cor do tipo em transparência viram `color-mix()` sobre o token; saem os `--*-rgb`.
+- Ficam escritos de propósito: brancos/pretos translúcidos de sombra e véu (trocar por token não muda nada), cores de marcas de fora (Rotten Tomatoes, IMDb) e as paletas decorativas da roleta e do confete.

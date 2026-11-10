@@ -27,14 +27,22 @@
     --text-tertiary: rgba(255, 255, 255, 0.6);
     --text-muted: rgba(255, 255, 255, 0.5);
 
+    /* Cor de cada tipo (filme, série, dorama): o tema troca o destaque para a do tipo escolhido */
+    --type-movie: #ffc94d;
+    --type-tv: #3dd6c6;
+    --type-dorama: #ff8fb8;
+
+    /* Estados: perigo/erro e alerta (sucesso é --accent-success) */
+    --danger: #ef4444;
+    --danger-text: #f87171; /* --danger como texto no fundo escuro ficava abaixo de 4.5:1 */
+    --warning: #f59e0b;
+
     /* Accent Colors */
-    --accent-primary: #ffc94d;
-    --accent-primary-rgb: 255, 201, 77;
+    --accent-primary: var(--type-movie);
     --accent-hover: #ffd873;
-    --accent-text: #ffc94d;   /* accent usado como cor de texto no fundo escuro */
+    --accent-text: var(--accent-primary);   /* accent usado como cor de texto no fundo escuro */
     --accent-on: #111520;     /* cor de texto sobre fundo accent */
-    --accent-gold: #ffc94d;
-    --accent-gold-rgb: 255, 201, 77;
+    --accent-gold: var(--type-movie);
     --accent-success: #22c55e;
 
     /* Borders */
@@ -85,26 +93,23 @@
 /* ==================== THEME VARIATIONS ==================== */
 /* Filme: âmbar de letreiro */
 [data-theme="movie"] {
-    --accent-primary: #ffc94d;
-    --accent-primary-rgb: 255, 201, 77;
+    --accent-primary: var(--type-movie);
+    --accent-text: var(--type-movie);
     --accent-hover: #ffd873;
-    --accent-text: #ffc94d;
 }
 
 /* Série: luz de tela */
 [data-theme="tv"] {
-    --accent-primary: #3dd6c6;
-    --accent-primary-rgb: 61, 214, 198;
+    --accent-primary: var(--type-tv);
+    --accent-text: var(--type-tv);
     --accent-hover: #6be3d6;
-    --accent-text: #3dd6c6;
 }
 
 /* Dorama: flor de cerejeira */
 [data-theme="dorama"] {
-    --accent-primary: #ff8fb8;
-    --accent-primary-rgb: 255, 143, 184;
+    --accent-primary: var(--type-dorama);
+    --accent-text: var(--type-dorama);
     --accent-hover: #ffb0cd;
-    --accent-text: #ff8fb8;
 }
 
 /* ==================== RESET & BASE ==================== */
@@ -184,8 +189,8 @@ body::after {
     left: 0;
     width: 100%;
     height: 100%;
-    background: radial-gradient(ellipse at 30% 0%, rgba(var(--accent-primary-rgb), 0.06) 0%, transparent 50%),
-                radial-gradient(ellipse at 100% 100%, rgba(var(--accent-gold-rgb), 0.04) 0%, transparent 40%);
+    background: radial-gradient(ellipse at 30% 0%, color-mix(in srgb, var(--accent-primary) 6%, transparent) 0%, transparent 50%),
+                radial-gradient(ellipse at 100% 100%, color-mix(in srgb, var(--accent-gold) 4%, transparent) 0%, transparent 40%);
     pointer-events: none;
     z-index: -1;
     will-change: background;
@@ -432,8 +437,8 @@ header {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(var(--accent-primary-rgb), 0.15);
-    border: 1px solid rgba(var(--accent-primary-rgb), 0.3);
+    background: color-mix(in srgb, var(--accent-primary) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent-primary) 30%, transparent);
     border-radius: var(--radius-full);
     color: var(--accent-text);
     font-size: 0.8rem;
@@ -666,9 +671,9 @@ header {
 }
 
 /* Cada indicação na cor do próprio tipo */
-.home-card--pick[data-kind="movie"] .home-card__kind { color: #ffc94d; }
-.home-card--pick[data-kind="tv"] .home-card__kind { color: #3dd6c6; }
-.home-card--pick[data-kind="dorama"] .home-card__kind { color: #ff8fb8; }
+.home-card--pick[data-kind="movie"] .home-card__kind { color: var(--type-movie); }
+.home-card--pick[data-kind="tv"] .home-card__kind { color: var(--type-tv); }
+.home-card--pick[data-kind="dorama"] .home-card__kind { color: var(--type-dorama); }
 
 .home-card__title {
     display: -webkit-box;
@@ -811,42 +816,42 @@ header {
 
 /* Genre Color Indicators (always visible) */
 /* Cada card tem a cor do seu tipo, seja qual for o tema ativo */
-#btn-movie { --type-rgb: 255, 201, 77; }
-#btn-tv { --type-rgb: 61, 214, 198; }
-#btn-dorama { --type-rgb: 255, 143, 184; }
+#btn-movie { --type-color: var(--type-movie); }
+#btn-tv { --type-color: var(--type-tv); }
+#btn-dorama { --type-color: var(--type-dorama); }
 
 #btn-movie,
 #btn-tv,
 #btn-dorama {
-    border-bottom: 3px solid rgba(var(--type-rgb), 0.3);
+    border-bottom: 3px solid color-mix(in srgb, var(--type-color) 30%, transparent);
 }
 
 #btn-movie .icon,
 #btn-tv .icon,
 #btn-dorama .icon {
-    color: rgba(var(--type-rgb), 0.6);
+    color: color-mix(in srgb, var(--type-color) 60%, transparent);
 }
 
 #btn-movie.selected,
 #btn-tv.selected,
 #btn-dorama.selected {
-    border-color: rgba(var(--type-rgb), 0.5);
-    border-bottom-color: rgb(var(--type-rgb));
-    background: linear-gradient(180deg, rgba(var(--type-rgb), 0.15) 0%, transparent 100%);
-    box-shadow: 0 8px 32px rgba(var(--type-rgb), 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    border-color: color-mix(in srgb, var(--type-color) 50%, transparent);
+    border-bottom-color: var(--type-color);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--type-color) 15%, transparent) 0%, transparent 100%);
+    box-shadow: 0 8px 32px color-mix(in srgb, var(--type-color) 20%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 #btn-movie.selected .icon,
 #btn-tv.selected .icon,
 #btn-dorama.selected .icon {
-    color: rgb(var(--type-rgb));
-    filter: drop-shadow(0 0 16px rgba(var(--type-rgb), 0.6));
+    color: var(--type-color);
+    filter: drop-shadow(0 0 16px color-mix(in srgb, var(--type-color) 60%, transparent));
 }
 
 #btn-movie.selected .card__label,
 #btn-tv.selected .card__label,
 #btn-dorama.selected .card__label {
-    color: rgb(var(--type-rgb));
+    color: var(--type-color);
 }
 
 /* ==================== INPUTS ==================== */
@@ -1478,7 +1483,7 @@ header {
 
 @media (hover: hover) and (pointer: fine) {
     .btn-outline:hover {
-        background: rgba(var(--accent-primary-rgb), 0.1);
+        background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
     }
 }
 
@@ -1491,9 +1496,9 @@ header {
     width: 100%;
     padding: var(--space-md) var(--space-lg);
     background: transparent;
-    border: 1px solid #ef4444;
+    border: 1px solid var(--danger);
     border-radius: var(--radius-md);
-    color: #f87171; /* #ef4444 como texto no fundo vermelho translúcido ficava abaixo de 4.5:1 */
+    color: var(--danger-text); /* var(--danger) como texto no fundo vermelho translúcido ficava abaixo de 4.5:1 */
     font-family: var(--font-family);
     font-size: 0.95rem;
     font-weight: 600;
@@ -1505,7 +1510,7 @@ header {
 
 @media (hover: hover) and (pointer: fine) {
     .btn-danger:hover {
-        background: rgba(239, 68, 68, 0.15);
+        background: color-mix(in srgb, var(--danger) 15%, transparent);
     }
 }
 
@@ -1587,7 +1592,7 @@ header {
 
 @media (hover: hover) and (pointer: fine) {
     .result-item:hover img {
-        border-color: rgba(var(--accent-primary-rgb), 0.5);
+        border-color: color-mix(in srgb, var(--accent-primary) 50%, transparent);
     }
 }
 
@@ -1719,7 +1724,7 @@ header {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(var(--accent-primary-rgb), 0.9);
+    background: color-mix(in srgb, var(--accent-primary) 90%, transparent);
     border: none;
     border-radius: var(--radius-full);
     color: var(--text-primary);
@@ -1829,7 +1834,7 @@ header {
     border-radius: var(--radius-full);
     font-size: 1.5rem;
     z-index: 5;
-    box-shadow: 0 0 30px rgba(var(--accent-primary-rgb), 0.4);
+    box-shadow: 0 0 30px color-mix(in srgb, var(--accent-primary) 40%, transparent);
 }
 
 .roulette-center .icon {
@@ -1999,7 +2004,7 @@ header {
     display: none;
     padding: var(--space-md);
     margin-bottom: var(--space-md);
-    background: rgba(var(--accent-primary-rgb), 0.1);
+    background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
     border: 1px solid var(--accent-primary);
     border-radius: var(--radius-md);
     color: var(--accent-text);
@@ -2024,8 +2029,8 @@ header {
                 background-color var(--duration-normal) var(--ease-smooth);
 }
 
-.password-strength-bar.weak { transform: scaleX(0.33); background: #ef4444; }
-.password-strength-bar.medium { transform: scaleX(0.66); background: #f59e0b; }
+.password-strength-bar.weak { transform: scaleX(0.33); background: var(--danger); }
+.password-strength-bar.medium { transform: scaleX(0.66); background: var(--warning); }
 .password-strength-bar.strong { transform: scaleX(1); background: var(--accent-success); }
 
 /* ==================== MODAL ==================== */
@@ -2487,13 +2492,13 @@ header {
 }
 
 .btn-green {
-    background: rgba(34, 197, 94, 0.2);
+    background: color-mix(in srgb, var(--accent-success) 20%, transparent);
     color: var(--accent-success);
 }
 
 @media (hover: hover) and (pointer: fine) {
     .btn-green:hover {
-        background: rgba(34, 197, 94, 0.3);
+        background: color-mix(in srgb, var(--accent-success) 30%, transparent);
     }
 }
 
@@ -2505,7 +2510,7 @@ header {
 
 @media (hover: hover) and (pointer: fine) {
     .btn-roleta:hover {
-        background: rgba(var(--accent-gold-rgb), 0.1);
+        background: color-mix(in srgb, var(--accent-gold) 10%, transparent);
     }
 }
 
@@ -2516,8 +2521,8 @@ header {
 
 @media (hover: hover) and (pointer: fine) {
     .btn-ignore:hover {
-        border-color: #ef4444;
-        color: #ef4444;
+        border-color: var(--danger);
+        color: var(--danger);
     }
 }
 
@@ -2701,7 +2706,7 @@ header {
 
 @media (hover: hover) and (pointer: fine) {
     .blacklist-item button:hover {
-        color: #ef4444;
+        color: var(--danger);
     }
 }
 
@@ -2719,8 +2724,8 @@ header {
 
 @media (hover: hover) and (pointer: fine) {
     .btn-clear-small:hover {
-        border-color: #ef4444;
-        color: #ef4444;
+        border-color: var(--danger);
+        color: var(--danger);
     }
 }
 
@@ -2819,8 +2824,8 @@ header {
 .badge-item[data-color="orange"] .badge-icon { color: #f97316; }
 
 .badge-item[data-color="green"].unlocked {
-    border-color: rgba(34, 197, 94, 0.4);
-    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), transparent);
+    border-color: color-mix(in srgb, var(--accent-success) 40%, transparent);
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent-success) 10%, transparent), transparent);
 }
 .badge-item[data-color="green"] .badge-icon { color: #22c55e; }
 
@@ -2882,7 +2887,7 @@ header {
 /* Badge Unlock Animation */
 @keyframes badge-unlock {
     0% { transform: scale(1); }
-    50% { transform: scale(1.08); box-shadow: 0 0 24px rgba(var(--accent-gold-rgb), 0.5); }
+    50% { transform: scale(1.08); box-shadow: 0 0 24px color-mix(in srgb, var(--accent-gold) 50%, transparent); }
     100% { transform: scale(1); }
 }
 
@@ -2938,12 +2943,12 @@ header {
 }
 
 .toast.warning {
-    --toast-tone: #f59e0b;
+    --toast-tone: var(--warning);
 }
 
 .toast.achievement {
     --toast-tone: var(--accent-gold);
-    background: linear-gradient(135deg, rgba(var(--accent-gold-rgb), 0.1), var(--glass-bg));
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent-gold) 10%, transparent), var(--glass-bg));
 }
 
 /* ==================== SKELETON LOADERS ==================== */
@@ -3482,11 +3487,11 @@ button:focus-visible,
     flex-shrink: 0;
     padding: var(--space-sm) 12px;
     border-radius: var(--radius-full);
-    background: rgba(var(--accent-primary-rgb), 0.12);
+    background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
     color: var(--accent-text);
     font-size: 0.75rem;
     font-weight: 600;
-    border: 1px solid rgba(var(--accent-primary-rgb), 0.2);
+    border: 1px solid color-mix(in srgb, var(--accent-primary) 20%, transparent);
     cursor: pointer;
     transition: background var(--duration-fast) var(--ease-smooth),
                 border-color var(--duration-fast) var(--ease-smooth);
@@ -3495,8 +3500,8 @@ button:focus-visible,
 
 @media (hover: hover) and (pointer: fine) {
     .up-next-card__action:hover {
-        background: rgba(var(--accent-primary-rgb), 0.22);
-        border-color: rgba(var(--accent-primary-rgb), 0.4);
+        background: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+        border-color: color-mix(in srgb, var(--accent-primary) 40%, transparent);
     }
 }
 
@@ -3549,15 +3554,15 @@ button:focus-visible,
 }
 
 .episodes-status-badge.status-watching {
-    background: rgba(var(--accent-primary-rgb), 0.15);
+    background: color-mix(in srgb, var(--accent-primary) 15%, transparent);
     color: var(--accent-text);
-    border: 1px solid rgba(var(--accent-primary-rgb), 0.3);
+    border: 1px solid color-mix(in srgb, var(--accent-primary) 30%, transparent);
 }
 
 .episodes-status-badge.status-completed {
-    background: rgba(34, 197, 94, 0.15);
+    background: color-mix(in srgb, var(--accent-success) 15%, transparent);
     color: var(--accent-success);
-    border: 1px solid rgba(34, 197, 94, 0.3);
+    border: 1px solid color-mix(in srgb, var(--accent-success) 30%, transparent);
 }
 
 /* Botão "Marcar todos" */
@@ -3577,9 +3582,9 @@ button:focus-visible,
 
 @media (hover: hover) and (pointer: fine) {
     .episodes-mark-all-btn:hover {
-        background: rgba(var(--accent-primary-rgb), 0.12);
+        background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
         color: var(--accent-text);
-        border-color: rgba(var(--accent-primary-rgb), 0.3);
+        border-color: color-mix(in srgb, var(--accent-primary) 30%, transparent);
     }
 }
 
@@ -3716,16 +3721,16 @@ button:focus-visible,
 }
 
 .episode-item__upto:focus-visible {
-    background: rgba(var(--accent-primary-rgb), 0.12);
+    background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
     color: var(--accent-text);
-    border-color: rgba(var(--accent-primary-rgb), 0.3);
+    border-color: color-mix(in srgb, var(--accent-primary) 30%, transparent);
 }
 
 @media (hover: hover) and (pointer: fine) {
     .episode-item__upto:hover {
-        background: rgba(var(--accent-primary-rgb), 0.12);
+        background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
         color: var(--accent-text);
-        border-color: rgba(var(--accent-primary-rgb), 0.3);
+        border-color: color-mix(in srgb, var(--accent-primary) 30%, transparent);
     }
 }
 
@@ -3959,7 +3964,7 @@ button:focus-visible,
     padding: var(--space-md);
     border-radius: 12px;
     background: #2a1010;
-    border: 1px solid #f87171;
+    border: 1px solid var(--danger-text);
     color: #fff;
     font: 600 0.95rem/1.5 system-ui, sans-serif;
     white-space: pre-line;
@@ -4265,8 +4270,8 @@ h1, h2, h3,
 .provider-list { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-top: 12px; }
 
 .danger-zone { cursor: pointer; }
-.danger-zone__summary { display: flex; align-items: center; gap: var(--space-sm); color: #f87171; font-size: 0.9rem; }
-.danger-box { margin-top: var(--space-md); padding: var(--space-md); background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; border-radius: 10px; }
+.danger-zone__summary { display: flex; align-items: center; gap: var(--space-sm); color: var(--danger-text); font-size: 0.9rem; }
+.danger-box { margin-top: var(--space-md); padding: var(--space-md); background: color-mix(in srgb, var(--danger) 10%, transparent); border: 1px solid var(--danger); border-radius: 10px; }
 .danger-box__text { margin-bottom: var(--space-md); color: #fca5a5; font-size: 0.85rem; }
 
 /* Texto sobre accent segue o tema */
@@ -4342,13 +4347,13 @@ header { gap: var(--space-sm); }
 #btn-dorama .icon {
     width: 56px;
     height: 56px;
-    color: rgba(var(--type-rgb), 0.85);
+    color: color-mix(in srgb, var(--type-color) 85%, transparent);
 }
 
 #btn-movie.selected .icon,
 #btn-tv.selected .icon,
 #btn-dorama.selected .icon {
-    color: rgb(var(--type-rgb));
+    color: var(--type-color);
 }
 
 /* Conquistas: bloqueada fica neutra só no ícone; o card mantém o fundo do app */
@@ -4387,8 +4392,8 @@ header { gap: var(--space-sm); }
 .legacy-hint {
     margin-bottom: var(--space-md);
     padding: var(--space-sm) var(--space-md);
-    background: rgba(var(--accent-primary-rgb), 0.1);
-    border: 1px solid rgba(var(--accent-primary-rgb), 0.35);
+    background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent-primary) 35%, transparent);
     border-radius: var(--radius-md);
     color: var(--text-primary);
     font-size: 0.85rem;
@@ -4570,7 +4575,7 @@ select.input-dark,
 }
 
 .challenge.done {
-    border-color: rgba(var(--accent-gold-rgb), 0.4);
+    border-color: color-mix(in srgb, var(--accent-gold) 40%, transparent);
 }
 
 .challenge__label {
@@ -5969,7 +5974,7 @@ button.site-footer__link {
 
 .emoji-picker__option[aria-checked="true"] {
     border-color: var(--accent-primary);
-    background: rgba(var(--accent-primary-rgb), 0.15);
+    background: color-mix(in srgb, var(--accent-primary) 15%, transparent);
 }
 
 @media (max-width: 400px) {
@@ -6198,8 +6203,8 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
 }
 .title-action:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
 /* Acesas: já vi (verde), na lista de quero ver (cor do tipo) */
-.title-action--seen:disabled { color: var(--accent-success); cursor: default; background: rgba(34, 197, 94, 0.16); border-color: rgba(34, 197, 94, 0.45); opacity: 1; }
-.title-action.is-on { color: var(--accent-text); background: rgba(var(--accent-primary-rgb), 0.14); border-color: rgba(var(--accent-primary-rgb), 0.5); }
+.title-action--seen:disabled { color: var(--accent-success); cursor: default; background: color-mix(in srgb, var(--accent-success) 16%, transparent); border-color: color-mix(in srgb, var(--accent-success) 45%, transparent); opacity: 1; }
+.title-action.is-on { color: var(--accent-text); background: color-mix(in srgb, var(--accent-primary) 14%, transparent); border-color: color-mix(in srgb, var(--accent-primary) 50%, transparent); }
 
 .title-where { background: rgba(255, 255, 255, 0.04); }
 /* Filme sem streaming, mas em cartaz ou com estreia marcada no Brasil */
@@ -6209,8 +6214,8 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
     gap: var(--space-sm);
     padding: var(--space-sm) var(--space-md) var(--space-sm) 12px;
     border-radius: var(--radius-full);
-    background: rgba(var(--accent-primary-rgb), 0.12);
-    border: 1px solid rgba(var(--accent-primary-rgb), 0.4);
+    background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent-primary) 40%, transparent);
     color: var(--accent-text);
     font-size: 0.875rem;
     font-weight: 600;
@@ -6250,7 +6255,7 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
 @media (hover: hover) and (pointer: fine) {
     .title-tab:hover { color: var(--text-primary); }
 }
-.title-tab.is-active { background: rgba(var(--accent-primary-rgb), 0.16); color: var(--accent-text); }
+.title-tab.is-active { background: color-mix(in srgb, var(--accent-primary) 16%, transparent); color: var(--accent-text); }
 .title-tab:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 1px; }
 .title-section { scroll-margin-top: 70px; }
 .title-section:focus { outline: none; }
@@ -6329,7 +6334,7 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
     .title-more__btn:hover { color: var(--text-primary); border-color: var(--border-strong); }
 }
 @media (hover: hover) and (pointer: fine) {
-    .title-more__btn--ignore:hover { color: #f87171; border-color: #f87171; }
+    .title-more__btn--ignore:hover { color: var(--danger-text); border-color: var(--danger-text); }
 }
 
 /* Esqueletos no formato do que vai chegar */
@@ -6351,8 +6356,8 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
     gap: var(--space-sm) 12px;
     margin: 0 0 var(--space-md);
     padding: 12px 12px 12px var(--space-md);
-    background: rgba(var(--accent-primary-rgb), 0.12);
-    border: 1px solid rgba(var(--accent-primary-rgb), 0.4);
+    background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent-primary) 40%, transparent);
     border-radius: var(--radius-md);
     color: var(--text-primary);
     font-size: 0.85rem;
@@ -6886,7 +6891,7 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
     flex-shrink: 0;
     width: 22px;
     height: 22px;
-    color: rgb(var(--type-rgb));
+    color: var(--type-color);
     filter: none;
 }
 
@@ -6901,8 +6906,8 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
 }
 
 .type-pills :is(#btn-movie, #btn-tv, #btn-dorama).selected {
-    background: rgb(var(--type-rgb));
-    border-color: rgb(var(--type-rgb));
+    background: var(--type-color);
+    border-color: var(--type-color);
     box-shadow: none;
 }
 
@@ -6915,7 +6920,7 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
     .type-pills :is(#btn-movie, #btn-tv, #btn-dorama):not(.selected):hover {
         transform: none;
         background: var(--bg-elevated);
-        border-color: rgba(var(--type-rgb), 0.5);
+        border-color: color-mix(in srgb, var(--type-color) 50%, transparent);
         box-shadow: none;
     }
     .type-pills :is(#btn-movie, #btn-tv, #btn-dorama):not(.selected):hover .card__label { color: var(--text-primary); }

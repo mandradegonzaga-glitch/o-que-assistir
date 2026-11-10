@@ -1,10 +1,10 @@
 import { IMG_BASE } from '../config/constants.js';
 
-// Cada tipo do app: nomes e a cor do tema (--accent-primary de [data-theme] em style.css)
+// Cada tipo do app e seus nomes. A cor de cada um é o token --type-<tipo> de style.css
 export const MEDIA_KIND = {
-  movie: { one: 'Filme', many: 'Filmes', a: 'Um filme', color: '#ffc94d' },
-  tv: { one: 'Série', many: 'Séries', a: 'Uma série', color: '#3dd6c6' },
-  dorama: { one: 'Dorama', many: 'Doramas', a: 'Um dorama', color: '#ff8fb8' },
+  movie: { one: 'Filme', many: 'Filmes', a: 'Um filme' },
+  tv: { one: 'Série', many: 'Séries', a: 'Uma série' },
+  dorama: { one: 'Dorama', many: 'Doramas', a: 'Um dorama' },
 };
 export const MEDIA_TYPES = Object.keys(MEDIA_KIND);
 export const isSeriesType = type => type === 'tv' || type === 'dorama';
