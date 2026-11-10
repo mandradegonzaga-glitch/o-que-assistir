@@ -87,7 +87,7 @@ test.describe('filtros em pílulas', () => {
   });
 });
 
-test.describe('Filtros Inteligentes recolhíveis', () => {
+test.describe('Filtros recolhíveis', () => {
   test('começam recolhidos, o resumo mostra o que vale e abrir fica lembrado', async ({ page }) => {
     await enterAsGuest(page);
     const toggle = page.locator('#filters-toggle');

@@ -180,7 +180,7 @@ test.describe('Match ao vivo com amigos', () => {
     await expect(page.locator('#match-live-code')).toHaveText(/^[A-Z0-9]{6}$/);
     const code = await page.locator('#match-live-code').textContent();
     await page.locator('#match-live-lobby .friend-target', { hasText: 'Bia' }).click();
-    await expect(page.locator('#toast')).toHaveText('Enviado para Bia!');
+    await expect(page.locator('#toast')).toHaveText('Enviado para Bia');
     const sent = await page.evaluate(() => window.__db.match_invites[0]);
     expect(sent.payload).toBe(`ao-vivo:${code}`);
   });
@@ -231,7 +231,7 @@ test.describe('Match ao vivo: recarregar a página', () => {
     await bia.reload();
     await expect(bia.locator('#toast')).toHaveText('Match ao vivo retomado.');
     await expect(bia.locator('#match-counter')).toHaveText(`3 de ${LIST.length}`);
-    await expect(page.locator('#toast')).toHaveText('Bia voltou!');
+    await expect(page.locator('#toast')).toHaveText('Bia voltou');
     await expect(page.locator('#match-partner')).toHaveText(`Bia está no 3 de ${LIST.length}`);
 
     await voteAll(page, t => t === first);

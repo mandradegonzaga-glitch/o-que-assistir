@@ -36,7 +36,7 @@ test.describe('gerar ingresso', () => {
     await drawTitle(page);
     const [download] = await Promise.all([page.waitForEvent('download'), page.locator('#btn-ingresso').click()]);
     expect(download.suggestedFilename()).toMatch(/^ingresso-filme-[a-z-]+\.png$/);
-    await expect(page.locator('#toast')).toHaveText('Ingresso baixado!');
+    await expect(page.locator('#toast')).toHaveText('Ingresso baixado');
     await expect(shareModal(page)).toBeHidden();
   });
 
@@ -157,7 +157,7 @@ test.describe('compartilhar', () => {
 
     const [download] = await Promise.all([page.waitForEvent('download'), page.locator('#btn-share-apps').click()]);
     expect(download.suggestedFilename()).toMatch(/^ingresso-filme-[a-z-]+\.png$/);
-    await expect(page.locator('#toast')).toHaveText('Ingresso baixado e texto copiado! Cole na conversa.');
+    await expect(page.locator('#toast')).toHaveText('Ingresso baixado e texto copiado. Cole na conversa');
 
     const copied = await page.evaluate(() => navigator.clipboard.readText());
     expect(copied).toContain('Hoje é dia de: Filme');
@@ -265,7 +265,7 @@ test.describe('indicar para amigos', () => {
     const target = page.locator('#share-friends .friend-target', { hasText: 'Bia' });
     await target.focus();
     await page.keyboard.press('Enter');
-    await expect(page.locator('#toast')).toHaveText('Enviado para Bia!');
+    await expect(page.locator('#toast')).toHaveText('Enviado para Bia');
     await expect(target).toHaveText('Bia ✓');
     await expect(target).toHaveAttribute('aria-disabled', 'true');
     await expect(target).toHaveAttribute('aria-label', 'Enviado para Bia');

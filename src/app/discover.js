@@ -137,7 +137,7 @@ async function fetchDrawList(endpoint) {
     if (similarInput.length > 2) {
         const buscaData = await tmdbGet(`/search/${endpoint}`, { query: similarInput });
         if (!buscaData.results?.length) {
-            showToast("Não encontrei esse título. Tente outro nome!", "error");
+            showToast("Não encontrei esse título. Tente outro nome", "error");
             return null;
         }
         // Recomendações do primeiro resultado; sem elas, os similares
@@ -176,7 +176,7 @@ async function drawFromFilters() {
         if (lista === null) return null;
         const escolhido = pickDraw(lista);
         if (!escolhido) {
-            showToast("Nada encontrado (ou tudo na sua blacklist)!", "error");
+            showToast("Nada encontrado (ou tudo na sua blacklist)", "error");
             return null;
         }
         return withDetails(escolhido);

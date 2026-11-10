@@ -41,12 +41,12 @@ export async function salvarHistorico(f) {
     const entry = createWatchedEntry(f, f.media_type);
 
     if (await addToHistory(entry)) {
-        showToast("Marcado como visto!");
+        showToast("Marcado como visto");
         grantXp('watched');
         trackChallenge('watched', entry);
         await checkAllBadges();
     } else {
-        showToast("Erro ao salvar!", "error");
+        showToast("Erro ao salvar", "error");
     }
 }
 
@@ -54,10 +54,10 @@ export async function toggleWatchlist(f) {
     if (!session.currentUser) return;
 
     if (inWatchlist(f.id)) {
-        if (await removeFromWatchlist(f.id)) showToast("Removido da lista!");
+        if (await removeFromWatchlist(f.id)) showToast("Removido da lista");
         else showToast("Não foi possível tirar da lista. Tente de novo.", "error");
     } else if (await addToWatchlist(toLibraryItem(f, state.type))) {
-        showToast("Adicionado a Quero Assistir!");
+        showToast("Adicionado a Quero Assistir");
         trackChallenge('saved', f);
     } else {
         showToast("Não foi possível salvar. Tente de novo.", "error");
@@ -102,7 +102,7 @@ async function renderLibrary() {
             <div class="empty-state grid-full">
                 <div class="empty-state-icon">${isWatchlist ? starIcon : checkIcon}</div>
                 <h3 class="empty-state-title">${isWatchlist ? 'Sua lista está vazia' : 'Nenhum item assistido ainda'}</h3>
-                <p class="empty-state-desc">${isWatchlist ? 'Comece adicionando filmes e séries que deseja assistir!' : 'Marque filmes como assistidos para construir seu histórico'}</p>
+                <p class="empty-state-desc">${isWatchlist ? 'Comece adicionando filmes e séries que deseja assistir' : 'Marque filmes como assistidos para construir seu histórico'}</p>
                 <button class="empty-state-cta" data-action="switchTabAndTop" data-arg="${isWatchlist ? 'vistos' : 'watchlist'}">
                     ${isWatchlist ? tvIcon : bookmarkBtn} ${isWatchlist ? 'Ver Assistidos' : 'Ver Lista'}
                 </button>
@@ -199,7 +199,7 @@ async function renderAndando(div, isStale = () => false) {
     });
 
     if (cards.length === 0) {
-        div.innerHTML = '<div class="library-note">Todas as séries foram concluídas!</div>';
+        div.innerHTML = '<div class="library-note">Todas as séries foram concluídas</div>';
         return;
     }
     div.innerHTML = cards.join('');

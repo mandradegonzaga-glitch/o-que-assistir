@@ -40,7 +40,7 @@ function addRoletaItem() {
         state.rouletteItems.push(val);
         renderRoleta();
         document.getElementById('roulette-input').value = '';
-        showToast("Item adicionado!");
+        showToast("Item adicionado");
     }
 }
 
@@ -219,7 +219,7 @@ async function limparRoleta() {
     if (await confirmDialog({ title: 'Limpar roleta', message: 'Deseja limpar toda a lista da roleta?', confirmLabel: 'Limpar', danger: true })) {
         state.rouletteItems = [];
         renderRoleta();
-        showToast("Lista limpa!");
+        showToast("Lista limpa");
     }
 }
 

@@ -1,7 +1,7 @@
 {
   "name": "O Que Assistir?",
   "short_name": "OQueAssistir",
-  "description": "Descubra filmes e séries de forma inteligente com filtros personalizados",
+  "description": "Sorteie o filme, a série ou o dorama da noite, com os filtros que você escolher",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#10141F",

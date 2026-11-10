@@ -258,7 +258,7 @@ test.describe('lista do Match', () => {
   test('salva todos em Quero Assistir, sem repetir', async ({ page }) => {
     await playLocal(page, t => ['Filme Um', 'Filme Dois'].includes(t));
     await page.locator('[data-action="matchHistorySave"]').click();
-    await expect(page.locator('#toast')).toHaveText('2 títulos salvos em Quero Assistir!');
+    await expect(page.locator('#toast')).toHaveText('2 títulos salvos em Quero Assistir');
     await page.locator('[data-action="matchHistorySave"]').click();
     await expect(page.locator('#toast')).toHaveText('Esses títulos já estão em Quero Assistir.');
   });

@@ -563,7 +563,7 @@ function gerarIngresso() {
     try {
       const { blob, name } = await preparedFor(movie);
       download(blob, name);
-      showToast('Ingresso baixado!');
+      showToast('Ingresso baixado');
     } catch (e) {
       console.error('Erro ao gerar ingresso:', e);
       showToast('Não foi possível gerar o ingresso. Tente de novo.', 'error');
@@ -614,7 +614,7 @@ function compartilharApps() {
       }
       download(blob, name);
       const copied = await copyText(text);
-      showToast(copied ? 'Ingresso baixado e texto copiado! Cole na conversa.' : 'Ingresso baixado!');
+      showToast(copied ? 'Ingresso baixado e texto copiado. Cole na conversa' : 'Ingresso baixado');
       recordSocial('ticketsShared');
       trackChallenge('ticket');
     } catch (e) {

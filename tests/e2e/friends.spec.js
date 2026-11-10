@@ -24,7 +24,7 @@ test.describe('amigos com conta', () => {
 
     await page.locator('#friend-username').fill('@BIA');
     await page.locator('[data-action="friendAdd"]').click();
-    await expect(page.locator('#toast')).toHaveText('Pedido enviado para Bia!');
+    await expect(page.locator('#toast')).toHaveText('Pedido enviado para Bia');
     await expect(page.locator('#friends-sent')).toContainText('@bia');
     await expect(page.locator('#friend-username')).toHaveValue('');
   });
@@ -170,7 +170,7 @@ test.describe('amigos com conta', () => {
     await page.goto('/?amigo=bia');
     await expect(page.locator('#confirm-message')).toContainText('@bia');
     await page.locator('#confirm-ok').click();
-    await expect(page.locator('#toast')).toHaveText('Pedido enviado para Bia!');
+    await expect(page.locator('#toast')).toHaveText('Pedido enviado para Bia');
     await expect(page.locator('#friends-sent')).toContainText('@bia');
     await expect(page).not.toHaveURL(/amigo=/);
   });
@@ -206,7 +206,7 @@ test.describe('amigos com conta', () => {
     await voteAll(page);
 
     await page.locator('#match-invite .friend-target', { hasText: 'Bia' }).click();
-    await expect(page.locator('#toast')).toHaveText('Enviado para Bia!');
+    await expect(page.locator('#toast')).toHaveText('Enviado para Bia');
     const sent = await page.evaluate(() => window.__db.match_invites[0]);
     expect(sent).toMatchObject({ from_user: 'u1', to_user: 'u2' });
     expect(sent.payload).toMatch(/^[\w-]+$/);

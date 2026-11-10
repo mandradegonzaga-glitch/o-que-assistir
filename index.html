@@ -12,12 +12,12 @@
     <meta name="apple-mobile-web-app-title" content="OQueAssistir">
     <meta name="application-name" content="O Que Assistir?">
     <meta name="msapplication-TileColor" content="#10141F">
-    <meta name="description" content="Descubra filmes e séries de forma inteligente com filtros personalizados">
+    <meta name="description" content="Sorteie o filme, a série ou o dorama da noite, com os filtros que você escolher">
 
     <!-- Open Graph / Social -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="O Que Assistir?">
-    <meta property="og:description" content="Descubra filmes e séries de forma inteligente com filtros personalizados">
+    <meta property="og:description" content="Sorteie o filme, a série ou o dorama da noite, com os filtros que você escolher">
     <meta property="og:url" content="https://o-que-assistir-watch.vercel.app/">
     <meta property="og:image" content="https://o-que-assistir-watch.vercel.app/icons/og-image.png">
     <meta property="og:image:width" content="1200">
@@ -56,12 +56,12 @@
 
             <div class="login-tabs" role="tablist" aria-label="Opções de autenticação">
                 <button type="button" id="login-tab" class="login-tab active" role="tab" aria-selected="true" aria-controls="login-form" data-action="switchLoginTab" data-arg="login" tabindex="0">Entrar</button>
-                <button type="button" id="register-tab" class="login-tab" role="tab" aria-selected="false" aria-controls="register-form" data-action="switchLoginTab" data-arg="register" tabindex="-1">Criar Conta</button>
+                <button type="button" id="register-tab" class="login-tab" role="tab" aria-selected="false" aria-controls="register-form" data-action="switchLoginTab" data-arg="register" tabindex="-1">Criar conta</button>
             </div>
 
             <!-- LOGIN FORM -->
             <div class="login-form active" id="login-form" role="tabpanel" aria-labelledby="login-tab">
-                <p id="legacy-hint" class="legacy-hint" hidden>Usava a versão antiga? Agora o acesso é por email: crie uma conta nova em "Criar Conta" e sua lista será trazida.</p>
+                <p id="legacy-hint" class="legacy-hint" hidden>Usava a versão antiga? Agora o acesso é por email: crie uma conta nova em "Criar conta" e sua lista será trazida.</p>
                 <div class="error-message" id="login-error" role="alert" aria-live="polite"></div>
                 <div class="form-group">
                     <label for="login-email">Email</label>
@@ -75,7 +75,7 @@
                 <button class="btn-login" data-action="loginUser" aria-label="Fazer login">Entrar</button>
                 <button class="btn-guest" data-action="loginAsGuest" aria-label="Entrar como convidado sem criar conta">
                     <svg class="ph icon" data-icon="user" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/></svg>
-                    Entrar como Convidado
+                    Entrar como convidado
                 </button>
             </div>
 
@@ -101,10 +101,10 @@
                     <label for="register-confirm">Confirme a senha</label>
                     <input type="password" id="register-confirm" name="confirm-password" placeholder="Digite a senha novamente" aria-required="true" autocomplete="new-password">
                 </div>
-                <button class="btn-login" data-action="registerUser" aria-label="Criar nova conta">Criar Conta</button>
+                <button class="btn-login" data-action="registerUser" aria-label="Criar nova conta">Criar conta</button>
                 <button class="btn-guest" data-action="loginAsGuest" aria-label="Entrar como convidado sem criar conta">
                     <svg class="ph icon" data-icon="user" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/></svg>
-                    Entrar como Convidado
+                    Entrar como convidado
                 </button>
             </div>
         </div>
@@ -215,7 +215,7 @@
                 <div class="section-header">
                     <div class="badge-num">2</div>
                     <button type="button" id="filters-toggle" class="section-toggle" aria-expanded="true" aria-controls="filters-body">
-                        <span class="section-title">Filtros Inteligentes</span>
+                        <span class="section-title">Filtros</span>
                         <span id="filters-summary" class="section-toggle__summary"></span>
                         <span class="section-toggle__caret" aria-hidden="true"></span>
                     </button>
@@ -382,7 +382,7 @@
             <div class="section text-center">
                 <h2 class="panel-title panel-title--large">
                     <svg class="ph icon icon-28 text-accent" data-icon="roulette" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M128,146L128.0,64.0A82,82 0 0 1 199.0,105.0Z" opacity="0.2"/><path d="M128,146L199.0,187.0A82,82 0 0 1 128.0,228.0Z" opacity="0.2"/><path d="M128,146L57.0,187.0A82,82 0 0 1 57.0,105.0Z" opacity="0.2"/><g fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"><circle cx="128" cy="146" r="82"/><path d="M128.0,64.0L128.0,228.0M199.0,105.0L57.0,187.0M199.0,187.0L57.0,105.0"/></g><circle cx="128" cy="146" r="14"/><path d="M108,26h40l-20,34Z" stroke="currentColor" stroke-width="8.0" stroke-linejoin="round"/></svg>
-                    Roleta Personalizada
+                    Roleta personalizada
                 </h2>
                 <p class="panel-hint">Em dúvida entre alguns títulos? Adicione e deixe a sorte decidir.</p>
 
@@ -405,7 +405,7 @@
                 <p id="roulette-hint" class="roulette-hint" role="status">Adicione pelo menos 2 opções para girar.</p>
                 <button id="btn-girar" class="btn-main btn-spin" data-action="girarRoleta" disabled aria-label="Girar roleta e sortear">
                     <svg class="ph icon" data-icon="roulette" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><g fill="none" stroke="currentColor" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"><circle cx="128" cy="146" r="82"/><path d="M128.0,64.0L128.0,228.0M199.0,105.0L57.0,187.0M199.0,187.0L57.0,105.0"/></g><circle cx="128" cy="146" r="22"/><path d="M108,26h40l-20,36Z" stroke="currentColor" stroke-width="12.0" stroke-linejoin="round"/></svg>
-                    Girar Roleta!
+                    Girar roleta
                 </button>
                 <button id="btn-limpar-roleta" class="btn-outline row-center w-full mt-10" data-action="limparRoleta" hidden aria-label="Limpar todos os itens da roleta">
                     <svg class="ph icon icon-16" data-icon="trash" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"/></svg>
@@ -587,7 +587,7 @@
 
                 <div id="friends-guest" hidden>
                     <h2 class="panel-title panel-title--large"><svg class="ph icon icon-28 text-accent" data-icon="users-three" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M168,144a40,40,0,1,1-40-40A40,40,0,0,1,168,144ZM64,56A32,32,0,1,0,96,88,32,32,0,0,0,64,56Zm128,0a32,32,0,1,0,32,32A32,32,0,0,0,192,56Z" opacity="0.2"/><path d="M244.8,150.4a8,8,0,0,1-11.2-1.6A51.6,51.6,0,0,0,192,128a8,8,0,0,1,0-16,24,24,0,1,0-23.24-30,8,8,0,1,1-15.5-4A40,40,0,1,1,219,117.51a67.94,67.94,0,0,1,27.43,21.68A8,8,0,0,1,244.8,150.4ZM190.92,212a8,8,0,1,1-13.85,8,57,57,0,0,0-98.15,0,8,8,0,1,1-13.84-8,72.06,72.06,0,0,1,33.74-29.92,48,48,0,1,1,58.36,0A72.06,72.06,0,0,1,190.92,212ZM128,176a32,32,0,1,0-32-32A32,32,0,0,0,128,176ZM72,120a8,8,0,0,0-8-8A24,24,0,1,1,87.24,82a8,8,0,1,0,15.5-4A40,40,0,1,0,37,117.51,67.94,67.94,0,0,0,9.6,139.19a8,8,0,1,0,12.8,9.61A51.6,51.6,0,0,1,64,128,8,8,0,0,0,72,120Z"/></svg> Amigos</h2>
-                    <p class="panel-hint text-center">Crie uma conta para adicionar amigos, ver o que cada um assistiu e chamar para um Match. Saia do modo convidado e toque em "Criar Conta".</p>
+                    <p class="panel-hint text-center">Crie uma conta para adicionar amigos, ver o que cada um assistiu e chamar para um Match. Saia do modo convidado e toque em "Criar conta".</p>
                 </div>
                 <p id="friends-unavailable" class="panel-hint text-center" hidden>Amigos indisponíveis no momento. Tente de novo mais tarde.</p>
 
@@ -615,7 +615,7 @@
                         <h3 class="subsection-title">Seus amigos</h3>
                         <ul id="friends-list" class="friend-list"></ul>
                     </div>
-                    <p id="friends-empty" class="section-note text-center">Você ainda não tem amigos aqui. Mande o link para alguém!</p>
+                    <p id="friends-empty" class="section-note text-center">Você ainda não tem amigos aqui. Mande o link para alguém</p>
                     <div data-friends-group hidden>
                         <h3 class="subsection-title">Aguardando resposta</h3>
                         <ul id="friends-sent" class="friend-list"></ul>
@@ -732,7 +732,7 @@
                 <div class="title-actions" role="group" aria-label="O que fazer com este título">
                     <button id="btn-visto" data-action="marcarVistoAtual" class="title-action title-action--seen" data-tooltip="Marcar como assistido" aria-label="Marcar como assistido">
                         <svg class="ph icon" data-icon="check" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>
-                        Já Vi
+                        Já vi
                     </button>
                     <button id="btn-salvar" data-action="toggleSalvarAtual" class="title-action" data-tooltip="Adicionar à lista" aria-label="Adicionar à lista de desejos">
                         <svg class="ph icon" data-icon="bookmark-simple" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M184,32H72A16,16,0,0,0,56,48V224a8,8,0,0,0,12.24,6.78L128,193.43l59.77,37.35A8,8,0,0,0,200,224V48A16,16,0,0,0,184,32Zm0,177.57-51.77-32.35a8,8,0,0,0-8.48,0L72,209.57V48H184Z"/></svg>
@@ -1089,8 +1089,8 @@
             <div class="onboarding-icon" id="onboarding-icon">
                 <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path fill="currentColor" fill-opacity="0.2" d="M2 8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2.5a1.5 1.5 0 0 0 0 3V16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2.5a1.5 1.5 0 0 0 0-3z"/><path d="M16 6v2M16 11v2M16 16v2"/><path fill="currentColor" stroke="none" d="M8 9v6l5-3z"/></svg>
             </div>
-            <h2 class="onboarding-title" id="onboarding-title">Bem-vindo!</h2>
-            <p class="onboarding-desc" id="onboarding-desc">Descubra filmes e séries de forma inteligente</p>
+            <h2 class="onboarding-title" id="onboarding-title">O Que Assistir?</h2>
+            <p class="onboarding-desc" id="onboarding-desc">Filme, série ou dorama: o app escolhe por você</p>
             <div class="onboarding-dots">
                 <span class="onboarding-dot active"></span>
                 <span class="onboarding-dot"></span>
@@ -1112,7 +1112,7 @@
                 <summary><span class="ph-slot" data-ph="film-slate" data-weight="duotone" aria-hidden="true"></span> Sortear o que assistir</summary>
                 <ol>
                     <li>No <strong>Início</strong>, escolha <strong>Filme</strong>, <strong>Série</strong> ou <strong>Dorama</strong>.</li>
-                    <li>Se quiser, marque os <strong>Filtros Inteligentes</strong>.</li>
+                    <li>Se quiser, marque os <strong>Filtros</strong>.</li>
                     <li>Toque em <strong>Sortear Agora</strong>. Não gostou? Na tela do título, <strong>Sortear outro</strong>.</li>
                 </ol>
                 <p>No celular, a barra de baixo leva ao <strong>Início</strong>, à <strong>Roleta</strong>, ao <strong>Match</strong> e à <strong>Biblioteca</strong>. O botão do meio, <strong>Sortear</strong>, sorteia na hora com o tipo e os filtros escolhidos, de qualquer tela. No computador, use as abas do topo.</p>
@@ -1120,8 +1120,8 @@
             </details>
 
             <details class="help__topic" id="guia-filtros">
-                <summary><span class="ph-slot" data-ph="sliders-horizontal" data-weight="duotone" aria-hidden="true"></span> Filtros Inteligentes</summary>
-                <p>Toque no título <strong>Filtros Inteligentes</strong> para abrir ou recolher; recolhido, ele mostra o que está valendo. Toque numa pílula para escolher e de novo para desfazer.</p>
+                <summary><span class="ph-slot" data-ph="sliders-horizontal" data-weight="duotone" aria-hidden="true"></span> Filtros</summary>
+                <p>Toque no título <strong>Filtros</strong> para abrir ou recolher; recolhido, ele mostra o que está valendo. Toque numa pílula para escolher e de novo para desfazer.</p>
                 <ul>
                     <li><strong>Clima</strong> (leve, para chorar, tensão…) ou <strong>Gênero</strong>: um substitui o outro. Em Gênero, <strong>Ver todos</strong> mostra o resto; <strong>Natal</strong> traz filmes e séries de fim de ano.</li>
                     <li><strong>Onde assistir</strong>: toque no logo da plataforma. "Minhas plataformas" usa as que você marcou no perfil (<strong>Escolher minhas</strong>).</li>
@@ -1148,14 +1148,14 @@
                     <li><strong>Sessão às escuras</strong>: mostra só a sinopse, a nota e a duração. Gostou? <strong>Arriscar e revelar</strong>.</li>
                     <li><strong>Cine-batalha</strong>: 8 títulos se enfrentam de dois em dois. Toque no que prefere até sobrar o campeão. Para ler a sinopse, passe o mouse no pôster (no celular, toque em <strong>Sinopse</strong>, embaixo dele). Votou errado? <strong>Voltar</strong> desfaz o último voto.</li>
                 </ul>
-                <p>Quer uma batalha só de terror, ou uma sessão às escuras só da Netflix? Marque o gênero ou a plataforma nos <strong>Filtros Inteligentes</strong> antes de começar.</p>
+                <p>Quer uma batalha só de terror, ou uma sessão às escuras só da Netflix? Marque o gênero ou a plataforma nos <strong>Filtros</strong> antes de começar.</p>
             </details>
 
             <details class="help__topic" id="guia-titulo">
                 <summary><span class="ph-slot" data-ph="popcorn" data-weight="duotone" aria-hidden="true"></span> Na tela do título</summary>
                 <ul>
                     <li><strong>Onde assistir</strong>, elenco e trailer.</li>
-                    <li><strong>Já Vi</strong>: vai para "Já assistidos" e abre o <strong>Como foi?</strong> (🔥 😢 😂 🤯). Seus amigos veem a reação.</li>
+                    <li><strong>Já vi</strong>: vai para "Já assistidos" e abre o <strong>Como foi?</strong> (🔥 😢 😂 🤯). Seus amigos veem a reação.</li>
                     <li><strong>Salvar</strong>: guarda em "Quero Assistir".</li>
                     <li><strong>Salvar em uma lista</strong>: guarda numa lista sua (veja <strong>Minhas Listas</strong>, na <strong>Biblioteca</strong>).</li>
                     <li><strong>Adicionar à Roleta</strong>, <strong>Gerar ingresso</strong> (uma imagem para postar) e <strong>Compartilhar</strong> (WhatsApp, outros apps ou um amigo).</li>
@@ -1176,12 +1176,12 @@
 
             <details class="help__topic" id="guia-series">
                 <summary><span class="ph-slot" data-ph="television" data-weight="duotone" aria-hidden="true"></span> Séries: episódios e "Em Andamento"</summary>
-                <p>Na tela de uma série, marque os episódios que já viu (um a um, com <strong>Marcar temporada</strong> ou com <strong>Vi até aqui</strong>, que marca o episódio e todos os anteriores). Ela aparece em <strong>Continue assistindo</strong>, no alto do Início, e na aba <strong>Em Andamento</strong> da Biblioteca, com o próximo episódio e o progresso, e vai sozinha para "Já assistidos" quando você termina. Já viu a série toda? Toque em <strong>Já Vi</strong>: todas as temporadas são marcadas de uma vez e você pode dizer <strong>Como foi?</strong>. Vale também para doramas. Funciona com conta e como convidado (no convidado, fica salvo neste aparelho).</p>
+                <p>Na tela de uma série, marque os episódios que já viu (um a um, com <strong>Marcar temporada</strong> ou com <strong>Vi até aqui</strong>, que marca o episódio e todos os anteriores). Ela aparece em <strong>Continue assistindo</strong>, no alto do Início, e na aba <strong>Em Andamento</strong> da Biblioteca, com o próximo episódio e o progresso, e vai sozinha para "Já assistidos" quando você termina. Já viu a série toda? Toque em <strong>Já vi</strong>: todas as temporadas são marcadas de uma vez e você pode dizer <strong>Como foi?</strong>. Vale também para doramas. Funciona com conta e como convidado (no convidado, fica salvo neste aparelho).</p>
             </details>
 
             <details class="help__topic" id="guia-roleta">
                 <summary><span class="ph-slot" data-ph="roulette" data-weight="duotone" aria-hidden="true"></span> Roleta</summary>
-                <p>Na aba <strong>Roleta</strong>, digite os títulos em dúvida (ou use "Adicionar à Roleta" na tela de um título) e toque em <strong>Girar Roleta!</strong></p>
+                <p>Na aba <strong>Roleta</strong>, digite os títulos em dúvida (ou use "Adicionar à Roleta" na tela de um título) e toque em <strong>Girar roleta</strong></p>
             </details>
 
             <details class="help__topic" id="guia-match">

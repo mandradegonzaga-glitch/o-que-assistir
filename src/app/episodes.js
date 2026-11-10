@@ -171,7 +171,7 @@ function seasonCounter(seriesId, episodes) {
     const remaining = episodes.length - watched;
     return `${watched}/${episodes.length} assistidos · ` + (remaining > 0
         ? `<strong>${remaining} ${pluralize(remaining, 'restante', 'restantes')}</strong>`
-        : '<strong class="text-success">Concluída!</strong>');
+        : '<strong class="text-success">Concluída</strong>');
 }
 
 function updateSeasonCounter(seriesId, seasonNumber) {
@@ -180,7 +180,7 @@ function updateSeasonCounter(seriesId, seasonNumber) {
     if (counter && seasonData) counter.innerHTML = seasonCounter(seriesId, seasonData.episodes);
 }
 
-// Selo "Assistindo"/"Concluído" e o botão "Já Vi" da série aberta; só desenha
+// Selo "Assistindo"/"Concluído" e o botão "Já vi" da série aberta; só desenha
 function renderSeriesStatus(seriesData) {
     const btnV = document.getElementById('btn-visto');
     const badge = document.getElementById('episodes-status-badge');
@@ -199,9 +199,9 @@ function renderSeriesStatus(seriesData) {
 
 const CHECK_ICON = ph('check', { weight: 'bold', cls: 'icon icon-16 icon-lead-4' });
 
-// Botão "Já Vi" (ativo) ou "JÁ VISTO" (desativado), de filmes e séries
+// Botão "Já vi" (ativo) ou "Já visto" (desativado), de filmes e séries
 export function setSeenButton(btnV, seen) {
-    btnV.innerHTML = CHECK_ICON + (seen ? 'JÁ VISTO' : 'Já Vi');
+    btnV.innerHTML = CHECK_ICON + (seen ? 'Já visto' : 'Já vi');
     btnV.disabled = seen;
 }
 
@@ -291,10 +291,10 @@ async function marcarTemporadaAtual() {
     }
     if (ok) await syncSeriesStatus(seriesData);
     await afterBulkChange(seriesData, currentSeason);
-    if (ok) showToast(`Temporada ${currentSeason} marcada!`);
+    if (ok) showToast(`Temporada ${currentSeason} marcada`);
 }
 
-// Todas as temporadas (sem a 0, de especiais). Usado pelo "Marcar série" e pelo "Já Vi" da série.
+// Todas as temporadas (sem a 0, de especiais). Usado pelo "Marcar série" e pelo "Já vi" da série.
 export async function markWholeSeries(seriesData) {
     if (!canTrackEpisodes() || !seriesData) return false;
     const numberOfSeasons = seriesData.number_of_seasons || 0;

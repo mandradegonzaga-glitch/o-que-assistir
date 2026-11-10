@@ -92,7 +92,7 @@ export function enterAsGuest() {
 
     closeModal('login-overlay');
     updateUserDisplay();
-    showToast('Bem-vindo(a), Convidado!');
+    showToast('Bem-vindo(a), Convidado');
     emit('library:changed');
     emit('session:started', { kind: 'guest' });
 }
@@ -160,18 +160,18 @@ async function registerUser() {
     const confirm = document.getElementById('register-confirm').value;
     const errorEl = document.getElementById('register-error');
 
-    if (!username || !email || !password || !confirm) return showFormError(errorEl, 'Preencha todos os campos!');
-    if (!isValidEmail(email)) return showFormError(errorEl, 'Digite um email válido!');
+    if (!username || !email || !password || !confirm) return showFormError(errorEl, 'Preencha todos os campos');
+    if (!isValidEmail(email)) return showFormError(errorEl, 'Digite um email válido');
     const invalid = passwordError(password, confirm);
     if (invalid) return showFormError(errorEl, invalid);
 
     const result = await supabaseRegister(username, email, password);
     if (!result.success) {
         const exists = result.error.includes('already registered') || result.error.includes('already exists');
-        return showFormError(errorEl, exists ? 'Este usuário já existe!' : `Erro: ${result.error}`);
+        return showFormError(errorEl, exists ? 'Este usuário já existe' : `Erro: ${result.error}`);
     }
 
-    showToast('Conta criada com sucesso!');
+    showToast('Conta criada com sucesso');
     await enterAccount(result.user);
 }
 
@@ -180,26 +180,26 @@ async function loginUser() {
     const password = document.getElementById('login-password').value;
     const errorEl = document.getElementById('login-error');
 
-    if (!email || !password) return showFormError(errorEl, 'Preencha todos os campos!');
+    if (!email || !password) return showFormError(errorEl, 'Preencha todos os campos');
 
     const result = await supabaseLogin(email, password);
-    if (!result.success) return showFormError(errorEl, 'Email ou senha incorretos!');
+    if (!result.success) return showFormError(errorEl, 'Email ou senha incorretos');
 
     await enterAccount(result.user);
-    showToast(`Bem-vindo(a), ${session.user.name || 'Usuário'}!`);
+    showToast(`Bem-vindo(a), ${session.user.name || 'Usuário'}`);
 }
 
 async function esqueceuSenha() {
     const email = document.getElementById('login-email').value.trim();
 
     if (!email) {
-        showToast("Digite seu email primeiro!", "error");
+        showToast("Digite seu email primeiro", "error");
         document.getElementById('login-email').focus();
         return;
     }
 
     if (!isValidEmail(email)) {
-        showToast("Digite um email válido!", "error");
+        showToast("Digite um email válido", "error");
         return;
     }
 
@@ -233,7 +233,7 @@ async function logout() {
         await supabaseLogout();
     }
     endSession();
-    showToast('Até logo!');
+    showToast('Até logo');
 }
 
 registerActions({

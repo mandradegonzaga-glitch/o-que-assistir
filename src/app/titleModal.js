@@ -350,7 +350,7 @@ export async function abrirModal(item, { fromDraw = false } = {}) {
     ]);
 }
 
-// Fica aberto: o botão vira "JÁ VISTO" e aparece o "Como foi?", com o foco na primeira reação
+// Fica aberto: o botão vira "Já visto" e aparece o "Como foi?", com o foco na primeira reação
 async function marcarVistoAtual() {
     const movie = state.currentMovie;
     if (!movie) return;
@@ -362,7 +362,7 @@ async function marcarVistoAtual() {
         if (isSeries && state.currentMovie === movie) btnV.disabled = false;
         return;
     }
-    // "Já Vi" numa série marca todas as temporadas (e assim sai do "Quero Assistir")
+    // "Já vi" numa série marca todas as temporadas (e assim sai do "Quero Assistir")
     // (markWholeSeries já avisa a biblioteca; sem temporadas para marcar, avisa aqui)
     if (!(isSeries && await markWholeSeries(movie))) await emit('library:changed');
     if (state.currentMovie !== movie) return;

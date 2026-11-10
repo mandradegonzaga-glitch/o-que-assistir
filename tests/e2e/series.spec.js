@@ -1,4 +1,4 @@
-// Séries: temporadas, episódios, "Já Vi" e "Como foi?" — iguais para conta e convidado (T001-115)
+// Séries: temporadas, episódios, "Já vi" e "Como foi?" — iguais para conta e convidado (T001-115)
 import { test, expect, enterAsGuest, openApp, modal, openLibraryTab } from './support/app.js';
 
 const openFirstSeries = async page => {
@@ -23,7 +23,7 @@ test.describe('séries como convidado', () => {
     await expect(page.locator('#episodes-season-select option')).toHaveText(['Temporada 1']);
     await expect(page.locator('.episode-checkbox')).toHaveCount(3);
     await expect(seen(page)).toBeEnabled();
-    await expect(seen(page)).toHaveText('Já Vi');
+    await expect(seen(page)).toHaveText('Já vi');
 
     await page.locator('.episode-checkbox').first().check();
     await expect(page.locator('.episodes-season-counter')).toContainText('1/3 assistidos');
@@ -43,7 +43,7 @@ test.describe('séries como convidado', () => {
     await expect(page.locator('.episode-checkbox').first()).toBeChecked();
   });
 
-  test('"Já Vi" marca a série, abre o "Como foi?" e tira de Em Andamento', async ({ page }) => {
+  test('"Já vi" marca a série, abre o "Como foi?" e tira de Em Andamento', async ({ page }) => {
     await enterAsGuest(page);
     await openFirstSeries(page);
     await page.locator('.episode-checkbox').first().check();
@@ -51,7 +51,7 @@ test.describe('séries como convidado', () => {
 
     await seen(page).click();
     await expect(seen(page)).toBeDisabled();
-    await expect(seen(page)).toHaveText('JÁ VISTO');
+    await expect(seen(page)).toHaveText('Já visto');
     await expect(reactions(page)).toBeVisible();
     // Marca todas as temporadas junto
     await expect(page.locator('.episodes-season-counter')).toContainText('3/3 assistidos');
@@ -73,12 +73,12 @@ test.describe('séries como convidado', () => {
     await openFirstSeries(page);
     await page.locator('[data-action="marcarTemporadaAtual"]').click();
     await expect(page.locator('.episodes-season-counter')).toContainText('3/3 assistidos');
-    await expect(seen(page)).toHaveText('JÁ VISTO');
+    await expect(seen(page)).toHaveText('Já visto');
     await expect(reactions(page)).toBeVisible();
 
     await page.locator('[data-action="desmarcarTodosEpisodios"]').click();
     await expect(page.locator('.episodes-season-counter')).toContainText('0/3 assistidos');
-    await expect(seen(page)).toHaveText('Já Vi');
+    await expect(seen(page)).toHaveText('Já vi');
     await expect(reactions(page)).toBeHidden();
   });
 });
@@ -88,7 +88,7 @@ test.describe('"Vi até aqui"', () => {
     await page.clock.setFixedTime(new Date(2026, 10, 6, 12, 0));
     await enterAsGuest(page);
     await openFirstSeries(page);
-    await expect(page.locator('[data-action="marcarTodosEpisodios"]')).toHaveCount(0); // "Já Vi" faz isso
+    await expect(page.locator('[data-action="marcarTodosEpisodios"]')).toHaveCount(0); // "Já vi" faz isso
 
     const upTo2 = page.getByRole('button', { name: 'Vi até T01E02: marca este e todos os anteriores' });
     await upTo2.click();
@@ -98,7 +98,7 @@ test.describe('"Vi até aqui"', () => {
     await expect(checks.nth(1)).toBeChecked();
     await expect(checks.nth(2)).not.toBeChecked();
     await expect(page.locator('#episodes-status-badge')).toHaveText('Assistindo');
-    await expect(page.locator('#btn-visto')).toHaveText('Já Vi');
+    await expect(page.locator('#btn-visto')).toHaveText('Já vi');
     // A lista é redesenhada: o foco volta para o mesmo botão
     await expect(page.getByRole('button', { name: 'Vi até T01E02: marca este e todos os anteriores' })).toBeFocused();
 
@@ -115,7 +115,7 @@ test.describe('"Vi até aqui"', () => {
       await openFirstSeries(page);
       await page.getByRole('button', { name: 'Vi até T01E03: marca este e todos os anteriores' }).click();
       await expect(page.locator('.episodes-season-counter')).toContainText('3/3 assistidos');
-      await expect(page.locator('#btn-visto')).toHaveText('JÁ VISTO');
+      await expect(page.locator('#btn-visto')).toHaveText('Já visto');
       await expect(reactions(page)).toBeVisible();
       expect(await page.evaluate(() => window.__db.episode_progress.map(e => e.episode_number).sort())).toEqual([1, 2, 3]);
     });
@@ -136,14 +136,14 @@ test.describe('"Vi até aqui"', () => {
 test.describe('séries com conta', () => {
   test.use({ logged: true });
 
-  test('"Já Vi" marca todas as temporadas e grava no histórico', async ({ page }) => {
+  test('"Já vi" marca todas as temporadas e grava no histórico', async ({ page }) => {
     await openApp(page);
     await openFirstSeries(page);
     await expect(page.locator('.episode-checkbox')).toHaveCount(3);
     await expect(seen(page)).toBeEnabled();
 
     await seen(page).click();
-    await expect(seen(page)).toHaveText('JÁ VISTO');
+    await expect(seen(page)).toHaveText('Já visto');
     await expect(reactions(page)).toBeVisible();
     await expect(page.locator('#m-reactions-note')).toBeVisible();
     await expect(page.locator('.episodes-season-counter')).toContainText('3/3 assistidos');
@@ -152,7 +152,7 @@ test.describe('séries com conta', () => {
     expect(await page.evaluate(() => window.__db.episode_progress.map(e => e.episode_number).sort())).toEqual([1, 2, 3]);
   });
 
-  test('dorama: "Já Vi" vai para Doramas e, aberto pela biblioteca, continua dorama', async ({ page }) => {
+  test('dorama: "Já vi" vai para Doramas e, aberto pela biblioteca, continua dorama', async ({ page }) => {
     await openApp(page);
     await page.locator('#btn-dorama').click();
     await page.locator('#btn-top10').click();
@@ -166,7 +166,7 @@ test.describe('séries com conta', () => {
     await expect(page.locator('.library-group-title')).toHaveText('DORAMAS (1)');
     await page.locator('#library-content .library-item__open').first().click();
     await expect(page.locator('.episode-checkbox:checked')).toHaveCount(3);
-    await expect(seen(page)).toHaveText('JÁ VISTO');
+    await expect(seen(page)).toHaveText('Já visto');
     await expect(reactions(page)).toBeVisible();
     expect(await page.evaluate(() => [...new Set(window.__db.episode_progress.map(e => e.media_type))])).toEqual(['dorama']);
   });

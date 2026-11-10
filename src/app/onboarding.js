@@ -9,18 +9,18 @@ import { storage } from '../utils/storage.js';
 const steps = [
     {
         icon: TICKET_ICON, // a marca do app abre as boas-vindas
-        title: 'Bem-vindo!',
-        desc: 'Descubra filmes e séries de forma inteligente'
+        title: 'O Que Assistir?',
+        desc: 'Filme, série ou dorama: o app escolhe por você'
     },
     {
         icon: ph('shuffle', { weight: 'bold' }),
-        title: 'Sorteio Inteligente',
-        desc: 'Use filtros avançados e deixe o algoritmo escolher a melhor opção para você'
+        title: 'Sorteio com filtros',
+        desc: 'Escolha gênero, nota, streaming e mais, e o app sorteia um título'
     },
     {
         icon: ph('roulette', { weight: 'duotone' }),
-        title: 'Roleta Personalizada',
-        desc: 'Crie sua própria roleta com filmes e deixe a sorte decidir!'
+        title: 'Roleta',
+        desc: 'Ponha os títulos em dúvida e deixe a roleta decidir'
     },
     {
         icon: ph('sparkle', { weight: 'duotone' }),
@@ -39,7 +39,7 @@ function showStep(index) {
     document.getElementById('onboarding-desc').innerText = step.desc;
     document.querySelector('.onboarding-dots').innerHTML = steps
         .map((_, i) => `<span class="onboarding-dot${i === index ? ' active' : ''}"></span>`).join('');
-    document.getElementById('onboarding-btn').innerText = index === steps.length - 1 ? 'Começar Agora!' : 'Começar';
+    document.getElementById('onboarding-btn').innerText = index === steps.length - 1 ? 'Começar' : 'Próximo';
 }
 
 function finishOnboarding() {

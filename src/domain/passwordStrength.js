@@ -15,8 +15,8 @@ export const MIN_PASSWORD_LENGTH = 6;
 
 // Senha nova (cadastro ou troca): o aviso a mostrar, ou null se está tudo certo
 export function passwordError(password, confirm) {
-  if (password.length < MIN_PASSWORD_LENGTH) return `A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres!`;
-  if (password !== confirm) return 'As senhas não coincidem!';
+  if (password.length < MIN_PASSWORD_LENGTH) return `A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres`;
+  if (password !== confirm) return 'As senhas não coincidem';
   return null;
 }
 

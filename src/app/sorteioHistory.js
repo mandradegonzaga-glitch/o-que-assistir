@@ -82,7 +82,7 @@ function abrirHistoricoSorteios() {
     const grid = document.getElementById('sorteio-history-grid');
 
     if (session.sorteioHistory.length === 0) {
-        grid.innerHTML = '<p class="text-secondary text-center grid-full">Nenhum sorteio ainda!</p>';
+        grid.innerHTML = '<p class="text-secondary text-center grid-full">Nenhum sorteio ainda</p>';
     } else {
         grid.innerHTML = session.sorteioHistory.map((item, idx) => `
             <button type="button" class="history-item ${idx === session.sorteioHistoryIndex ? 'current' : ''}"
@@ -118,7 +118,7 @@ async function limparHistoricoSorteios() {
         saveGuestSorteioHistory([]);
     }
 
-    showToast('Histórico limpo!');
+    showToast('Histórico limpo');
     closeModal('modal-sorteio-history');
 }
 

@@ -20,7 +20,7 @@ async function adicionarBlacklist() {
     if (!item) return;
 
     if (session.blacklist.includes(item.id)) {
-        showToast('Já está na sua lista de ignorados!', 'warning');
+        showToast('Já está na sua lista de ignorados', 'warning');
         return;
     }
 
@@ -38,7 +38,7 @@ async function adicionarBlacklist() {
         ]);
     }
 
-    showToast('Adicionado à lista de ignorados. Não será mais sugerido!');
+    showToast('Adicionado à lista de ignorados. Não será mais sugerido');
     fecharModal();
 }
 
@@ -119,7 +119,7 @@ async function limparBlacklist() {
 
     session.blacklist = [];
     renderBlacklist();
-    showToast('Lista de ignorados limpa!');
+    showToast('Lista de ignorados limpa');
 }
 
 registerActions({

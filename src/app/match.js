@@ -492,7 +492,7 @@ function runLiveAction(action, msg) {
   } else if (action === 'finish') {
     finishLive();
   } else if (action === 'partner-back') {
-    showToast(`${partnerName()} voltou!`);
+    showToast(`${partnerName()} voltou`);
     if (!document.getElementById('match-live-wait').hidden) setText('match-live-wait-progress', '');
     renderPartnerProgress();
   } else if (action === 'partner-left') {

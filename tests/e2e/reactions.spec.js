@@ -17,10 +17,10 @@ test.describe('reações rápidas', () => {
     await expect(reactions(page)).toBeHidden(); // ainda não assistido
 
     await page.locator('#btn-visto').click();
-    // Fica aberto, com o botão em "JÁ VISTO" e o foco na primeira reação
+    // Fica aberto, com o botão em "Já visto" e o foco na primeira reação
     await expect(modal(page)).toBeVisible();
     await expect(page.locator('#btn-visto')).toBeDisabled();
-    await expect(page.locator('#btn-visto')).toHaveText('JÁ VISTO');
+    await expect(page.locator('#btn-visto')).toHaveText('Já visto');
     await expect(reactions(page)).toBeVisible();
     await expect(reaction(page, 'Amei')).toBeFocused();
     await expect(page.locator('#m-reactions-note')).toBeHidden(); // convidado não tem amigos

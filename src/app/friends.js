@@ -287,7 +287,7 @@ async function friendSendTitle(el) {
   if (result.success || result.duplicate) {
     el.textContent = `${displayName(friend)} ✓`;
     el.setAttribute('aria-label', `Enviado para ${displayName(friend)}`);
-    showToast(result.success ? `Enviado para ${displayName(friend)}!` : `${displayName(friend)} já recebeu este título.`);
+    showToast(result.success ? `Enviado para ${displayName(friend)}` : `${displayName(friend)} já recebeu este título.`);
     if (result.success) {
       recordSocial('sharesSent');
       trackChallenge('shared');
@@ -362,7 +362,7 @@ async function requestFriendship(username) {
     showToast('Não foi possível enviar o pedido. Tente de novo.', 'error');
   } else {
     sent = true;
-    showToast(`Pedido enviado para ${displayName(found.user)}!`);
+    showToast(`Pedido enviado para ${displayName(found.user)}`);
   }
   await refreshFriends();
   return sent;
@@ -370,7 +370,7 @@ async function requestFriendship(username) {
 
 async function friendAccept(id) {
   const result = await supabaseAcceptFriend(id);
-  showToast(result.success ? 'Amizade aceita!' : 'Não foi possível aceitar. Tente de novo.', result.success ? 'success' : 'error');
+  showToast(result.success ? 'Amizade aceita' : 'Não foi possível aceitar. Tente de novo.', result.success ? 'success' : 'error');
   await refreshFriends();
 }
 
@@ -417,7 +417,7 @@ export async function openFriendLinkFromUrl() {
 
   const clean = username.trim().replace(/^@/, '');
   if (clean === session.userProfile?.username) {
-    showToast('Este é o seu próprio link. Envie para um amigo!');
+    showToast('Este é o seu próprio link. Envie para um amigo');
     return;
   }
   const ok = await confirmDialog({
@@ -558,7 +558,7 @@ function friendMatchCurrent() {
 export async function sendInviteToFriend(friendId, code) {
   const friend = friends.find(f => f.other_id === friendId);
   const result = await supabaseSendMatchInvite(session.currentUserId, friendId, code);
-  showToast(result.success ? `Enviado para ${friend ? displayName(friend) : 'seu amigo'}!` : 'Não foi possível enviar. Tente pelo link.', result.success ? 'success' : 'error');
+  showToast(result.success ? `Enviado para ${friend ? displayName(friend) : 'seu amigo'}` : 'Não foi possível enviar. Tente pelo link.', result.success ? 'success' : 'error');
 }
 
 function renderInbox(invites) {

@@ -56,7 +56,7 @@ async function salvarPerfil() {
     const email = document.getElementById('profile-email').value.trim();
 
     if (!name) {
-        showToast("Digite um nome válido!", "error");
+        showToast("Digite um nome válido", "error");
         return;
     }
 
@@ -72,9 +72,9 @@ async function salvarPerfil() {
         session.userProfile = result.profile;
         updateUserDisplay();
         closeModal('modal-profile');
-        showToast("Perfil salvo com sucesso!");
+        showToast("Perfil salvo com sucesso");
     } else {
-        showToast("Erro ao salvar perfil!", "error");
+        showToast("Erro ao salvar perfil", "error");
     }
 }
 
@@ -82,7 +82,7 @@ async function salvarPerfil() {
 
 async function alterarSenha() {
     if (!isAccount()) {
-        showToast("Convidados não podem alterar senha!", "error");
+        showToast("Convidados não podem alterar senha", "error");
         return;
     }
 
@@ -90,7 +90,7 @@ async function alterarSenha() {
     const confirmPassword = document.getElementById('confirm-new-password').value;
 
     if (!newPassword || !confirmPassword) {
-        showToast("Preencha os dois campos de senha!", "error");
+        showToast("Preencha os dois campos de senha", "error");
         return;
     }
 
@@ -105,7 +105,7 @@ async function alterarSenha() {
     if (result.success) {
         document.getElementById('new-password').value = '';
         document.getElementById('confirm-new-password').value = '';
-        showToast("Senha alterada com sucesso!");
+        showToast("Senha alterada com sucesso");
     } else {
         showToast("Erro ao alterar senha: " + result.error, "error");
     }
@@ -115,7 +115,7 @@ async function alterarSenha() {
 
 async function deletarConta() {
     if (!isAccount()) {
-        showToast("Convidados não têm conta para deletar!", "error");
+        showToast("Convidados não têm conta para deletar", "error");
         return;
     }
 
@@ -145,7 +145,7 @@ async function deletarConta() {
         closeModal('modal-profile');
         endSession();
 
-        showToast("Conta deletada com sucesso. Até mais!");
+        showToast("Conta deletada com sucesso. Até mais");
     } else {
         showToast("Não foi possível deletar a conta. Nada foi apagado; tente de novo.", "error");
     }

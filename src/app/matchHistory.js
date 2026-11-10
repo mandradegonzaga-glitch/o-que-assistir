@@ -102,7 +102,7 @@ async function matchHistorySave(at) {
   const titles = await loadTitles(entry);
   const added = await addManyToWatchlist(titles.map(t => ({ ...t, media_type: entry.type })));
   showToast(added
-    ? `${added === 1 ? 'Título salvo' : `${added} títulos salvos`} em Quero Assistir!`
+    ? `${added === 1 ? 'Título salvo' : `${added} títulos salvos`} em Quero Assistir`
     : 'Esses títulos já estão em Quero Assistir.');
 }
 

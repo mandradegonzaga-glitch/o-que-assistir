@@ -25,6 +25,6 @@ describe('passwordLevel', () => {
 
 it('senha nova: curta, diferente da confirmação ou certa', () => {
   expect(passwordError('12345', '12345')).toMatch(/pelo menos 6/);
-  expect(passwordError('123456', '123457')).toBe('As senhas não coincidem!');
+  expect(passwordError('123456', '123457')).toBe('As senhas não coincidem');
   expect(passwordError('123456', '123456')).toBeNull();
 });

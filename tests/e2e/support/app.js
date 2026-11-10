@@ -132,7 +132,7 @@ export async function openMoreFilters(page) {
   if (!(await details.evaluate(el => el.open))) await page.locator('#more-filters summary').click();
 }
 
-// Os Filtros Inteligentes começam recolhidos (o resumo mostra o que vale)
+// Os Filtros começam recolhidos (o resumo mostra o que vale)
 export async function expandFilters(page) {
   const toggle = page.locator('#filters-toggle');
   if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
