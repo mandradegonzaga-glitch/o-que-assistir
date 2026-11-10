@@ -33,6 +33,10 @@ export function discoverRequest(type, filters = {}) {
     minRating = null,
     sortBy = 'popularity.desc',
     releases = null, // { today: Date } → só lançamentos recentes (ver releaseWindow)
+    // O app sugere o que dá para ver hoje em casa: sem plataforma escolhida, só o que está em
+    // streaming no Brasil (assinatura, grátis ou com anúncios). O Top 10 desliga para mostrar o
+    // que está em alta, cinema incluído; lançamentos já têm a regra deles.
+    streaming = true,
   } = filters;
   const endpoint = getTmdbEndpoint(type);
   const isDorama = type === 'dorama';
@@ -50,7 +54,9 @@ export function discoverRequest(type, filters = {}) {
     with_keywords: special?.keywords,
     without_genres: [isDorama ? DORAMA_PARAMS.without_genres : '', moodGenres?.without].filter(Boolean).join('|'),
     with_people: personId,
-    ...(provider && { with_watch_providers: provider, watch_region: 'BR' }),
+    ...(provider
+      ? { with_watch_providers: provider, watch_region: 'BR' }
+      : streaming && !releases && { with_watch_monetization_types: 'flatrate|free|ads', watch_region: 'BR' }),
     ...RUNTIME[duration],
   };
 

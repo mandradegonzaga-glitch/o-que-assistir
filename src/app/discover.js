@@ -254,7 +254,7 @@ async function mostrarTop10() {
     showSkeletonLoader();
 
     try {
-        const data = await fetchDiscover(discoverRequest({ duration: '', personId: null, minVotes: 100 }));
+        const data = await fetchDiscover(discoverRequest({ duration: '', personId: null, minVotes: 100, streaming: false }));
         renderResults(data.results.slice(0,10), true);
         markOpenList(btn);
     } catch(e) {

@@ -28,6 +28,18 @@ describe('buildDiscoverUrl', () => {
     expect(url).toContain('watch_region=BR');
   });
 
+  it('sem plataforma escolhida, só o que já dá para ver em streaming no Brasil', () => {
+    const url = buildDiscoverUrl('movie', {});
+    expect(url).toContain('with_watch_monetization_types=flatrate|free|ads');
+    expect(url).toContain('watch_region=BR');
+  });
+
+  it('streaming: false (Top 10) também traz o que só está no cinema', () => {
+    const url = buildDiscoverUrl('movie', { streaming: false });
+    expect(url).not.toContain('with_watch_monetization_types');
+    expect(url).not.toContain('watch_region');
+  });
+
   it('dorama: série coreana sem animação', () => {
     const url = buildDiscoverUrl('dorama', {});
     expect(url).toContain('with_origin_country=KR');
@@ -108,6 +120,10 @@ describe('lançamentos', () => {
     expect(url).toContain('&with_genres=27');
     expect(url).toContain('&release_date.gte=2026-09-22&release_date.lte=2026-11-06&with_release_type=4&region=BR');
     expect(url).not.toContain('1990');
+  });
+
+  it('lançamentos têm a regra própria, sem o filtro de streaming', () => {
+    expect(buildDiscoverUrl('movie', { releases: { today } })).not.toContain('with_watch_monetization_types');
   });
 
   it('series and doramas: first air date', () => {
