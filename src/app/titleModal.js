@@ -128,7 +128,7 @@ async function loadSimilar(f, type, mediaType, signal) {
     const tab = document.getElementById('tab-parecidos');
     section.hidden = false;
     tab.hidden = false;
-    showSectionLoading('m-similar', 'Carregando parecidos...');
+    showSectionLoading('m-similar', 'Carregando parecidos…');
     try {
         const data = await tmdbGet(`/${type}/${f.id}/recommendations`, {}, { signal });
         if (signal.aborted || state.currentMovie?.id !== f.id) return;
@@ -309,8 +309,8 @@ export async function abrirModal(item, { fromDraw = false } = {}) {
     // Limpa o título anterior antes de abrir: as seções abaixo chegam depois
     document.getElementById('video-area').style.display = 'none';
     document.getElementById('trailer-frame').src = '';
-    showSectionLoading('cast-list', 'Carregando elenco...');
-    showSectionLoading('m-providers', 'Verificando onde assistir...');
+    showSectionLoading('cast-list', 'Carregando elenco…');
+    showSectionLoading('m-providers', 'Verificando onde assistir…');
 
     const vistos = session.user.history || [];
 

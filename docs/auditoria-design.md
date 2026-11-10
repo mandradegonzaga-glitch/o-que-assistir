@@ -13,13 +13,13 @@ Marque `[x]` quando aplicado.
 - [x] **A3. Brilho colorido na moldura:** `.user-pill:hover`, `.btn-main:hover`, `.result-item:hover`, `.empty-state-cta:hover`, `.scroll-top-btn:hover` (`--shadow-glow`) e o degradê amarelo→roxo do `.avatar` ("?" do topo) → sombra neutra / cor lisa. Fica: `.roulette-center` (a roleta é momento).
 - [x] **A4. Amarelo demais na moldura.** Ícones de "Outros jeitos de escolher" em amarelo → cor do texto; os dois links "Como funciona(m)?" amarelos sublinhados → texto secundário; botão "voltar ao topo" amarelo disputa com o Sortear da barra → superfície neutra.
 - [x] **A5. Texto.** "Inteligente(s)", "algoritmo", "filtros avançados" (boas-vindas, "Filtros Inteligentes", meta description) → concreto ("Filtros"). 31 de 121 avisos terminam em "!" → sem exclamação, menos celebração. Maiúsculas no meio: "Criar Conta", "Já Vi", "Entrar como Convidado", "Girar Roleta!" → frase normal.
-- [ ] **A6. Animação que mexe em largura/altura** (10): `.password-strength-bar`, `.onboarding-dot`, `.loading-bar` + `@keyframes loading-progress`, `.up-next-card__progress-bar`, `.badges-progress__fill`, `.dna__genre-fill`, `.dna__month-fill` → `transform: scaleX/scaleY`. Foco: anel do `input:focus` tem transição (deve ser instantâneo) e `.input-dark:focus` usa borda → `outline`.
+- [x] **A6. Animação que mexe em largura/altura** (10): `.password-strength-bar`, `.onboarding-dot`, `.loading-bar` + `@keyframes loading-progress`, `.up-next-card__progress-bar`, `.badges-progress__fill`, `.dna__genre-fill`, `.dna__month-fill` → `transform: scaleX/scaleY`. Foco: anel do `input:focus` tem transição (deve ser instantâneo) e `.input-dark:focus` usa borda → `outline`.
 - [x] **A7. Passar o mouse.** Subir + sombra em 9 seletores (`.card`, `.btn-main`, `.user-pill`…) e `scale(1.05)` em 3 → só cor/superfície (DESIGN: hover é troca de cor).
-- [ ] **A8. Números:** `.stat-card__value` sem `tabular-nums`.
-- [ ] **A9. Cartão "Filtros"** recolhido tem uma faixa vazia entre "Nenhum filtro: vale tudo" e "Como funcionam?".
-- [ ] **A10. `overflow-x: hidden` no `body`** → `clip` (o `hidden` quebra `position: sticky`, usado nas abas do título).
+- [x] **A8. Números:** `.stat-card__value` sem `tabular-nums`.
+- [x] **A9. Cartão "Filtros"** recolhido tem uma faixa vazia entre "Nenhum filtro: vale tudo" e "Como funcionam?".
+- [x] **A10. `overflow-x: hidden` no `body`** → `clip` (o `hidden` quebra `position: sticky`, usado nas abas do título).
 - [ ] **A11. Espaçamento fora da grade de 4:** 83 valores (6, 10, 14px…) e 37 que já têm token `--space-*` → trocar por tokens, em lote, conferindo prints antes/depois.
-- [ ] **A12. Baratos:** aviso (`.toast`) com faixa colorida só à esquerda → borda fina toda; aspas retas → “ ” e "..." → "…" nos textos visíveis.
+- [x] **A12. Baratos:** aviso (`.toast`) com faixa colorida só à esquerda → borda fina toda; aspas retas → “ ” e "..." → "…" nos textos visíveis.
 
 ## Bugs achados no caminho (não são estilo)
 

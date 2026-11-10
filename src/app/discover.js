@@ -129,8 +129,8 @@ function surpreendaMe() {
     }, { failure: 'Erro na API.' });
 }
 
-// Lista para o sorteio: "Parecido com..." (recomendações do título informado) ou os filtros.
-// null quando o título de "Parecido com..." não existe (o aviso já foi dado).
+// Lista para o sorteio: "Parecido com…" (recomendações do título informado) ou os filtros.
+// null quando o título de "Parecido com…" não existe (o aviso já foi dado).
 async function fetchDrawList(endpoint) {
     const similarInput = state.filters.similar;
 
@@ -159,7 +159,7 @@ function sortearFilme() {
     const btn = document.getElementById('btn-sortear');
     return whileBusy(btn, async () => {
         const idle = btn.innerHTML;
-        btn.innerHTML = ph('circle-notch', { weight: 'bold', cls: 'icon spin icon-16 icon-lead-6' }) + 'Buscando...';
+        btn.innerHTML = ph('circle-notch', { weight: 'bold', cls: 'icon spin icon-16 icon-lead-6' }) + 'Buscando…';
         try {
             await drawFromFilters();
         } finally {
@@ -236,7 +236,7 @@ function setPillLoading(btn, on) {
     const label = btn.querySelector('.list-pill__label');
     if (on) {
         btn.dataset.label = label.textContent;
-        label.textContent = 'Carregando...';
+        label.textContent = 'Carregando…';
     } else if (btn.dataset.label) {
         label.textContent = btn.dataset.label;
     }

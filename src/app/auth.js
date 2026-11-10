@@ -211,7 +211,7 @@ async function esqueceuSenha() {
 
     if (!confirmar) return;
 
-    showToast("Enviando email...");
+    showToast("Enviando email…");
 
     const result = await supabaseResetPassword(email);
 

@@ -36,7 +36,7 @@ function syncProviderOption(selectIt) {
   const existing = select.querySelector(`option[value="${MY_PROVIDERS_VALUE}"]`);
   const hasProviders = getMyProviders().length > 0;
 
-  select.querySelector(`option[value="${CHOOSE_PROVIDERS_VALUE}"]`).textContent = hasProviders ? 'Editar minhas plataformas...' : 'Escolher minhas plataformas...';
+  select.querySelector(`option[value="${CHOOSE_PROVIDERS_VALUE}"]`).textContent = hasProviders ? 'Editar minhas plataformas…' : 'Escolher minhas plataformas…';
 
   if (!hasProviders) {
     existing?.remove();

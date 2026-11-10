@@ -137,7 +137,7 @@ async function deletarConta() {
 
     if (!confirmarFinal) return;
 
-    showToast("Deletando conta...");
+    showToast("Deletando conta…");
 
     const result = await supabaseDeleteAccount();
 

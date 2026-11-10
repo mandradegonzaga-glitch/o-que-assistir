@@ -52,7 +52,7 @@ test.describe('sorteio', () => {
     await enterAsGuest(page);
     await page.locator('#btn-sortear').click();
     await expect(modal(page)).toBeVisible();
-    await expect(page.locator('#cast-list')).toHaveText('Carregando elenco...');
+    await expect(page.locator('#cast-list')).toHaveText('Carregando elenco…');
 
     release();
     await expect(page.locator('#cast-list')).toContainText('Atriz Lenta');
@@ -184,7 +184,7 @@ test.describe('minhas plataformas', () => {
   test('"Onde" lista os mesmos destaques do perfil', async ({ page }) => {
     await page.goto('/');
     const labels = await page.locator('#input-provider option').allTextContents();
-    expect(labels).toEqual(['Onde: Todas as plataformas', 'Netflix', 'Prime Video', 'Apple TV', 'Disney+', 'Paramount+', 'HBO Max', 'Globoplay', 'Claro video', 'Looke', 'MUBI', 'Crunchyroll', 'Escolher minhas plataformas...']);
+    expect(labels).toEqual(['Onde: Todas as plataformas', 'Netflix', 'Prime Video', 'Apple TV', 'Disney+', 'Paramount+', 'HBO Max', 'Globoplay', 'Claro video', 'Looke', 'MUBI', 'Crunchyroll', 'Escolher minhas plataformas…']);
   });
 
   test('"Escolher" abre o perfil, mantém o filtro e não vai para a URL', async ({ page }) => {
@@ -200,7 +200,7 @@ test.describe('minhas plataformas', () => {
 
     await choice(page, 'MUBI').check();
     await expect(select).toHaveValue('minhas');
-    await expect(select.locator('option[value="escolher"]')).toHaveText('Editar minhas plataformas...');
+    await expect(select.locator('option[value="escolher"]')).toHaveText('Editar minhas plataformas…');
     await expect(page).toHaveURL(/onde=minhas/);
   });
 
