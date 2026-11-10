@@ -550,3 +550,18 @@ Regras combinadas: cada etapa numa branch `redesign/etapa-N`, com commit e envio
 **Alternativas consideradas:**
 - Seguir corrigindo cada caso especial no lugar → o mesmo tipo de bug voltaria em cada tela nova.
 
+## D001-050 — DESIGN.md como árbitro do visual, fundo azul-noite e sorteio só com streaming
+
+**Data:** 2026-11-10 · **Tarefa:** T001-137
+
+**Contexto:** duas skills de design novas (`unslop`, `hallmark`) auditam a tela e se contradizem (bolinha de status, largura, itálico, carimbo no CSS), e cada uma quer impor a própria direção. A auditoria achou pouca "cara de IA" (modo polimento). O sorteio sem filtro trazia 44 de 100 títulos estreados nos últimos 90 dias, muitos só no cinema.
+
+**Decisão:**
+- `DESIGN.md` na raiz guarda a direção e decide os conflitos; os valores ficam no `:root` do `style.css` (o arquivo só cita os tokens).
+- Decisões do usuário: fundo **azul-noite** (comparou roxo, grafite e azul no app; preferiu cinza ou azul ao roxo, e o azul mantém personalidade sem a "cara de template" do cinza puro); letreiro só nos momentos; brilho e degradê só no conteúdo; bolinha só quando informa.
+- Sem plataforma escolhida, os pedidos ao `/discover` trazem só o que está em streaming no Brasil (`with_watch_monetization_types=flatrate|free|ads`); Top 10 desliga, Lançamentos tem a regra própria.
+- O ingresso (SORTEAR AGORA e Sortear da barra) fica como estava: a forma única testada foi recusada pelo usuário.
+
+**Alternativas consideradas:**
+- Grafite (cinza neutro) → a própria lista do unslop chama de "cara de template".
+- Juntar os 137 brancos/pretos translúcidos em tokens → troca texto por texto sem ganho; ficaram só as cores com significado.

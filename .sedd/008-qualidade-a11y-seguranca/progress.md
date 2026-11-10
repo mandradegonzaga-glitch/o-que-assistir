@@ -1,7 +1,7 @@
 # Implementation Progress
 
 > Feature: 008-qualidade-a11y-seguranca
-> Last Updated: 2026-11-07 (redesign, etapas 1 e 2)
+> Last Updated: 2026-11-10 (auditoria de design)
 > Branch: `004-series-tracking` (D001-001). Todo push nesta branch publica o site na Vercel.
 
 ## Summary
@@ -19,6 +19,8 @@
 ---
 
 ## Para retomar
+
+**PAUSA 2026-11-10 — AUDITORIA DE DESIGN FEITA (T001-137, D001-050): branch `refactor/untangle`, LOCAL (sem push), último commit = o desta pausa.** `DESIGN.md` (raiz) decide o visual; `docs/auditoria-design.md` tem tudo marcado. Fundo azul-noite, letreiro só em títulos/ingresso, hover só cor, textos sem "!", espaçamentos na grade, cores com dono, sorteio só com streaming. Jest 435, banco 25, e2e 260. Skills `unslop` e `hallmark` agora de uso livre (DESIGN.md manda). Regra nova no CLAUDE.md global: bug → primeiro o teste que falha. **Ao reabrir, perguntar:** (1) rodar a rodada de revisores com subagentes? (cara; **só com pedido explícito** — "faça tudo" não conta); (2) juntar `refactor/untangle` com `redesign/etapa-5` e enviar (confirmar antes do push); (3) depois, 5c (Match de arrastar + Deu Match!), com captação no Dribbble antes. Detalhe pequeno: `src/app/discover.js:147` ainda tem `"…"...` com aspas retas e três pontos. **Não refazer:** forma única dos dois botões-ingresso (usuário achou feio).
 
 **REFATORAÇÃO "UNTANGLE" (D001-049, T001-135, atualizado em 2026-11-09): branch `refactor/untangle`, LOCAL (sem push), último commit = o desta pausa.** Registro `docs/untangle-decisoes.md` aplicado inteiro (grupos 1 a 7) + ícone da Roleta (T001-136). Jest 425, banco 25, e2e 260, 0 ciclos. **Ao reabrir:** perguntar ao usuário o que seguir: (a) nova rodada de revisores com subagentes (passo 5 da skill; cara, só se ele pedir), (b) juntar `refactor/untangle` com `redesign/etapa-5` e enviar, ou (c) seguir o redesign na 5c (Match de arrastar + Deu Match!), já sobre o código refatorado. **Regra nova (CLAUDE.md global):** todo código novo segue as regras do untangle; usar os donos que já existem (`setFilters`, `openModal`, `whileBusy`, `storage`...). Skills globais novas: `motion-prompt` (nomes e tempos de efeitos; útil no "Deu Match!") e `hallmark` (só por `/hallmark audit`).
 

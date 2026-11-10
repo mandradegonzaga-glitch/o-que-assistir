@@ -2,6 +2,26 @@
 
 All notable changes to this feature will be documented in this file.
 
+## [2026-11-10, auditoria de design] — branch `refactor/untangle` (local, ainda não publicado)
+
+### Changed
+
+- Fundo azul-noite no lugar do roxo
+- Botões e rótulos na fonte de texto; o letreiro fica nos títulos e no ingresso
+- Passar o mouse só troca a cor (sem brilho nem "pulo"); menos amarelo fora da ação principal
+- Textos sem exclamação fora de comemoração, em frase normal; "Filtros Inteligentes" vira "Filtros"
+- Sem plataforma escolhida, o sorteio traz só o que já está em streaming no Brasil
+- Aviso mostra o tipo numa bolinha; espaçamentos e cores organizados (sem mudança visível)
+
+### Fixed
+
+- Página do título mostrava trailer removido do YouTube
+- "Onde assistir" repetia o serviço (Netflix e "Netflix Standard with Ads")
+
+### Removed
+
+- Links "Apoiar" e "Feedback" do rodapé, até existirem os endereços reais
+
 ## [2026-11-09, refatoração "untangle"] — branch `refactor/untangle` (local, ainda não publicado)
 
 ### Changed
