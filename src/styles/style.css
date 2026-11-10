@@ -453,8 +453,6 @@ header {
 .section-title {
     font-size: 0.85rem;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
     color: var(--text-secondary);
 }
 
@@ -484,8 +482,6 @@ header {
     font-family: inherit;
     font-size: 0.85rem;
     font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
 }
 
 .home-row__note {
@@ -675,10 +671,8 @@ header {
 
 .home-card__kind {
     color: var(--accent-primary);
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
 }
 
 /* Cada indicação na cor do próprio tipo */
@@ -823,8 +817,6 @@ header {
     line-height: 1.2;
     font-size: 0.85rem;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
     color: var(--text-secondary);
     transition: color var(--duration-normal) var(--ease-smooth);
 }
@@ -1025,8 +1017,6 @@ header {
     font-family: inherit;
     font-size: 0.85rem;
     font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
 }
 
 .fun-modes__list {
@@ -1149,10 +1139,8 @@ header {
 
 .battle__stage-name {
     color: var(--text-tertiary);
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
 }
 
 .battle__stage-group.is-active .battle__stage-name {
@@ -1326,8 +1314,6 @@ header {
     color: var(--text-secondary);
     font-size: 0.8rem;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
 }
 
 .battle__champion-name {
@@ -1361,8 +1347,6 @@ header {
     color: var(--text-secondary);
     font-size: 0.8rem;
     font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
 }
 
 .blind__title {
@@ -1426,10 +1410,8 @@ header {
     border-radius: var(--radius-md);
     color: var(--accent-on);
     font-family: var(--font-family);
-    font-size: 0.95rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-size: 1rem;
+    font-weight: 600;
     cursor: pointer;
     overflow: hidden;
     transition: transform 0.2s var(--ease-smooth),
@@ -1501,9 +1483,7 @@ header {
     color: var(--accent-text);
     font-family: var(--font-family);
     font-size: 0.95rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-weight: 600;
     cursor: pointer;
     transition: background-color var(--duration-normal) var(--ease-smooth),
                 transform var(--duration-normal) var(--ease-smooth);
@@ -1535,9 +1515,7 @@ header {
     color: #f87171; /* #ef4444 como texto no fundo vermelho translúcido ficava abaixo de 4.5:1 */
     font-family: var(--font-family);
     font-size: 0.95rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-weight: 600;
     cursor: pointer;
     transition: background-color var(--duration-normal) var(--ease-smooth),
                 transform var(--duration-normal) var(--ease-smooth),
@@ -2000,9 +1978,7 @@ header {
     border-radius: var(--radius-md);
     color: var(--accent-on);
     font-size: 1rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-weight: 600;
     cursor: pointer;
     transition: background-color var(--duration-normal) var(--ease-smooth),
                 transform var(--duration-normal) var(--ease-smooth),
@@ -2520,9 +2496,7 @@ header {
     border-radius: var(--radius-md);
     color: var(--text-primary);
     font-size: 0.85rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
+    font-weight: 600;
     cursor: pointer;
     transition: background-color 0.25s var(--ease-smooth),
                 transform 0.2s var(--ease-smooth);
@@ -2581,9 +2555,7 @@ header {
     background: var(--accent-primary);
     border: none;
     color: var(--accent-on);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-weight: 600;
     cursor: pointer;
     transition: background var(--duration-fast) var(--ease-smooth);
 }
@@ -3624,18 +3596,15 @@ button:focus-visible,
     font-size: 0.75rem;
     color: var(--text-muted);
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
     margin: 0;
 }
 
 /* Badge de status da série */
 .episodes-status-badge {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 700;
     padding: 2px 8px;
     border-radius: var(--radius-full);
-    letter-spacing: 0.04em;
 }
 
 .episodes-status-badge.status-watching {
@@ -4074,15 +4043,12 @@ button:focus-visible,
 }
 
 /* ==================== IDENTIDADE: LETREIRO ==================== */
-/* Títulos falam a língua do cartaz: condensada e pesada */
+/* Títulos e o ingresso falam a língua do cartaz: condensada e pesada. Botões e rótulos ficam na fonte de texto (DESIGN.md) */
 h1, h2, h3,
 .section-title,
 .modal-title,
 .card__label,
-.btn-main,
-.btn-modal,
-.close-btn,
-.mode-tab,
+#btn-sortear,
 .confirm-dialog__title {
     font-family: var(--font-display);
     letter-spacing: 0.02em;
@@ -4114,24 +4080,6 @@ h1, h2, h3,
 .card__label {
     font-size: 1.3rem;
     font-weight: 800;
-}
-
-.btn-main,
-.btn-modal {
-    font-size: 1.2rem;
-    font-weight: 800;
-    text-transform: none;
-}
-
-.mode-tab {
-    font-size: 1.15rem;
-    font-weight: 800;
-}
-
-.close-btn {
-    font-size: 1.15rem;
-    font-weight: 800;
-    text-transform: none;
 }
 
 /* O bilhete: recortes laterais e picote no botão que decide a noite */
@@ -4389,16 +4337,6 @@ h1, h2, h3,
 .episode-checkbox:checked::after { border-color: var(--accent-on); }
 .remove-btn { color: var(--accent-on); }
 
-/* Botões secundários no mesmo letreiro */
-.btn-outline,
-.btn-danger {
-    font-family: var(--font-display);
-    font-size: 1.15rem;
-    font-weight: 800;
-    letter-spacing: 0.02em;
-    text-transform: none;
-}
-
 /* hidden sempre vence: regras com display (flex/grid) não podem mostrar o que está oculto */
 [hidden] {
     display: none !important;
@@ -4446,15 +4384,6 @@ header { gap: var(--space-sm); }
     border: 0;
     color: inherit;
     cursor: pointer;
-}
-
-.btn-login,
-.btn-guest {
-    font-family: var(--font-display);
-    font-size: 1.2rem;
-    font-weight: 800;
-    letter-spacing: 0.02em;
-    text-transform: none;
 }
 
 .onboarding-card .btn-main {
@@ -4712,8 +4641,6 @@ select.input-dark,
     color: var(--text-secondary);
     font-size: 0.75rem;
     font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
 }
 
 .challenge__text {
@@ -4904,8 +4831,6 @@ select.input-dark,
     color: var(--text-secondary);
     font-size: 0.75rem;
     font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
 }
 
 .dna__months {
@@ -6545,8 +6470,6 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
     color: var(--text-secondary);
     font-size: 0.78rem;
     font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
 }
 
 .chip-group {
