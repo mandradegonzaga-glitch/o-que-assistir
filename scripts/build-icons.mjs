@@ -24,8 +24,7 @@ export const ICONS = {
   'dice-five': ['duotone'], 'eye-slash': ['duotone'], sword: ['duotone'], heart: ['regular', 'duotone', 'fill'],
   // ---- cabeçalho, abas e rodapé ----
   user: ['regular'], 'user-circle': ['duotone'], users: ['regular'], 'users-three': ['duotone'],
-  question: ['regular'], 'magnifying-glass': ['regular', 'bold', 'duotone'], coffee: ['regular'],
-  'chat-circle-text': ['regular'],
+  question: ['regular'], 'magnifying-glass': ['regular', 'bold', 'duotone'],
   // ---- barra de baixo (celular): traço normal, preenchido quando ativo ----
   house: ['regular', 'fill'],
   // ---- descobrir ----

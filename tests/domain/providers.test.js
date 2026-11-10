@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { FEATURED_PROVIDERS, buildOtherProviders, matchesProviderSearch } from '../../src/domain/providers.js';
+import { FEATURED_PROVIDERS, buildOtherProviders, matchesProviderSearch, watchProviders } from '../../src/domain/providers.js';
 
 const p = (provider_id, provider_name) => ({ provider_id, provider_name });
 
@@ -28,6 +28,23 @@ describe('buildOtherProviders', () => {
 
   it('ignores invalid entries', () => {
     expect(buildOtherProviders([null, {}, p('x', 'Y'), p(1, '')])).toEqual([]);
+  });
+});
+
+describe('watchProviders', () => {
+  const names = list => watchProviders(list).map(x => x.provider_name);
+
+  it('hides the ad plan when the same service is listed without it', () => {
+    expect(names([p(8, 'Netflix'), p(1796, 'Netflix Standard with Ads')])).toEqual(['Netflix']);
+    expect(names([p(119, 'Amazon Prime Video'), p(2100, 'Amazon Prime Video with Ads')])).toEqual(['Amazon Prime Video']);
+  });
+
+  it('keeps the ad plan when it is the only way to watch', () => {
+    expect(names([p(1796, 'Netflix Standard with Ads'), p(337, 'Disney Plus')])).toEqual(['Netflix Standard with Ads', 'Disney Plus']);
+  });
+
+  it('handles a missing list', () => {
+    expect(watchProviders()).toEqual([]);
   });
 });
 

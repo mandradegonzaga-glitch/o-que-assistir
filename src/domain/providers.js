@@ -17,6 +17,19 @@ export const FEATURED_PROVIDERS = [
 // e variações que repetem o mesmo serviço
 const NOT_A_SUBSCRIPTION = /channel|with ads|store|amazon video|premium/i;
 
+// "Netflix Standard with Ads", "Amazon Prime Video with Ads": o mesmo serviço, no plano com anúncios
+const AD_PLAN = /\s+(standard\s+)?with ads$/i;
+
+// "Onde assistir" de um título: o plano com anúncios só aparece quando o serviço não está lá sem ele
+export function watchProviders(flatrate = []) {
+  const plain = flatrate.filter(p => !AD_PLAN.test(p.provider_name)).map(p => p.provider_name.toLowerCase());
+  return flatrate.filter(p => {
+    if (!AD_PLAN.test(p.provider_name)) return true;
+    const base = p.provider_name.replace(AD_PLAN, '').toLowerCase();
+    return !plain.some(name => name.startsWith(base));
+  });
+}
+
 const featuredIds = new Set(FEATURED_PROVIDERS.map(p => p.id));
 
 // Une as listas de filmes e séries do TMDB, sem os destaques, em ordem alfabética

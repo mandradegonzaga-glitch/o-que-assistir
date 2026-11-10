@@ -221,12 +221,10 @@ test.describe('site', () => {
     await expect(page.locator('body')).toHaveAttribute('data-theme', 'tv');
   });
 
-  test('a página não mostra restos de template e o rodapé fica em linha', async ({ page }) => {
+  test('a página não mostra restos de template', async ({ page }) => {
     await page.goto('/');
     const text = await page.locator('body').textContent();
     expect(text).not.toMatch(/\$\d|\$\{|undefined|\[object/);
-    const [first, second] = await page.locator('.site-footer__link').all();
-    expect((await first.boundingBox()).y).toBe((await second.boundingBox()).y);
   });
 
   test('a chave do TMDB não aparece em nenhuma chamada do navegador', async ({ page, tmdbUrls }) => {

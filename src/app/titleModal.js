@@ -8,6 +8,9 @@ import { showToast } from '../ui/feedback.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { titleFacts, titleSize } from '../domain/titleFacts.js';
 import { cinemaLabel, cinemaStatus } from '../domain/cinemaRelease.js';
+import { watchProviders } from '../domain/providers.js';
+import { rankTrailers } from '../domain/trailers.js';
+import { firstAvailableVideo } from '../api/youtube.js';
 import { localDay } from '../utils/date.js';
 import { IMG_URL } from '../config/constants.js';
 import { getTmdbEndpoint, getTitle, isSeriesType } from '../domain/mediaItem.js';
@@ -215,17 +218,19 @@ async function loadCast(f, type, signal) {
 
 async function loadTrailer(f, type, signal) {
     try {
-        let vData = await tmdbGet(`/${type}/${f.id}/videos`, {}, { signal });
-        if (signal.aborted) return;
-        if(vData.results.length === 0) {
-            vData = await tmdbGet(`/${type}/${f.id}/videos`, { language: 'en-US' }, { signal });
+        // Dublado/legendado primeiro; o em inglês entra quando nenhum em português existe mais
+        let key = null;
+        for (const params of [{}, { language: 'en-US' }]) {
+            const vData = await tmdbGet(`/${type}/${f.id}/videos`, params, { signal });
+            if (signal.aborted) return;
+            key = await firstAvailableVideo(rankTrailers(vData.results));
+            if (signal.aborted) return;
+            if (key) break;
         }
-        if (signal.aborted) return;
-        const trailer = vData.results.find(v => v.site === 'YouTube');
         const vidArea = document.getElementById('video-area');
-        if(trailer) {
+        if(key) {
             vidArea.style.display = 'block';
-            document.getElementById('trailer-frame').src = `https://www.youtube-nocookie.com/embed/${trailer.key}`;
+            document.getElementById('trailer-frame').src = `https://www.youtube-nocookie.com/embed/${key}`;
         } else {
             vidArea.style.display = 'none';
         }
@@ -258,7 +263,7 @@ async function loadProviders(f, type, signal, detailsPromise) {
         provDiv.innerHTML = '';
         if(pData.results?.BR?.flatrate) {
             const link = pData.results.BR.link;
-            pData.results.BR.flatrate.forEach(p => {
+            watchProviders(pData.results.BR.flatrate).forEach(p => {
                 provDiv.innerHTML += `<a href="${escapeHtml(link)}" target="_blank" rel="noopener" aria-label="Ver no ${escapeHtml(p.provider_name)} (abre em nova aba)"><img src="${IMG_URL+p.logo_path}" class="provider-logo" alt="" width="44" height="44" loading="lazy" title="Ver no ${escapeHtml(p.provider_name)}"></a>`;
             });
         } else {
