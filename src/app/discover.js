@@ -159,7 +159,7 @@ function sortearFilme() {
     const btn = document.getElementById('btn-sortear');
     return whileBusy(btn, async () => {
         const idle = btn.innerHTML;
-        btn.innerHTML = ph('circle-notch', { weight: 'bold', cls: 'icon spin icon-16 icon-lead-6' }) + 'Buscando…';
+        btn.innerHTML = ph('circle-notch', { weight: 'bold', cls: 'icon spin icon-16 icon-lead-8' }) + 'Buscando…';
         try {
             await drawFromFilters();
         } finally {
@@ -308,7 +308,7 @@ function renderResults(list, rank=false, { caption = '', empty = '' } = {}) {
                 <h3 class="empty-state-title">${escapeHtml(empty || 'Nenhum resultado encontrado')}</h3>
                 <p class="empty-state-desc">Tente ajustar seus filtros ou fazer uma nova busca</p>
                 <button class="empty-state-cta" data-action="focusSearch">
-                    ${ph('magnifying-glass', { weight: 'bold', cls: 'icon-16 icon-lead-6' })}Nova Busca
+                    ${ph('magnifying-glass', { weight: 'bold', cls: 'icon-16 icon-lead-8' })}Nova Busca
                 </button>
             </div>
         `;

@@ -18,7 +18,7 @@ Marque `[x]` quando aplicado.
 - [x] **A8. Números:** `.stat-card__value` sem `tabular-nums`.
 - [x] **A9. Cartão "Filtros"** recolhido tem uma faixa vazia entre "Nenhum filtro: vale tudo" e "Como funcionam?".
 - [x] **A10. `overflow-x: hidden` no `body`** → `clip` (o `hidden` quebra `position: sticky`, usado nas abas do título).
-- [ ] **A11. Espaçamento fora da grade de 4:** 83 valores (6, 10, 14px…) e 37 que já têm token `--space-*` → trocar por tokens, em lote, conferindo prints antes/depois.
+- [x] **A11. Espaçamento fora da grade de 4:** 83 valores (6, 10, 14px…) e 37 que já têm token `--space-*` → trocar por tokens, em lote, conferindo prints antes/depois.
 - [x] **A12. Baratos:** aviso (`.toast`) com faixa colorida só à esquerda → borda fina toda; aspas retas → “ ” e "..." → "…" nos textos visíveis.
 
 ## Bugs achados no caminho (não são estilo)
