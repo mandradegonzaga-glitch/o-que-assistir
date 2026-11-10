@@ -47,7 +47,6 @@
     --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
     --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
-    --shadow-glow: 0 0 40px rgba(var(--accent-primary-rgb), 0.15);
 
     /* Transitions */
     /* Curvas fortes de saída: começam rápido (o olho vê a resposta na hora) e assentam devagar.
@@ -90,7 +89,6 @@
     --accent-primary-rgb: 255, 201, 77;
     --accent-hover: #ffd873;
     --accent-text: #ffc94d;
-    --shadow-glow: 0 0 40px rgba(255, 201, 77, 0.15);
 }
 
 /* Série: luz de tela */
@@ -99,7 +97,6 @@
     --accent-primary-rgb: 61, 214, 198;
     --accent-hover: #6be3d6;
     --accent-text: #3dd6c6;
-    --shadow-glow: 0 0 40px rgba(61, 214, 198, 0.15);
 }
 
 /* Dorama: flor de cerejeira */
@@ -108,7 +105,6 @@
     --accent-primary-rgb: 255, 143, 184;
     --accent-hover: #ffb0cd;
     --accent-text: #ff8fb8;
-    --shadow-glow: 0 0 40px rgba(255, 143, 184, 0.15);
 }
 
 /* ==================== RESET & BASE ==================== */
@@ -309,9 +305,7 @@ header {
 
 @media (hover: hover) and (pointer: fine) {
     .user-pill:hover {
-        border-color: rgba(var(--accent-primary-rgb), 0.3);
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md), var(--shadow-glow);
+        border-color: var(--border-strong);
     }
 }
 
@@ -319,7 +313,8 @@ header {
     width: 36px;
     height: 36px;
     border-radius: var(--radius-full);
-    background: linear-gradient(135deg, var(--accent-primary), var(--bg-elevated));
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -630,7 +625,7 @@ header {
     height: auto;
     object-fit: cover;
     margin-bottom: 4px;
-    transition: transform var(--duration-normal) var(--ease-smooth);
+    transition: filter var(--duration-normal) var(--ease-smooth);
 }
 
 .home-card__poster--empty {
@@ -639,7 +634,7 @@ header {
 
 @media (hover: hover) and (pointer: fine) {
     .home-card:hover .home-card__poster {
-        transform: translateY(-3px);
+        filter: brightness(1.08);
     }
 }
 
@@ -798,9 +793,7 @@ header {
 
 @media (hover: hover) and (pointer: fine) {
     .card:hover {
-        transform: translateY(-4px);
         border-color: var(--border-strong);
-        box-shadow: var(--shadow-lg);
     }
 }
 
@@ -1062,7 +1055,7 @@ header {
 .fun-mode__icon {
     grid-area: icon;
     display: inline-flex;
-    color: var(--accent-text);
+    color: var(--text-secondary);
 }
 
 .fun-mode__icon .ph { width: 30px; height: 30px; }
@@ -1435,8 +1428,7 @@ header {
 
 @media (hover: hover) and (pointer: fine) {
     .btn-main:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-lg), 0 0 30px rgba(var(--accent-primary-rgb), 0.4);
+        background: var(--accent-hover);
     }
 }
 
@@ -1497,7 +1489,6 @@ header {
 @media (hover: hover) and (pointer: fine) {
     .btn-outline:hover {
         background: rgba(var(--accent-primary-rgb), 0.1);
-        transform: translateY(-2px);
     }
 }
 
@@ -1525,8 +1516,6 @@ header {
 @media (hover: hover) and (pointer: fine) {
     .btn-danger:hover {
         background: rgba(239, 68, 68, 0.15);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
     }
 }
 
@@ -1590,10 +1579,8 @@ header {
 }
 
 @media (hover: hover) and (pointer: fine) {
-    .result-item:hover {
-        transform: scale(1.05) translateY(-4px);
-        z-index: 2;
-        box-shadow: var(--shadow-xl), var(--shadow-glow);
+    .result-item:hover img {
+        filter: brightness(1.08);
     }
 }
 
@@ -1604,7 +1591,8 @@ header {
     object-fit: cover;
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
-    transition: border-color var(--duration-normal) var(--ease-smooth);
+    transition: border-color var(--duration-normal) var(--ease-smooth),
+                filter var(--duration-normal) var(--ease-smooth);
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -1678,9 +1666,8 @@ header {
 }
 
 @media (hover: hover) and (pointer: fine) {
-    .library-item:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-lg);
+    .library-item:hover img {
+        filter: brightness(1.08);
     }
 }
 
@@ -1730,6 +1717,7 @@ header {
     object-fit: cover;
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
+    transition: filter var(--duration-normal) var(--ease-smooth);
 }
 
 .remove-btn {
@@ -1988,8 +1976,6 @@ header {
 @media (hover: hover) and (pointer: fine) {
     .btn-login:hover {
         background: var(--accent-hover);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(var(--accent-primary-rgb), 0.4);
     }
 }
 
@@ -2510,7 +2496,6 @@ header {
 @media (hover: hover) and (pointer: fine) {
     .btn-modal:hover {
         background: var(--border-default);
-        transform: translateY(-2px);
     }
 }
 
@@ -2601,7 +2586,6 @@ header {
 @media (hover: hover) and (pointer: fine) {
     .btn-nav:hover:not(:disabled) {
         background: var(--accent-primary);
-        transform: scale(1.05);
     }
 }
 
@@ -2643,7 +2627,6 @@ header {
 
 @media (hover: hover) and (pointer: fine) {
     .history-item:hover {
-        transform: scale(1.05);
         border-color: var(--accent-primary);
     }
 }
@@ -2787,12 +2770,6 @@ header {
     opacity: 1;
     filter: grayscale(0);
     transform: scale(1);
-}
-
-@media (hover: hover) and (pointer: fine) {
-    .badge-item.unlocked:hover {
-        transform: scale(1.02);
-    }
 }
 
 .badge-item.unlocked .badge-icon {
@@ -3010,12 +2987,6 @@ header {
     height: 64px;
     margin: 0 auto var(--space-lg);
     color: var(--accent-text);
-    animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
 }
 
 .empty-state-title {
@@ -3043,14 +3014,13 @@ header {
     font-weight: 600;
     text-decoration: none;
     cursor: pointer;
-    transition: transform var(--duration-normal) var(--ease-smooth),
-                box-shadow var(--duration-normal) var(--ease-smooth);
+    transition: background-color var(--duration-normal) var(--ease-smooth),
+                transform var(--duration-normal) var(--ease-smooth);
 }
 
 @media (hover: hover) and (pointer: fine) {
     .empty-state-cta:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-lg), var(--shadow-glow);
+        background: var(--accent-hover);
     }
 }
 
@@ -3207,10 +3177,10 @@ header {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--accent-primary);
-    border: none;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
     border-radius: var(--radius-full);
-    color: var(--accent-on);
+    color: var(--text-primary);
     cursor: pointer;
     opacity: 0;
     visibility: hidden;
@@ -3234,8 +3204,7 @@ header {
 
 @media (hover: hover) and (pointer: fine) {
     .scroll-top-btn:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-lg), var(--shadow-glow);
+        border-color: var(--border-strong);
     }
 }
 
@@ -5671,7 +5640,7 @@ body:has(#pwa-install-banner) {
     padding: 0 var(--space-xs);
     background: none;
     border: 0;
-    color: var(--accent-text);
+    color: var(--text-secondary);
     font: inherit;
     font-size: 0.85rem;
     font-weight: 600;
@@ -5860,7 +5829,7 @@ button.site-footer__link {
 }
 
 @media (hover: hover) and (pointer: fine) {
-    .list-card:hover { border-color: var(--accent-primary); transform: translateY(-2px); }
+    .list-card:hover { border-color: var(--accent-primary); }
 }
 
 /* Nome longo encurta com reticências, sem empurrar o cartão para fora da tela */
@@ -6736,7 +6705,7 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
     color: var(--accent-on);
 }
 
-/* ---------- Filtros Inteligentes recolhíveis ---------- */
+/* ---------- Filtros recolhíveis ---------- */
 /* O título é o botão; recolhido, o resumo diz o que está valendo */
 .section-toggle {
     flex: 1;
@@ -6980,7 +6949,7 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
 }
 
 /* ===== Títulos das seções do Início em proporção (redesign, 2026-11-08) =====
-   "O que você procura?" e "Filtros Inteligentes" ficavam pequenos (1,35rem na fonte condensada) perto
+   "O que você procura?" e "Filtros" ficavam pequenos (1,35rem na fonte condensada) perto
    das pílulas de 52px. Título maior; no celular, caixas com menos respiro para o SORTEAR AGORA
    continuar na primeira tela. */
 .section-title {
@@ -7007,7 +6976,7 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
     .section-title {
         font-size: 1.6rem;
     }
-    /* "Filtros Inteligentes" pode quebrar no celular: sem a fonte (rede lenta) a letra reserva é mais
+    /* "Filtros" pode quebrar no celular: sem a fonte (rede lenta) a letra reserva é mais
        larga e, sem quebra, passava da tela em 345px */
     .section-toggle .section-title {
         white-space: normal;
