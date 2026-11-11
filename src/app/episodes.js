@@ -5,11 +5,12 @@ import { salvarHistorico } from './library.js';
 import { emptyEpisodes, session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
-import { pluralize } from '../utils/format.js';
+import { formatDay, joinMeta, pluralize } from '../utils/format.js';
 import { isSeriesType, toLibraryItem } from '../domain/mediaItem.js';
 import { emit, on } from '../state/events.js';
 import { cachedSeason, getAllSeasons, getSeason } from '../api/tmdbSeries.js';
-import { buildEpisodeKey, episodeCode, parseEpisodeKey } from '../domain/seriesProgress.js';
+import { buildEpisodeKey, episodeCode, parseEpisodeKey, seriesUpNext } from '../domain/seriesProgress.js';
+import { tmdbImage } from '../domain/mediaItem.js';
 import { registerActions } from '../ui/actions.js';
 import { inHistory, inWatchlist, removeFromHistory, removeFromWatchlist } from './libraryStore.js';
 
@@ -22,9 +23,10 @@ on('title:closed', () => {
 
 async function loadEpisodesSection(seriesData) {
     const section = document.getElementById('episodes-section');
-    const select = document.getElementById('episodes-season-select');
+    const seasons = document.getElementById('episodes-seasons');
     const list = document.getElementById('episodes-list');
-    if (!section || !select || !list) return;
+    if (!section || !seasons || !list) return;
+    document.getElementById('m-series-progress').hidden = true; // a do título anterior não fica
 
     if (!canTrackEpisodes()) {
         section.hidden = true;
@@ -38,6 +40,7 @@ async function loadEpisodesSection(seriesData) {
     }
 
     section.hidden = false;
+    setEpisodesOpen(true); // cada título abre com os episódios à vista
     list.innerHTML = '<div class="episodes-loading">Carregando episódios...</div>';
 
     const seriesId = seriesData.id;
@@ -49,13 +52,9 @@ async function loadEpisodesSection(seriesData) {
 
     renderSeriesStatus(seriesData);
 
-    select.innerHTML = '';
-    for (let s = 1; s <= numberOfSeasons; s++) {
-        const opt = document.createElement('option');
-        opt.value = s;
-        opt.textContent = `Temporada ${s}`;
-        select.appendChild(opt);
-    }
+    seasons.innerHTML = Array.from({ length: numberOfSeasons }, (_, i) =>
+        `<button type="button" class="season-pill" data-action="escolherTemporada" data-season="${i + 1}" aria-pressed="${i === 0}">Temporada ${i + 1}</button>`).join('');
+    seasons.hidden = numberOfSeasons < 2; // uma temporada só: não há o que escolher
 
     if (numberOfSeasons > 0) {
         await renderEpisodeList(seriesId, 1);
@@ -66,8 +65,10 @@ async function loadEpisodesSection(seriesData) {
 
 async function renderEpisodeList(seriesId, seasonNumber) {
     const list = document.getElementById('episodes-list');
+    const summary = document.getElementById('episodes-summary');
     if (!list) return;
 
+    summary.innerHTML = '';
     list.innerHTML = '<div class="episodes-loading">Carregando...</div>';
 
     let seasonData;
@@ -84,31 +85,55 @@ async function renderEpisodeList(seriesId, seasonNumber) {
         return;
     }
 
-    list.innerHTML = `<div class="episodes-season-counter">${seasonCounter(seriesId, episodes)}</div>` + episodes.map(ep => {
-        const key = buildEpisodeKey(seriesId, ep.season_number, ep.episode_number);
-        const watched = session.episodes.watchedKeys.has(key);
-        const code = episodeCode(ep.season_number, ep.episode_number);
-        const name = ep.name || `Episódio ${ep.episode_number}`; // cache antigo sem nome
-        return `
-            <div class="episode-item ${watched ? 'is-watched' : ''}" role="listitem">
-                <label class="episode-item__main">
-                    <input
-                        type="checkbox"
-                        class="episode-checkbox"
-                        ${watched ? 'checked' : ''}
-                        data-change="toggleEpisode" data-series="${seriesId}" data-season="${ep.season_number}" data-episode="${ep.episode_number}"
-                        aria-label="${code} — ${escapeHtml(name)}">
+    renderSeasonSummary(seriesId, episodes);
+    list.innerHTML = episodes.map(ep => episodeHtml(seriesId, ep)).join('');
+}
+
+// Episódio: foto da cena, código, nome inteiro (até 2 linhas), data e o "visto" à direita.
+// A linha toda (menos o "Vi até aqui") marca e desmarca, como o checkbox
+function episodeHtml(seriesId, ep) {
+    const key = buildEpisodeKey(seriesId, ep.season_number, ep.episode_number);
+    const watched = session.episodes.watchedKeys.has(key);
+    const code = episodeCode(ep.season_number, ep.episode_number);
+    const name = ep.name || `Episódio ${ep.episode_number}`; // cache antigo sem nome
+    const still = tmdbImage(ep.still_path, 'w300');
+    const date = formatDay(ep.air_date);
+    const image = still
+        ? `<img class="episode-item__still" src="${still}" alt="" width="300" height="169" loading="lazy">`
+        : '<span class="episode-item__still" aria-hidden="true"></span>';
+    return `
+        <div class="episode-item ${watched ? 'is-watched' : ''}" role="listitem">
+            <label class="episode-item__main">
+                ${image}
+                <span class="episode-item__info">
                     <span class="episode-item__code">${code}</span>
                     <span class="episode-item__label">${escapeHtml(name)}</span>
-                </label>
-                <button type="button" class="episode-item__upto" data-action="marcarAteAqui" data-season="${ep.season_number}" data-episode="${ep.episode_number}" aria-label="Vi até ${code}: marca este e todos os anteriores">Vi até aqui</button>
-            </div>`;
-    }).join('');
+                    ${date ? `<span class="episode-item__date">${date}</span>` : ''}
+                </span>
+                <input
+                    type="checkbox"
+                    class="episode-checkbox"
+                    ${watched ? 'checked' : ''}
+                    data-change="toggleEpisode" data-series="${seriesId}" data-season="${ep.season_number}" data-episode="${ep.episode_number}"
+                    aria-label="${code} — ${escapeHtml(name)}">
+            </label>
+            ${ep.overview ? `<button type="button" class="episode-item__overview" data-action="alternarSinopse" aria-expanded="false">${escapeHtml(ep.overview)}</button>` : ''}
+            <button type="button" class="episode-item__upto" data-action="marcarAteAqui" data-season="${ep.season_number}" data-episode="${ep.episode_number}" aria-label="Vi até ${code}: marca este e todos os anteriores">Vi até aqui</button>
+        </div>`;
+}
+
+// Tocar no cabeçalho esconde ou mostra temporadas, resumo e lista
+function setEpisodesOpen(open) {
+    document.getElementById('episodes-body').hidden = !open;
+    document.getElementById('episodes-toggle').setAttribute('aria-expanded', String(open));
 }
 
 async function onSeasonChange(seasonNumber) {
     if (!session.episodes.seriesId) return;
-    await renderEpisodeList(session.episodes.seriesId, Number(seasonNumber));
+    document.querySelectorAll('#episodes-seasons .season-pill').forEach(pill => {
+        pill.setAttribute('aria-pressed', String(Number(pill.dataset.season) === seasonNumber));
+    });
+    await renderEpisodeList(session.episodes.seriesId, seasonNumber);
 }
 
 async function toggleEpisode(seriesId, seasonNumber, episodeNumber, checked) {
@@ -163,21 +188,31 @@ async function syncSeriesStatus(series, { unmarked = false } = {}) {
     return { leftWatchlist };
 }
 
-// "3/10 assistidos · 7 restantes" (ou "Concluída!") da temporada mostrada
-function seasonCounter(seriesId, episodes) {
+// Resumo da temporada mostrada: "3/10 assistidos · 7 restantes" (ou "Concluída"), um botão que
+// marca a temporada inteira (ou desmarca, se já está toda vista) e, se há algo marcado, "Desmarcar série"
+function renderSeasonSummary(seriesId, episodes) {
+    const summary = document.getElementById('episodes-summary');
+    if (!summary) return;
     const watched = episodes.filter(ep =>
         session.episodes.watchedKeys.has(buildEpisodeKey(seriesId, ep.season_number, ep.episode_number))
     ).length;
     const remaining = episodes.length - watched;
-    return `${watched}/${episodes.length} assistidos · ` + (remaining > 0
+    const status = remaining > 0
         ? `<strong>${remaining} ${pluralize(remaining, 'restante', 'restantes')}</strong>`
-        : '<strong class="text-success">Concluída</strong>');
+        : '<strong class="text-success">Concluída</strong>';
+    const toggle = remaining > 0
+        ? '<button type="button" class="episodes-bulk-btn" data-action="marcarTemporadaAtual">Marcar temporada como vista</button>'
+        : '<button type="button" class="episodes-bulk-btn" data-action="desmarcarTemporadaAtual">Desmarcar temporada</button>';
+    const unmarkSeries = session.episodes.watchedKeys.size > 0
+        ? '<button type="button" class="episodes-bulk-btn episodes-bulk-btn--link" data-action="desmarcarTodosEpisodios">Desmarcar série</button>'
+        : '';
+    summary.innerHTML = `<p class="episodes-season-counter">${joinMeta([`${watched}/${episodes.length} assistidos`, status])}</p>
+        <div class="episodes-summary__actions">${toggle}${unmarkSeries}</div>`;
 }
 
 function updateSeasonCounter(seriesId, seasonNumber) {
-    const counter = document.querySelector('.episodes-season-counter');
     const seasonData = cachedSeason(seriesId, seasonNumber);
-    if (counter && seasonData) counter.innerHTML = seasonCounter(seriesId, seasonData.episodes);
+    if (seasonData) renderSeasonSummary(seriesId, seasonData.episodes);
 }
 
 // Selo "Assistindo"/"Concluído" e o botão "Já vi" da série aberta; só desenha
@@ -191,10 +226,41 @@ function renderSeriesStatus(seriesData) {
     const isCompleted = total > 0 && watched >= total;
     setSeenButton(btnV, inHistory(seriesData.id) || isCompleted);
 
+    const seasons = seriesData.number_of_seasons || 0;
+    document.getElementById('episodes-overview').textContent = joinMeta([
+        seasons && `${seasons} ${pluralize(seasons, 'temporada', 'temporadas')}`,
+        total && `${watched}/${total} vistos`,
+    ]);
+
     if (!badge) return;
     badge.hidden = watched === 0;
     badge.textContent = isCompleted ? 'Concluído' : 'Assistindo';
     badge.className = `episodes-status-badge ${isCompleted ? 'status-completed' : 'status-watching'}`;
+    renderSeriesProgress(seriesData);
+}
+
+// No alto da página: "Próximo: T01E03 · 5 restantes" e a barra (o mesmo cálculo do Continue assistindo).
+// Só para série começada e não concluída; tocar leva aos episódios.
+async function renderSeriesProgress(seriesData) {
+    const box = document.getElementById('m-series-progress');
+    if (!box) return;
+    const watchedKeys = session.episodes.watchedKeys;
+    if (watchedKeys.size === 0 || !seriesData.number_of_seasons) {
+        box.hidden = true;
+        return;
+    }
+    let upNext = null;
+    try {
+        upNext = seriesUpNext(watchedKeys, await getAllSeasons(seriesData.id, seriesData.number_of_seasons), seriesData.id);
+    } catch {
+        // sem as temporadas não há o que mostrar; a lista de episódios já avisa o erro
+    }
+    if (state.currentMovie?.id !== seriesData.id) return;
+    box.hidden = !upNext;
+    if (!upNext) return;
+    document.getElementById('m-series-progress-text').textContent =
+        joinMeta([`Próximo: ${upNext.nextLabel}`, `${upNext.remaining} ${pluralize(upNext.remaining, 'restante', 'restantes')}`]);
+    document.getElementById('m-series-progress-fill').style.width = `${upNext.percent}%`;
 }
 
 const CHECK_ICON = ph('check', { weight: 'bold', cls: 'icon icon-16 icon-lead-4' });
@@ -209,7 +275,7 @@ async function desmarcarTemporadaAtual() {
     if (!canTrackEpisodes() || !state.currentMovie) return;
 
     const seriesId = state.currentMovie.id;
-    const currentSeason = Number(document.getElementById('episodes-season-select')?.value || 1);
+    const currentSeason = selectedSeason();
 
     markButtons(true);
     const result = await unmarkSeason(seriesId, currentSeason);
@@ -242,8 +308,8 @@ async function desmarcarTodosEpisodios() {
 }
 
 const seriesRef = seriesData => toLibraryItem(seriesData, 'tv');
-const markButtons = disabled => document.querySelectorAll('.episodes-mark-all-btn').forEach(b => { b.disabled = disabled; });
-const selectedSeason = () => Number(document.getElementById('episodes-season-select')?.value || 1);
+const markButtons = disabled => document.querySelectorAll('.episodes-bulk-btn').forEach(b => { b.disabled = disabled; });
+const selectedSeason = () => Number(document.querySelector('#episodes-seasons [aria-pressed="true"]')?.dataset.season || 1);
 
 // Depois de marcar ou desmarcar em lote: lista, selo e botões de novo, e a biblioteca acompanha.
 // O título aberto pode ter mudado enquanto gravava: só redesenha se ainda for esta série.
@@ -342,9 +408,12 @@ registerActions({
         desmarcarTodosEpisodios,
         marcarTemporadaAtual,
         marcarAteAqui: el => marcarAteAqui(Number(el.dataset.season), Number(el.dataset.episode)),
+        escolherTemporada: el => onSeasonChange(Number(el.dataset.season)),
+        alternarEpisodios: el => setEpisodesOpen(el.getAttribute('aria-expanded') !== 'true'),
+        // A sinopse começa em 2 linhas; tocar abre inteira (e fecha de novo)
+        alternarSinopse: el => el.setAttribute('aria-expanded', String(el.getAttribute('aria-expanded') !== 'true')),
     },
     change: {
-        onSeasonChange: el => onSeasonChange(el.value),
         toggleEpisode: el => toggleEpisode(Number(el.dataset.series), Number(el.dataset.season), Number(el.dataset.episode), el.checked),
     },
 });

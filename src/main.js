@@ -18,7 +18,7 @@ import { initMyProviders } from './app/myProviders.js';
 import { checkFirstVisit } from './app/onboarding.js';
 import { initPwa } from './app/pwa.js';
 import { initRoulette } from './app/roulette.js';
-import { initUrlState, openTitleFromUrl } from './app/urlSync.js';
+import { hasTitleLink, initUrlState, openTitleFromUrl } from './app/urlSync.js';
 import { initModalA11y } from './ui/modals.js';
 import { hydrateIcons } from './ui/phosphor.js';
 import { initChipFilters, refreshMoreFilters } from './ui/chipFilters.js';
@@ -59,7 +59,10 @@ showLegacyHint();
   initUrlState();
   refreshMoreFilters({ openIfActive: true }); // link com ator, país ou ano: "Mais filtros" já aberto
   setupInputWrappers();
-  if (!fromMatchInvite) checkFirstVisit();
+  // Quem chega pelo link de um título vê o título primeiro; as boas-vindas vêm ao fechá-lo
+  if (!fromMatchInvite && hasTitleLink()) {
+    const off = on('title:closed', () => { off(); checkFirstVisit(); });
+  } else if (!fromMatchInvite) checkFirstVisit();
   initScrollButton();
   initRoulette();
   initMatch();

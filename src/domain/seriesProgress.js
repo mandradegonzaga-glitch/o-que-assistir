@@ -39,3 +39,19 @@ export function calcProgressPercent(watchedKeys, seasons, seriesId) {
 
   return Math.floor((watched / total) * 100);
 }
+
+// Resumo da série em andamento: o próximo episódio, quantos faltam e a porcentagem vista.
+// null quando não há próximo (concluída ou sem episódios). Usado no Continue assistindo, em
+// Em Andamento e na página do título, para os três contarem igual.
+export function seriesUpNext(watchedKeys, seasons, seriesId) {
+  const next = getNextEpisode(watchedKeys, seasons, seriesId);
+  if (!next) return null;
+  const episodes = seasons.flatMap(season => season.episodes);
+  const seen = episodes.filter(ep => watchedKeys.has(buildEpisodeKey(seriesId, ep.season_number, ep.episode_number))).length;
+  return {
+    next,
+    nextLabel: episodeCode(next.season_number, next.episode_number),
+    remaining: episodes.length - seen,
+    percent: calcProgressPercent(watchedKeys, seasons, seriesId),
+  };
+}

@@ -550,6 +550,23 @@ Regras combinadas: cada etapa numa branch `redesign/etapa-N`, com commit e envio
 **Alternativas consideradas:**
 - Seguir corrigindo cada caso especial no lugar → o mesmo tipo de bug voltaria em cada tela nova.
 
+## D001-052 — Repasse da página do título: episódios no modelo do Showcase e progresso no alto
+
+**Data:** 2026-11-11 · **Tarefa:** T001-139
+
+**Contexto:** a página do título cortava nomes de episódio, tinha uma lista com rolagem dentro da gaveta, um seletor nativo de temporada, três botões empilhados para a temporada, elenco sem personagem e um "FECHAR" amarelo redundante com a alça. Quem chegava pela primeira vez por um link via as boas-vindas por cima do título.
+
+**Decisão (aprovada pelo usuário):**
+- Temporadas em pílulas; episódio com foto, nome inteiro, data e o "visto" à direita (verde = estado bom, DESIGN.md); "Vi até aqui" continua, embaixo do texto.
+- Um botão só para a temporada, que alterna: "Marcar temporada como vista" ou, com ela toda vista, "Desmarcar temporada". Desmarcar uma temporada vista pela metade passa a ser episódio por episódio ou "Desmarcar série".
+- "Próximo episódio" no alto, com o mesmo cálculo (`seriesUpNext`) do Continue assistindo e de Em Andamento.
+- Elenco com personagem; "Direção/Roteiro" dos créditos (filme) e "Criação" dos detalhes (série).
+- Boas-vindas depois de fechar o título aberto pelo link (a decisão fica no `main.js`; as boas-vindas não conhecem links).
+
+**Alternativas consideradas:**
+- Limitar o nome do episódio a 2 linhas → um nome longo ainda cortava na coluna estreita.
+- "Parte da coleção" (franquia) → exige liberar `/collection` no proxy do TMDB; ficou para depois.
+
 ## D001-051 — Repasse do redesign: separador que não fica sozinho, abas sempre à vista e selos do pôster
 
 **Data:** 2026-11-11 · **Tarefa:** T001-138

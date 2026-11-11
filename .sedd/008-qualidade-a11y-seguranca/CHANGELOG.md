@@ -2,6 +2,28 @@
 
 All notable changes to this feature will be documented in this file.
 
+## [2026-11-11, repasse do redesign: etapa 2] — branch `redesign/repasse` (local, ainda não publicado)
+
+### Added
+
+- Série em andamento: "Próximo episódio" com barra no alto da página do título
+- Episódios com foto da cena e data; temporadas em pílulas
+- Elenco com o personagem; direção e roteiro (filme) ou criação (série)
+
+### Changed
+
+- Um botão só para marcar ou desmarcar a temporada; "Desmarcar série" discreto
+- Sinopse antes do trailer; "Fechar" discreto no fim da página
+- Quem chega pelo link de um título vê o título antes das boas-vindas
+
+- Temporadas: todas à vista (quebram de linha); botão para recolher os episódios; sinopse em cada episódio
+- "X" para fechar no alto da página do título
+
+### Fixed
+
+- Nome do episódio cortado
+- Lista de episódios com rolagem própria dentro da gaveta
+
 ## [2026-11-11, repasse do redesign: etapa 1] — branch `redesign/repasse` (local, ainda não publicado)
 
 ### Added

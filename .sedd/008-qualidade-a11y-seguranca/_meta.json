@@ -139,7 +139,8 @@
         "T001-132",
         "T001-133",
         "T001-134",
-        "T001-138"
+        "T001-138",
+        "T001-139"
       ],
       "tasksCompleted": [
         "T001-001",
@@ -350,11 +351,12 @@
       "T001-117",
       "T001-118",
       "T001-119",
-      "T001-138"
+      "T001-138",
+      "T001-139"
     ],
     "inProgress": null,
     "nextSteps": [
-      "Repasse do redesign: etapa 1 feita (T001-138), aguardando aprovação; próximo: etapa 2 (página do título) com captação antes"
+      "Repasse do redesign: etapas 1 (T001-138) e 2 (T001-139) feitas; próximo: etapa 3 (barra de baixo, Biblioteca, Início) com captação antes"
     ],
     "filesModified": [
       "index.html",

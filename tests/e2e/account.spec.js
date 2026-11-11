@@ -74,14 +74,15 @@ test.describe('episódios', () => {
     await openApp(page);
     await page.locator('#btn-tv').click();
     await page.locator('#btn-sortear').click();
-    await page.locator('.episode-checkbox').first().check();
-    await expect(page.locator('.episodes-season-counter')).toContainText('1/3 assistidos');
+    // "Desmarcar temporada" aparece com a temporada inteira vista (repasse da etapa 2)
+    await page.locator('[data-action="marcarTemporadaAtual"]').click();
+    await expect(page.locator('.episodes-season-counter')).toContainText('3/3 assistidos');
 
     await page.evaluate(() => { window.__TEST.failDeleteRows = true; });
     await page.locator('[data-action="desmarcarTemporadaAtual"]').click();
     await expect(page.locator('#toast')).toHaveText('Erro ao desmarcar episódios');
-    await expect(page.locator('.episodes-season-counter')).toContainText('1/3 assistidos');
-    expect(await page.evaluate(() => window.__db.episode_progress.length)).toBe(1);
+    await expect(page.locator('.episodes-season-counter')).toContainText('3/3 assistidos');
+    expect(await page.evaluate(() => window.__db.episode_progress.length)).toBe(3);
   });
 });
 

@@ -13,10 +13,12 @@ import { rankTrailers } from '../domain/trailers.js';
 import { firstAvailableVideo } from '../api/youtube.js';
 import { localDay } from '../utils/date.js';
 import { IMG_URL } from '../config/constants.js';
-import { getTmdbEndpoint, getTitle, isSeriesType } from '../domain/mediaItem.js';
+import { getTmdbEndpoint, getTitle, isSeriesType, tmdbImage } from '../domain/mediaItem.js';
 import { emit } from '../state/events.js';
 import { closeModal, isModalOpen, onModalClose, openModal } from '../ui/modals.js';
-import { personPhoto, posterImg } from '../ui/icons.js';
+import { posterImg } from '../ui/icons.js';
+import { castMembers, crewLine, initials } from '../domain/credits.js';
+import { joinMeta } from '../utils/format.js';
 import { registerActions } from '../ui/actions.js';
 import { afterAnimations, prefersReducedMotion } from '../ui/motion.js';
 
@@ -214,15 +216,28 @@ function initTitleTabs() {
 }
 
 // Cada seção carrega por conta própria: o modal já está aberto e uma falha não afeta as outras
-async function loadCast(f, type, signal) {
+// Elenco com o personagem ("Ryan Gosling / Ryland Grace"); sem foto, as iniciais.
+// Embaixo, "Direção · Roteiro" (filme) ou "Criação" (série, que vem nos detalhes)
+async function loadCast(f, type, signal, detailsPromise) {
+    const crewEl = document.getElementById('m-crew');
+    crewEl.hidden = true;
     try {
         const cData = await tmdbGet(`/${type}/${f.id}/credits`, {}, { signal });
         if (signal.aborted) return; // resposta do cache não passa pelo abort
-        const castDiv = document.getElementById('cast-list');
-        castDiv.innerHTML = '';
-        cData.cast.slice(0,8).forEach(a => {
-            castDiv.innerHTML += `<div class="cast-item"><img src="${personPhoto(a.profile_path)}" class="cast-photo" alt="" width="60" height="60" loading="lazy"><br>${escapeHtml(a.name)}</div>`;
-        });
+        document.getElementById('cast-list').innerHTML = castMembers(cData).map(person => `
+            <div class="cast-item">
+                ${person.photo
+                    ? `<img src="${tmdbImage(person.photo, 'w185')}" class="cast-photo" alt="" width="60" height="60" loading="lazy">`
+                    : `<span class="cast-photo cast-photo--initials" aria-hidden="true">${escapeHtml(initials(person.name))}</span>`}
+                <span class="cast-item__name">${escapeHtml(person.name)}</span>
+                ${person.character ? `<span class="cast-item__role">${escapeHtml(person.character)}</span>` : ''}
+            </div>`).join('');
+        const details = await detailsPromise.catch(() => ({}));
+        if (signal.aborted) return;
+        const lines = crewLine(cData, details);
+        crewEl.innerHTML = lines.map(line =>
+            `<span class="cast-crew__line"><span class="cast-crew__label">${line.label}</span> ${escapeHtml(joinMeta(line.names))}</span>`).join('');
+        crewEl.hidden = lines.length === 0;
     } catch(e) {
         if (isAbortError(e)) return;
         console.error('Erro ao carregar elenco:', e);
@@ -359,7 +374,7 @@ export async function abrirModal(item, { fromDraw = false } = {}) {
         loadImdbLink(f, type, signal),
         loadFacts(f, type, signal, detailsPromise),
         loadSimilar(f, type, mediaType, signal),
-        loadCast(f, type, signal),
+        loadCast(f, type, signal, detailsPromise),
         loadTrailer(f, type, signal),
         loadProviders(f, type, signal, detailsPromise),
     ]);

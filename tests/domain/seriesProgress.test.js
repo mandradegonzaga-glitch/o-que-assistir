@@ -4,6 +4,7 @@ import {
   calcProgressPercent,
   buildEpisodeKey,
   parseEpisodeKey,
+  seriesUpNext,
 } from '../../src/domain/seriesProgress.js';
 
 // Fixtures reutilizáveis
@@ -119,5 +120,25 @@ describe('calcProgressPercent', () => {
 
   it('retorna 0 para série sem episódios', () => {
     expect(calcProgressPercent(new Set(), [], 1)).toBe(0);
+  });
+});
+
+// "Próximo: T01E03 · 2 restantes" e a barra: o mesmo cálculo no Continue assistindo e na página do título
+describe('seriesUpNext', () => {
+  it('próximo episódio, quantos faltam e a porcentagem', () => {
+    expect(seriesUpNext(watched([1, 1], [1, 2]), allSeasons, 1)).toEqual({
+      next: { season_number: 1, episode_number: 3 }, nextLabel: 'T01E03', remaining: 3, percent: 40,
+    });
+  });
+
+  it('marcado fora das temporadas conhecidas não conta como visto', () => {
+    const keys = watched([1, 1]);
+    keys.add(buildEpisodeKey(1, 0, 1)); // especial (temporada 0)
+    expect(seriesUpNext(keys, allSeasons, 1).remaining).toBe(4);
+  });
+
+  it('série concluída ou sem episódios: nada a mostrar', () => {
+    expect(seriesUpNext(watched([1, 1], [1, 2], [1, 3], [2, 1], [2, 2]), allSeasons, 1)).toBeNull();
+    expect(seriesUpNext(new Set(), [], 1)).toBeNull();
   });
 });

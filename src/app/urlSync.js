@@ -48,6 +48,9 @@ export function initUrlState() {
   syncUrl();
 }
 
+// Há um título do link esperando alguém entrar para abrir
+export const hasTitleLink = () => Boolean(pendingTitle);
+
 // O título do link espera o login/convidado: o modal não pode abrir atrás da tela de entrada
 export function openTitleFromUrl() {
   if (!pendingTitle) return;

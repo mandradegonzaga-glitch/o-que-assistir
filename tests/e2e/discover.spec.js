@@ -44,7 +44,7 @@ test.describe('sorteio', () => {
   test('o modal abre antes de as seções terminarem de carregar', async ({ page }) => {
     let release;
     const gate = new Promise(resolve => { release = resolve; });
-    await page.route('**/credits**', async route => {
+    await page.route(/\/tmdb\/.*\/credits/, async route => {
       await gate;
       await route.fulfill({ json: { cast: [{ name: 'Atriz Lenta', profile_path: null }] } });
     });
@@ -59,7 +59,7 @@ test.describe('sorteio', () => {
   });
 
   test('falha em uma seção não afeta as outras', async ({ page }) => {
-    await page.route('**/credits**', route => route.fulfill({ status: 500, json: {} }));
+    await page.route(/\/tmdb\/.*\/credits/, route => route.fulfill({ status: 500, json: {} }));
     await enterAsGuest(page);
     await page.locator('#btn-sortear').click();
     await expect(page.locator('#cast-list')).toHaveText('Não foi possível carregar o elenco.');
@@ -269,6 +269,22 @@ test.describe('boas-vindas', () => {
     }
     expect(seen.size).toBe(4);
     await expect(page.locator('#onboarding-overlay')).toBeHidden();
+  });
+
+  // Repasse da etapa 2 (2026-11-11): quem chega pela primeira vez por um link de título via as
+  // boas-vindas por cima do título. Agora o título vem primeiro e as boas-vindas, ao fechá-lo.
+  test('pelo link de um título, as boas-vindas esperam o título fechar', async ({ page }) => {
+    await page.addInitScript(() => localStorage.removeItem('has_visited'));
+    await page.goto('/?titulo=movie-1');
+    await page.locator('#login-form [data-action="loginAsGuest"]').click();
+    await expect(modal(page)).toBeVisible();
+    await expect(page.locator('#m-title')).toHaveText('Filme Um');
+    await page.waitForTimeout(800); // as boas-vindas abriam 500 ms depois de carregar
+    await expect(page.locator('#onboarding-overlay')).toBeHidden();
+
+    await page.keyboard.press('Escape');
+    await expect(modal(page)).toBeHidden();
+    await expect(page.locator('#onboarding-overlay')).toBeVisible();
   });
 });
 

@@ -8,7 +8,7 @@ import { checkAllBadges } from './badges.js';
 import { grantXp, trackChallenge } from './progress.js';
 import { renderListsTab } from './userLists.js';
 import { reactionOf } from '../domain/reactions.js';
-import { calcProgressPercent, episodeCode, getNextEpisode } from '../domain/seriesProgress.js';
+import { seriesUpNext } from '../domain/seriesProgress.js';
 import { session, state } from '../state/appState.js';
 import { isPendingRemoval, scheduleUndoable, showToast } from '../ui/feedback.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
@@ -143,16 +143,8 @@ export async function loadSeriesInProgress() {
         try {
             const info = await tmdbGet(`/tv/${s.id}`, {}, { ttl: 3_600_000 });
             const allSeasons = await getAllSeasons(s.id, info.number_of_seasons || 0);
-            const next = getNextEpisode(s.watchedKeys, allSeasons, s.id);
-            if (!next) return null; // concluída: não aparece
-            const totalEps = allSeasons.reduce((a, season) => a + season.episodes.length, 0);
-            return {
-                ...s,
-                next,
-                nextLabel: episodeCode(next.season_number, next.episode_number),
-                percent: calcProgressPercent(s.watchedKeys, allSeasons, s.id),
-                remaining: totalEps - s.watchedKeys.size,
-            };
+            const upNext = seriesUpNext(s.watchedKeys, allSeasons, s.id);
+            return upNext && { ...s, ...upNext }; // concluída: não aparece
         } catch { return null; }
     }));
     return { started: pending.length, series: series.filter(Boolean) };

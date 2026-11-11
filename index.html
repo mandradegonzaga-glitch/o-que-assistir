@@ -708,6 +708,8 @@
         <div class="modal-content title-sheet" role="dialog" aria-modal="true" aria-labelledby="m-title" tabindex="-1">
             <!-- Fundo com a cor do pôster: o próprio pôster, bem desfocado (src/app/titleModal.js) -->
             <div id="m-ambient" class="title-ambient" aria-hidden="true"></div>
+            <!-- "X" no alto (pedido do usuário): fecha como o "Fechar" do fim, a alça e o Esc -->
+            <button type="button" class="title-close" data-action="closeModal" data-arg="modal-resultado" aria-label="Fechar"><span data-ph="x" data-weight="bold" aria-hidden="true"></span></button>
             <div class="modal-poster-container">
                 <img id="m-poster" class="modal-poster" alt="" width="780" height="439" fetchpriority="high">
             </div>
@@ -727,6 +729,12 @@
 
                 <!-- Linha única: ★ nota • ano • duração ou temporadas • gêneros (src/domain/titleFacts.js) -->
                 <p id="m-facts" class="modal-info"></p>
+
+                <!-- Série em andamento: o próximo episódio e quanto já foi visto (src/app/episodes.js) -->
+                <button type="button" id="m-series-progress" class="series-progress" data-action="goTitleSection" data-arg="episodes-section" hidden>
+                    <span id="m-series-progress-text" class="series-progress__text"></span>
+                    <span class="series-progress__bar" aria-hidden="true"><span id="m-series-progress-fill"></span></span>
+                </button>
 
                 <!-- Ações principais: ícone em cima, nome embaixo; acendem quando marcadas -->
                 <div class="title-actions" role="group" aria-label="O que fazer com este título">
@@ -782,13 +790,13 @@
                     <button type="button" class="title-tab" data-action="goTitleSection" data-arg="sec-parecidos" id="tab-parecidos" hidden>Parecidos</button>
                 </nav>
 
+                <!-- Frase e sinopse primeiro (decidir rápido); o trailer vem depois -->
                 <section id="sec-sobre" class="title-section" aria-label="Sobre">
-                <div id="video-area" class="video-container is-hidden">
-                    <iframe id="trailer-frame" src="" title="Trailer" allowfullscreen></iframe>
-                </div>
-
                     <p class="modal-tagline" id="m-tagline" hidden></p>
                     <p class="modal-synopsis" id="m-desc">Sinopse…</p>
+                    <div id="video-area" class="video-container is-hidden">
+                        <iframe id="trailer-frame" src="" title="Trailer" allowfullscreen></iframe>
+                    </div>
                     <div class="critic-links">
                         <a id="link-imdb" href="#" target="_blank" rel="noopener" class="critic-btn critic-btn--imdb" hidden>Ver no IMDb</a>
                         <a id="link-rt" href="#" target="_blank" rel="noopener" class="critic-btn critic-btn--rt">Ver no Rotten Tomatoes</a>
@@ -798,24 +806,28 @@
                 <section id="sec-elenco" class="title-section" aria-labelledby="sec-elenco-title">
                     <p class="detail-label" id="sec-elenco-title">Elenco principal</p>
                     <div id="cast-list" class="cast-list"></div>
+                    <p id="m-crew" class="cast-crew" hidden></p>
                 </section>
 
                 <!-- EPISÓDIOS (TV/Dorama only — 004-series-tracking) -->
                 <div id="episodes-section" class="episodes-section" hidden>
-                    <div class="episodes-section__header">
-                        <div class="episodes-section__left">
-                            <p class="episodes-section__label">Rastrear Episódios</p>
+                    <!-- O cabeçalho inteiro abre e fecha, como os Filtros do Início; o resumo fica sempre à vista -->
+                    <button type="button" id="episodes-toggle" class="section-toggle episodes-toggle" data-action="alternarEpisodios" aria-expanded="true" aria-controls="episodes-body">
+                        <span class="episodes-toggle__title">
+                            <span class="episodes-section__label">Episódios</span>
                             <span id="episodes-status-badge" class="episodes-status-badge" hidden></span>
+                        </span>
+                        <span id="episodes-overview" class="section-toggle__summary"></span>
+                        <span class="section-toggle__caret" aria-hidden="true"></span>
+                    </button>
+                    <div id="episodes-body">
+                        <!-- Temporadas em pílulas; a escolhida fica marcada (aria-pressed) -->
+                        <div id="episodes-seasons" class="season-pills" role="group" aria-label="Temporadas"></div>
+                        <!-- "3/10 assistidos · 7 restantes", marcar/desmarcar a temporada e desmarcar a série -->
+                        <div id="episodes-summary" class="episodes-summary"></div>
+                        <div id="episodes-list" class="episodes-list" role="list" aria-live="polite">
+                            <!-- Episódios injetados por JS -->
                         </div>
-                        <div class="episodes-section__controls">
-                            <select id="episodes-season-select" class="episodes-season-select" data-change="onSeasonChange" aria-label="Selecionar temporada"></select>
-                            <button class="episodes-mark-all-btn" data-action="marcarTemporadaAtual" aria-label="Marcar todos os episódios da temporada">Marcar temporada</button>
-                            <button class="episodes-mark-all-btn episodes-mark-all-btn--unmark" data-action="desmarcarTemporadaAtual" aria-label="Desmarcar todos os episódios da temporada">Desmarcar temporada</button>
-                            <button class="episodes-mark-all-btn episodes-mark-all-btn--unmark" data-action="desmarcarTodosEpisodios" aria-label="Desmarcar todos os episódios da série">Desmarcar série</button>
-                        </div>
-                    </div>
-                    <div id="episodes-list" class="episodes-list" role="list" aria-live="polite">
-                        <!-- Episódios injetados por JS -->
                     </div>
                 </div>
 
@@ -839,7 +851,7 @@
                     </button>
                 </div>
             </div>
-            <button class="close-btn" data-action="closeModal" data-arg="modal-resultado" aria-label="Fechar detalhes">FECHAR</button>
+            <button class="close-btn" data-action="closeModal" data-arg="modal-resultado" aria-label="Fechar detalhes">Fechar</button>
         </div>
     </div>
 

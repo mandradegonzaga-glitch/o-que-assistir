@@ -22,6 +22,9 @@ export async function getSeason(seriesId, seasonNumber) {
       season_number: ep.season_number,
       episode_number: ep.episode_number,
       name: ep.name || `Episódio ${ep.episode_number}`,
+      air_date: ep.air_date || '', // data, foto da cena e sinopse: a lista de episódios mostra
+      overview: ep.overview || '',
+      still_path: ep.still_path || null,
     })),
   };
   seasons.set(keyOf(seriesId, seasonNumber), season);

@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { formatRating, formatCount, joinMeta, pluralize } from '../../src/utils/format.js';
+import { formatDay, formatRating, formatCount, joinMeta, pluralize } from '../../src/utils/format.js';
 
 const NBSP = String.fromCharCode(0xa0);
 
@@ -29,5 +29,12 @@ describe('format', () => {
     expect(joinMeta(['2020', '', '★ 8,5', null])).toBe(`2020 ·${NBSP}★ 8,5`);
     // o único lugar onde a linha pode quebrar é antes do "·"
     expect(joinMeta(['a', 'b']).split(' ')).toEqual(['a', `·${NBSP}b`]);
+  });
+
+  it('formats a TMDB day the Brazilian way, without timezone shifts', () => {
+    expect(formatDay('2008-01-20')).toBe('20/01/2008');
+    expect(formatDay('2008-01-20T00:00:00.000Z')).toBe('20/01/2008');
+    expect(formatDay('')).toBe('');
+    expect(formatDay(null)).toBe('');
   });
 });

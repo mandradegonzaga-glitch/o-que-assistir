@@ -2113,6 +2113,25 @@ header {
     }
 }
 
+/* "X" de fechar no canto de cima da página do título, sobre a imagem */
+.title-close {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+    z-index: 6;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-full);
+    background: color-mix(in srgb, var(--bg-deep) 70%, transparent);
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.title-close svg { width: 18px; height: 18px; }
+
 .modal-poster-container {
     position: relative;
     width: 100%;
@@ -2200,6 +2219,41 @@ header {
     font-variant-numeric: tabular-nums;
 }
 
+/* Série em andamento, no alto da página do título: "Próximo: T01E03 · 5 restantes" e a barra.
+   Toca e leva aos episódios */
+.series-progress {
+    display: grid;
+    gap: var(--space-xs);
+    width: 100%;
+    margin-bottom: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--bg-deep) 45%, transparent);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+}
+
+.series-progress[hidden] { display: none; }
+
+.series-progress__bar {
+    display: block;
+    height: 4px;
+    border-radius: var(--radius-full);
+    background: var(--border-default);
+    overflow: hidden;
+}
+
+.series-progress__bar > span {
+    display: block;
+    height: 100%;
+    background: var(--accent-primary);
+}
+
 .modal-tagline {
     margin-bottom: var(--space-sm);
     color: var(--text-tertiary);
@@ -2272,7 +2326,7 @@ header {
 
 .cast-item {
     flex-shrink: 0;
-    min-width: 70px;
+    width: 88px;
     text-align: center;
 }
 
@@ -2285,11 +2339,44 @@ header {
     object-fit: cover;
 }
 
-.cast-item span {
+/* Sem foto: as iniciais no mesmo círculo */
+.cast-photo--initials {
+    display: inline-grid;
+    place-items: center;
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.cast-item__name {
     display: block;
-    font-size: 0.7rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.3;
+}
+
+.cast-item__role {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.72rem;
     color: var(--text-tertiary);
     line-height: 1.3;
+}
+
+/* "Direção  Phil Lord · Christopher Miller" — uma função por linha */
+.cast-crew {
+    display: grid;
+    gap: var(--space-xs);
+    margin: calc(-1 * var(--space-sm)) 0 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.cast-crew__label {
+    color: var(--text-muted);
+    margin-right: var(--space-xs);
 }
 
 /* Modal Actions */
@@ -2596,20 +2683,24 @@ header {
     }
 }
 
+/* "Fechar" discreto no fim da página do título: a gaveta já fecha pela alça, por Esc e tocando fora,
+   e o amarelo fica para a ação principal (DESIGN.md) */
 .close-btn {
     width: 100%;
     padding: var(--space-md);
-    background: var(--accent-primary);
-    border: none;
-    color: var(--accent-on);
-    font-weight: 600;
+    background: none;
+    border: 0;
+    border-top: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font: inherit;
+    font-weight: 500;
     cursor: pointer;
-    transition: background var(--duration-fast) var(--ease-smooth);
+    transition: color var(--duration-fast) var(--ease-out);
 }
 
 @media (hover: hover) and (pointer: fine) {
     .close-btn:hover {
-        background: var(--accent-hover);
+        color: var(--text-primary);
     }
 }
 
@@ -3319,8 +3410,7 @@ button:focus-visible,
 /* ==================== RESPONSIVE ==================== */
 /* iOS dá zoom automático ao focar campos com fonte < 16px */
 @media (pointer: coarse) {
-    .input-dark,
-    .episodes-season-select {
+    .input-dark {
         font-size: 16px;
     }
 }
@@ -3585,34 +3675,34 @@ button:focus-visible,
     border: 1px solid var(--border-subtle);
 }
 
-.episodes-section__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-md);
-    flex-wrap: wrap;
+/* Cabeçalho que abre e fecha (componente dos Filtros, .section-toggle). Aqui o resumo
+   ("15 temporadas · 1/62 vistos") fica à vista também aberto: é o progresso da série */
+.episodes-toggle {
+    width: 100%;
+    min-height: 44px;
 }
 
-.episodes-section__left {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    flex-wrap: wrap;
+.section-toggle.episodes-toggle[aria-expanded="true"] .section-toggle__summary {
+    display: block;
 }
 
-.episodes-section__controls {
+.episodes-toggle__title {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    flex-wrap: wrap;
+    min-width: 0;
 }
+
+#episodes-body {
+    margin-top: var(--space-md);
+}
+
+#episodes-body[hidden] { display: none; }
 
 .episodes-section__label {
-    font-size: 0.75rem;
-    color: var(--text-muted);
+    font-size: 1rem;
     font-weight: 600;
-    margin: 0;
+    color: var(--text-primary);
 }
 
 /* Badge de status da série */
@@ -3635,63 +3725,95 @@ button:focus-visible,
     border: 1px solid color-mix(in srgb, var(--accent-success) 30%, transparent);
 }
 
-/* Botão "Marcar todos" */
-.episodes-mark-all-btn {
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: var(--space-xs) 12px;
-    border-radius: var(--radius-sm);
-    background: var(--bg-elevated);
-    color: var(--text-secondary);
+/* Temporadas em pílulas (no lugar do <select>): quebram de linha e ficam todas à vista.
+   Antes rolavam de lado e, com o mouse, cortavam na borda sem como arrastar (achado do usuário) */
+.season-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    padding: 2px 2px var(--space-sm);
+    margin-bottom: var(--space-sm);
+}
+
+.season-pill {
+    flex-shrink: 0;
+    min-height: 36px;
+    padding: 0 var(--space-md);
     border: 1px solid var(--border-default);
+    border-radius: var(--radius-full);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
     cursor: pointer;
-    transition: background var(--duration-fast) var(--ease-smooth),
-                color var(--duration-fast) var(--ease-smooth);
+    transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+}
+
+.season-pill[aria-pressed="true"] {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: var(--accent-on);
+}
+
+/* Resumo da temporada: contagem, um botão para a temporada toda e "Desmarcar série" discreto */
+.episodes-summary {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    padding-bottom: var(--space-sm);
+    margin-bottom: var(--space-xs);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.episodes-summary:empty { display: none; }
+
+.episodes-summary__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-xs) var(--space-md);
+}
+
+.episodes-bulk-btn {
+    min-height: 36px;
     white-space: nowrap;
-}
-
-@media (hover: hover) and (pointer: fine) {
-    .episodes-mark-all-btn:hover {
-        background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
-        color: var(--accent-text);
-        border-color: color-mix(in srgb, var(--accent-primary) 30%, transparent);
-    }
-}
-
-@media (hover: hover) and (pointer: fine) {
-    .episodes-mark-all-btn--unmark:hover {
-        background: rgba(255, 255, 255, 0.06);
-        color: var(--text-secondary);
-        border-color: var(--border-strong);
-    }
-}
-
-.episodes-season-select {
+    padding: 0 var(--space-md);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-full);
     background: var(--bg-elevated);
     color: var(--text-primary);
-    border: 1px solid var(--border-default);
-    border-radius: var(--radius-sm);
-    padding: var(--space-sm) 12px;
+    font: inherit;
     font-size: 0.8rem;
+    font-weight: 500;
     cursor: pointer;
-    transition: border-color var(--duration-fast) var(--ease-smooth);
 }
+
+.episodes-bulk-btn--link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text-tertiary);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.episodes-bulk-btn:disabled { opacity: 0.5; cursor: progress; }
 
 .episodes-list {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    max-height: 260px;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-default) transparent;
+    gap: var(--space-xs);
 }
 
 .episode-item {
+    --still-width: 96px;
     display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-sm) 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+    padding: var(--space-sm);
     border-radius: var(--radius-sm);
     cursor: pointer;
     transition: background var(--duration-fast) var(--ease-smooth);
@@ -3714,10 +3836,11 @@ button:focus-visible,
 .episode-checkbox {
     appearance: none;
     -webkit-appearance: none;
-    width: 18px;
-    height: 18px;
+    width: 24px;
+    height: 24px;
+    margin-left: auto;
     border: 2px solid var(--border-strong);
-    border-radius: 4px;
+    border-radius: var(--radius-full);
     background: transparent;
     cursor: pointer;
     flex-shrink: 0;
@@ -3728,8 +3851,8 @@ button:focus-visible,
 }
 
 .episode-checkbox:checked {
-    background: var(--accent-primary);
-    border-color: var(--accent-primary);
+    background: var(--accent-success);
+    border-color: var(--accent-success);
 }
 
 .episode-checkbox:checked::after {
@@ -3750,25 +3873,68 @@ button:focus-visible,
     font-variant-numeric: tabular-nums;
 }
 
+/* Nome inteiro, quebrando em quantas linhas precisar (antes cortava em uma: "…And the Bag's i…") */
 .episode-item__label {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.3;
     color: var(--text-primary);
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
     transition: color var(--duration-fast) var(--ease-smooth);
+}
+
+.episode-item__still {
+    flex-shrink: 0;
+    width: var(--still-width);
+    aspect-ratio: 16 / 9;
+    height: auto;
+    border-radius: var(--radius-sm);
+    background: var(--bg-elevated);
+    object-fit: cover;
+}
+
+.episode-item__info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+/* Sinopse do episódio: 2 linhas; tocar abre inteira */
+.episode-item__overview {
+    margin-left: calc(var(--still-width) + 12px);
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text-tertiary);
+    font: inherit;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    text-align: left;
+    cursor: pointer;
+}
+
+.episode-item__overview[aria-expanded="false"] {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.episode-item__date {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
 }
 
 /* Linha do episódio: a área do check e o "Vi até aqui" */
 .episode-item__main {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
-    flex: 1;
+    gap: 12px;
+    width: 100%;
     min-width: 0;
     cursor: pointer;
-    align-self: stretch;
 }
 
 .episode-item.is-watched .episode-item__main {
@@ -3777,6 +3943,7 @@ button:focus-visible,
 
 .episode-item__upto {
     flex-shrink: 0;
+    margin-left: calc(var(--still-width) + 12px);
     font-size: 0.7rem;
     font-weight: 600;
     padding: 3px var(--space-sm);
@@ -3818,11 +3985,9 @@ button:focus-visible,
 
 /* Contador de episódios da temporada */
 .episodes-season-counter {
-    font-size: 0.75rem;
+    margin: 0;
+    font-size: 0.8rem;
     color: var(--text-muted);
-    padding: var(--space-xs) 12px var(--space-sm);
-    border-bottom: 1px solid var(--border-subtle);
-    margin-bottom: var(--space-xs);
 }
 
 .episodes-season-counter strong {
@@ -3980,8 +4145,8 @@ button:focus-visible,
     .btn-clear-small,
     .selected-pill,
     .up-next-card__action,
-    .episodes-mark-all-btn,
-    .episodes-season-select,
+    .season-pill,
+    .episodes-bulk-btn,
     .episode-item,
     .undo-toast__btn,
     .close-btn {
@@ -3997,28 +4162,8 @@ button:focus-visible,
     }
 }
 
-/* ==================== EPISÓDIOS NO CELULAR ==================== */
+/* ==================== FAIXA DE INSTALAÇÃO NO CELULAR ==================== */
 @media (max-width: 640px) {
-    .episodes-section__controls {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        width: 100%;
-    }
-
-    .episodes-season-select {
-        grid-column: 1 / -1;
-        width: 100%;
-    }
-
-    .episodes-mark-all-btn {
-        white-space: normal;
-    }
-
-    /* Marcar e Desmarcar temporada lado a lado; Desmarcar série na linha de baixo */
-    .episodes-mark-all-btn:last-child {
-        grid-column: 1 / -1;
-    }
-
     .install-banner {
         flex-wrap: wrap;
     }
@@ -4510,8 +4655,7 @@ header { gap: var(--space-sm); }
 }
 
 /* Seta própria nos seletores: a do navegador fica colada na borda */
-select.input-dark,
-.episodes-season-select {
+select.input-dark {
     appearance: none;
     -webkit-appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-opacity='0.7' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
