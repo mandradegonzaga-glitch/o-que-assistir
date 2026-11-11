@@ -5,22 +5,35 @@ const phone = { width: 390, height: 844 };
 const friends = page => page.locator('#modal-friends');
 const friendsSheet = page => page.locator('#modal-friends .modal-content');
 
-async function openFriends(page) {
-  await page.locator('#btn-friends').click();
-  await expect(friends(page)).toBeVisible();
-  // espera a gaveta terminar de subir
+// Espera a gaveta parar no lugar: style.transform vazio vale na hora, mas a volta anima por 0,5 s,
+// e medir a alça no meio do caminho faz o clique cair em quem estiver ali (ex.: o aviso do desafio)
+async function waitSheetSettled(page) {
   await expect.poll(() => friendsSheet(page).evaluate(el => getComputedStyle(el).transform)).toMatch(/none|matrix\(1, 0, 0, 1, 0, 0\)/);
 }
 
-// Arrasta a alça com o mouse (eventos de ponteiro, como o dedo)
+async function openFriends(page) {
+  await page.locator('#btn-friends').click();
+  await expect(friends(page)).toBeVisible();
+  await waitSheetSettled(page);
+}
+
+// Arrasta a alça com o mouse (eventos de ponteiro, como o dedo), num relógio próprio: um passo a
+// cada 16 ms e a pausa no horário do evento. Com page.mouse o intervalo real dependia da carga da
+// máquina, e um peteleco às vezes chegava "lento" (0,42 px/ms) e não fechava.
 async function dragHandle(page, dy, { steps = 8, holdMs = 0 } = {}) {
   const box = await page.locator('#modal-friends .sheet-handle').boundingBox();
   const x = box.x + box.width / 2, y = box.y + box.height / 2;
-  await page.mouse.move(x, y);
-  await page.mouse.down();
-  await page.mouse.move(x, y + dy, { steps });
-  if (holdMs) await page.waitForTimeout(holdMs);
-  await page.mouse.up();
+  const cdp = await page.context().newCDPSession(page);
+  const t0 = Date.now() / 1000;
+  const send = (type, offset, ms, extra) =>
+    cdp.send('Input.dispatchMouseEvent', { type, x, y: y + offset, timestamp: t0 + ms / 1000, ...extra });
+  await send('mouseMoved', 0, 0, { button: 'none' });
+  await send('mousePressed', 0, 0, { button: 'left', buttons: 1, clickCount: 1 });
+  for (let i = 1; i <= steps; i++) {
+    await send('mouseMoved', (dy * i) / steps, i * 16, { button: 'left', buttons: 1 });
+  }
+  await send('mouseReleased', dy, steps * 16 + holdMs, { button: 'left', clickCount: 1 });
+  await cdp.detach();
 }
 
 test.describe('gavetas no celular', () => {
@@ -42,7 +55,7 @@ test.describe('gavetas no celular', () => {
     await openFriends(page);
     await dragHandle(page, 40, { holdMs: 200 });
     await expect(friends(page)).toBeVisible();
-    await expect.poll(() => friendsSheet(page).evaluate(el => el.style.transform)).toBe('');
+    await waitSheetSettled(page);
 
     const { height } = await friendsSheet(page).boundingBox();
     await dragHandle(page, Math.round(height * 0.5), { holdMs: 200 });
