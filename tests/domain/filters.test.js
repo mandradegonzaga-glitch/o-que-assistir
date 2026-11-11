@@ -1,7 +1,7 @@
 import { describe, it, expect } from '@jest/globals';
 import { BASE_URL as BASE } from '../../src/config/constants.js';
 import { buildTmdbUrl } from '../../src/api/tmdb.js';
-import { discoverRequest, getRandomPage, hasLatinTitle, releaseWindow } from '../../src/domain/filters.js';
+import { discoverRequest, getRandomPage, hasLatinTitle, isRecentRelease, releaseWindow } from '../../src/domain/filters.js';
 
 // URL final, como o app pede ao TMDB
 const buildDiscoverUrl = (type, filters) => {
@@ -113,6 +113,16 @@ describe('lançamentos', () => {
   it('releaseWindow: 45 days for movies, 60 for series', () => {
     expect(releaseWindow('movie', today)).toEqual({ from: '2026-09-22', to: '2026-11-06', days: 45 });
     expect(releaseWindow('tv', today)).toEqual({ from: '2026-09-07', to: '2026-11-06', days: 60 });
+  });
+
+  it('selo "Estreia": a data do título cai no mesmo período dos lançamentos', () => {
+    expect(isRecentRelease({ release_date: '2026-09-22' }, 'movie', today)).toBe(true);
+    expect(isRecentRelease({ release_date: '2026-09-21' }, 'movie', today)).toBe(false);
+    expect(isRecentRelease({ first_air_date: '2026-09-07' }, 'tv', today)).toBe(true);
+    expect(isRecentRelease({ first_air_date: '2026-09-07' }, 'dorama', today)).toBe(true);
+    // ainda não lançado não é estreia; sem data também não
+    expect(isRecentRelease({ release_date: '2026-11-07' }, 'movie', today)).toBe(false);
+    expect(isRecentRelease({}, 'movie', today)).toBe(false);
   });
 
   it('movies: digital releases in Brazil, ignoring the chosen years', () => {

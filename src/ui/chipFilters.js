@@ -9,6 +9,7 @@ import { escapeHtml } from '../utils/escapeHtml.js';
 import { on } from '../state/events.js';
 import { storage } from '../utils/storage.js';
 import { DAY_MS } from '../utils/date.js';
+import { joinMeta } from '../utils/format.js';
 import { FILTER_FIELDS, filterField } from './filterFields.js';
 import { CHOOSE_PROVIDERS_VALUE as CHOOSE, MY_PROVIDERS_VALUE } from '../domain/filters.js';
 
@@ -170,7 +171,7 @@ function updateSummary() {
   const summary = document.getElementById('filters-summary');
   if (!summary) return;
   const labels = activeLabels();
-  summary.textContent = labels.length ? labels.join(' · ') : 'Nenhum filtro: vale tudo';
+  summary.textContent = labels.length ? joinMeta(labels) : 'Nenhum filtro: vale tudo';
   summary.classList.toggle('is-active', labels.length > 0);
 }
 

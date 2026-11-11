@@ -4,7 +4,7 @@
 import { session } from '../state/appState.js';
 import { switchMode, switchTab } from '../ui/navigation.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
-import { pluralize } from '../utils/format.js';
+import { joinMeta, pluralize } from '../utils/format.js';
 import { loadSeriesInProgress } from './library.js';
 import { on } from '../state/events.js';
 import { registerActions } from '../ui/actions.js';
@@ -23,7 +23,7 @@ function cardHtml({ id, title, poster, type, nextLabel, percent, remaining }) {
       <button type="button" class="home-card home-card--wide" data-action="abrirEpisodios" data-id="${id}" data-media="${type || 'tv'}" aria-label="Continuar ${name}, próximo ${nextLabel}, ${left}">
         ${image}
         <span class="home-card__title">${name}</span>
-        <span class="home-card__meta">${nextLabel} · ${left}</span>
+        <span class="home-card__meta">${joinMeta([nextLabel, left])}</span>
         <span class="home-card__progress" aria-hidden="true"><span style="width:${percent}%"></span></span>
       </button>
     </li>`;

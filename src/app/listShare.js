@@ -7,7 +7,7 @@ import { showToast } from '../ui/feedback.js';
 import { closeModal, confirmDialog, openModal } from '../ui/modals.js';
 import { listIcon } from '../ui/listIcons.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
-import { formatCount, pluralize } from '../utils/format.js';
+import { formatCount, joinMeta, pluralize } from '../utils/format.js';
 import { cardPoster, copyAsList, getOpenListId, showUserList } from './userLists.js';
 import { changeList, findList } from './listStore.js';
 import { emit } from '../state/events.js';
@@ -100,7 +100,7 @@ function renderSharedList() {
     const n = shared.items.length;
     document.getElementById('shared-list-title').innerHTML = `${listIcon(shared.emoji)} ${escapeHtml(shared.name)}`;
     document.getElementById('shared-list-owner').textContent =
-        `${shared.owner ? `Lista de ${shared.owner}` : 'Lista compartilhada'} · ${n === 0 ? 'nenhum título' : `${formatCount(n)} ${pluralize(n, 'título', 'títulos')}`}`;
+        joinMeta([shared.owner ? `Lista de ${shared.owner}` : 'Lista compartilhada', n === 0 ? 'nenhum título' : `${formatCount(n)} ${pluralize(n, 'título', 'títulos')}`]);
     document.getElementById('shared-list-items').innerHTML = n === 0
         ? '<p class="library-note grid-full">Esta lista ainda está vazia.</p>'
         : shared.items.map(i => `<div class="library-item">

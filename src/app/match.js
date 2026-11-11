@@ -11,7 +11,7 @@ import { MATCH_PARAMS, computeMatches, decodeMatchInvite, encodeMatchInvite, inv
 import { session, state } from '../state/appState.js';
 import { createConfetti, showToast } from '../ui/feedback.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
-import { formatRating } from '../utils/format.js';
+import { formatRating, joinMeta } from '../utils/format.js';
 import { enterAsGuest } from './auth.js';
 import { discoverRequest, fetchRandomPage } from './filters.js';
 import { sendInviteToFriend } from './friends.js';
@@ -50,7 +50,7 @@ function renderCard() {
     ${posterImg(title.poster_path, { cls: 'match-card__poster', lazy: false })}
     <div class="match-card__info">
       <h3 class="match-card__title">${escapeHtml(name)}</h3>
-      <p class="match-card__meta">${escapeHtml(year)} · Nota ${formatRating(title.vote_average)}</p>
+      <p class="match-card__meta">${escapeHtml(joinMeta([year, `Nota ${formatRating(title.vote_average)}`]))}</p>
       <p class="match-card__overview">${escapeHtml(title.overview || 'Sem sinopse.')}</p>
     </div>`;
 }

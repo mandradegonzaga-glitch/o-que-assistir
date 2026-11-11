@@ -9,7 +9,7 @@ import { state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { ph } from '../ui/phosphor.js';
 import { formatRuntime } from '../domain/titleFacts.js';
-import { formatRating } from '../utils/format.js';
+import { formatRating, joinMeta } from '../utils/format.js';
 import { refreshFriends } from './friends.js';
 import { recordSocial, trackChallenge } from './progress.js';
 import { MEDIA_KIND, getYear, getTitle } from '../domain/mediaItem.js';
@@ -577,7 +577,7 @@ function compartilhar() {
   const movie = state.currentMovie;
   if (!movie) return;
   const kind = titleKind(movie, state.type);
-  document.getElementById('share-subtitle').textContent = `${getTitle(movie)} · ${MEDIA_KIND[kind].one}`;
+  document.getElementById('share-subtitle').textContent = joinMeta([getTitle(movie), MEDIA_KIND[kind].one]);
   // Celular: o compartilhar do sistema já inclui o WhatsApp, com a imagem. Computador: WhatsApp Web com o texto.
   // Celular sem esse recurso (navegador antigo ou site fora de HTTPS): baixa o ingresso para anexar da galeria.
   const native = canShareFiles(new File([''], 'ingresso.png', { type: 'image/png' }));

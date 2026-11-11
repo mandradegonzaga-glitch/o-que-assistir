@@ -239,7 +239,7 @@ test.describe('lista do Match', () => {
     await playLocal(page, t => ['Filme Um', 'Filme Dois'].includes(t));
     const history = page.locator('#match-history');
     await expect(history).toBeVisible();
-    await expect(history.locator('.match-history__meta')).toHaveText(/^Com Ana e Bia · \d{1,2} de \w+/);
+    await expect(history.locator('.match-history__meta')).toHaveText(/^Com Ana e Bia ·\s\d{1,2} de \w+/);
     await expect(history.locator('.match-history__title')).toHaveCount(2);
     await history.locator('.match-history__title', { hasText: 'Filme Dois' }).click();
     await expect(modal(page)).toBeVisible();

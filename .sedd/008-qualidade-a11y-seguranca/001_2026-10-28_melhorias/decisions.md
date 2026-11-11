@@ -550,6 +550,23 @@ Regras combinadas: cada etapa numa branch `redesign/etapa-N`, com commit e envio
 **Alternativas consideradas:**
 - Seguir corrigindo cada caso especial no lugar → o mesmo tipo de bug voltaria em cada tela nova.
 
+## D001-051 — Repasse do redesign: separador que não fica sozinho, abas sempre à vista e selos do pôster
+
+**Data:** 2026-11-11 · **Tarefa:** T001-138
+
+**Contexto:** o usuário pediu para repassar todas as etapas do redesign com a captação nova (Dribbble + galerias + clone de sites). Na etapa 1 o app mostrava "2012 · ★ 8,2 ·" com o ponto sozinho no fim da linha e a Biblioteca com a 2ª aba cortada no celular.
+
+**Decisão:**
+- Toda linha de informações usa `joinMeta` (um dono só): o espaço depois do "·" não quebra, então a quebra só pode acontecer antes do "·". Rótulos lidos por leitor de tela (`aria-label`), o texto de compartilhar e o desenho do ingresso no canvas ficaram como estavam (não quebram na tela).
+- Abas da Biblioteca em grade `auto-fit` (mín. 150px): 2 colunas no celular, uma fileira quando cabem.
+- Nota no canto de cima do pôster (o número do Top 10 fica à esquerda) e "Estreia" no de baixo, na cor do tipo; "Estreia" usa o período da lista de Lançamentos (45 dias filme, 60 série) pela data do próprio título.
+- Classificação indicativa só do Brasil e só para filme (já vem em `release_dates`); a de outro país não vale.
+- Aprovado pelo usuário e deixado de fora: notas do IMDb/Rotten Tomatoes em pílulas (só o TMDB dá nota, e o OMDb segue fora), "Nova temporada" em todo pôster (uma chamada a mais por título), histograma e números do Letterboxd (sem dados).
+
+**Alternativas consideradas:**
+- Esmaecer a borda das abas para indicar rolagem → a última aba ficaria sempre meio apagada; a grade mostra tudo.
+- Classificação de série → precisaria de `content_ratings`, ainda não conferido no proxy.
+
 ## D001-050 — DESIGN.md como árbitro do visual, fundo azul-noite e sorteio só com streaming
 
 **Data:** 2026-11-10 · **Tarefa:** T001-137

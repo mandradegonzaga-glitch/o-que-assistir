@@ -97,3 +97,11 @@ export function releaseWindow(endpoint, today = new Date()) {
   const from = new Date(today.getFullYear(), today.getMonth(), today.getDate() - days);
   return { from: localDay(from), to: localDay(today), days };
 }
+
+// Selo "Estreia" nos pôsteres: lançado dentro do mesmo período da lista de Lançamentos
+export function isRecentRelease(item, type, today = new Date()) {
+  const endpoint = getTmdbEndpoint(type);
+  const date = String((endpoint === 'tv' ? item?.first_air_date : item?.release_date) || '').slice(0, 10);
+  const w = releaseWindow(endpoint, today);
+  return Boolean(date) && date >= w.from && date <= w.to;
+}

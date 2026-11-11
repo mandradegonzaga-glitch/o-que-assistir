@@ -1,7 +1,7 @@
 // Descobrir: filtros, sorteio, Top 10 e busca
 import { isAbortError, latestSignal, titleDetails, tmdbGet } from '../api/tmdb.js';
 import { ph } from '../ui/phosphor.js';
-import { RELEASE_DAYS, hasLatinTitle } from '../domain/filters.js';
+import { RELEASE_DAYS, hasLatinTitle, isRecentRelease } from '../domain/filters.js';
 import { GENRE_NAMES } from '../domain/genres.js';
 import { SURPRISE_QUALITY, surpriseGenres } from '../domain/surprise.js';
 import { session, state } from '../state/appState.js';
@@ -16,6 +16,10 @@ import { registerActions } from '../ui/actions.js';
 import { discoverRequest, fetchDiscover, fetchRandomPage, filtersKey, setFilters } from './filters.js';
 import { openDrawn } from './sorteioHistory.js';
 import { whileBusy } from '../ui/busy.js';
+import { formatRating } from '../utils/format.js';
+
+// Selos do pôster (repasse da etapa 1): a nota no canto de cima e "Estreia" no de baixo
+const POSTER_STAR = ph('star', { weight: 'fill', cls: 'icon' });
 
 const RECENT_DRAWS = 20;
 
@@ -318,16 +322,20 @@ function renderResults(list, rank=false, { caption = '', empty = '' } = {}) {
     list.forEach((f, i) => {
         if(f.poster_path) {
             const title = getTitle(f);
+            const rating = f.vote_average ? formatRating(f.vote_average) : '';
+            const premiere = isRecentRelease(f, state.type);
             const item = document.createElement('button');
             item.type = 'button';
             item.className = 'result-item';
-            item.setAttribute('aria-label', `${title}${rank ? `, posição ${i+1}` : ''}`);
+            item.setAttribute('aria-label', [title, rank && `posição ${i+1}`, rating && `nota ${rating}`, premiere && 'estreia'].filter(Boolean).join(', '));
             item.dataset.action = 'carregarDetalhes';
             item.dataset.id = f.id;
             item.dataset.media = state.type;
 
             item.innerHTML = `
                 ${rank ? `<span class="result-rank">${i+1}º</span>` : ''}
+                ${rating ? `<span class="poster-badge poster-badge--rating" aria-hidden="true">${POSTER_STAR}${rating}</span>` : ''}
+                ${premiere ? '<span class="poster-badge poster-badge--premiere" aria-hidden="true">Estreia</span>' : ''}
                 ${posterImg(f.poster_path, { alt: escapeHtml(title) })}
                 <span class="result-title-preview">${escapeHtml(title)}</span>
             `;

@@ -1,4 +1,4 @@
-// Linha única de informações do título: ★ nota • ano • duração ou temporadas • até 2 gêneros
+// Informações do título: ★ nota • ano • duração ou temporadas; depois a classificação e até 2 gêneros
 import { genreIds, genreNames } from './genres.js';
 import { formatRating, pluralize } from '../utils/format.js';
 
@@ -19,7 +19,8 @@ export function seasonsLabel(count) {
 }
 
 // genres: ids (genre_ids do /discover) ou objetos { id } dos detalhes; o nome sai sempre em português
-export function titleFacts({ rating, date, runtime, seasons, genres } = {}) {
+// certification: classificação indicativa do Brasil ("L", "14"…), só para filme
+export function titleFacts({ rating, date, runtime, seasons, genres, certification } = {}) {
   const ids = genreIds(genres);
   const facts = [];
   if (rating) facts.push({ kind: 'rating', text: formatRating(rating) });
@@ -27,8 +28,11 @@ export function titleFacts({ rating, date, runtime, seasons, genres } = {}) {
   if (/^\d{4}$/.test(year)) facts.push({ kind: 'year', text: year });
   const length = seasons ? seasonsLabel(seasons) : formatRuntime(runtime);
   if (length) facts.push({ kind: 'length', text: length });
+  if (certification) facts.push(certification === 'L'
+    ? { kind: 'certification', text: 'Livre', label: 'Classificação: livre' }
+    : { kind: 'certification', text: certification, label: `Classificação: ${certification} anos` });
   const names = genreNames(ids, 2);
-  if (names.length) facts.push({ kind: 'genres', text: names.join(', ') });
+  if (names.length) facts.push({ kind: 'genres', items: names });
   return facts;
 }
 

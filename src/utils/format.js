@@ -15,3 +15,11 @@ export function formatCount(value) {
 export function pluralize(count, one, other) {
   return pluralRules.select(count) === 'one' ? one : other;
 }
+
+// Informações em linha: "2020 · ★ 8,5". O espaço depois do "·" não quebra, então, se a linha
+// precisar quebrar, o "·" desce junto com o que vem depois e nunca fica sozinho no fim
+const NO_BREAK_SPACE = String.fromCharCode(0xa0);
+const META_SEPARATOR = ` ·${NO_BREAK_SPACE}`;
+export function joinMeta(parts) {
+  return parts.filter(Boolean).join(META_SEPARATOR);
+}

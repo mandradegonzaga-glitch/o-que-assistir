@@ -138,7 +138,8 @@
         "T001-131",
         "T001-132",
         "T001-133",
-        "T001-134"
+        "T001-134",
+        "T001-138"
       ],
       "tasksCompleted": [
         "T001-001",
@@ -348,13 +349,12 @@
       "T001-116",
       "T001-117",
       "T001-118",
-      "T001-119"
+      "T001-119",
+      "T001-138"
     ],
     "inProgress": null,
     "nextSteps": [
-      "Extras feitos (menos listas personalizadas, que ficaram para depois a pedido do usuário). Próximo: perguntar (listas personalizadas? commit e publicar? vídeo de lançamento final?)",
-      "Teste real com dois celulares e duas contas (amizade, indicação, Match ao vivo, WhatsApp com ingresso)",
-      "Em espera (precisam de servidor): T001-094 ranking, T001-095 aviso de sequência"
+      "Repasse do redesign: etapa 1 feita (T001-138), aguardando aprovação; próximo: etapa 2 (página do título) com captação antes"
     ],
     "filesModified": [
       "index.html",

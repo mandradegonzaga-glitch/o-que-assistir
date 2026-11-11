@@ -6,7 +6,7 @@ import { EMPTY_PROGRESS, XP_LABELS, addXp, applyDailyVisit, bumpSocial, getLevel
 import { getGuestProgress, saveGuestProgress } from './guestLibrary.js';
 import { isAccount, session } from '../state/appState.js';
 import { showAchievement, showToast } from '../ui/feedback.js';
-import { formatCount, pluralize } from '../utils/format.js';
+import { formatCount, joinMeta, pluralize } from '../utils/format.js';
 import { checkAllBadges } from './badges.js';
 import { localDay } from '../utils/date.js';
 import { emit, on } from '../state/events.js';
@@ -88,7 +88,7 @@ export function trackChallenge(event, detail) {
     const done = result.completed.map(kind => view[kind]);
     const xp = done.reduce((sum, c) => sum + c.xp, 0);
     const kicker = done.length === 2 ? 'Desafio do dia e meta da semana' : (result.completed[0] === 'daily' ? 'Desafio do dia concluído' : 'Meta da semana concluída');
-    showAchievement({ name: done.map(c => c.text).join(' · '), desc: `+${formatCount(xp)} XP`, icon: done[0].icon, kicker });
+    showAchievement({ name: joinMeta(done.map(c => c.text)), desc: `+${formatCount(xp)} XP`, icon: done[0].icon, kicker });
   }
   celebrateLevel(before);
   emit('progress:changed');
@@ -133,7 +133,7 @@ export function renderProgress() {
   const logBox = document.getElementById('xp-log');
   logBox.replaceChildren(...log.map(({ action, amount }) => {
     const item = document.createElement('li');
-    item.textContent = `+${amount} XP · ${XP_LABELS[action] || action}`;
+    item.textContent = joinMeta([`+${amount} XP`, XP_LABELS[action] || action]);
     return item;
   }));
   logBox.hidden = log.length === 0;

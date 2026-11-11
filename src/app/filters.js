@@ -10,6 +10,7 @@ import { state } from '../state/appState.js';
 import { emit, on } from '../state/events.js';
 import { FILTER_FIELDS, filterField } from '../ui/filterFields.js';
 import { resolveProviderFilter } from './myProviders.js';
+import { joinMeta } from '../utils/format.js';
 
 const readField = el => el.value.trim();
 
@@ -97,5 +98,5 @@ export function filtersSummary() {
   const { yearFrom: from, yearTo: to, personName } = state.filters;
   const years = from && to ? `${from} a ${to}` : from ? `desde ${from}` : to ? `até ${to}` : '';
   const parts = [personName, chosen('mood'), chosen('genre'), chosen('provider'), chosen('duration'), chosen('country'), years].filter(Boolean);
-  return [MEDIA_KIND[state.type].many, ...(parts.length ? parts : ['todos os gêneros'])].join(' · ');
+  return joinMeta([MEDIA_KIND[state.type].many, ...(parts.length ? parts : ['todos os gêneros'])]);
 }

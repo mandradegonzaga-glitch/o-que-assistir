@@ -4,7 +4,7 @@ import { openModal, closeModal, isModalOpen } from '../ui/modals.js';
 import { blindFacts, hasBlindOverview } from '../domain/blind.js';
 import { state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
-import { formatRating } from '../utils/format.js';
+import { formatRating, joinMeta } from '../utils/format.js';
 import { pickDraw, withDetails } from './discover.js';
 import { discoverRequest, fetchRandomPage, filtersSummary } from './filters.js';
 import { MEDIA_KIND } from '../domain/mediaItem.js';
@@ -23,7 +23,7 @@ function render(item) {
   const facts = blindFacts(item, state.type);
   document.getElementById('blind-title').textContent = `${MEDIA_KIND[state.type].a} misterioso`;
   document.getElementById('blind-rating').textContent = `★ ${formatRating(facts.rating)}`;
-  const rest = [['blind-length', facts.length], ['blind-decade', facts.decade], ['blind-genres', facts.genres.join(' · ')]];
+  const rest = [['blind-length', facts.length], ['blind-decade', facts.decade], ['blind-genres', joinMeta(facts.genres)]];
   rest.forEach(([id, text]) => {
     const el = document.getElementById(id);
     el.textContent = text;

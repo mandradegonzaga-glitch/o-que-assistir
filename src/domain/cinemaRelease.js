@@ -35,6 +35,15 @@ export function cinemaStatus(releaseDates, today = localDay()) {
   return { kind: 'now' };
 }
 
+// Classificação indicativa do Brasil ("L", "10", "12", "14", "16", "18") nas mesmas datas de lançamento:
+// a do cinema, se houver; senão a primeira que vier. Sem a do Brasil, nada (a de outro país não vale aqui)
+export function brCertification(releaseDates) {
+  const br = (releaseDates?.results || []).find(r => r.iso_3166_1 === 'BR');
+  const rated = (br?.release_dates || []).filter(r => r.certification);
+  const theatrical = THEATRICAL.map(type => rated.find(r => r.type === type)).find(Boolean);
+  return (theatrical || rated[0])?.certification || '';
+}
+
 export function cinemaLabel(status, today = localDay()) {
   if (!status) return '';
   return status.kind === 'now' ? 'Nos cinemas' : `Estreia nos cinemas em ${formatPremiere(status.date, today)}`;

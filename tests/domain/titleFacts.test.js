@@ -21,13 +21,22 @@ describe('linha única de informações do título', () => {
       { kind: 'rating', text: '8,7' },
       { kind: 'year', text: '1999' },
       { kind: 'length', text: '2h 16min' },
-      { kind: 'genres', text: 'Ação, Ficção científica' },
+      { kind: 'genres', items: ['Ação', 'Ficção científica'] },
     ]);
+  });
+
+  it('classificação indicativa do Brasil vai junto dos gêneros: "L" vira "Livre"', () => {
+    expect(titleFacts({ certification: '14', genres: [18] })).toEqual([
+      { kind: 'certification', text: '14', label: 'Classificação: 14 anos' },
+      { kind: 'genres', items: ['Drama'] },
+    ]);
+    expect(titleFacts({ certification: 'L' })).toEqual([{ kind: 'certification', text: 'Livre', label: 'Classificação: livre' }]);
+    expect(titleFacts({ certification: '' })).toEqual([]);
   });
 
   it('série: temporadas no lugar da duração; gêneros dos detalhes pelo id (o TMDB manda alguns em inglês)', () => {
     const facts = titleFacts({ rating: 8.6, date: '2016-07-15', seasons: 5, runtime: 50, genres: [{ id: 10759, name: 'Action & Adventure' }, { id: 9648 }] });
-    expect(facts.map(f => f.text)).toEqual(['8,6', '2016', '5 temporadas', 'Ação e aventura, Mistério']);
+    expect(facts.map(f => f.text || f.items)).toEqual(['8,6', '2016', '5 temporadas', ['Ação e aventura', 'Mistério']]);
   });
 
   it('o que não existe fica de fora, sem separador sobrando', () => {

@@ -77,6 +77,22 @@ test.describe('Biblioteca em tela própria', () => {
     await expect(page.locator('#view-library')).toBeVisible();
     await expect(page.locator('#tab-mode-library')).toHaveAttribute('aria-selected', 'true');
   });
+
+  // Repasse da etapa 1 (2026-11-11): no celular a 2ª aba aparecia cortada ("Em Andament…") e as
+  // outras ficavam fora da tela, sem nada dizendo que a fileira rolava. Todas inteiras e à vista.
+  test('no celular, as 4 abas aparecem inteiras', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 740 });
+    await enterAsGuest(page);
+    await page.locator('.bottom-nav').getByRole('button', { name: 'Biblioteca' }).click();
+    const tabs = page.locator('.library-tabs .library-tab');
+    await expect(tabs).toHaveCount(4);
+    for (const tab of await tabs.all()) {
+      const box = await tab.boundingBox();
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width).toBeLessThanOrEqual(360);
+      expect(await tab.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+    }
+  });
 });
 
 test.describe('Continue assistindo', () => {

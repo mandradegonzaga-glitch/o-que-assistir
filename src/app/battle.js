@@ -5,7 +5,7 @@ import { IMG_URL } from '../config/constants.js';
 import { champion, choose, currentPair, isDone, stageLabel, stageTrack, startBattle } from '../domain/battle.js';
 import { session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
-import { formatRating } from '../utils/format.js';
+import { formatRating, joinMeta } from '../utils/format.js';
 import { withDetails } from './discover.js';
 import { discoverRequest, fetchRandomPage, filtersSummary } from './filters.js';
 import { shuffle } from '../utils/shuffle.js';
@@ -53,7 +53,7 @@ function fighter(item, side) {
   name.textContent = getTitle(item);
   const meta = document.createElement('span');
   meta.className = 'battle__meta';
-  meta.textContent = [getYear(item), `★ ${formatRating(item.vote_average)}`].filter(Boolean).join(' · ');
+  meta.textContent = joinMeta([getYear(item), `★ ${formatRating(item.vote_average)}`]);
   btn.append(poster, name, meta);
 
   const info = document.createElement('button');

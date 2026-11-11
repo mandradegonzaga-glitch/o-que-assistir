@@ -7,7 +7,7 @@ import { GENRE_NAMES, genreNames } from '../domain/genres.js';
 import { DAY_MS, localDay } from '../utils/date.js';
 import { session } from '../state/appState.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
-import { formatRating } from '../utils/format.js';
+import { formatRating, joinMeta } from '../utils/format.js';
 import { getYear, getTitle } from '../domain/mediaItem.js';
 import { on } from '../state/events.js';
 import { posterImg } from '../ui/icons.js';
@@ -70,13 +70,15 @@ function cardHtml({ kind, item, genre }) {
   const year = getYear(item);
   // O gênero que trouxe a indicação aparece primeiro, para combinar com o "Porque você curte"
   const ids = genre ? [genre, ...(item.genre_ids || []).filter(id => id !== genre)] : item.genre_ids;
-  const meta = [year, `★ ${formatRating(item.vote_average)}`, genreNames(ids, 1)[0]].filter(Boolean).join(' · ');
+  const meta = joinMeta([year, `★ ${formatRating(item.vote_average)}`]);
+  const genreName = genreNames(ids, 1)[0];
   return `<li>
       <button type="button" class="home-card home-card--pick" data-kind="${kind.kind}" data-action="carregarDetalhes" data-id="${item.id}" data-media="${kind.kind}" aria-label="${kind.label} do dia: ${title}">
         ${posterImg(item.poster_path, { cls: 'home-card__poster' })}
         <span class="home-card__kind">${kind.label}</span>
         <span class="home-card__title">${title}</span>
         <span class="home-card__meta">${escapeHtml(meta)}</span>
+        ${genreName ? `<span class="home-card__genre">${escapeHtml(genreName)}</span>` : ''}
         ${why}
         <span class="home-card__overview">${escapeHtml(shortOverview(item.overview))}</span>
       </button>

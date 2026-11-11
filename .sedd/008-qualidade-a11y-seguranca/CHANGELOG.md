@@ -2,6 +2,19 @@
 
 All notable changes to this feature will be documented in this file.
 
+## [2026-11-11, repasse do redesign: etapa 1] — branch `redesign/repasse` (local, ainda não publicado)
+
+### Added
+
+- Frase de efeito do filme ou série acima da sinopse
+- Nota no canto dos pôsteres e selo "Estreia" nos lançamentos recentes
+- Classificação indicativa do Brasil (filmes) junto dos gêneros, em pílulas
+
+### Fixed
+
+- "·" sozinho no fim da linha nas Indicações do dia (e em outras linhas de informação)
+- Abas da Biblioteca cortadas no celular
+
 ## [2026-11-10, auditoria de design] — branch `refactor/untangle` (local, ainda não publicado)
 
 ### Changed

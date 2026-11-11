@@ -14,7 +14,7 @@ import { CLOSE_ICON, posterImg } from '../ui/icons.js';
 import { listIcon, listIconInfo } from '../ui/listIcons.js';
 import { ph } from '../ui/phosphor.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
-import { formatCount, pluralize } from '../utils/format.js';
+import { formatCount, joinMeta, pluralize } from '../utils/format.js';
 import {
     addTitlesToList, allLists, canCreateList, changeList, createList, deleteList, findList, listsUnavailable,
     renameList, saveListOrder, setTitleInList as storeTitleInList,
@@ -142,7 +142,7 @@ function renderCollection(div, c) {
         <div class="list-view__head grid-full">
             <button type="button" class="btn-clear-small" data-action="closeUserList"><span aria-hidden="true">←</span> Todas as listas</button>
             <h3 id="list-view-title" class="list-view__title" tabindex="-1">${listIcon(c.emoji)} ${escapeHtml(c.name)}</h3>
-            <p class="list-view__count">${ready ? `Coleção pronta · ${countLabel(items.length)}` : 'Coleção pronta'}</p>
+            <p class="list-view__count">${ready ? joinMeta(['Coleção pronta', countLabel(items.length)]) : 'Coleção pronta'}</p>
             <div class="list-view__actions">
                 ${ready ? '<button type="button" class="btn-main btn-compact list-view__copy" data-action="copyCollection">Copiar para minhas listas</button>' : ''}
             </div>

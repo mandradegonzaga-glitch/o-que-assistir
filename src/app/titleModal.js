@@ -7,7 +7,7 @@ import { session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { titleFacts, titleSize } from '../domain/titleFacts.js';
-import { cinemaLabel, cinemaStatus } from '../domain/cinemaRelease.js';
+import { brCertification, cinemaLabel, cinemaStatus } from '../domain/cinemaRelease.js';
 import { watchProviders } from '../domain/providers.js';
 import { rankTrailers } from '../domain/trailers.js';
 import { firstAvailableVideo } from '../api/youtube.js';
@@ -103,13 +103,26 @@ function renderFacts(f, type, details = {}) {
         runtime: details.runtime,
         seasons: isTv ? details.number_of_seasons : undefined,
         genres: f.genre_ids?.length ? f.genre_ids : (details.genres || f.genres),
+        certification: brCertification(details.release_dates), // só filme traz release_dates (titleDetails)
     });
-    // Nota, ano e duração numa linha; os gêneros na linha de baixo (assim nenhum "•" fica sobrando ao quebrar)
-    const main = facts.filter(fact => fact.kind !== 'genres').map(fact => fact.kind === 'rating'
+    // Nota, ano e duração numa linha; classificação e gêneros em pílulas na linha de baixo
+    // (assim nenhum "•" fica sobrando ao quebrar)
+    const main = facts.filter(fact => ['rating', 'year', 'length'].includes(fact.kind)).map(fact => fact.kind === 'rating'
         ? `<span class="rating"><span class="sr-only">Nota </span>${STAR}${escapeHtml(fact.text)}</span>`
         : `<span>${escapeHtml(fact.text)}</span>`).join('<span class="modal-info__dot" aria-hidden="true">•</span>');
-    const genres = facts.find(fact => fact.kind === 'genres');
-    document.getElementById('m-facts').innerHTML = main + (genres ? `<span class="modal-info__genres">${escapeHtml(genres.text)}</span>` : '');
+    const tags = facts.flatMap(fact => {
+        if (fact.kind === 'certification') return [`<span class="title-tag title-tag--rating"><span class="sr-only">${escapeHtml(fact.label)}</span><span aria-hidden="true">${escapeHtml(fact.text)}</span></span>`];
+        if (fact.kind === 'genres') return fact.items.map(name => `<span class="title-tag">${escapeHtml(name)}</span>`);
+        return [];
+    });
+    document.getElementById('m-facts').innerHTML = main + (tags.length ? `<span class="modal-info__tags">${tags.join('')}</span>` : '');
+}
+
+// Frase de efeito do TMDB ("tagline"), em cima da sinopse; muitos títulos não têm
+function renderTagline(details = {}) {
+    const el = document.getElementById('m-tagline');
+    el.textContent = (details.tagline || '').trim();
+    el.hidden = !el.textContent;
 }
 
 async function loadFacts(f, type, signal, detailsPromise) {
@@ -117,6 +130,7 @@ async function loadFacts(f, type, signal, detailsPromise) {
         const details = await detailsPromise;
         if (signal.aborted || state.currentMovie?.id !== f.id) return;
         renderFacts(f, type, details);
+        renderTagline(details);
     } catch (e) {
         if (!isAbortError(e)) console.error('Erro ao carregar detalhes:', e);
     }
@@ -292,6 +306,7 @@ export async function abrirModal(item, { fromDraw = false } = {}) {
     titleEl.innerText = getTitle(f);
     titleEl.dataset.size = titleSize(getTitle(f));
     document.getElementById('m-desc').innerText = f.overview || "Sem sinopse.";
+    renderTagline(); // a frase do título anterior não fica enquanto os detalhes chegam
 
     // Links de crítica: RT por busca no título; IMDb só se houver imdb_id (séries precisam de external_ids)
     const linkImdb = document.getElementById('link-imdb');

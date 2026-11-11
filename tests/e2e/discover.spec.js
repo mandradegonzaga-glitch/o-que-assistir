@@ -271,3 +271,28 @@ test.describe('boas-vindas', () => {
     await expect(page.locator('#onboarding-overlay')).toBeHidden();
   });
 });
+
+// Repasse da etapa 1 (2026-11-11): selos no pôster da grade
+test.describe('selos no pôster', () => {
+  test('a nota fica no canto; "Estreia" só no que saiu dentro do período dos Lançamentos', async ({ page }) => {
+    await page.clock.setFixedTime(new Date(2026, 10, 6, 12, 0));
+    const recent = { ...LIST[0], id: 50, title: 'Saiu Agora', release_date: '2026-10-30' };
+    const old = { ...LIST[1], id: 51, title: 'Antigo', release_date: '2020-01-01', vote_average: 0 };
+    await page.route(/\/tmdb\/discover\//, route => route.fulfill({ contentType: 'application/json', json: { results: [recent, old] } }));
+    await enterAsGuest(page);
+    await page.locator('#btn-top10').click();
+
+    const first = page.locator('#results-area .result-item').first();
+    await expect(first.locator('.poster-badge--rating')).toHaveText('8,5');
+    await expect(first.locator('.poster-badge--premiere')).toHaveText('Estreia');
+    await expect(first).toHaveAttribute('aria-label', 'Saiu Agora, posição 1, nota 8,5, estreia');
+
+    const second = page.locator('#results-area .result-item').nth(1);
+    await expect(second.locator('.poster-badge')).toHaveCount(0); // sem nota e antigo: nada no pôster
+    await expect(second).toHaveAttribute('aria-label', 'Antigo, posição 2');
+
+    // o selo da nota não cobre o número do Top 10
+    const [rank, badge] = await Promise.all([first.locator('.result-rank').boundingBox(), first.locator('.poster-badge--rating').boundingBox()]);
+    expect(rank.x + rank.width).toBeLessThan(badge.x);
+  });
+});

@@ -120,3 +120,39 @@ test.describe('nos cinemas', () => {
     expect(tmdbUrls.some(u => u.searchParams.get('append_to_response') === 'release_dates')).toBe(false);
   });
 });
+
+// Repasse da etapa 1 (2026-11-11): frase de efeito acima da sinopse; classificação e gêneros em pílulas
+test.describe('frase de efeito, classificação e gêneros', () => {
+  const withDetails = (page, id, extra) => page.route(`**/functions/v1/tmdb/movie/${id}?*`, route => route.fulfill({
+    contentType: 'application/json',
+    json: { id, title: `Filme ${id}`, overview: 'Sinopse', runtime: 100, genres: [{ id: 28 }, { id: 878 }, { id: 53 }], ...extra },
+  }));
+
+  test('filme: a frase fica em cima da sinopse; a classificação do Brasil e 2 gêneros em pílulas', async ({ page }) => {
+    await withDetails(page, 1, {
+      tagline: 'Acredite no impossível.',
+      release_dates: { results: [
+        { iso_3166_1: 'US', release_dates: [{ type: 3, certification: 'PG-13' }] },
+        { iso_3166_1: 'BR', release_dates: [{ type: 3, certification: '14' }] },
+      ] },
+    });
+    await openTitle(page, 'movie-1');
+    const tagline = page.locator('#m-tagline');
+    await expect(tagline).toHaveText('Acredite no impossível.');
+    const [tag, desc] = await Promise.all([tagline.boundingBox(), page.locator('#m-desc').boundingBox()]);
+    expect(tag.y).toBeLessThan(desc.y);
+
+    const tags = page.locator('#m-facts .title-tag');
+    await expect(tags).toHaveText(['Classificação: 14 anos14', 'Ação', 'Ficção científica']);
+    await expect(tags.first()).toHaveClass(/title-tag--rating/);
+    // nenhum "•" depois da linha de cima: os gêneros não são mais texto corrido
+    await expect(page.locator('#m-facts .modal-info__tags .modal-info__dot')).toHaveCount(0);
+  });
+
+  test('sem frase e sem classificação do Brasil, nada aparece no lugar', async ({ page }) => {
+    await withDetails(page, 2, { tagline: '', release_dates: { results: [{ iso_3166_1: 'US', release_dates: [{ type: 3, certification: 'R' }] }] } });
+    await openTitle(page, 'movie-2');
+    await expect(page.locator('#m-facts .title-tag')).toHaveText(['Ação', 'Ficção científica']);
+    await expect(page.locator('#m-tagline')).toBeHidden();
+  });
+});

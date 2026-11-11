@@ -11,6 +11,7 @@ import { getTitle } from '../domain/mediaItem.js';
 import { on } from '../state/events.js';
 import { registerActions } from '../ui/actions.js';
 import { posterEl } from '../ui/icons.js';
+import { joinMeta } from '../utils/format.js';
 
 function load() {
   if (!session.currentUser) return [];
@@ -81,7 +82,7 @@ export async function renderMatchHistory() {
     item.className = 'match-history__item';
     const meta = document.createElement('p');
     meta.className = 'match-history__meta';
-    meta.textContent = `Com ${entry.with} · ${formatMatchDate(entry.at)}`;
+    meta.textContent = joinMeta([`Com ${entry.with}`, formatMatchDate(entry.at)]);
     const grid = document.createElement('div');
     grid.className = 'match-history__titles';
     grid.append(...titles.map(t => titleButton(t, entry.type)));

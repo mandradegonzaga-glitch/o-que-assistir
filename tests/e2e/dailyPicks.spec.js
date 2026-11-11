@@ -11,7 +11,8 @@ test.describe('indicações do dia', () => {
 
     await expect(row(page)).toBeVisible();
     await expect(cards(page).locator('.home-card__kind')).toHaveText(['Filme', 'Série', 'Dorama']);
-    await expect(cards(page).first().locator('.home-card__meta')).toHaveText('2020 · ★ 8,5 · Drama');
+    await expect(cards(page).first().locator('.home-card__meta')).toHaveText('2020 · ★ 8,5');
+    await expect(cards(page).first().locator('.home-card__genre')).toHaveText('Drama');
     await expect(cards(page).first()).toHaveAttribute('aria-label', /^Filme do dia: /);
     await expect(cards(page).nth(2)).toHaveAttribute('data-media', 'dorama');
     // Nada abre por cima da tela: não há mais painel nem botão no canto
@@ -67,6 +68,30 @@ test.describe('indicações do dia', () => {
     const draw = await page.locator('#btn-sortear').boundingBox();
     const row = await page.locator('#daily-row').boundingBox();
     expect(row.y).toBeGreaterThan(draw.y);
+  });
+
+  // Repasse da etapa 1 (2026-11-11): no cartão estreito a linha quebrava logo depois de um "·"
+  // ("2012 · ★ 8,2 ·" e o gênero embaixo). Nenhum separador pode terminar uma linha.
+  test('no celular, nenhum "·" fica sozinho no fim de uma linha', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await enterAsGuest(page);
+    await expect(cards(page)).toHaveCount(3);
+    const orphans = await page.locator('#daily-picks-list .home-card__meta').evaluateAll(metas => metas.flatMap(meta => {
+      const walker = document.createTreeWalker(meta, NodeFilter.SHOW_TEXT);
+      const chars = [];
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        for (let i = 0; i < node.length; i++) {
+          if (!node.data[i].trim()) continue;
+          const range = document.createRange();
+          range.setStart(node, i);
+          range.setEnd(node, i + 1);
+          chars.push({ ch: node.data[i], top: range.getBoundingClientRect().top });
+        }
+      }
+      return chars.filter((c, i) => c.ch === '·' && (i === chars.length - 1 || chars[i + 1].top > c.top + 2))
+        .map(() => meta.textContent);
+    }));
+    expect(orphans).toEqual([]);
   });
 
   // Canto inferior direito: aviso, faixa "Instalar App", "voltar ao topo", conquista e (no celular) a barra
@@ -147,7 +172,7 @@ test.describe('indicações do dia pelo DNA', () => {
 
     await expect(cards(page).first().locator('.home-card__why')).toHaveText('Porque você curte Terror');
     // o gênero que trouxe a indicação vem primeiro
-    await expect(cards(page).first().locator('.home-card__meta')).toHaveText(/ · Terror$/);
+    await expect(cards(page).first().locator('.home-card__genre')).toHaveText('Terror');
     await expect(cards(page).nth(1).locator('.home-card__why')).toHaveCount(0);
     await expect(cards(page).nth(2).locator('.home-card__why')).toHaveCount(0);
     await expect(page.locator('#daily-picks-note')).toHaveText('Escolhidos pelo seu gosto, novos à meia-noite');

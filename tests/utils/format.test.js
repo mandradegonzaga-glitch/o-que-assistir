@@ -1,5 +1,7 @@
 import { describe, it, expect } from '@jest/globals';
-import { formatRating, formatCount, pluralize } from '../../src/utils/format.js';
+import { formatRating, formatCount, joinMeta, pluralize } from '../../src/utils/format.js';
+
+const NBSP = String.fromCharCode(0xa0);
 
 describe('format', () => {
   it('formats ratings with a comma and one decimal', () => {
@@ -21,5 +23,11 @@ describe('format', () => {
     expect(pluralize(1, 'restante', 'restantes')).toBe('restante');
     expect(pluralize(0, 'restante', 'restantes')).toBe('restante');
     expect(pluralize(2, 'restante', 'restantes')).toBe('restantes');
+  });
+
+  it('joins facts so a "·" never ends a line', () => {
+    expect(joinMeta(['2020', '', '★ 8,5', null])).toBe(`2020 ·${NBSP}★ 8,5`);
+    // o único lugar onde a linha pode quebrar é antes do "·"
+    expect(joinMeta(['a', 'b']).split(' ')).toEqual(['a', `·${NBSP}b`]);
   });
 });

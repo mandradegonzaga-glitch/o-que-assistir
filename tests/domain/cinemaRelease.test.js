@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { cinemaLabel, cinemaStatus, formatPremiere, IN_THEATERS_DAYS } from '../../src/domain/cinemaRelease.js';
+import { brCertification, cinemaLabel, cinemaStatus, formatPremiere, IN_THEATERS_DAYS } from '../../src/domain/cinemaRelease.js';
 
 const TODAY = '2026-11-07';
 const dates = (country, list) => ({
@@ -50,5 +50,23 @@ describe('nos cinemas / estreia (Brasil)', () => {
     expect(cinemaStatus(undefined, TODAY)).toBeNull();
     expect(cinemaStatus({ results: [{ iso_3166_1: 'BR', release_dates: [{ type: 3, release_date: '' }] }] }, TODAY)).toBeNull();
     expect(cinemaLabel(null)).toBe('');
+  });
+});
+
+describe('classificação indicativa (Brasil)', () => {
+  const br = list => ({ results: [
+    { iso_3166_1: 'US', release_dates: [{ type: 3, certification: 'R' }] },
+    { iso_3166_1: 'BR', release_dates: list },
+  ] });
+
+  it('usa a do cinema; sem ela, a primeira que houver', () => {
+    expect(brCertification(br([{ type: 4, certification: '16' }, { type: 3, certification: '14' }]))).toBe('14');
+    expect(brCertification(br([{ type: 4, certification: '' }, { type: 6, certification: 'L' }]))).toBe('L');
+  });
+
+  it('sem classificação do Brasil, nada (não usa a de outro país)', () => {
+    expect(brCertification(br([{ type: 3, certification: '' }]))).toBe('');
+    expect(brCertification({ results: [{ iso_3166_1: 'US', release_dates: [{ type: 3, certification: 'R' }] }] })).toBe('');
+    expect(brCertification(undefined)).toBe('');
   });
 });

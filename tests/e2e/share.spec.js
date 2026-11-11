@@ -151,7 +151,7 @@ test.describe('compartilhar', () => {
     await enterAsGuest(page);
     await drawTitle(page);
     await openShare(page);
-    await expect(page.locator('#share-subtitle')).toHaveText(/· Filme$/);
+    await expect(page.locator('#share-subtitle')).toHaveText(/·\sFilme$/);
     await expect(page.locator('#btn-share-apps')).toHaveText('Baixar ingresso e copiar texto');
     await expect(page.locator('#btn-share-whatsapp')).toBeVisible();
 
