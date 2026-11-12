@@ -2,7 +2,6 @@
 // "Gerar ingresso" baixa só a imagem; "Compartilhar" abre as opções: outros apps (com ingresso, texto e link) e amigos do app.
 import { openModal } from '../ui/modals.js';
 import { titleDetails, tmdbGet } from '../api/tmdb.js';
-import { IMG_URL } from '../config/constants.js';
 import { buildQrMatrix } from '../domain/qr.js';
 import { shareText, titleKind, titleLink } from '../domain/titleShare.js';
 import { state } from '../state/appState.js';
@@ -14,6 +13,7 @@ import { refreshFriends } from './friends.js';
 import { recordSocial, trackChallenge } from './progress.js';
 import { MEDIA_KIND, getYear, getTitle } from '../domain/mediaItem.js';
 import { appBase, isTouch } from '../ui/share.js';
+import { DISPLAY, TEXT, canShareFiles, download, drawCover, fitTitleSize, loadImage, slug, toBlob, wrapLines } from '../ui/canvasImage.js';
 import { registerActions } from '../ui/actions.js';
 import { whileBusy } from '../ui/busy.js';
 import { themeColor } from '../ui/themeColor.js';
@@ -34,33 +34,10 @@ const COLORS = {
   muted: 'rgba(244, 241, 250, 0.72)',
   line: 'rgba(255, 255, 255, 0.14)',
 };
-const DISPLAY = "'Big Shoulders Display', 'Arial Narrow', sans-serif";
-const TEXT = "'Hanken Grotesk', system-ui, sans-serif";
-const IMG_BASE = IMG_URL.replace(/[^/]+$/, '');
 const QR_BOX = 184;
 const LOGO = 64;
 const SECTION_GAP = 26;
 const BODY_LINE = 40;
-
-function loadImage(path, size = 'w500') {
-  return new Promise(resolve => {
-    if (!path) { resolve(null); return; }
-    const image = new Image();
-    image.crossOrigin = 'anonymous'; // sem isso, o canvas fica bloqueado para exportar
-    image.onload = () => resolve(image);
-    image.onerror = () => resolve(null); // imagem sem CORS ou fora do ar: o ingresso sai sem ela
-    // Endereço próprio: a cópia que o navegador já guardou da imagem veio sem CORS e seria recusada
-    image.src = `${IMG_BASE}${size}${path}?ingresso=1`;
-  });
-}
-
-// Preenche a área inteira cortando as sobras; focusY escolhe que altura da imagem fica (0 = topo)
-function drawCover(ctx, image, x, y, w, h, focusY = 0.5) {
-  const scale = Math.max(w / image.width, h / image.height);
-  const sw = w / scale;
-  const sh = h / scale;
-  ctx.drawImage(image, (image.width - sw) / 2, (image.height - sh) * focusY, sw, sh, x, y, w, h);
-}
 
 // Desfoque que cobre a área; sem filtro no canvas, uma cópia minúscula ampliada faz o efeito
 function drawBlurred(ctx, image, x, y, w, h) {
@@ -118,30 +95,6 @@ function drawTicketShape(ctx, x, y, w, h, tearY) {
   ctx.closePath();
 }
 
-// Quebra em palavras, ou em itens inteiros quando recebe uma lista (nomes do elenco não se partem)
-function wrapLines(ctx, text, maxWidth, maxLines) {
-  const isList = Array.isArray(text);
-  const sep = isList ? ' · ' : ' ';
-  const lines = [];
-  let line = '';
-  // Só o espaço comum quebra: o espaço inseparável (\u00A0) mantém palavras juntas
-  (isList ? text : text.split(/[ \t\n]+/)).filter(Boolean).forEach(word => {
-    const candidate = line ? `${line}${sep}${word}` : word;
-    if (ctx.measureText(candidate).width <= maxWidth || !line) line = candidate;
-    else { lines.push(line); line = word; }
-  });
-  if (line) lines.push(line);
-  if (lines.length <= maxLines) return lines;
-  const cut = lines.slice(0, maxLines);
-  let last = `${cut[maxLines - 1].replace(/[\s,.:;·-]+$/, '')}…`;
-  // A linha cheia mais as reticências pode passar da largura: tira palavras até caber
-  while (ctx.measureText(last).width > maxWidth && last.includes(' ')) {
-    last = `${last.slice(0, last.lastIndexOf(' ')).replace(/[\s,.:;·-]+$/, '')}…`;
-  }
-  cut[maxLines - 1] = last;
-  return cut;
-}
-
 // Artigos e preposições curtos (A, O, DE, DO...) presos à palavra seguinte: nenhuma linha termina em "ANÉIS: A"
 function glueShortWords(text) {
   let glued = text;
@@ -165,18 +118,6 @@ function balanceLines(ctx, text, maxWidth, lines) {
     else low = mid;
   }
   return wrapLines(ctx, text, high, lines.length);
-}
-
-// Reduz a fonte até a palavra mais longa caber na largura: quebrar linha não resolve uma palavra só
-function fitTitleSize(ctx, text, maxWidth, startSize) {
-  let size = startSize;
-  ctx.font = `900 ${size}px ${DISPLAY}`;
-  const longest = text.split(/[ \t\n]+/).reduce((a, b) => (ctx.measureText(b).width > ctx.measureText(a).width ? b : a), '');
-  while (size > 40 && ctx.measureText(longest).width > maxWidth) {
-    size -= 4;
-    ctx.font = `900 ${size}px ${DISPLAY}`;
-  }
-  return size;
 }
 
 // Link curto e limpo: quanto menor o texto, mais fácil de ler pela câmera
@@ -505,23 +446,6 @@ export async function drawTicket(movie, {
   return canvas;
 }
 
-const toBlob = canvas => new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-
-function slug(text) {
-  return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'titulo';
-}
-
-function download(blob, name) {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = name;
-  document.body.append(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
 async function copyText(text) {
   try {
     await navigator.clipboard.writeText(text);
@@ -570,8 +494,6 @@ function gerarIngresso() {
     }
   }, { label: 'Gerando…' });
 }
-
-const canShareFiles = file => isTouch() && Boolean(navigator.canShare?.({ files: [file] }));
 
 function compartilhar() {
   const movie = state.currentMovie;

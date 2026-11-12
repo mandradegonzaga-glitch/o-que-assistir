@@ -8,6 +8,9 @@ export const GENRE_NAMES = {
   10766: 'Novela', 10767: 'Talk show', 10768: 'Guerra e política',
 };
 
+// Gêneros principais, na ordem em que aparecem: filtros, primeira visita e o cartão "Seu gosto"
+export const MAIN_GENRE_IDS = [28, 35, 27, 10749, 18, 53, 878, 16];
+
 // Gêneros que o TMDB tem para séries (Terror, Romance, Suspense, Música, História não existem)
 export const TV_GENRE_IDS = new Set([10759, 16, 35, 80, 99, 18, 10751, 10762, 9648, 10763, 10764, 10765, 10766, 10767, 10768, 37]);
 

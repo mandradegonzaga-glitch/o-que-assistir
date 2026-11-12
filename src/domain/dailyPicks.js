@@ -65,11 +65,14 @@ export function choosePick(results, index, kind, exclude = null) {
 }
 
 // Gêneros do histórico com o peso de cada um, do mais assistido ao menos (ids de filme; os de
-// série já vêm juntados). null = DNA ainda se formando: ficam as indicações de todo mundo.
-export function pickProfile(history) {
+// série já vêm juntados). Enquanto o DNA se forma, valem os gêneros escolhidos na primeira visita
+// (`seed`); sem eles, null: ficam as indicações de todo mundo.
+export function pickProfile(history, seed = []) {
   const { titles, weights } = genreWeights(history);
-  if (titles < PERSONAL_MIN_TITLES) return null;
-  const genres = [...weights.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0]).map(([id, weight]) => ({ id, weight }));
+  const forming = titles < PERSONAL_MIN_TITLES;
+  if (forming && seed.length === 0) return null;
+  const source = forming ? new Map(seed.map(id => [id, 1])) : weights;
+  const genres = [...source.entries()].sort((a, b) => b[1] - a[1] || a[0] - b[0]).map(([id, weight]) => ({ id, weight }));
   const watched = { movie: new Set(), tv: new Set() };
   for (const entry of history || []) {
     const id = Number(entry?.id);

@@ -256,19 +256,49 @@ test.describe('site', () => {
 });
 
 test.describe('boas-vindas', () => {
-  test('cada passo tem um ícone próprio', async ({ page }) => {
+  // Repasse da etapa 5d (2026-11-11): uma tela só, com serviços e gêneros (antes, 4 telas de apresentação)
+  const firstVisit = async page => {
     await page.addInitScript(() => localStorage.removeItem('has_visited'));
     await page.goto('/');
-    const icon = page.locator('#onboarding-icon');
-    await expect(icon.locator('svg')).toBeVisible();
+    await expect(page.locator('#onboarding-overlay')).toBeVisible();
+  };
+  const saved = (page, key) => page.evaluate(k => JSON.parse(localStorage.getItem(k)), key);
 
-    const seen = new Set();
-    for (let step = 0; step < 4; step++) {
-      seen.add(await icon.innerHTML());
-      await page.locator('#onboarding-btn').click();
-    }
-    expect(seen.size).toBe(4);
+  test('uma tela só: serviços e gêneros escolhidos já deixam o app do seu jeito', async ({ page }) => {
+    await firstVisit(page);
+    const overlay = page.locator('#onboarding-overlay');
+    await expect(overlay.locator('.onboarding-service')).toHaveCount(8);
+    await expect(overlay.locator('.onboarding-genre')).toHaveCount(8);
+
+    const netflix = overlay.getByRole('button', { name: 'Netflix' });
+    await netflix.click();
+    await expect(netflix).toHaveAttribute('aria-pressed', 'true');
+    await overlay.getByRole('button', { name: 'Terror' }).click();
+    await overlay.getByRole('button', { name: 'Continuar' }).click();
+    await expect(overlay).toBeHidden();
+
+    expect(await saved(page, 'my_providers')).toEqual(['8']);
+    expect(await saved(page, 'taste_seed')).toEqual([27]);
+    expect(await page.evaluate(() => localStorage.getItem('has_visited'))).toBe('true');
+    // o filtro "Onde assistir" já vem com as suas plataformas
+    await page.locator('#login-form [data-action="loginAsGuest"]').click();
+    await expect(page.locator('#input-provider')).toHaveValue('minhas');
+  });
+
+  test('Pular não guarda nada', async ({ page }) => {
+    await firstVisit(page);
+    await page.locator('#onboarding-overlay').getByRole('button', { name: 'Netflix' }).click();
+    await page.locator('#onboarding-overlay').getByRole('button', { name: 'Pular' }).click();
     await expect(page.locator('#onboarding-overlay')).toBeHidden();
+    expect(await saved(page, 'my_providers')).toBeNull();
+    expect(await saved(page, 'taste_seed')).toBeNull();
+    expect(await page.evaluate(() => localStorage.getItem('has_visited'))).toBe('true');
+  });
+
+  test('os serviços entram um a um (clleancode)', async ({ page }) => {
+    await firstVisit(page);
+    const delays = await page.locator('.onboarding-service').evaluateAll(els => els.slice(0, 3).map(el => getComputedStyle(el).animationDelay));
+    expect(delays).toEqual(['0s', '0.06s', '0.12s']);
   });
 
   // Repasse da etapa 2 (2026-11-11): quem chega pela primeira vez por um link de título via as

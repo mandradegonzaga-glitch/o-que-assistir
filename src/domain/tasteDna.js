@@ -87,6 +87,9 @@ export function typeSplit(history) {
   return split;
 }
 
+// "Anos 80" antes de 2000; "Anos 2010" depois (só "Anos 10" seria ambíguo)
+export const decadeLabel = decade => `Anos ${String(decade).slice(decade < 2000 ? 2 : 0)}`;
+
 // Década com mais títulos; no empate, a mais recente
 export function favoriteDecade(history) {
   const counts = new Map();

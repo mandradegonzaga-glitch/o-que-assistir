@@ -2,6 +2,18 @@
 
 All notable changes to this feature will be documented in this file.
 
+## [2026-11-11, repasse do redesign: etapa 5d] — branch `redesign/repasse` (local, ainda não publicado)
+
+### Added
+
+- Cartão "Seu gosto" no perfil: gênero favorito, década, títulos, seus gêneros acesos e 3 filmes que combinam
+- Compartilhar o cartão como imagem
+- Primeira visita numa tela só: escolha seus serviços e gêneros (ou pule)
+
+### Changed
+
+- As 4 telas de apresentação da primeira visita saíram (o guia continua em "Como usar")
+
 ## [2026-11-11, repasse do redesign: etapa 5] — branch `redesign/repasse` (local, ainda não publicado)
 
 ### Added

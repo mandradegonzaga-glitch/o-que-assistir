@@ -947,6 +947,8 @@
             <!-- DNA do usuário: gêneros, tipos, década e meses (src/domain/tasteDna.js) -->
             <section class="dna" id="dna" aria-labelledby="dna-title">
                 <h3 class="subsection-title" id="dna-title">Seu DNA</h3>
+                <!-- Cartão-ingresso "Seu gosto" (src/app/tasteCard.js) -->
+                <article class="taste-ticket" id="taste-ticket" aria-labelledby="taste-title" hidden></article>
                 <p class="dna__summary" id="dna-summary"></p>
                 <p class="section-note" id="dna-note" hidden></p>
                 <ul class="dna__genres" id="dna-genres" aria-label="Gêneros que você mais assiste"></ul>
@@ -1138,20 +1140,24 @@
     </div>
 
     <!-- ONBOARDING -->
+    <!-- Primeira visita: uma tela só, serviços e gêneros, tudo opcional (src/app/onboarding.js) -->
     <div class="onboarding-overlay" id="onboarding-overlay">
         <div class="onboarding-card" role="dialog" aria-modal="true" aria-labelledby="onboarding-title" aria-describedby="onboarding-desc" tabindex="-1">
             <div class="onboarding-icon" id="onboarding-icon">
                 <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path fill="currentColor" fill-opacity="0.2" d="M2 8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2.5a1.5 1.5 0 0 0 0 3V16a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2.5a1.5 1.5 0 0 0 0-3z"/><path d="M16 6v2M16 11v2M16 16v2"/><path fill="currentColor" stroke="none" d="M8 9v6l5-3z"/></svg>
             </div>
             <h2 class="onboarding-title" id="onboarding-title">O Que Assistir?</h2>
-            <p class="onboarding-desc" id="onboarding-desc">Filme, série ou dorama: o app escolhe por você</p>
-            <div class="onboarding-dots">
-                <span class="onboarding-dot active"></span>
-                <span class="onboarding-dot"></span>
-                <span class="onboarding-dot"></span>
-                <span class="onboarding-dot"></span>
-            </div>
-            <button class="btn-main" data-action="nextOnboarding" id="onboarding-btn">Começar</button>
+            <p class="onboarding-desc" id="onboarding-desc">Filme, série ou dorama: o app escolhe por você. Conte duas coisas e ele já começa do seu jeito.</p>
+            <fieldset class="onboarding-group">
+                <legend class="onboarding-group__title">Onde você assiste?</legend>
+                <div class="onboarding-services" id="onboarding-services"></div>
+            </fieldset>
+            <fieldset class="onboarding-group">
+                <legend class="onboarding-group__title">O que você curte?</legend>
+                <div class="onboarding-genres" id="onboarding-genres"></div>
+            </fieldset>
+            <button type="button" class="btn-main" data-action="continueOnboarding" id="onboarding-btn">Continuar</button>
+            <button type="button" class="onboarding-skip" data-action="skipOnboarding">Pular</button>
         </div>
     </div>
 

@@ -178,3 +178,76 @@ test.describe('horas assistidas e ator mais visto', () => {
     });
   });
 });
+
+// Repasse da etapa 5d (2026-11-11): cartão-ingresso "Seu gosto" no alto do DNA
+test.describe('cartão "Seu gosto"', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.clock.setFixedTime(new Date(2026, 10, 5, 12));
+  });
+
+  test('três dados, os gêneros acesos e o que combina, sem o que já foi visto', async ({ page, tmdbUrls }) => {
+    await seedHistory(page, HISTORY);
+    await enterAsGuest(page);
+    await openProfile(page);
+    const card = page.locator('#taste-ticket');
+    await expect(card).toBeVisible();
+    await expect(card.locator('.taste-ticket__title')).toHaveText('Seu gosto');
+    await expect(card.locator('.taste-ticket__stat dd')).toHaveText(['Terror', 'Anos 80', '5']);
+    await expect(card.locator('.taste-pill.is-lit', { hasText: 'Terror' })).toHaveCount(1);
+    await expect(card.locator('.taste-pill.is-lit', { hasText: 'Suspense' })).toHaveCount(0);
+
+    // combina: filmes conhecidos de terror (a lista falsa do TMDB não tem nenhum dos vistos)
+    const matches = card.locator('.taste-ticket__match');
+    await expect(matches).toHaveCount(3);
+    const asked = tmdbUrls.filter(u => u.pathname.endsWith('/discover/movie') && u.searchParams.get('with_genres') === '27');
+    expect(asked.length).toBeGreaterThan(0);
+    await matches.first().click();
+    await expect(modal(page)).toBeVisible();
+    await expect(page.locator('#m-title')).toHaveText('Filme Um');
+  });
+
+  test('sem nada visto, o cartão não aparece (fica o convite do DNA)', async ({ page }) => {
+    await enterAsGuest(page);
+    await openProfile(page);
+    await expect(page.locator('#dna-summary')).toHaveText('Marque títulos como assistidos para descobrir o seu DNA.');
+    // o elemento existe e está escondido (toBeHidden sozinho passaria sem o elemento)
+    await expect(page.locator('#taste-ticket')).toHaveAttribute('hidden', '');
+  });
+
+  test.describe('com conta', () => {
+    test.use({ logged: true });
+
+    test('o cartão leva o nome da conta', async ({ page }) => {
+      await page.addInitScript(() => {
+        if (sessionStorage.getItem('__db')) return;
+        sessionStorage.setItem('__db', JSON.stringify({
+          profiles: [{ id: 'u1', username: 'teste', display_name: 'Pessoa Teste', email: 't@t.dev', roulette_wins: 0 }],
+          watch_history: [{ user_id: 'u1', tmdb_id: 11, title: 'A', poster_path: '/a.jpg', media_type: 'movie', release_year: '1984', genres: [27], watched_at: new Date(2026, 10, 2).toISOString() }],
+          watchlist: [], user_preferences: [], user_badges: [], sorteio_history: [], blacklist: [], episode_progress: [],
+        }));
+      });
+      await openApp(page);
+      await openProfile(page);
+      await expect(page.locator('#taste-ticket .taste-ticket__title')).toHaveText('O gosto de Pessoa Teste');
+    });
+  });
+
+  test('compartilhar: no computador, baixa a imagem do cartão', async ({ page }) => {
+    await seedHistory(page, HISTORY);
+    await enterAsGuest(page);
+    await openProfile(page);
+    const download = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Compartilhar meu gosto' }).click();
+    expect((await download).suggestedFilename()).toBe('meu-gosto.png');
+  });
+
+  test('os três dados entram um a um (clleancode), e de uma vez com reduzir movimento', async ({ page }) => {
+    await seedHistory(page, HISTORY);
+    await enterAsGuest(page);
+    await openProfile(page);
+    const delays = () => page.locator('#taste-ticket .taste-ticket__stat').evaluateAll(els => els.map(el => getComputedStyle(el).animationDelay));
+    expect(await delays()).toEqual(['0s', '0.16s', '0.32s']);
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    expect(await page.locator('#taste-ticket .taste-ticket__stat').first().evaluate(el => getComputedStyle(el).animationName)).toBe('none');
+  });
+});

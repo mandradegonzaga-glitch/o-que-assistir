@@ -64,6 +64,7 @@
     --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
     --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);   /* algo que já está na tela e muda de lugar */
     --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);    /* gavetas (etapa 5) */
+    --ease-reveal: cubic-bezier(0.215, 0.61, 0.355, 1); /* power3.out do clleancode: entradas e revelações */
     --duration-fast: 150ms;
     --duration-normal: 250ms;
     --duration-slow: 300ms;
@@ -3287,13 +3288,17 @@ header {
     display: none;
     align-items: center;
     justify-content: center;
-    background: color-mix(in srgb, var(--bg-deep) 90%, transparent);
+    padding: var(--space-md);
+    overflow-y: auto;
+    background: var(--bg-deep); /* opaco: a tela de entrada não aparece por trás */
     z-index: 9999;
 }
 
 .onboarding-card {
+    width: 100%;
     max-width: 480px;
-    padding: var(--space-2xl);
+    margin: auto; /* centra e, se não couber, rola sem cortar o topo */
+    padding: var(--space-xl) var(--space-lg);
     background: color-mix(in srgb, var(--bg-card) 95%, transparent);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-xl);
@@ -3324,25 +3329,279 @@ header {
     line-height: 1.6;
 }
 
-.onboarding-dots {
-    display: flex;
+.onboarding-group {
+    margin: 0 0 var(--space-lg);
+    padding: 0;
+    border: 0;
+}
+
+.onboarding-group__title {
+    margin: 0 auto var(--space-sm);
+    font-weight: 700;
+}
+
+/* Serviços: blocos com o logo (o nome até o logo chegar), 4 por linha */
+.onboarding-services {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: var(--space-sm);
-    justify-content: center;
-    margin: var(--space-lg) 0;
 }
 
-.onboarding-dot {
-    width: 8px;
-    height: 8px;
+.onboarding-service {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1;
+    padding: var(--space-xs);
+    overflow: hidden;
+    border: 2px solid var(--border-subtle);
+    border-radius: var(--radius-md);
     background: var(--bg-elevated);
-    border-radius: var(--radius-full);
-    transition: background-color var(--duration-normal) var(--ease-smooth);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
 }
 
-.onboarding-dot.active {
-    width: 24px;
-    background: var(--accent-primary);
+.onboarding-service img {
+    width: 100%;
+    height: 100%;
     border-radius: var(--radius-sm);
+    object-fit: cover;
+}
+
+.onboarding-genres {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-xs);
+}
+
+.onboarding-genre {
+    min-height: 44px;
+    padding: 0 var(--space-md);
+    border: 2px solid var(--border-subtle);
+    border-radius: var(--radius-full);
+    background: none;
+    color: var(--text-primary);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.onboarding-service[aria-pressed="true"],
+.onboarding-genre[aria-pressed="true"] {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-primary);
+}
+
+.onboarding-genre[aria-pressed="true"] {
+    background: var(--accent-primary);
+    color: var(--accent-on);
+}
+
+.onboarding-skip {
+    display: block;
+    min-height: 44px;
+    margin: var(--space-xs) auto 0;
+    padding: 0 var(--space-md);
+    border: 0;
+    background: none;
+    color: var(--text-secondary);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Entrada um a um (efeito do clleancode: cada cartão vem de 22% ao lado, em sequência) */
+.onboarding-service,
+.onboarding-genre {
+    animation: enter-one-by-one 0.6s var(--ease-reveal) calc(var(--i) * 0.06s) both;
+}
+
+.onboarding-genre {
+    animation-delay: calc(0.3s + var(--i) * 0.04s);
+}
+
+@keyframes enter-one-by-one {
+    from { opacity: 0; transform: translateX(22%); }
+}
+
+/* ---- Cartão-ingresso "Seu gosto" (repasse da etapa 5d; ref.: Vicki Maiden) ---- */
+.taste-ticket {
+    margin: 0 0 var(--space-lg);
+}
+
+/* Cantos recortados para dentro: um círculo transparente em cada canto */
+.taste-ticket__frame {
+    --corner: 22px;
+    position: relative;
+    padding: var(--space-xl) var(--space-md) var(--space-lg);
+    background:
+        radial-gradient(circle at top left, transparent var(--corner), var(--accent-primary) calc(var(--corner) + 0.5px)) top left,
+        radial-gradient(circle at top right, transparent var(--corner), var(--accent-primary) calc(var(--corner) + 0.5px)) top right,
+        radial-gradient(circle at bottom left, transparent var(--corner), var(--accent-primary) calc(var(--corner) + 0.5px)) bottom left,
+        radial-gradient(circle at bottom right, transparent var(--corner), var(--accent-primary) calc(var(--corner) + 0.5px)) bottom right;
+    background-size: 51% 51%;
+    background-repeat: no-repeat;
+    color: var(--accent-on);
+    text-align: center;
+}
+
+/* Fio interno */
+.taste-ticket__frame::before {
+    content: '';
+    position: absolute;
+    inset: 10px;
+    border: 1.5px solid currentColor;
+    border-radius: 14px;
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+.taste-ticket__title {
+    position: relative;
+    margin: 40px auto var(--space-md); /* espaço do arco */
+    padding: var(--space-sm) 0;
+    border-top: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    max-width: 85%;
+    font-family: var(--font-display);
+    font-size: 1.9rem;
+    font-weight: 900;
+    line-height: 1;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+}
+
+/* Arco apoiado no fio de cima do título */
+.taste-ticket__title::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    width: 72px;
+    height: 36px;
+    border: 1.5px solid currentColor;
+    border-bottom: 0;
+    border-radius: 36px 36px 0 0;
+    transform: translateX(-50%);
+}
+
+.taste-ticket__stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-xs);
+    margin: 0 0 var(--space-md);
+}
+
+.taste-ticket__stat dt {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.taste-ticket__stat dd {
+    margin: 2px 0 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.25rem, 5.5vw, 1.6rem); /* "Anos 2010" numa linha só no celular */
+    font-weight: 900;
+    line-height: 1.05;
+    overflow-wrap: anywhere;
+}
+
+/* Os três dados entram um a um (clleancode: 0,16 s entre eles) e o valor sobe depois */
+.taste-ticket__stat {
+    animation: enter-one-by-one 0.7s var(--ease-reveal) calc(var(--i) * 0.16s) both;
+}
+
+.taste-ticket__stat dd {
+    animation: rise-in 0.7s var(--ease-reveal) calc(var(--i) * 0.16s + 0.3s) both;
+}
+
+@keyframes rise-in {
+    from { opacity: 0; transform: translateY(18px); }
+}
+
+.taste-ticket__label {
+    margin: var(--space-sm) 0 var(--space-xs);
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.taste-ticket__genres {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    margin: 0;
+    padding: 0 var(--space-sm);
+    list-style: none;
+}
+
+.taste-pill {
+    padding: 2px 10px;
+    border: 1.5px solid currentColor;
+    border-radius: var(--radius-full);
+    font-size: 0.8rem;
+    font-weight: 700;
+    opacity: 0.6;
+}
+
+.taste-pill.is-lit {
+    background: var(--accent-on);
+    color: var(--accent-primary);
+    border-color: var(--accent-on);
+    opacity: 1;
+}
+
+.taste-ticket__matches {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-sm);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.taste-ticket__match {
+    display: block;
+    width: 76px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    cursor: pointer;
+}
+
+.taste-ticket__match img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 2 / 3;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+}
+
+.taste-ticket__match:focus-visible {
+    outline: 2px solid var(--accent-on);
+    outline-offset: 2px;
+}
+
+.taste-ticket__share {
+    margin-top: var(--space-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .onboarding-service,
+    .onboarding-genre,
+    .taste-ticket__stat,
+    .taste-ticket__stat dd {
+        animation: none;
+    }
 }
 
 /* ==================== SCROLL TO TOP ==================== */
@@ -5327,7 +5586,6 @@ select.input-dark {
    pôsteres que chegam inclinados e o título revelado de baixo para cima (0,7 s). */
 .match-celebrate {
     --ease-back: cubic-bezier(0.34, 1.36, 0.64, 1);
-    --ease-reveal: cubic-bezier(0.215, 0.61, 0.355, 1);
 }
 
 .match-celebrate__stage {

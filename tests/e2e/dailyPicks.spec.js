@@ -165,6 +165,15 @@ test.describe('indicações do dia pelo DNA', () => {
     await page.clock.setFixedTime(new Date(2026, 10, 6, 12, 0));
   });
 
+  test('sem histórico, os gêneros da primeira visita já guiam as indicações', async ({ page, tmdbUrls }) => {
+    await page.addInitScript(() => localStorage.setItem('taste_seed', JSON.stringify([27])));
+    await enterAsGuest(page);
+    await expect(cards(page)).toHaveCount(3);
+    await expect(cards(page).first().locator('.home-card__why')).toHaveText('Porque você curte Terror');
+    const personal = discover(tmdbUrls).filter(u => u.searchParams.has('with_genres'));
+    expect(personal.map(u => u.searchParams.get('with_genres'))).toEqual(['27']);
+  });
+
   test('só vê terror: o filme vem de terror; série e dorama, sem terror em série, ficam com as de todo mundo', async ({ page, tmdbUrls }) => {
     await seedHistory(page, horror(5));
     await enterAsGuest(page);

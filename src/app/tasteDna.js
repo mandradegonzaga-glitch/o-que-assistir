@@ -1,6 +1,7 @@
 // DNA do usuário no perfil: desenha o que src/domain/tasteDna.js calcula
-import { computeTasteDna, otherNamesText } from '../domain/tasteDna.js';
+import { computeTasteDna, decadeLabel, otherNamesText } from '../domain/tasteDna.js';
 import { hideLifeStats, renderLifeStats } from './lifeStats.js';
+import { renderTasteCard } from './tasteCard.js';
 import { session } from '../state/appState.js';
 import { formatCount, pluralize } from '../utils/format.js';
 
@@ -63,6 +64,7 @@ export function renderTasteDna(history = session.user.history, now = new Date())
   const section = document.getElementById('dna');
   if (!section) return;
   const dna = computeTasteDna(history, now);
+  renderTasteCard(history);
 
   const summary = document.getElementById('dna-summary');
   const note = document.getElementById('dna-note');
@@ -94,7 +96,7 @@ export function renderTasteDna(history = session.user.history, now = new Date())
     fact('Filmes', formatCount(movie)),
     fact('Séries', formatCount(tv)),
     fact('Doramas', formatCount(dorama)),
-    fact('Década favorita', dna.decade ? `Anos ${String(dna.decade.decade).slice(dna.decade.decade < 2000 ? 2 : 0)}` : '—'),
+    fact('Década favorita', dna.decade ? decadeLabel(dna.decade.decade) : '—'),
   );
 
   renderLifeStats(history);

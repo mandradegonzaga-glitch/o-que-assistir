@@ -132,6 +132,14 @@ function toggleMyProvider(input) {
   writeAccountData({ my_providers: [...mine] });
 }
 
+// Escolha de uma vez (primeira visita): guarda, passa a filtrar por elas e sobe para a conta
+export function setMyProviders(ids) {
+  storage.set(STORAGE_KEY, normalizeProviderIds(ids));
+  if (optionsReady) renderChoices();
+  syncProviderOption(true);
+  writeAccountData({ my_providers: getMyProviders() });
+}
+
 // A conta guarda os provedores: entrar em outro aparelho traz os mesmos.
 // A conta vence o aparelho; a primeira vez, o que já estava marcado aqui sobe para a conta.
 on('session:started', ({ kind }) => kind === 'account' && syncProvidersWithAccount());

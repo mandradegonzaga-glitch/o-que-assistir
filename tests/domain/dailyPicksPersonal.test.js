@@ -22,6 +22,18 @@ describe('pickProfile', () => {
     expect([...profile.watched.movie]).toEqual([1, 2, 3, 4]);
     expect([...profile.watched.tv]).toEqual([5, 6, 7]); // dorama também é série no TMDB
   });
+
+  // Primeira visita (repasse da etapa 5d): os gêneros escolhidos guiam até o DNA se formar
+  it('uses the genres chosen on the first visit while the DNA is forming', () => {
+    const profile = pickProfile(HISTORY.slice(0, 2), [27, 878]);
+    expect(profile.genres).toEqual(g([27, 1], [878, 1]));
+    expect([...profile.watched.movie]).toEqual([1, 2]);
+    expect(pickProfile([], [])).toBeNull();
+  });
+
+  it('the history wins once the DNA is stable', () => {
+    expect(pickProfile(HISTORY, [10749]).genres).toEqual(g([18, 2], [27, 2], [28, 2], [35, 1]));
+  });
 });
 
 describe('usableGenres', () => {

@@ -1,14 +1,13 @@
 // Filtros em pílulas (Clima, Gênero, Onde assistir, Duração) e o "Mais filtros".
 // Tocar numa pílula escolhe no <select> escondido, como a pessoa faria; app/filters.js aplica as
 // regras e avisa 'filters:changed', e só aí as pílulas e o resumo se redesenham.
-import { tmdbGet } from '../api/tmdb.js';
+import { featuredProviderLogos } from '../api/providerLogos.js';
 import { IMG_URL } from '../config/constants.js';
-import { FEATURED_PROVIDERS } from '../domain/providers.js';
+import { MAIN_GENRE_IDS } from '../domain/genres.js';
 import { state } from '../state/appState.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { on } from '../state/events.js';
 import { storage } from '../utils/storage.js';
-import { DAY_MS } from '../utils/date.js';
 import { joinMeta } from '../utils/format.js';
 import { FILTER_FIELDS, filterField } from './filterFields.js';
 import { CHOOSE_PROVIDERS_VALUE as CHOOSE, MY_PROVIDERS_VALUE } from '../domain/filters.js';
@@ -25,7 +24,7 @@ const LABELS = {
 };
 
 // Gêneros à vista antes do "Ver todos"; o escolhido aparece sempre
-const MAIN_GENRES = ['28', '35', '27', '10749', '18', '53', '878', '16', 'natal'];
+const MAIN_GENRES = [...MAIN_GENRE_IDS.map(String), 'natal'];
 
 const providerLogos = new Map(); // id → caminho do logo no TMDB
 const renderers = new Map();
@@ -111,19 +110,10 @@ function enhance(group) {
   draw();
 }
 
-// Logos dos serviços em destaque (lista do TMDB, guardada por um dia). Sem ela, ficam os nomes.
+// Logos dos serviços em destaque; sem eles, ficam os nomes
 async function loadProviderLogos() {
-  try {
-    const data = await tmdbGet('/watch/providers/movie', { language: 'pt-BR', watch_region: 'BR' }, { ttl: DAY_MS });
-    const wanted = new Set(FEATURED_PROVIDERS.map(p => p.id));
-    (data?.results || []).forEach(p => {
-      const id = String(p.provider_id);
-      if (wanted.has(id) && p.logo_path) providerLogos.set(id, p.logo_path);
-    });
-    renderers.get('input-provider')?.();
-  } catch {
-    // os nomes continuam funcionando
-  }
+  (await featuredProviderLogos()).forEach((logo, id) => providerLogos.set(id, logo));
+  renderers.get('input-provider')?.();
 }
 
 // "Mais filtros": quantos estão ativos aparece no resumo, mesmo fechado

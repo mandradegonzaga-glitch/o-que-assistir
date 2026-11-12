@@ -1,7 +1,7 @@
 // Service Worker - O Que Assistir? PWA
 // CACHE_VERSION e a lista abaixo são gerados por scripts/sw-assets.mjs (npm run sw:assets).
 // O activate apaga os caches de versões anteriores.
-const CACHE_VERSION = '15f1b969f6';
+const CACHE_VERSION = '84b32e87b5';
 const STATIC_CACHE = `oqueassistir-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `oqueassistir-dynamic-${CACHE_VERSION}`;
 
@@ -11,6 +11,7 @@ const STATIC_ASSETS = [
     '/',
     '/index.html',
     '/manifest.json',
+    '/src/api/providerLogos.js',
     '/src/api/supabase.js',
     '/src/api/tmdb.js',
     '/src/api/tmdbSeries.js',
@@ -49,7 +50,10 @@ const STATIC_ASSETS = [
     '/src/app/roulette.js',
     '/src/app/sorteioHistory.js',
     '/src/app/splash.js',
+    '/src/app/tasteCard.js',
+    '/src/app/tasteCardImage.js',
     '/src/app/tasteDna.js',
+    '/src/app/tasteSeed.js',
     '/src/app/ticket.js',
     '/src/app/titleModal.js',
     '/src/app/urlSync.js',
@@ -87,6 +91,7 @@ const STATIC_ASSETS = [
     '/src/domain/screens.js',
     '/src/domain/seriesProgress.js',
     '/src/domain/surprise.js',
+    '/src/domain/tasteCard.js',
     '/src/domain/tasteDna.js',
     '/src/domain/tasteMatch.js',
     '/src/domain/titleFacts.js',
@@ -102,6 +107,7 @@ const STATIC_ASSETS = [
     '/src/ui/actions.js',
     '/src/ui/badgeIcons.js',
     '/src/ui/busy.js',
+    '/src/ui/canvasImage.js',
     '/src/ui/chipFilters.js',
     '/src/ui/discCarousel.js',
     '/src/ui/dragReorder.js',

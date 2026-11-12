@@ -11,6 +11,7 @@ import { formatRating, joinMeta } from '../utils/format.js';
 import { getYear, getTitle } from '../domain/mediaItem.js';
 import { on } from '../state/events.js';
 import { posterImg } from '../ui/icons.js';
+import { getTasteSeed } from './tasteSeed.js';
 
 
 let shownKey = null; // dia + gêneros que contam: outra pessoa (ou o gosto mudou) refaz o painel
@@ -88,7 +89,7 @@ function cardHtml({ kind, item, genre }) {
 async function renderDailyPicks() {
   const day = localDay();
   // Antes de entrar não há histórico: as de todo mundo
-  const profile = session.currentUser ? pickProfile(session.user?.history) : null;
+  const profile = session.currentUser ? pickProfile(session.user?.history, getTasteSeed()) : null;
   const key = `${day}#${profileKey(profile)}`;
   if (key === shownKey || key === loadingKey) return;
   const { row, list } = els();

@@ -550,6 +550,20 @@ Regras combinadas: cada etapa numa branch `redesign/etapa-N`, com commit e envio
 **Alternativas consideradas:**
 - Seguir corrigindo cada caso especial no lugar → o mesmo tipo de bug voltaria em cada tela nova.
 
+## D001-057 — Perfil de gosto em ingresso e primeira visita numa tela só
+
+**Data:** 2026-11-11 · **Tarefa:** T001-145
+
+**Decisão (aprovada pelo usuário):**
+- O DNA ganha um resumo que cabe num relance e dá para compartilhar: o cartão-ingresso, no mesmo formato do ingresso do título (a imagem usa o mesmo módulo de desenho).
+- Terceiro dado do cartão = quantos títulos (não as horas): as horas chegam depois, do TMDB, e o cartão não pode mudar enquanto a pessoa olha.
+- Primeira visita pergunta só duas coisas, opcionais; o que as 4 telas antigas apresentavam já está em "Como usar". Os serviços reaproveitam "Minhas plataformas"; os gêneros só guiam as Indicações enquanto o histórico não basta.
+- Logos dos serviços têm um dono só (`src/api/providerLogos.js`), usado pelos filtros e pela primeira visita.
+
+**Alternativas consideradas:**
+- Quiz de "escolha 3 títulos" (Netflix/Mondaysys) → mais um pedido ao TMDB e mais uma decisão antes de usar; fora.
+- Cartão vazio para quem não viu nada → repetiria o convite do DNA; fica escondido.
+
 ## D001-056 — Match de arrastar e "Deu Match!" com a onda do clleancode
 
 **Data:** 2026-11-11 · **Tarefa:** T001-144
