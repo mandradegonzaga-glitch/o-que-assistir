@@ -508,12 +508,31 @@
                     </div>
                     <div class="badges-progress__track"><div class="badges-progress__fill" id="match-fill"></div></div>
                     <p id="match-partner" class="match-partner text-small" hidden></p>
-                    <div id="match-card" class="match-card"></div>
-                    <div class="grid-two">
-                        <button type="button" class="btn-outline" data-action="matchNo">Não quero</button>
-                        <button type="button" class="btn-main" data-action="matchYes">Quero</button>
+                    <!-- Cartão de arrastar (src/ui/swipeCard.js): segue o dedo, vira ao tocar -->
+                    <div class="match-deck">
+                        <div id="match-card" class="match-card"></div>
                     </div>
-                    <p class="section-note text-center match-tip">Também dá para arrastar o cartão para o lado.</p>
+                    <div class="match-votes" role="group" aria-label="Votar neste título">
+                        <button type="button" class="match-vote match-vote--undo" data-action="matchUndo" aria-label="Desfazer o último voto" disabled><span data-ph="arrow-u-up-left" data-weight="bold" aria-hidden="true"></span></button>
+                        <button type="button" class="match-vote match-vote--no" data-action="matchNo"><span class="match-vote__icon"><span data-ph="x" data-weight="bold" aria-hidden="true"></span></span>Não quero</button>
+                        <button type="button" class="match-vote match-vote--yes" data-action="matchYes"><span class="match-vote__icon"><span data-ph="heart" data-weight="fill" aria-hidden="true"></span></span>Quero</button>
+                    </div>
+                    <p class="section-note text-center match-tip">Arraste para votar. Toque para ler a sinopse.</p>
+                </div>
+
+                <!-- "Deu Match!" (repasse da etapa 5): onda de pontos do clleancode, pôsteres em comum e quem quer ver -->
+                <div id="match-celebrate" class="match-celebrate text-center" hidden>
+                    <div class="match-celebrate__stage" aria-hidden="true">
+                        <div id="match-dots" class="match-dots"></div>
+                        <div id="match-celebrate-posters" class="match-celebrate__posters"></div>
+                        <span class="match-celebrate__heart"><span data-ph="heart" data-weight="fill"></span></span>
+                    </div>
+                    <h2 id="match-celebrate-title" class="match-celebrate__title" tabindex="-1"></h2>
+                    <p id="match-celebrate-text" class="match-celebrate__text"></p>
+                    <div class="match-celebrate__actions">
+                        <button type="button" id="btn-match-see" class="btn-main w-full" data-action="matchSeeResult"></button>
+                        <button type="button" id="btn-celebrate-draw" class="btn-outline w-full" data-action="matchDraw">Sortear entre os matches</button>
+                    </div>
                 </div>
 
                 <div id="match-pass" class="text-center" hidden>

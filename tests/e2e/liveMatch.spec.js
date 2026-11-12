@@ -1,7 +1,10 @@
 import { test, expect, enterAsGuest, LIST } from './support/app.js';
 
-// Vota em todos os títulos, dizendo sim só para os que `wanted` aceitar
+// Vota em todos os títulos, dizendo sim só para os que `wanted` aceitar. Cada pessoa vota com o app na
+// frente, como no próprio celular: as duas abas dividem uma janela, e a de trás roda ~1 quadro por
+// segundo, o que atrasaria o voo do cartão.
 async function voteAll(page, wanted) {
+  await page.bringToFront();
   for (let i = 0; i < LIST.length; i++) {
     await expect(page.locator('#match-counter')).toHaveText(`${i + 1} de ${LIST.length}`);
     const title = await page.locator('.match-card__title').textContent();
@@ -62,6 +65,7 @@ test.describe('Match ao vivo', () => {
     await voteAll(bia, t => ['Filme Dois', 'Filme Três'].includes(t));
 
     for (const p of [page, bia]) {
+      await p.locator('#btn-match-see').click(); // do "Deu Match!" para a lista
       await expect(p.locator('#match-result-title')).toHaveText('Deu match!');
       await expect(p.locator('.match-result-item')).toHaveText(['Filme Dois']);
       await expect(p.locator('#achievement-name')).toHaveText('Par Perfeito');
@@ -212,6 +216,7 @@ test.describe('Match ao vivo: recarregar a página', () => {
 
   // Vota a partir do cartão atual até o fim
   async function voteRest(p, wanted) {
+    await p.bringToFront();
     while (await p.locator('#match-voting').isVisible()) {
       const counter = await p.locator('#match-counter').textContent();
       const title = await p.locator('.match-card__title').textContent();
@@ -237,7 +242,10 @@ test.describe('Match ao vivo: recarregar a página', () => {
     await voteAll(page, t => t === first);
     await voteRest(bia, () => false);
     // O voto dado antes de recarregar continua valendo
-    for (const p of [page, bia]) await expect(p.locator('.match-result-item')).toHaveText([first]);
+    for (const p of [page, bia]) {
+      await p.locator('#btn-match-see').click();
+      await expect(p.locator('.match-result-item')).toHaveText([first]);
+    }
     await bia.close();
   });
 
@@ -250,9 +258,9 @@ test.describe('Match ao vivo: recarregar a página', () => {
     await page.reload();
     await expect(page.locator('#match-live-wait')).toBeVisible();
     await expect(page.locator('#toast')).toHaveText('Match ao vivo retomado.');
-
     await voteAll(bia, t => t === 'Filme Três');
     for (const p of [page, bia]) {
+      await p.locator('#btn-match-see').click(); // do "Deu Match!" para a lista
       await expect(p.locator('#match-result-title')).toHaveText('Deu match!');
       await expect(p.locator('.match-result-item')).toHaveText(['Filme Três']);
     }

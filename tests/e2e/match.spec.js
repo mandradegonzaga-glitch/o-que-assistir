@@ -27,6 +27,8 @@ const inviteAs = async (page, name, wanted) => {
   return page.locator('#match-link').inputValue();
 };
 
+const seeMatches = page => page.locator('#btn-match-see').click(); // do "Deu Match!" para a lista
+
 const freshVisitor = async (page) => {
   await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); });
 };
@@ -54,6 +56,7 @@ test.describe('match', () => {
     await expect(page.locator('#match-player')).toHaveText('Bia');
     await voteAll(page, t => ['Filme Dois', 'Filme Três'].includes(t));
 
+    await seeMatches(page);
     await expect(page.locator('#match-result-title')).toHaveText('Deu match!');
     await expect(page.locator('.match-result-item')).toHaveText(['Filme Dois']);
     await expect(page.locator('#btn-match-draw')).toBeHidden();
@@ -68,6 +71,7 @@ test.describe('match', () => {
     await voteAll(page, t => t === 'Filme Um');
     await page.locator('#btn-match-continue').click();
     await voteAll(page, t => t === 'Filme Um');
+    await seeMatches(page);
     await expect(page.locator('#achievement-name')).toHaveText('Par Perfeito');
     const social = await page.evaluate(() => JSON.parse(localStorage.getItem('guest_progress')).social);
     expect(social.matches).toBe(1);
@@ -89,6 +93,7 @@ test.describe('match', () => {
     await voteAll(page, () => true);
     await page.locator('#btn-match-continue').click();
     await voteAll(page, () => true);
+    await seeMatches(page);
     await expect(page.locator('#match-result-title')).toHaveText(`${LIST.length} matches!`);
     await page.locator('#btn-match-draw').click();
     await expect(modal(page)).toBeVisible();
@@ -114,6 +119,7 @@ test.describe('match', () => {
     await voteAll(page, () => true);
     await page.locator('#btn-match-continue').click();
     await voteAll(page, () => true);
+    await seeMatches(page);
     await page.locator('.user-pill').click();
     await expect(page.locator('#xp-log')).toContainText('+15 XP · Match');
   });
@@ -128,6 +134,100 @@ test.describe('match', () => {
     await expect(page.locator('#match-card img')).toBeVisible();
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflow).toBe(0);
+  });
+});
+
+// Repasse da etapa 5 (2026-11-11): cartão que segue o dedo, pôster que vira, desfazer e "Deu Match!"
+test.describe('Match de arrastar', () => {
+  const drag = async (page, dx, { steps = 12 } = {}) => {
+    const box = await page.locator('#match-card').boundingBox();
+    const x = box.x + box.width / 2;
+    const y = box.y + box.height / 2;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + dx, y + 4, { steps });
+    return async () => page.mouse.up();
+  };
+
+  test('o cartão segue o dedo e mostra o carimbo; curto volta, longo vota', async ({ page }) => {
+    await start(page);
+    const card = page.locator('#match-card');
+    const first = await page.locator('.match-card__title').first().textContent();
+
+    let release = await drag(page, 60);
+    const moving = await card.evaluate(el => ({ x: new DOMMatrix(getComputedStyle(el).transform).m41, yes: Number(getComputedStyle(el.querySelector('.match-stamp--yes')).opacity) }));
+    expect(moving.x).toBeGreaterThan(40);
+    expect(moving.yes).toBeGreaterThan(0.3);
+    await release();
+    await expect(page.locator('#match-counter')).toHaveText(`1 de ${LIST.length}`);
+    await expect.poll(() => card.evaluate(el => new DOMMatrix(getComputedStyle(el).transform).m41)).toBe(0);
+
+    release = await drag(page, -220);
+    expect(await card.evaluate(el => Number(getComputedStyle(el.querySelector('.match-stamp--no')).opacity))).toBe(1);
+    await release();
+    await expect(page.locator('#match-counter')).toHaveText(`2 de ${LIST.length}`);
+    await expect(page.locator('.match-card__title').first()).not.toHaveText(first);
+  });
+
+  test('tocar no cartão vira e mostra a sinopse', async ({ page }) => {
+    await start(page);
+    const flip = page.getByRole('button', { name: 'Ver sinopse' });
+    await expect(flip).toHaveAttribute('aria-pressed', 'false');
+    await page.locator('#match-card').click();
+    await expect(flip).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.match-card__overview')).toBeInViewport();
+    await flip.click();
+    await expect(flip).toHaveAttribute('aria-pressed', 'false');
+    // o próximo título começa de frente
+    await flip.click();
+    await page.locator('[data-action="matchNo"]').click();
+    await expect(page.locator('#match-counter')).toHaveText(`2 de ${LIST.length}`);
+    await expect(flip).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  test('desfazer volta o último voto e apaga o que ele marcou', async ({ page }) => {
+    await start(page);
+    const undo = page.getByRole('button', { name: 'Desfazer o último voto' });
+    await expect(undo).toBeDisabled();
+    await page.locator('[data-action="matchYes"]').click();
+    await expect(page.locator('#match-counter')).toHaveText(`2 de ${LIST.length}`);
+    await undo.click();
+    await expect(page.locator('#match-counter')).toHaveText(`1 de ${LIST.length}`);
+    await expect(undo).toBeDisabled();
+    await voteAll(page, () => false);
+    await page.locator('#btn-match-continue').click();
+    await expect(undo).toBeDisabled(); // a vez da Bia não volta para os votos da Ana
+    await voteAll(page, () => true);
+    await expect(page.locator('#match-result-title')).toHaveText('Nenhum título em comum');
+  });
+
+  test('"Deu Match!" diz quem e o quê, e a conquista espera ele fechar', async ({ page }) => {
+    await start(page);
+    await voteAll(page, t => ['Filme Um', 'Filme Dois'].includes(t));
+    await page.locator('#btn-match-continue').click();
+    await voteAll(page, t => ['Filme Um', 'Filme Dois'].includes(t));
+
+    const celebrate = page.locator('#match-celebrate');
+    await expect(celebrate).toBeVisible();
+    await expect(page.locator('#match-celebrate-title')).toHaveText('2 matches!');
+    // a ordem é a dos cartões, que é sorteada
+    await expect(page.locator('#match-celebrate-text')).toHaveText(/^Ana e Bia querem ver Filme (Um e Filme Dois|Dois e Filme Um)\.$/);
+    await expect(celebrate.locator('.match-celebrate__poster')).toHaveCount(2);
+    await expect(page.locator('#achievement')).toBeHidden();
+
+    await page.locator('#btn-match-see').click();
+    await expect(page.locator('.match-result-item')).toHaveCount(2);
+    await expect(page.locator('#achievement-name')).toHaveText('Par Perfeito');
+  });
+
+  test('com "reduzir movimento", a tela de match aparece sem animação', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await start(page);
+    await voteAll(page, () => true);
+    await page.locator('#btn-match-continue').click();
+    await voteAll(page, () => true);
+    const animations = await page.locator('#match-celebrate').evaluate(el => el.getAnimations({ subtree: true }).length);
+    expect(animations).toBe(0);
   });
 });
 
@@ -148,12 +248,14 @@ test.describe('match por link', () => {
     await expect(page.locator('#match-player')).toHaveText('Bia');
     await voteAll(page, t => ['Filme Dois', 'Filme Três'].includes(t));
 
+    await seeMatches(page);
     await expect(page.locator('#match-result-title')).toHaveText('Deu match!');
     await expect(page.locator('.match-result-item')).toHaveText(['Filme Dois']);
     const answer = await page.locator('#match-answer-link').inputValue();
 
     // Volta para a primeira pessoa: resultado pronto
     await page.goto(answer);
+    await seeMatches(page);
     await expect(page.locator('#match-result-title')).toHaveText('Deu match!');
     await expect(page.locator('.match-result-item')).toHaveText(['Filme Dois']);
     await expect(page.locator('#match-answer')).toBeHidden();
@@ -165,6 +267,7 @@ test.describe('match por link', () => {
     await page.locator('#tab-mode-match').click();
     await page.locator('#btn-match-invite').click();
     await voteAll(page, () => true);
+    await expect(page.locator('#match-invite')).toBeVisible();
     const link = await page.locator('#match-link').inputValue();
 
     await freshVisitor(page);
@@ -219,6 +322,7 @@ test.describe('match por link', () => {
     await page.goto(link);
     await page.locator('[data-action="matchJoin"]').click();
     await voteAll(page, () => true);
+    await seeMatches(page);
     await page.locator('#match-result [data-action="matchRestart"]').click();
     await expect(page).not.toHaveURL(/match=/);
     await expect(page.locator('#match-setup')).toBeVisible();
@@ -231,7 +335,7 @@ test.describe('lista do Match', () => {
     await voteAll(page, wanted);
     await page.locator('#btn-match-continue').click();
     await voteAll(page, wanted);
-    await expect(page.locator('#match-result')).toBeVisible();
+    await seeMatches(page);
     await page.locator('#match-result [data-action="matchRestart"]').click();
   }
 
@@ -290,7 +394,7 @@ test.describe('lista do Match com conta', () => {
     await voteAll(page, t => t === 'Filme Um');
     await page.locator('#btn-match-continue').click();
     await voteAll(page, t => t === 'Filme Um');
-    await expect(page.locator('#match-result')).toBeVisible();
+    await seeMatches(page);
     const saved = await page.evaluate(() => ({
       account: window.__db.user_metadata.matchHistory,
       device: localStorage.getItem('guest_match_history'),

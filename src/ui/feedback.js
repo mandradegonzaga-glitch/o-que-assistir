@@ -139,10 +139,11 @@ const achievementQueue = [];
 let achievementTimer;
 let achievementBusy = false;
 let achievementScheduled = false;
+let achievementHolds = 0;
 
 function showNextAchievement() {
     achievementScheduled = false;
-    if (achievementBusy || achievementQueue.length === 0) return;
+    if (achievementBusy || achievementHolds || achievementQueue.length === 0) return;
     achievementQueue.sort((a, b) => a.priority - b.priority || a.order - b.order);
     const { name, desc, icon, kicker } = achievementQueue.shift();
     achievementBusy = true;
@@ -167,11 +168,28 @@ function showNextAchievement() {
 let achievementOrder = 0;
 export function showAchievement({ name, desc, icon, kicker = 'Conquista desbloqueada' }) {
     achievementQueue.push({ name, desc, icon, kicker, priority: priorityOf(kicker), order: achievementOrder++ });
-    // Espera o fim da tarefa atual: assim avisos disparados juntos entram na fila antes de escolher o primeiro
+    scheduleAchievement();
+}
+
+// Espera o fim da tarefa atual: assim avisos disparados juntos entram na fila antes de escolher o primeiro
+function scheduleAchievement() {
     if (!achievementBusy && !achievementScheduled) {
         achievementScheduled = true;
         setTimeout(showNextAchievement, 0);
     }
+}
+
+// Um momento que ocupa a tela (ex.: o "Deu Match!") segura os avisos; eles saem na ordem quando ele
+// acaba. Devolve a função que solta (chamar de novo não faz nada).
+export function holdAchievements() {
+    achievementHolds++;
+    let released = false;
+    return () => {
+        if (released) return;
+        released = true;
+        achievementHolds--;
+        scheduleAchievement();
+    };
 }
 
 registerActions({

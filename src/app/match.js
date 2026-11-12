@@ -5,11 +5,10 @@ import { getActiveModal } from '../ui/modals.js';
 import { whileBusy } from '../ui/busy.js';
 import { openLiveRoom } from '../api/supabase.js';
 import { titleDetails } from '../api/tmdb.js';
-import { isHorizontalSwipe } from '../domain/gestures.js';
 import { createLiveState, liveReduce, makeRoomCode, normalizeRoomCode, parseLiveMessage } from '../domain/liveMatch.js';
-import { MATCH_PARAMS, computeMatches, decodeMatchInvite, encodeMatchInvite, invitePayload, pickTitles, playerName } from '../domain/match.js';
+import { MATCH_PARAMS, computeMatches, matchSummary, decodeMatchInvite, encodeMatchInvite, invitePayload, pickTitles, playerName } from '../domain/match.js';
 import { session, state } from '../state/appState.js';
-import { createConfetti, showToast } from '../ui/feedback.js';
+import { holdAchievements, showToast } from '../ui/feedback.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { formatRating, joinMeta } from '../utils/format.js';
 import { enterAsGuest } from './auth.js';
@@ -23,11 +22,15 @@ import { getYear, getTitle } from '../domain/mediaItem.js';
 import { appLink, setUrlParams, shareLink } from '../ui/share.js';
 import { registerActions } from '../ui/actions.js';
 import { posterImg } from '../ui/icons.js';
+import { ph } from '../ui/phosphor.js';
+import { bindSwipeCard, enterCard, flyOut, isLeaving } from '../ui/swipeCard.js';
+import { waveCells } from '../domain/wave.js';
+import { on } from '../state/events.js';
 
 let game = null; // { titles, type, names, votes: [Set, Set], player, index, mode: 'local' | 'invite' | 'guest' | 'answer' | 'live' }
 let live = null; // { code, clientId, name, room, state, helloTimer, resyncTimer, giveUp }
 
-const STEPS = ['match-setup', 'match-voting', 'match-pass', 'match-invite', 'match-joined', 'match-result',
+const STEPS = ['match-setup', 'match-voting', 'match-pass', 'match-invite', 'match-joined', 'match-celebrate', 'match-result',
   'match-live-lobby', 'match-live-join', 'match-live-wait'];
 const { invite: INVITE_PARAM, live: LIVE_PARAM } = MATCH_PARAMS;
 const HELLO_RETRY_MS = 2000;
@@ -35,7 +38,10 @@ const JOIN_TIMEOUT_MS = 15000;
 
 function showStep(id) {
   STEPS.forEach(step => { document.getElementById(step).hidden = step !== id; });
+  if (id !== 'match-celebrate') endCelebration();
 }
+
+const matchCard = () => document.getElementById('match-card');
 
 function renderCard() {
   const title = game.titles[game.index];
@@ -46,13 +52,71 @@ function renderCard() {
   document.getElementById('match-counter').textContent = `${game.index + 1} de ${game.titles.length}`;
   document.getElementById('match-fill').style.width = `${(game.index / game.titles.length) * 100}%`;
   renderPartnerProgress();
-  document.getElementById('match-card').innerHTML = `
-    ${posterImg(title.poster_path, { cls: 'match-card__poster', lazy: false })}
-    <div class="match-card__info">
-      <h3 class="match-card__title">${escapeHtml(name)}</h3>
-      <p class="match-card__meta">${escapeHtml(joinMeta([year, `Nota ${formatRating(title.vote_average)}`]))}</p>
-      <p class="match-card__overview">${escapeHtml(title.overview || 'Sem sinopse.')}</p>
-    </div>`;
+  document.querySelector('[data-action="matchUndo"]').disabled = game.index === 0;
+  const meta = escapeHtml(joinMeta([year, `Nota ${formatRating(title.vote_average)}`]));
+  const card = matchCard();
+  card.innerHTML = `
+    <div class="match-card__inner">
+      <div class="match-card__face match-card__front">
+        ${posterImg(title.poster_path, { cls: 'match-card__poster', lazy: false })}
+        <span class="match-stamp match-stamp--yes" aria-hidden="true">Quero</span>
+        <span class="match-stamp match-stamp--no" aria-hidden="true">Não quero</span>
+        <div class="match-card__caption">
+          <h3 class="match-card__title">${escapeHtml(name)}</h3>
+          <p class="match-card__meta">${meta}</p>
+        </div>
+      </div>
+      <div class="match-card__face match-card__back" aria-hidden="true">
+        <p class="match-card__back-title">${escapeHtml(name)}</p>
+        <p class="match-card__meta">${meta}</p>
+        <p class="match-card__overview">${escapeHtml(title.overview || 'Sem sinopse.')}</p>
+      </div>
+    </div>
+    <button type="button" class="match-card__flip" data-action="matchFlip" aria-pressed="false" aria-label="Ver sinopse">${ph('info', { weight: 'bold' })}</button>`;
+  enterCard(card);
+}
+
+// Toque no cartão ou no botão: vira entre o pôster e a sinopse
+function matchFlip() {
+  const card = matchCard();
+  const flipped = card.classList.toggle('is-flipped');
+  card.querySelector('.match-card__flip').setAttribute('aria-pressed', String(flipped));
+  card.querySelector('.match-card__back').setAttribute('aria-hidden', String(!flipped));
+}
+
+const isVoting = () => game && !document.getElementById('match-voting').hidden;
+
+// Botões, setas e arraste: o cartão sai voando para o lado do voto e só então o voto conta. Um voto
+// que chega durante o voo termina o voo anterior na hora (o voto dele conta primeiro).
+let flight = null;
+
+async function castVote(wanted) {
+  if (flight) {
+    flight.finish();
+    await flight.done;
+  }
+  if (!isVoting()) return;
+  const current = flyOut(matchCard(), wanted);
+  flight = current;
+  await current.done;
+  if (flight !== current) return;
+  flight = null;
+  matchVote(wanted);
+}
+
+function sendLiveProgress() {
+  if (game.mode !== 'live') return;
+  live?.room.send({ event: 'progress', index: game.index });
+  saveLive();
+}
+
+// Volta um título na vez de quem está votando (não volta para os votos da outra pessoa)
+function matchUndo() {
+  if (!isVoting() || game.index === 0 || isLeaving(matchCard())) return;
+  game.index--;
+  game.votes[game.player].delete(game.titles[game.index].id);
+  sendLiveProgress();
+  renderCard();
 }
 
 const matchStart = () => beginGame('local', 'btn-match-start');
@@ -87,13 +151,10 @@ function beginGame(mode, buttonId) {
 }
 
 function matchVote(wanted) {
-  if (!game || document.getElementById('match-voting').hidden) return;
+  if (!isVoting()) return;
   if (wanted) game.votes[game.player].add(game.titles[game.index].id);
   game.index++;
-  if (game.mode === 'live') {
-    live?.room.send({ event: 'progress', index: game.index });
-    saveLive();
-  }
+  sendLiveProgress();
 
   if (game.index < game.titles.length) {
     renderCard();
@@ -126,7 +187,8 @@ function matchContinue() {
 function showResult() {
   const matches = computeMatches(game.titles, game.votes[0], game.votes[1]);
   game.matches = matches;
-  showStep('match-result');
+  // O "Deu Match!" segura os avisos (ex.: conquista Par Perfeito) até ser fechado
+  if (matches.length) releaseAchievements = holdAchievements();
   const heading = document.getElementById('match-result-title');
   const list = document.getElementById('match-result-list');
   document.getElementById('btn-match-draw').hidden = matches.length < 2;
@@ -135,7 +197,7 @@ function showResult() {
     heading.textContent = 'Nenhum título em comum';
     list.innerHTML = '<p class="section-note">Vocês não coincidiram desta vez. Tente com outros títulos.</p>';
   } else {
-    heading.textContent = matches.length === 1 ? 'Deu match!' : `${matches.length} matches!`;
+    heading.textContent = matchHeading(matches.length);
     const type = game.type;
     list.innerHTML = matches.map(title => {
       const name = escapeHtml(getTitle(title));
@@ -144,7 +206,6 @@ function showResult() {
         <span>${name}</span>
       </button>`;
     }).join('');
-    createConfetti();
     grantXp('match');
     recordSocial('matches');
     trackChallenge('match');
@@ -157,7 +218,44 @@ function showResult() {
     document.getElementById('match-answer-name').textContent = game.names[0];
     document.getElementById('match-answer-link').value = inviteLink();
   }
+  if (matches.length) {
+    showCelebration(matches);
+    return;
+  }
+  showStep('match-result');
   heading.focus();
+}
+
+const matchHeading = count => (count === 1 ? 'Deu match!' : `${count} matches!`);
+
+// Grade da onda de pontos (clleancode): cada ponto leva seu atraso e sua escala inicial
+const DOT_COLS = 9;
+const DOT_ROWS = 6;
+const dotsHtml = () => waveCells(DOT_COLS, DOT_ROWS)
+  .map(({ delay, from }) => `<i style="--delay:${delay}s;--from:${from}"></i>`).join('');
+
+let releaseAchievements = null;
+
+function showCelebration(matches) {
+  document.getElementById('match-dots').innerHTML = dotsHtml(); // HTML novo: a onda recomeça
+  document.getElementById('match-celebrate-posters').innerHTML = matches.slice(0, 2)
+    .map(title => posterImg(title.poster_path, { cls: 'match-celebrate__poster', lazy: false })).join('');
+  document.getElementById('match-celebrate-title').textContent = matchHeading(matches.length);
+  document.getElementById('match-celebrate-text').textContent = matchSummary(game.names, matches);
+  document.getElementById('btn-match-see').textContent = matches.length === 1 ? 'Ver o match' : 'Ver os matches';
+  document.getElementById('btn-celebrate-draw').hidden = matches.length < 2;
+  showStep('match-celebrate');
+  document.getElementById('match-celebrate-title').focus();
+}
+
+function endCelebration() {
+  releaseAchievements?.();
+  releaseAchievements = null;
+}
+
+function matchSeeResult() {
+  showStep('match-result');
+  document.getElementById('match-result-title').focus();
 }
 
 // Com quem foi a partida, do ponto de vista de quem está neste aparelho
@@ -283,6 +381,7 @@ export async function openMatchFromUrl() {
 function matchDraw() {
   const matches = game?.matches || [];
   if (matches.length === 0) return;
+  showStep('match-result'); // do "Deu Match!", o título sorteado abre sobre o resultado
   const chosen = matches[Math.floor(Math.random() * matches.length)];
   carregarDetalhes(chosen.id, game.type);
 }
@@ -643,27 +742,17 @@ window.addEventListener('pagehide', () => {
   if (live && !live.state.finished) live.room.send({ event: 'bye' });
 });
 
+// Saiu do Match com o "Deu Match!" na tela: os avisos seguros não ficam esperando a volta
+on('mode:changed', ({ mode }) => mode !== 'match' && endCelebration());
+
 export function initMatch() {
-  const card = document.getElementById('match-card');
-  let start = null;
-  card.addEventListener('touchstart', (e) => {
-    const { screenX, screenY } = e.changedTouches[0];
-    start = { x: screenX, y: screenY };
-  }, { passive: true });
-  card.addEventListener('touchend', (e) => {
-    if (!start) return;
-    const { screenX, screenY } = e.changedTouches[0];
-    const deltaX = screenX - start.x;
-    const deltaY = screenY - start.y;
-    start = null;
-    if (isHorizontalSwipe(deltaX, deltaY)) matchVote(deltaX > 0);
-  });
+  bindSwipeCard(matchCard(), { onVote: castVote, onTap: matchFlip });
 
   document.addEventListener('keydown', (e) => {
     if (document.getElementById('match-voting').hidden || document.getElementById('view-match').style.display !== 'block') return;
     if (e.target.closest('input, select, textarea') || getActiveModal()) return;
-    if (e.key === 'ArrowRight') matchVote(true);
-    if (e.key === 'ArrowLeft') matchVote(false);
+    if (e.key === 'ArrowRight') castVote(true);
+    if (e.key === 'ArrowLeft') castVote(false);
   });
 }
 
@@ -673,6 +762,7 @@ registerActions({
     matchContinue,
     matchDraw,
     matchEmailInvite,
+    matchFlip,
     matchInvite,
     matchJoin,
     matchCodeJoin,
@@ -681,10 +771,12 @@ registerActions({
     matchLiveSend,
     matchSendAnswer,
     matchSendInvite,
-    matchNo: () => matchVote(false),
+    matchNo: () => castVote(false),
     matchRestart,
+    matchSeeResult,
     matchStart,
-    matchYes: () => matchVote(true),
+    matchUndo,
+    matchYes: () => castVote(true),
   },
   enter: {
     matchCodeJoin,

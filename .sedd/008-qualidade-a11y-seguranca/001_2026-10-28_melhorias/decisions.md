@@ -550,6 +550,22 @@ Regras combinadas: cada etapa numa branch `redesign/etapa-N`, com commit e envio
 **Alternativas consideradas:**
 - Seguir corrigindo cada caso especial no lugar → o mesmo tipo de bug voltaria em cada tela nova.
 
+## D001-056 — Match de arrastar e "Deu Match!" com a onda do clleancode
+
+**Data:** 2026-11-11 · **Tarefa:** T001-144
+
+**Decisão (aprovada pelo usuário):**
+- O cartão é o dedo (skill gestures): segue 1:1, vota por distância (35% da largura) ou por arremesso, senão volta com mola. Botões e setas usam o mesmo voo, para o voto sempre "sair" do cartão.
+- Nenhum toque se perde: um voto durante o voo termina o voo anterior na hora.
+- "Deu Match!" é um passo próprio, antes da grade, e segura os avisos de conquista até ser fechado (antes, a conquista e os confetes cobriam os pôsteres em comum).
+- A onda de pontos (clleancode) substitui os confetes no Match; as contas da onda ficam no domínio (`waveCells`) e o tempo no CSS.
+- Desfazer volta só na vez de quem está votando (no mesmo celular, a vez da segunda pessoa não mexe nos votos da primeira).
+
+**Alternativas consideradas:**
+- "Deu Match!" no alto da tela de resultado → a conquista cobriria a lista do mesmo jeito; fora.
+- Ignorar votos durante o voo → toques rápidos se perderiam; fora.
+- Botão "Já vi" entre os votos (Pickr) → fica para depois; o selo "Já vi" já existe nas grades.
+
 ## D001-055 — Filtros sempre à vista, nota mínima, "Já vi" no pôster e a sanfona do clleancode
 
 **Data:** 2026-11-11 · **Tarefa:** T001-143

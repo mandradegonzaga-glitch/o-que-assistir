@@ -1,5 +1,5 @@
 import { describe, it, expect } from '@jest/globals';
-import { computeMatches, decodeMatchInvite, encodeMatchInvite, invitePayload, parseInvitePayload, pickTitles, playerName } from '../../src/domain/match.js';
+import { computeMatches, matchSummary, decodeMatchInvite, encodeMatchInvite, invitePayload, parseInvitePayload, pickTitles, playerName } from '../../src/domain/match.js';
 
 const titles = [1, 2, 3, 4].map(id => ({ id, poster_path: `/${id}.jpg` }));
 
@@ -79,5 +79,22 @@ describe('convite pela caixa de amigos', () => {
   it('o convite por link vai só com o código e volta para o parâmetro match', () => {
     expect(invitePayload({ code: 'abc123' })).toBe('abc123');
     expect(parseInvitePayload('abc123')).toEqual({ live: false, code: 'abc123', param: 'match' });
+  });
+});
+
+// Frase do "Deu Match!" (repasse da etapa 5)
+describe('matchSummary', () => {
+  const t = ['Um', 'Dois', 'Três', 'Quatro'].map((title, i) => ({ id: i, title }));
+  it('names both people and what they want', () => {
+    expect(matchSummary(['Ana', 'Bia'], t.slice(0, 1))).toBe('Ana e Bia querem ver Um.');
+    expect(matchSummary(['Ana', 'Bia'], t.slice(0, 2))).toBe('Ana e Bia querem ver Um e Dois.');
+  });
+
+  it('counts the rest instead of listing everything', () => {
+    expect(matchSummary(['Ana', 'Bia'], t)).toBe('Ana e Bia querem ver Um, Dois e mais 2.');
+  });
+
+  it('uses the series name too', () => {
+    expect(matchSummary(['Ana', 'Bia'], [{ id: 9, name: 'Série' }])).toBe('Ana e Bia querem ver Série.');
   });
 });

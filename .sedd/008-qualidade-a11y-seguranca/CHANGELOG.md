@@ -2,6 +2,20 @@
 
 All notable changes to this feature will be documented in this file.
 
+## [2026-11-11, repasse do redesign: etapa 5] — branch `redesign/repasse` (local, ainda não publicado)
+
+### Added
+
+- Match de arrastar: o cartão segue o dedo, inclina e mostra "Quero" ou "Não quero"
+- Cartão com o pôster grande; tocar vira e mostra a sinopse
+- Botão Desfazer para voltar o último voto
+- Tela "Deu Match!" com os pôsteres em comum, quem quer ver o quê e a onda de pontos
+
+### Fixed
+
+- A conquista "Par Perfeito" cobria o resultado do Match
+- Elenco com poucas pessoas deixava só a primeira em destaque
+
 ## [2026-11-11, repasse do redesign: etapa 4] — branch `redesign/repasse` (local, ainda não publicado)
 
 ### Added

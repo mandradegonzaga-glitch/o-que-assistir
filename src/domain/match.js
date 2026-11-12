@@ -1,5 +1,5 @@
 // Match no mesmo aparelho: cada pessoa vota sem ver os votos da outra.
-import { MEDIA_TYPES } from './mediaItem.js';
+import { MEDIA_TYPES, getTitle } from './mediaItem.js';
 import { shuffle } from '../utils/shuffle.js';
 
 // Títulos por partida; um convite ou mensagem de outro aparelho não pode trazer mais
@@ -13,6 +13,14 @@ export function computeMatches(titles, votesA, votesB) {
 export function pickTitles(results, blacklist = [], size = MATCH_SIZE, random = Math.random) {
   const valid = results.filter(item => item.poster_path && !blacklist.includes(item.id));
   return shuffle(valid, random).slice(0, size);
+}
+
+// Frase do "Deu Match!": quem e o quê; passando de dois títulos, conta o resto em vez de listar
+export function matchSummary(names, matches) {
+  const [first, second] = matches.map(getTitle);
+  const rest = matches.length - 2;
+  const what = matches.length === 1 ? first : rest > 0 ? `${first}, ${second} e mais ${rest}` : `${first} e ${second}`;
+  return `${names[0]} e ${names[1]} querem ver ${what}.`;
 }
 
 export function playerName(name, index) {

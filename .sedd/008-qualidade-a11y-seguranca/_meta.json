@@ -143,7 +143,8 @@
         "T001-139",
         "T001-141",
         "T001-142",
-        "T001-143"
+        "T001-143",
+        "T001-144"
       ],
       "tasksCompleted": [
         "T001-001",
@@ -358,11 +359,12 @@
       "T001-139",
       "T001-141",
       "T001-142",
-      "T001-143"
+      "T001-143",
+      "T001-144"
     ],
     "inProgress": null,
     "nextSteps": [
-      "Repasse: etapas 1-4 feitas; próximo: etapa 5 (5a gavetas, 5b sorteio, depois 5c Match + Deu Match! com o círculo do clleancode), captação antes"
+      "Repasse: etapas 1-5 feitas (5: Match de arrastar + Deu Match!, T001-144); próximo: 5d Perfil de gosto + primeira visita, com captação (Dribbble, galerias e clleancode)"
     ],
     "filesModified": [
       "index.html",
