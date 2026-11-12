@@ -8156,6 +8156,11 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
 .library-tile__poster:nth-child(3) { z-index: 1; transform: translateX(12px) rotate(7deg); }
 
 /* O leque ao tocar */
+/* Os outros cartões apagam enquanto este abre (ocupados); ele fica inteiro */
+.library-tile.is-fanning {
+    opacity: 1;
+}
+
 .library-tile.is-fanning .library-tile__poster:nth-child(1) { transform: translateY(-6px); }
 .library-tile.is-fanning .library-tile__poster:nth-child(2) { transform: translateX(-40px) rotate(-16deg); }
 .library-tile.is-fanning .library-tile__poster:nth-child(3) { transform: translateX(40px) rotate(16deg); }

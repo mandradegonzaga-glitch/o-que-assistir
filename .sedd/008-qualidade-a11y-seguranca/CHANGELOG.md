@@ -16,6 +16,7 @@ All notable changes to this feature will be documented in this file.
 ### Fixed
 
 - "Já visto" travado: tocar de novo tira de Já assistidos, com Desfazer
+- Dois toques rápidos em cartões da Biblioteca abriam a parte errada
 
 ## [2026-11-11, repasse do redesign: etapa 5d] — branch `redesign/repasse` (local, ainda não publicado)
 

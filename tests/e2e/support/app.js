@@ -112,6 +112,8 @@ export async function openLibraryTab(page, tab) {
   const tile = page.locator(`#library-overview [data-arg="${tab}"]`);
   if (await tile.isVisible()) await tile.click();
   else await page.locator(`#tab-${tab}`).click();
+  // O cartão abre em leque antes da lista: sem esperar, o passo seguinte corria contra a abertura
+  await expect(page.locator(`#tab-${tab}`)).toHaveAttribute('aria-selected', 'true');
 }
 
 export async function openLibrary(page) {

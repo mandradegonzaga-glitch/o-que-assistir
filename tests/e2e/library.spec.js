@@ -52,6 +52,25 @@ test.describe('abertura da Biblioteca', () => {
     await tile(page, 'watchlist').click();
     await expect(page.locator('#library-browser')).toBeVisible();
   });
+
+  // Achado ao investigar um teste instável (2026-11-12): durante o leque a visão geral continua na
+  // tela, e um segundo toque em outro cartão abria a outra parte por cima da primeira
+  test('dois toques seguidos: vale o primeiro cartão, o segundo é ignorado durante o leque', async ({ page }) => {
+    await seed(page, { watchlist: [item(1, 'movie')], history: [item(3, 'movie')] });
+    await enterAsGuest(page);
+    await page.locator('#tab-mode-library').click();
+    await expect(page.locator('[data-count="vistos"]')).toHaveText('1 título');
+    // o segundo toque vem um instante depois, com o primeiro cartão ainda abrindo em leque
+    await page.evaluate(() => new Promise(resolve => {
+      document.querySelector('#library-overview [data-arg="vistos"]').click();
+      setTimeout(() => { document.querySelector('#library-overview [data-arg="watchlist"]').click(); resolve(); }, 100);
+    }));
+    await expect(page.locator('#library-browser')).toBeVisible();
+    await expect(page.locator('#tab-vistos')).toHaveAttribute('aria-selected', 'true');
+    // nenhuma abertura atrasada troca a parte depois
+    await page.waitForTimeout(800);
+    await expect(page.locator('#tab-vistos')).toHaveAttribute('aria-selected', 'true');
+  });
 });
 
 test.describe('lista da Biblioteca', () => {

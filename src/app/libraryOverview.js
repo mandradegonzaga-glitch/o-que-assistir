@@ -6,6 +6,7 @@ import { session } from '../state/appState.js';
 import { on } from '../state/events.js';
 import { registerActions } from '../ui/actions.js';
 import { posterImg } from '../ui/icons.js';
+import { whileBusy } from '../ui/busy.js';
 import { afterAnimations, prefersReducedMotion } from '../ui/motion.js';
 import { switchTab } from '../ui/navigation.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
@@ -84,13 +85,18 @@ async function renderOverview() {
     if (li) li.outerHTML = tileHtml(tile, { count: series.length, posters: series.map(s => s.poster) });
 }
 
-// A pilha se abre em leque e só então a lista aparece; com "reduzir movimento", entra direto
-async function openSection(tile) {
-    tile.classList.add('is-fanning');
-    if (!prefersReducedMotion()) await afterAnimations(tile);
-    tile.classList.remove('is-fanning');
-    await switchTab(tile.dataset.arg);
-    window.scrollTo({ top: 0 }); // a lista começa do alto, com o título à vista
+// A pilha se abre em leque e só então a lista aparece; com "reduzir movimento", entra direto.
+// Enquanto abre, os cartões ficam ocupados: um segundo toque em outro cartão abria a outra parte
+// por cima da primeira.
+function openSection(tile) {
+    const tiles = [...els().overview.querySelectorAll('.library-tile')];
+    return whileBusy(tiles, async () => {
+        tile.classList.add('is-fanning');
+        if (!prefersReducedMotion()) await afterAnimations(tile);
+        tile.classList.remove('is-fanning');
+        await switchTab(tile.dataset.arg);
+        window.scrollTo({ top: 0 }); // a lista começa do alto, com o título à vista
+    });
 }
 
 registerActions({
