@@ -16,8 +16,8 @@ const DRAW_TIMING = { shuffleMin: 900, hold: 250, posterWait: 1500 };
 
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-// Verso do ingresso: o bilhete da marca, grande, e o letreiro
-const TICKET_BACK = `
+// Verso do ingresso: o bilhete da marca, grande, e o letreiro (também na abertura do app, src/app/splash.js)
+export const TICKET_BACK = `
   <span class="draw-ticket__back" aria-hidden="true">
     ${ticketIcon('draw-ticket__logo')}
     <span class="draw-ticket__brand">O que<br>assistir?</span>

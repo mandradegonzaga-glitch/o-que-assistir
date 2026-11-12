@@ -63,6 +63,7 @@ async function prepare(page, { logged, dailySeen = 'today', errors, tmdbUrls }) 
   await page.addInitScript(({ logged, dailySeen }) => {
     window.__TEST = { logged };
     localStorage.setItem('has_visited', 'true');
+    sessionStorage.setItem('splash_seen', '1'); // a abertura tem testes próprios (splash.spec.js)
     if (dailySeen === 'today') {
       const d = new Date();
       const pad = n => String(n).padStart(2, '0');

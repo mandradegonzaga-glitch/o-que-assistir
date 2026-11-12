@@ -2,6 +2,13 @@
 
 All notable changes to this feature will be documented in this file.
 
+## [2026-11-11, efeitos do clleancode] — branch `redesign/repasse` (local, ainda não publicado)
+
+### Added
+
+- Abertura do app: pilha de ingressos (com seus pôsteres) arremessados para o alto, uma vez por sessão
+- "Parecidos" em carrossel: o pôster do meio em destaque, os vizinhos menores
+
 ## [2026-11-11, repasse do redesign: etapa 3] — branch `redesign/repasse` (local, ainda não publicado)
 
 ### Added

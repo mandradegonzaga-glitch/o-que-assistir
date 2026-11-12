@@ -17,6 +17,7 @@ import { openSharedListFromUrl } from './app/listShare.js';
 import { enterFromMatchInvite, initMatch, openMatchFromUrl } from './app/match.js';
 import { initMyProviders } from './app/myProviders.js';
 import { checkFirstVisit } from './app/onboarding.js';
+import { playSplash } from './app/splash.js';
 import { initPwa } from './app/pwa.js';
 import { initRoulette } from './app/roulette.js';
 import { hasTitleLink, initUrlState, openTitleFromUrl } from './app/urlSync.js';
@@ -39,6 +40,7 @@ async function openLinksAfterEntering() {
   if (isAccount()) offerLegacyImport();
 }
 
+playSplash(); // primeiro de tudo: a abertura cobre o app enquanto ele se monta
 hydrateIcons();
 initActions();
 initFilters();

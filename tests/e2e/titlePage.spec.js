@@ -156,3 +156,51 @@ test.describe('frase de efeito, classificação e gêneros', () => {
     await expect(page.locator('#m-tagline')).toBeHidden();
   });
 });
+
+// Volta à etapa 2 com o clleancode (2026-11-11): "Parecidos" e "Elenco" em carrossel em disco.
+// Ajustes pedidos pelo usuário: sem o espaço vazio antes do primeiro, o mesmo efeito no elenco e
+// os primeiros também com destaque — o destaque caminha com a rolagem (1º no começo, último no fim).
+test.describe('carrossel em disco', () => {
+  const poses = list => list.evaluate(el => {
+    const box = el.getBoundingClientRect();
+    return [...el.children].map(item => {
+      const r = item.getBoundingClientRect();
+      return { scale: new DOMMatrix(getComputedStyle(item).transform).a, opacity: Number(getComputedStyle(item).opacity), off: Math.abs(r.left + r.width / 2 - (box.left + box.width / 2)), left: r.left - box.left };
+    });
+  });
+
+  for (const [name, id] of [['Parecidos', '#m-similar'], ['Elenco', '#cast-list']]) {
+    test(`${name}: começa encostado, o mais perto do meio em destaque e rolar troca`, async ({ page }) => {
+      if (id === '#cast-list') {
+        await page.route(/\/tmdb\/movie\/1\/credits/, route => route.fulfill({ contentType: 'application/json',
+          json: { cast: Array.from({ length: 8 }, (_, i) => ({ id: i, name: `Pessoa ${i}`, character: `Papel ${i}`, profile_path: null })), crew: [] } }));
+      }
+      await page.setViewportSize({ width: 390, height: 844 });
+      await openTitle(page, 'movie-1');
+      const list = page.locator(id);
+      await expect(list.locator(':scope > *')).toHaveCount(id === '#m-similar' ? 4 : 8);
+      // começa com o 1º em destaque, encostado (nada de vazio antes)
+      await expect.poll(async () => (await poses(list))[0].scale).toBeGreaterThan(0.97);
+      const all = await poses(list);
+      expect(all[0].left).toBeLessThan(24);
+      expect(all[1].scale).toBeLessThan(0.95);
+      expect(all[1].opacity).toBeLessThan(0.9);
+
+      // no fim, o último em destaque
+      await list.evaluate(el => el.scrollTo({ left: el.scrollWidth, behavior: 'instant' }));
+      await expect.poll(async () => (await poses(list)).at(-1).scale).toBeGreaterThan(0.97);
+
+      // soltar no meio do caminho encaixa alguém exatamente no destaque
+      await list.evaluate(el => el.scrollTo({ left: el.scrollLeft * 0.4, behavior: 'instant' }));
+      await expect.poll(async () => Math.max(...(await poses(list)).map(p => p.scale))).toBeGreaterThan(0.99);
+    });
+  }
+
+  test('com "reduzir movimento", fileira comum', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await openTitle(page, 'movie-1');
+    const items = page.locator('#m-similar .similar-item');
+    await expect(items).toHaveCount(4);
+    expect(await items.nth(1).evaluate(el => getComputedStyle(el).transform)).toBe('none');
+  });
+});

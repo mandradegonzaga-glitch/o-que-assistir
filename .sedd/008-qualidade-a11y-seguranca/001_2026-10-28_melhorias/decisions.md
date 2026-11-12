@@ -550,6 +550,21 @@ Regras combinadas: cada etapa numa branch `redesign/etapa-N`, com commit e envio
 **Alternativas consideradas:**
 - Seguir corrigindo cada caso especial no lugar → o mesmo tipo de bug voltaria em cada tela nova.
 
+## D001-054 — Efeitos do clleancode na abertura e no "Parecidos"
+
+**Data:** 2026-11-11 · **Tarefa:** T001-142
+
+**Contexto:** o usuário notou que as etapas 1 e 2 do repasse não usaram o clleancode e pediu para voltar a elas.
+
+**Decisão:**
+- Abertura curta (~1,45 s) e uma vez por sessão: o app carrega em menos de 1 s, então esperar "o carregamento" como o site seria atraso artificial. Tocar pula; com "reduzir movimento" não aparece.
+- Cartões = verso do ingresso (a assinatura do app, DESIGN.md) com pôsteres reais do aparelho por cima; sem o contador de % (número inventado).
+- "Parecidos" em disco com os números do site (12% por posição), mas sem sumir os vizinhos (é para escolher).
+
+**Alternativas consideradas:**
+- Abertura a cada carregamento → repetiria ao recarregar.
+- Carrossel guiado pela rolagem da página (como no site, com a seção presa) → brigaria com a rolagem da gaveta no celular.
+
 ## D001-053 — Biblioteca com abertura em cartões, nota guardada e "Sair" no perfil
 
 **Data:** 2026-11-11 · **Tarefa:** T001-141

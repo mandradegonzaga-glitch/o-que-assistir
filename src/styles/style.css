@@ -2329,6 +2329,7 @@ header {
     flex-shrink: 0;
     width: 88px;
     text-align: center;
+    transform-origin: center 30%;
 }
 
 .cast-photo {
@@ -6481,21 +6482,22 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
     display: flex;
     gap: 12px;
     margin-top: var(--space-sm);
-    padding-bottom: var(--space-sm);
+    /* em disco, começando encostado (sem vazio antes do primeiro, pedido do usuário); o encaixe
+       é do carrossel (src/ui/discCarousel.js), não do CSS: o destaque anda com a rolagem */
+    padding: var(--space-sm) 0;
     overflow-x: auto;
-    scroll-snap-type: x mandatory;
     scrollbar-width: thin;
     scrollbar-color: var(--border-default) transparent;
 }
 .similar-item {
-    flex: 0 0 104px;
+    flex: 0 0 128px;
+    transform-origin: center 40%;
     padding: 0;
     background: none;
     border: 0;
     color: var(--text-secondary);
     text-align: left;
     cursor: pointer;
-    scroll-snap-align: start;
 }
 .similar-item img {
     display: block;
@@ -7355,7 +7357,8 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
     transition: transform 0.45s var(--ease-in-out);
 }
 .draw-ticket__back,
-.draw-ticket__front {
+.draw-ticket__front,
+.splash__poster {
     --notch: 12px;
     position: absolute;
     inset: 0;
@@ -7628,3 +7631,86 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
 
 /* Convidado: o boneco no avatar */
 .avatar svg { width: 18px; height: 18px; }
+
+/* ===== Abertura do app (src/app/splash.js; efeito do carregamento do clleancode) =====
+   Pilha de 4 cartões (verso do ingresso, com o pôster por cima quando há). Os 3 de cima são
+   arremessados para o alto, um a cada 0,15 s (0,55 s cada, curva que acelera como um arremesso);
+   no fim a tela sobe (0,5 s). Total ~1,45 s; tocar pula. Com "reduzir movimento", não aparece. */
+.splash {
+    position: fixed;
+    inset: 0;
+    z-index: 5000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xl);
+    background: var(--bg-primary);
+    overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .splash { display: none; }
+}
+
+.splash__stack {
+    --ticket-w: min(46vw, 200px);
+    position: relative;
+    width: var(--ticket-w);
+    aspect-ratio: 2 / 3;
+}
+
+.splash__card {
+    --x: 0px; --y: 0px; --r: 0deg;
+    position: absolute;
+    inset: 0;
+    transform: translate(var(--x), var(--y)) rotate(var(--r));
+}
+
+/* o de baixo fica; os outros, levemente fora do lugar, como uma pilha de verdade */
+.splash__card:nth-child(2) { --x: -6px; --y: 4px; --r: -4deg; }
+.splash__card:nth-child(3) { --x: 7px; --y: -3px; --r: 5deg; }
+.splash__card:nth-child(4) { --x: -3px; --y: -6px; --r: -2deg; }
+
+.splash__poster {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.2s var(--ease-out);
+}
+
+.splash__poster.is-loaded { opacity: 1; }
+
+.splash.is-playing .splash__card:not(:first-child) {
+    animation: splash-throw 0.55s cubic-bezier(0.5, 0, 0.78, 0.46) forwards;
+    animation-delay: calc(0.2s + (3 - var(--i)) * 0.15s);
+}
+
+@keyframes splash-throw {
+    to { transform: translate(var(--x), -125vh) rotate(-10deg) scale(0.82); }
+}
+
+.splash.is-playing {
+    animation: splash-lift 0.5s var(--ease-in-out) 0.95s forwards;
+}
+
+.splash.is-playing.is-skipping {
+    animation: splash-lift 0.3s var(--ease-in-out) forwards;
+}
+
+@keyframes splash-lift {
+    to { transform: translateY(-100%); }
+}
+
+.splash__brand {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: var(--letter-spacing-tight);
+    text-transform: uppercase;
+    color: var(--accent-text);
+}
+

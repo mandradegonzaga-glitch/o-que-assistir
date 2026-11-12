@@ -141,7 +141,8 @@
         "T001-134",
         "T001-138",
         "T001-139",
-        "T001-141"
+        "T001-141",
+        "T001-142"
       ],
       "tasksCompleted": [
         "T001-001",
@@ -354,11 +355,12 @@
       "T001-119",
       "T001-138",
       "T001-139",
-      "T001-141"
+      "T001-141",
+      "T001-142"
     ],
     "inProgress": null,
     "nextSteps": [
-      "Repasse: etapas 1-3 feitas; próximo: voltar às etapas 1 e 2 com o clleancode (abertura com pilha que embaralha; Parecidos em disco), depois etapa 4 (filtros e busca)"
+      "Repasse: etapas 1-3 + efeitos do clleancode feitos; próximo: etapa 4 (filtros em pílulas e busca) com captação antes"
     ],
     "filesModified": [
       "index.html",

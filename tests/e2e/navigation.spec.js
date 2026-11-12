@@ -165,6 +165,8 @@ test.describe('reduzir movimento', () => {
 // Toque não deixa o cartão "levantado": os efeitos de hover só valem com mouse
 test('no celular, tocar num resultado não deixa o hover preso', async ({ browser }) => {
   const context = await browser.newContext({ viewport: phone, hasTouch: true, isMobile: true });
+  // contexto próprio (sem o preparo comum): boas-vindas e abertura já vistas, como nos outros testes
+  await context.addInitScript(() => { localStorage.setItem('has_visited', 'true'); sessionStorage.setItem('splash_seen', '1'); });
   const page = await context.newPage();
   await enterAsGuest(page);
   const hoverRules = await page.evaluate(() => {

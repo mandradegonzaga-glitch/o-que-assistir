@@ -21,6 +21,7 @@ import { castMembers, crewLine, initials } from '../domain/credits.js';
 import { joinMeta } from '../utils/format.js';
 import { registerActions } from '../ui/actions.js';
 import { afterAnimations, prefersReducedMotion } from '../ui/motion.js';
+import { bindDisc, resetDisc } from '../ui/discCarousel.js';
 
 // ================================================
 // EPISÓDIOS — abre modal de tracking (T001-009)
@@ -156,6 +157,10 @@ async function loadSimilar(f, type, mediaType, signal) {
                 ${posterImg(i.poster_path)}
                 <span class="similar-item__name" aria-hidden="true">${escapeHtml(name)}</span></button>`;
         }).join('');
+        // "Parecidos" em disco: o do meio em destaque, os vizinhos menores (src/ui/discCarousel.js)
+        const list = document.getElementById('m-similar');
+        bindDisc(list);
+        resetDisc(list);
     } catch (e) {
         if (isAbortError(e)) return;
         section.hidden = tab.hidden = true;
@@ -224,7 +229,8 @@ async function loadCast(f, type, signal, detailsPromise) {
     try {
         const cData = await tmdbGet(`/${type}/${f.id}/credits`, {}, { signal });
         if (signal.aborted) return; // resposta do cache não passa pelo abort
-        document.getElementById('cast-list').innerHTML = castMembers(cData).map(person => `
+        const castList = document.getElementById('cast-list');
+        castList.innerHTML = castMembers(cData).map(person => `
             <div class="cast-item">
                 ${person.photo
                     ? `<img src="${tmdbImage(person.photo, 'w185')}" class="cast-photo" alt="" width="60" height="60" loading="lazy">`
@@ -232,6 +238,9 @@ async function loadCast(f, type, signal, detailsPromise) {
                 <span class="cast-item__name">${escapeHtml(person.name)}</span>
                 ${person.character ? `<span class="cast-item__role">${escapeHtml(person.character)}</span>` : ''}
             </div>`).join('');
+        // Elenco também em disco, como o "Parecidos" (pedido do usuário)
+        bindDisc(castList);
+        resetDisc(castList);
         const details = await detailsPromise.catch(() => ({}));
         if (signal.aborted) return;
         const lines = crewLine(cData, details);
