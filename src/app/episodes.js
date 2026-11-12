@@ -1,7 +1,7 @@
 // Rastreamento de episódios (004-series-tracking)
 import { ph } from '../ui/phosphor.js';
 import { canTrackEpisodes, clearSeries, getSeriesProgress, markEpisode, markEpisodes, unmarkEpisode, unmarkSeason } from './episodeStore.js';
-import { salvarHistorico } from './library.js';
+import { isRemovingWatched, salvarHistorico } from './library.js';
 import { emptyEpisodes, session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
@@ -224,7 +224,7 @@ function renderSeriesStatus(seriesData) {
     const total = seriesData.number_of_episodes || 0;
     const watched = session.episodes.watchedKeys.size;
     const isCompleted = total > 0 && watched >= total;
-    setSeenButton(btnV, inHistory(seriesData.id) || isCompleted);
+    setSeenButton(btnV, !isRemovingWatched(seriesData.id) && (inHistory(seriesData.id) || isCompleted));
 
     const seasons = seriesData.number_of_seasons || 0;
     document.getElementById('episodes-overview').textContent = joinMeta([
@@ -266,10 +266,20 @@ async function renderSeriesProgress(seriesData) {
 const CHECK_ICON = ph('check', { weight: 'bold', cls: 'icon icon-16 icon-lead-4' });
 
 // Botão "Já vi" (ativo) ou "Já visto" (desativado), de filmes e séries
+// Alterna: marcado, tocar de novo tira de Já assistidos (achado do usuário: ficava travado)
 export function setSeenButton(btnV, seen) {
     btnV.innerHTML = CHECK_ICON + (seen ? 'Já visto' : 'Já vi');
-    btnV.disabled = seen;
+    btnV.disabled = false;
+    btnV.setAttribute('aria-pressed', String(seen));
+    const label = seen ? 'Tirar de Já assistidos' : 'Marcar como assistido';
+    btnV.setAttribute('aria-label', label);
+    btnV.dataset.tooltip = label;
 }
+
+// A série aberta acompanha a Biblioteca (tirou e desfez pelo "Já visto", por exemplo)
+on('library:changed', () => {
+    if (isSeriesType(state.currentMovie?.media_type)) renderSeriesStatus(state.currentMovie);
+});
 
 async function desmarcarTemporadaAtual() {
     if (!canTrackEpisodes() || !state.currentMovie) return;

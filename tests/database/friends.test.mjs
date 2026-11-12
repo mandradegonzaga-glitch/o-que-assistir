@@ -145,12 +145,15 @@ test('perfil: amigo vê o que a pessoa assistiu, a lista e as conquistas, e nada
   assert.equal('user_id' in profile.history[0], false);
 });
 
-test('reação: só no próprio histórico, só as 4 válidas, e o amigo vê', async () => {
+test('reação: só no próprio histórico, só as válidas, e o amigo vê', async () => {
   const react = (who, id, value) => as(who, async () => (await rows('SELECT set_title_reaction($1, $2) AS ok', [id, value]))[0].ok);
   assert.equal(await react(BIA, 603, 'fire'), true);
   assert.equal(await react(BIA, 999, 'fire'), false, 'título fora do histórico');
   assert.equal(await react(ANA, 603, 'sad'), false, 'não muda o histórico de outra pessoa');
   await assert.rejects(react(BIA, 603, 'love'), /violates check constraint/);
+  assert.equal(await react(BIA, 603, 'sleep'), true, 'reações negativas (etapa 5e)');
+  assert.equal(await react(BIA, 603, 'dislike'), true);
+  assert.equal(await react(BIA, 603, 'fire'), true);
   await denied(as(null, () => rows('SELECT set_title_reaction(603, $1)', ['fire'])), 'sem login');
   // Atualizar direto continua proibido (sem permissão de UPDATE no histórico)
   // (no Supabase a tabela tem permissão e a RLS barra: 0 linhas; aqui, sem permissão: erro)
@@ -164,6 +167,16 @@ test('reação: só no próprio histórico, só as 4 válidas, e o amigo vê', a
   assert.equal(profile.history[0].title, 'Matrix');
   assert.equal(await react(BIA, 603, null), true, 'null tira a reação');
   assert.equal((await friendProfile(ANA, BIA)).history[0].reaction, null);
+});
+
+// Banco que já tinha a regra antiga (4 reações): rodar o arquivo de novo troca a regra
+test('reações: o arquivo atualiza a regra antiga', async () => {
+  await db.exec(`ALTER TABLE watch_history DROP CONSTRAINT watch_history_reaction_check;
+    ALTER TABLE watch_history ADD CONSTRAINT watch_history_reaction_check CHECK (reaction IN ('fire', 'sad', 'laugh', 'mind'))`);
+  await db.exec(readFileSync(new URL('../../database/reactions.sql', import.meta.url), 'utf8'));
+  const react = (who, id, value) => as(who, async () => (await rows('SELECT set_title_reaction($1, $2) AS ok', [id, value]))[0].ok);
+  assert.equal(await react(BIA, 603, 'sleep'), true);
+  assert.equal(await react(BIA, 603, null), true);
 });
 
 test('perfil: quem não é amigo não vê, nem sem login', async () => {

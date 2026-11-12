@@ -50,7 +50,7 @@ test.describe('séries como convidado', () => {
     await expect(reactions(page)).toBeHidden();
 
     await seen(page).click();
-    await expect(seen(page)).toBeDisabled();
+    await expect(seen(page)).toHaveAttribute('aria-pressed', 'true');
     await expect(seen(page)).toHaveText('Já visto');
     await expect(reactions(page)).toBeVisible();
     // Marca todas as temporadas junto

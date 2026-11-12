@@ -1,7 +1,7 @@
 // Biblioteca: Quero Assistir, Em Andamento, Já Assistidos e Minhas Listas (src/app/userLists.js)
 import { ph } from '../ui/phosphor.js';
 import { getAllSeriesInProgress } from './episodeStore.js';
-import { addToHistory, addToWatchlist, inWatchlist, removeFromHistory, removeFromWatchlist } from './libraryStore.js';
+import { addToHistory, addToWatchlist, inHistory, inWatchlist, removeFromHistory, removeFromWatchlist } from './libraryStore.js';
 import { tmdbGet } from '../api/tmdb.js';
 import { getAllSeasons } from '../api/tmdbSeries.js';
 import { checkAllBadges } from './badges.js';
@@ -14,8 +14,7 @@ import { isPendingRemoval, scheduleUndoable, showToast } from '../ui/feedback.js
 import { escapeHtml } from '../utils/escapeHtml.js';
 import { formatRating, joinMeta, pluralize } from '../utils/format.js';
 import { IMG_URL } from '../config/constants.js';
-import { CLOSE_ICON, posterImg } from '../ui/icons.js';
-import { TV_ICON } from '../ui/icons.js';
+import { CLOSE_ICON, TV_ICON, posterImg, reactionImg } from '../ui/icons.js';
 import { toLibraryItem } from '../domain/mediaItem.js';
 import { emit, on } from '../state/events.js';
 import { createWatchedEntry } from '../domain/history.js';
@@ -149,7 +148,7 @@ function libraryGroup(title, items, media, key) {
         const reaction = key === 'vistos_obj' ? reactionOf(f.reaction) : null;
         const rating = f.rating ? formatRating(f.rating) : '';
         const name = escapeHtml([f.title || 'Abrir título', rating && `nota ${rating}`, reaction?.label].filter(Boolean).join(', '));
-        const badge = reaction ? `<span class="title-reaction" aria-hidden="true">${reaction.emoji}</span>` : '';
+        const badge = reaction ? reactionImg(reaction.id, { cls: 'title-reaction', size: 30 }) : '';
         const ratingLine = rating ? `<span class="library-item__rating" aria-hidden="true">★ ${rating}</span>` : '';
         return `<div class="library-item"><button type="button" class="library-item__open" data-action="carregarDetalhes" data-id="${f.id}" data-media="${media}" aria-label="${name}">${posterImg(f.poster)}${badge}${ratingLine}</button><button type="button" class="remove-btn" data-action="removeLibItem" data-key="${key}" data-id="${f.id}" aria-label="Remover ${escapeHtml(f.title || 'título')}">${CLOSE_ICON}</button></div>`;
     });
@@ -223,9 +222,13 @@ async function renderAndando(div, isStale = () => false) {
     div.innerHTML = cards.join('');
 }
 
-function removeLibItem(key, id, btn) {
+// "Já visto" na tela: no histórico e sem uma remoção esperando o "Desfazer" (título e reações perguntam aqui)
+export const isRemovingWatched = id => isPendingRemoval(`vistos_obj:${id}`);
+export const isWatched = id => inHistory(id) && !isRemovingWatched(id);
+
+// Tira de uma parte da Biblioteca com "Desfazer" (pela Biblioteca ou pelo "Já visto" do título)
+export function removeFromLibrary(key, id, card = null) {
     if (!session.currentUser) return;
-    const card = btn?.closest('.library-item');
     scheduleUndoable({
         message: key === 'vistos_obj' ? 'Removido de Já Assistidos.' : 'Removido de Quero Assistir.',
         hide: `${key}:${id}`,
@@ -253,7 +256,7 @@ async function commitRemoveLibItem(key, id) {
 
 registerActions({
     click: {
-        removeLibItem: el => removeLibItem(el.dataset.key, Number(el.dataset.id), el),
+        removeLibItem: el => removeFromLibrary(el.dataset.key, Number(el.dataset.id), el.closest('.library-item')),
         filtrarBiblioteca: el => { kindFilter = el.dataset.arg; renderLibrary(); },
         alternarEdicaoBiblioteca: () => { editing = !editing; renderLibrary(); },
     },

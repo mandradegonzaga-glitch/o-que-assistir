@@ -2,7 +2,7 @@
 import { isAbortError, latestSignal, titleDetails, tmdbGet } from '../api/tmdb.js';
 import { ph } from '../ui/phosphor.js';
 import { markWholeSeries, setSeenButton } from './episodes.js';
-import { salvarHistorico, toggleWatchlist } from './library.js';
+import { isWatched, removeFromLibrary, salvarHistorico, toggleWatchlist } from './library.js';
 import { session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
@@ -14,7 +14,7 @@ import { firstAvailableVideo } from '../api/youtube.js';
 import { localDay } from '../utils/date.js';
 import { IMG_URL } from '../config/constants.js';
 import { getTmdbEndpoint, getTitle, isSeriesType, tmdbImage } from '../domain/mediaItem.js';
-import { emit } from '../state/events.js';
+import { emit, on } from '../state/events.js';
 import { closeModal, isModalOpen, onModalClose, openModal } from '../ui/modals.js';
 import { posterImg } from '../ui/icons.js';
 import { castMembers, crewLine, initials } from '../domain/credits.js';
@@ -351,15 +351,13 @@ export async function abrirModal(item, { fromDraw = false } = {}) {
     showSectionLoading('cast-list', 'Carregando elenco…');
     showSectionLoading('m-providers', 'Verificando onde assistir…');
 
-    const vistos = session.user.history || [];
-
     const btnV = document.getElementById('btn-visto');
     const btnS = document.getElementById('btn-salvar');
 
     const isSeries = type === 'tv';
 
     // Séries também: ao terminar todos os episódios, a série é marcada sozinha (episodes.js)
-    setSeenButton(btnV, vistos.some(i => i.id === f.id));
+    setSeenButton(btnV, isWatched(f.id));
 
     const starIcon = ph('bookmark-simple', { weight: 'bold', cls: 'icon icon-16 icon-lead-4' });
     const removeIcon = ph('bookmark-simple', { weight: 'fill', cls: 'icon icon-16 icon-lead-4' });
@@ -389,10 +387,21 @@ export async function abrirModal(item, { fromDraw = false } = {}) {
     ]);
 }
 
-// Fica aberto: o botão vira "Já visto" e aparece o "Como foi?", com o foco na primeira reação
+// O filme aberto acompanha a Biblioteca (a série, em episodes.js)
+on('library:changed', () => {
+    const movie = state.currentMovie;
+    if (movie && !isSeriesType(movie.media_type)) setSeenButton(document.getElementById('btn-visto'), isWatched(movie.id));
+});
+
+// Fica aberto: o botão vira "Já visto" e aparece o "Como foi?", com o foco na primeira reação.
+// Já visto: tocar de novo tira de Já assistidos, com "Desfazer" (o mesmo da Biblioteca).
 async function marcarVistoAtual() {
     const movie = state.currentMovie;
     if (!movie) return;
+    if (isWatched(movie.id)) {
+        removeFromLibrary('vistos_obj', movie.id);
+        return;
+    }
     const isSeries = isSeriesType(movie.media_type);
     const btnV = document.getElementById('btn-visto');
     if (isSeries) btnV.disabled = true; // marcar a série inteira leva um instante: evita o segundo toque

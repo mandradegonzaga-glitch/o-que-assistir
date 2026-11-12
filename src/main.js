@@ -7,7 +7,7 @@ import './app/blindSession.js';
 import './app/help.js';
 import './app/homeRows.js';
 import './app/libraryOverview.js';
-import './app/reactions.js';
+import { initReactions } from './app/reactions.js';
 import './app/ticket.js';
 import { initDailyPicks } from './app/dailyPicks.js';
 import { checkAuth, watchAuthChanges } from './app/auth.js';
@@ -69,6 +69,7 @@ showLegacyHint();
   initScrollButton();
   initRoulette();
   initMatch();
+  initReactions();
   initDailyPicks();
   openMatchFromUrl();
   // Já entrou ao abrir: abre agora, com a URL lida. Quem entrar depois abre pelo aviso.

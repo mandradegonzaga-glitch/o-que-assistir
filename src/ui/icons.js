@@ -14,6 +14,10 @@ export const STAR_ICON = ph('star', { weight: 'duotone', cls: 'icon-40' });
 const PERSON_PLACEHOLDER = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60"><rect width="60" height="60" fill="#1f1f1f"/><circle cx="30" cy="23" r="11" fill="#555"/><path d="M10 56c3-11 11-17 20-17s17 6 20 17" fill="#555"/></svg>');
 export const personPhoto = path => tmdbImage(path) || PERSON_PLACEHOLDER;
 
+// Selo ilustrado de uma reação (src/domain/reactions.js); o nome vai no botão ou no rótulo de quem o usa
+export const reactionImg = (id, { cls = '', size = 48 } = {}) =>
+  `<img${cls ? ` class="${cls}"` : ''} src="icons/reactions/${id}.webp" alt="" width="${size}" height="${size}" decoding="async">`;
+
 // Pôster de título (proporção 2:3). Em texto (para templates) ou como elemento; sem pôster, src vazio
 // e o CSS mostra o fundo do cartão.
 export function posterImg(path, { cls = '', alt = '', lazy = true } = {}) {

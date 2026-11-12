@@ -550,6 +550,18 @@ Regras combinadas: cada etapa numa branch `redesign/etapa-N`, com commit e envio
 **Alternativas consideradas:**
 - Seguir corrigindo cada caso especial no lugar → o mesmo tipo de bug voltaria em cada tela nova.
 
+## D001-058 — Reações em selos ilustrados (Flow) e duas negativas
+
+**Data:** 2026-11-12 · **Tarefa:** T001-146
+
+**Decisão (aprovada pelo usuário):**
+- Selos ilustrados próprios no lugar dos emojis (cada sistema desenhava um emoji diferente e eles destoavam dos ícones Phosphor). Gerados no Flow do Google Labs (pedido do usuário, em vez do Gemini), revisados por ele.
+- Seis reações: as quatro de antes e "Não curti" e "Dormi no meio".
+- A lista de reações tem um dono só (`src/domain/reactions.js`): os botões saem dela, e um teste confere que o banco aceita exatamente os mesmos ids.
+
+**Alternativas consideradas:**
+- Animação contínua em cada selo (como no ILLO) → numa lista de escolha distrai; fica só o ressalto ao escolher.
+
 ## D001-057 — Perfil de gosto em ingresso e primeira visita numa tela só
 
 **Data:** 2026-11-11 · **Tarefa:** T001-145

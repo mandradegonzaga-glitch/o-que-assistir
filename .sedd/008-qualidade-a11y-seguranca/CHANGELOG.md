@@ -2,6 +2,21 @@
 
 All notable changes to this feature will be documented in this file.
 
+## [2026-11-12, repasse do redesign: etapa 5e] — branch `redesign/repasse` (local, ainda não publicado)
+
+### Added
+
+- Reações em selos ilustrados, com duas novas: "Não curti" e "Dormi no meio"
+- O selo da reação aparece no pôster da Biblioteca e no perfil dos amigos
+
+### Changed
+
+- "Como foi?" em 3 colunas; o selo escolhido surge com um leve ressalto
+
+### Fixed
+
+- "Já visto" travado: tocar de novo tira de Já assistidos, com Desfazer
+
 ## [2026-11-11, repasse do redesign: etapa 5d] — branch `redesign/repasse` (local, ainda não publicado)
 
 ### Added

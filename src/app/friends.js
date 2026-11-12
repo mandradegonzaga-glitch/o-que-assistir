@@ -24,7 +24,7 @@ import { on } from '../state/events.js';
 import { appLink, setUrlParams, shareLink } from '../ui/share.js';
 import { registerActions } from '../ui/actions.js';
 import { parseInvitePayload } from '../domain/match.js';
-import { posterEl } from '../ui/icons.js';
+import { posterEl, reactionImg } from '../ui/icons.js';
 
 const FRIEND_PARAM = 'amigo';
 
@@ -444,11 +444,8 @@ function titleCard(item) {
   if (reaction) {
     const poster = document.createElement('span');
     poster.className = 'friend-title__poster';
-    const badge = document.createElement('span');
-    badge.className = 'title-reaction';
-    badge.setAttribute('aria-hidden', 'true');
-    badge.textContent = reaction.emoji;
-    poster.append(image, badge);
+    poster.append(image);
+    poster.insertAdjacentHTML('beforeend', reactionImg(reaction.id, { cls: 'title-reaction', size: 30 }));
     card.append(poster, name);
   } else {
     card.append(image, name);

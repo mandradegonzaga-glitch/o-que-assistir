@@ -1,16 +1,13 @@
--- Reações rápidas (🔥 😢 😂 🤯) nos títulos assistidos. Ficam na própria linha do histórico,
+-- Reações rápidas nos títulos assistidos (src/domain/reactions.js: os ids precisam ser os mesmos). Ficam na própria linha do histórico,
 -- e os amigos as veem pelo get_friend_profile (database/friends.sql).
 -- Pode rodar de novo sem erro.
 
 ALTER TABLE watch_history ADD COLUMN IF NOT EXISTS reaction TEXT;
 
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'watch_history_reaction_check') THEN
-        ALTER TABLE watch_history
-            ADD CONSTRAINT watch_history_reaction_check CHECK (reaction IN ('fire', 'sad', 'laugh', 'mind'));
-    END IF;
-END $$;
+-- Refeita a cada execução: um banco com a lista antiga (4 reações, até a etapa 5e) passa a aceitar as 6
+ALTER TABLE watch_history DROP CONSTRAINT IF EXISTS watch_history_reaction_check;
+ALTER TABLE watch_history
+    ADD CONSTRAINT watch_history_reaction_check CHECK (reaction IN ('fire', 'sad', 'laugh', 'mind', 'dislike', 'sleep'));
 
 -- O histórico não tem permissão de UPDATE (só ver, inserir e apagar o próprio): esta função muda
 -- apenas a reação, e só nos títulos de quem está logado. NULL tira a reação.

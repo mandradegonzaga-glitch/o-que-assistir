@@ -2421,10 +2421,10 @@ header {
     font-weight: 700;
 }
 
-/* Quatro blocos iguais: emoji em cima, nome embaixo (nome comprido quebra dentro do bloco) */
+/* Seis blocos iguais em 3 colunas: selo em cima, nome embaixo (nome comprido quebra dentro do bloco) */
 .reactions__list {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--space-sm);
 }
 
@@ -2434,7 +2434,7 @@ header {
     align-items: center;
     justify-content: center;
     gap: var(--space-sm);
-    min-height: 76px;
+    min-height: 96px;
     padding: var(--space-sm) var(--space-xs);
     background: var(--bg-elevated);
     border: 1px solid var(--border-subtle);
@@ -2449,9 +2449,18 @@ header {
     transition: background-color 0.2s var(--ease-smooth), border-color 0.2s var(--ease-smooth);
 }
 
-.reaction span {
-    font-size: 1.5rem;
-    line-height: 1;
+.reaction img {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 3px #fff; /* o anel do selo, limpo (a imagem é cortada por dentro do anel dela) */
+    transition: opacity 0.2s var(--ease-smooth), filter 0.2s var(--ease-smooth);
+}
+
+/* Com uma escolhida, as outras apagam um pouco */
+.reactions__list:has([aria-pressed="true"]) .reaction[aria-pressed="false"] img {
+    opacity: 0.45;
+    filter: saturate(0.6);
 }
 
 @media (max-width: 340px) {
@@ -2484,18 +2493,22 @@ header {
     display: block;
 }
 
-.title-reaction {
+/* Mais específico que as regras das imagens de pôster (.library-item img, .friend-title img), que
+   davam ao selo o tamanho do pôster */
+.library-item .title-reaction,
+.friend-title .title-reaction {
     position: absolute;
     left: 6px;
     bottom: 6px;
-    display: grid;
-    place-items: center;
     width: 30px;
     height: 30px;
-    background: color-mix(in srgb, var(--bg-primary) 85%, transparent);
+    margin: 0;
+    aspect-ratio: 1;
+    border: 0;
     border-radius: 50%;
-    font-size: 1rem;
-    line-height: 1;
+    outline: 0;
+    background: none;
+    box-shadow: 0 0 0 2px #fff, 0 2px 6px rgba(0, 0, 0, 0.45);
     pointer-events: none;
 }
 
@@ -7022,7 +7035,7 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
 }
 .title-action:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
 /* Acesas: já vi (verde), na lista de quero ver (cor do tipo) */
-.title-action--seen:disabled { color: var(--accent-success); cursor: default; background: color-mix(in srgb, var(--accent-success) 16%, transparent); border-color: color-mix(in srgb, var(--accent-success) 45%, transparent); opacity: 1; }
+.title-action--seen[aria-pressed="true"] { color: var(--accent-success); background: color-mix(in srgb, var(--accent-success) 16%, transparent); border-color: color-mix(in srgb, var(--accent-success) 45%, transparent); opacity: 1; }
 .title-action.is-on { color: var(--accent-text); background: color-mix(in srgb, var(--accent-primary) 14%, transparent); border-color: color-mix(in srgb, var(--accent-primary) 50%, transparent); }
 
 .title-where { background: rgba(255, 255, 255, 0.04); }

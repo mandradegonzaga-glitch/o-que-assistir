@@ -145,7 +145,8 @@
         "T001-142",
         "T001-143",
         "T001-144",
-        "T001-145"
+        "T001-145",
+        "T001-146"
       ],
       "tasksCompleted": [
         "T001-001",
@@ -362,11 +363,12 @@
       "T001-142",
       "T001-143",
       "T001-144",
-      "T001-145"
+      "T001-145",
+      "T001-146"
     ],
     "inProgress": null,
     "nextSteps": [
-      "Repasse: etapas 1-5d feitas (5d: Perfil de gosto + primeira visita, T001-145); próximo: 5e reações ilustradas (Gemini, mostrar antes), com captação"
+      "Repasse: etapas 1-5e feitas (5e: reações ilustradas, T001-146); próximo: perguntar ao usuário (enviar o repasse, teste instável de séries, vídeo final)"
     ],
     "filesModified": [
       "index.html",
