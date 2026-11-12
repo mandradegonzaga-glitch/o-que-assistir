@@ -20,7 +20,8 @@ test.describe('biblioteca', () => {
     const items = page.locator('#library-content .library-item:visible');
     await expect(items).toHaveCount(1);
 
-    await page.locator('#library-content .remove-btn').first().click({ force: true });
+    await page.locator('#library-content .library-edit').click();
+    await page.locator('#library-content .remove-btn').first().click();
     await expect(items).toHaveCount(0);
     await page.locator('#undo-toast-btn').click();
     await expect(items).toHaveCount(1);
@@ -54,7 +55,7 @@ test.describe('biblioteca', () => {
     await page.locator('#btn-sortear').click();
     await expect(modal(page)).toBeVisible();
     await page.locator('#btn-salvar').click();
-    await expect(page.locator('.library-group-title')).toHaveText('DORAMAS (1)');
+    await expect(page.locator('.library-group-title')).toHaveText('Doramas ·\u00a01');
   });
 });
 

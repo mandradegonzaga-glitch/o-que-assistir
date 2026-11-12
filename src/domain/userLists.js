@@ -1,6 +1,6 @@
 // Listas personalizadas: regras puras. Quem lê e grava é src/app/userLists.js; o banco, database/user_lists.sql.
 // Formato: { id, name, emoji, items: [{ id, title, poster, type }] }
-import { MEDIA_TYPES, getTitle, isPosterPath } from './mediaItem.js';
+import { MEDIA_TYPES, getTitle, isPosterPath, withRating } from './mediaItem.js';
 
 export const LIST_EMOJIS = ['🎬', '🍿', '❤️', '🎃', '👻', '🎄', '😂', '😭', '😱', '🚀', '🧸', '🏆', '🌙', '🔥', '📚', '🎉'];
 export const DEFAULT_EMOJI = LIST_EMOJIS[0];
@@ -31,12 +31,12 @@ export const pickEmoji = emoji => (LIST_EMOJIS.includes(emoji) ? emoji : DEFAULT
 // O título como fica guardado na lista (vem do TMDB ou de um item da biblioteca)
 export function toListItem(title, fallbackType = 'movie') {
   const type = title.media_type || title.type || fallbackType;
-  return {
+  return withRating({
     id: title.id,
     title: getTitle(title) || 'Sem título',
     poster: title.poster_path ?? title.poster ?? null,
     type: MEDIA_TYPES.includes(type) ? type : 'movie',
-  };
+  }, title);
 }
 
 export const hasItem = (list, titleId) => list.items.some(i => i.id === titleId);
@@ -64,12 +64,12 @@ export function normalizeGuestLists(raw) {
       const id = Number(item?.id);
       if (!Number.isInteger(id) || id <= 0 || ids.has(id)) return null;
       ids.add(id);
-      return {
+      return withRating({
         id,
         title: String(item.title || 'Sem título').slice(0, 300),
         poster: isPosterPath(item.poster) ? item.poster : null,
         type: MEDIA_TYPES.includes(item.type) ? item.type : 'movie',
-      };
+      }, item);
     }).filter(Boolean).slice(0, MAX_ITEMS);
     return { id: String(list.id || name), name, emoji: pickEmoji(list.emoji), items };
   }).filter(Boolean).slice(0, MAX_LISTS);
@@ -84,7 +84,7 @@ export function buildLists(listRows, itemRows) {
     .map((row, index) => ({ row, index }))
     .sort((a, b) => rank(a.row) - rank(b.row) || a.index - b.index)
     .forEach(({ row }) => {
-      byId.get(row.list_id)?.items.push({ id: row.tmdb_id, title: row.title, poster: row.poster_path, type: row.media_type });
+      byId.get(row.list_id)?.items.push(withRating({ id: row.tmdb_id, title: row.title, poster: row.poster_path, type: row.media_type }, row));
     });
   return [...byId.values()];
 }

@@ -34,8 +34,21 @@ export function tmdbImage(path, size = 'w500') {
   return path ? `${IMG_BASE}${size}${path}` : '';
 }
 
+// Nota do TMDB guardada com o título salvo (biblioteca, listas, banco): vem do TMDB (vote_average)
+// ou do que já estava guardado (rating). Uma casa; sem nota, zero ou fora de 0 a 10: null
+export function storedRating(item) {
+  const n = Number(item?.vote_average ?? item?.rating);
+  return Number.isFinite(n) && n > 0 && n <= 10 ? Math.round(n * 10) / 10 : null;
+}
+
+// O título guardado só ganha `rating` quando há nota: os salvos antes da coluna ficam como eram
+export function withRating(stored, source) {
+  const rating = storedRating(source);
+  return rating ? { ...stored, rating } : stored;
+}
+
 // Forma em que um título do TMDB é guardado na biblioteca e nas listas
 export function toLibraryItem(item, fallbackType) {
-  return { id: item.id, poster: item.poster_path, title: getTitle(item), type: item.media_type || fallbackType };
+  return withRating({ id: item.id, poster: item.poster_path, title: getTitle(item), type: item.media_type || fallbackType }, item);
 }
 

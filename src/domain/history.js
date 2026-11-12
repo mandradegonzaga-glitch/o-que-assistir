@@ -1,5 +1,5 @@
 import { MAX_SORTEIO_HISTORY } from '../config/constants.js';
-import { getTitle } from './mediaItem.js';
+import { getTitle, withRating } from './mediaItem.js';
 
 export function deduplicateHistory(history, newItem) {
   const filtered = history.filter(item => item.id !== newItem.id);
@@ -21,7 +21,7 @@ export function createSorteioEntry(tmdbItem) {
 
 export function createWatchedEntry(tmdbItem, mediaType, now = new Date()) {
   const date = tmdbItem.release_date || tmdbItem.first_air_date || '';
-  return {
+  return withRating({
     id: tmdbItem.id,
     title: getTitle(tmdbItem),
     poster: tmdbItem.poster_path || null,
@@ -29,5 +29,5 @@ export function createWatchedEntry(tmdbItem, mediaType, now = new Date()) {
     year: date.split('-')[0] || '',
     genres: tmdbItem.genre_ids || tmdbItem.genres?.map(g => g.id) || [],
     watchedAt: now.toISOString(),
-  };
+  }, tmdbItem);
 }

@@ -6,6 +6,7 @@ import './app/battle.js';
 import './app/blindSession.js';
 import './app/help.js';
 import './app/homeRows.js';
+import './app/libraryOverview.js';
 import './app/reactions.js';
 import './app/ticket.js';
 import { initDailyPicks } from './app/dailyPicks.js';

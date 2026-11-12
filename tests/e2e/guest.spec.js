@@ -37,7 +37,8 @@ test.describe('convidado', () => {
     await openLibrary(page);
     const items = page.locator('#library-content .library-item:visible');
     await expect(items).toHaveCount(1);
-    await page.locator('#library-content .remove-btn').click({ force: true });
+    await page.locator('#library-content .library-edit').click();
+    await page.locator('#library-content .remove-btn').click();
     await expect(items).toHaveCount(0);
     await page.locator('#undo-toast-btn').click();
     await expect(items).toHaveCount(1);

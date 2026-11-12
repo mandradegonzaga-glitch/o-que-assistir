@@ -2,6 +2,21 @@
 
 All notable changes to this feature will be documented in this file.
 
+## [2026-11-11, repasse do redesign: etapa 3] — branch `redesign/repasse` (local, ainda não publicado)
+
+### Added
+
+- Biblioteca abre numa visão geral: um cartão por parte, com a pilha de pôsteres que abre em leque e a contagem
+- Nota embaixo do pôster na Biblioteca (títulos salvos a partir de agora)
+- Filtro por tipo (Todos, Filmes, Séries, Doramas) em Quero Assistir e Já Assistidos
+
+### Changed
+
+- Remover da Biblioteca pelo "Editar" (os x não ficam mais por cima dos pôsteres)
+- "Sair" fica no perfil; o convidado aparece com um boneco no avatar
+- Grupos da Biblioteca em frase normal ("Filmes · 2")
+- "Continue assistindo" com uma série só ocupa a largura
+
 ## [2026-11-11, repasse do redesign: etapa 2] — branch `redesign/repasse` (local, ainda não publicado)
 
 ### Added

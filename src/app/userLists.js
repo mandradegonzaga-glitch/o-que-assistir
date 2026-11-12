@@ -225,8 +225,7 @@ export async function showUserList(listId) {
     openListId = listId;
     reorderMode = false;
     switchMode('library'); // a lista fica na tela da Biblioteca
-    if (state.tab !== 'listas') switchTab('listas'); // troca a aba e já desenha
-    await emit('library:changed');
+    await switchTab('listas'); // sempre: entrar na Biblioteca mostra a visão geral, e aqui a lista é o destino
     const title = document.getElementById('list-view-title');
     title?.scrollIntoView({ block: 'center' });
     title?.focus({ preventScroll: true });

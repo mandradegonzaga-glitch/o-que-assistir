@@ -140,7 +140,8 @@
         "T001-133",
         "T001-134",
         "T001-138",
-        "T001-139"
+        "T001-139",
+        "T001-141"
       ],
       "tasksCompleted": [
         "T001-001",
@@ -352,11 +353,12 @@
       "T001-118",
       "T001-119",
       "T001-138",
-      "T001-139"
+      "T001-139",
+      "T001-141"
     ],
     "inProgress": null,
     "nextSteps": [
-      "Repasse do redesign: etapas 1 (T001-138) e 2 (T001-139) feitas; próximo: etapa 3 (barra de baixo, Biblioteca, Início) com captação antes"
+      "Repasse: etapas 1-3 feitas; próximo: voltar às etapas 1 e 2 com o clleancode (abertura com pilha que embaralha; Parecidos em disco), depois etapa 4 (filtros e busca)"
     ],
     "filesModified": [
       "index.html",

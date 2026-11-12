@@ -84,8 +84,13 @@ test.describe('Biblioteca em tela própria', () => {
     await page.setViewportSize({ width: 360, height: 740 });
     await enterAsGuest(page);
     await page.locator('.bottom-nav').getByRole('button', { name: 'Biblioteca' }).click();
+    await page.locator('#library-overview [data-arg="watchlist"]').click(); // a Biblioteca abre na visão geral
     const tabs = page.locator('.library-tabs .library-tab');
+    await expect(tabs.first()).toBeVisible(); // depois do leque
     await expect(tabs).toHaveCount(4);
+    // 2 colunas, não uma embaixo da outra
+    const [first, second] = await tabs.evaluateAll(els => els.slice(0, 2).map(e => e.getBoundingClientRect().top));
+    expect(second).toBe(first);
     for (const tab of await tabs.all()) {
       const box = await tab.boundingBox();
       expect(box.x).toBeGreaterThanOrEqual(0);
@@ -106,6 +111,9 @@ test.describe('Continue assistindo', () => {
     await expect(card.locator('.home-card__title')).toHaveText('Série Um');
     await expect(card.locator('.home-card__meta')).toHaveText('T01E02 · 2 restantes');
     await expect(card).toHaveAttribute('aria-label', 'Continuar Série Um, próximo T01E02, 2 restantes');
+    // sozinho, o cartão ocupa a largura da fileira (antes ficava com metade e um vazio ao lado)
+    const [cardBox, rowBox] = await Promise.all([card.boundingBox(), row.locator('.home-row__list').boundingBox()]);
+    expect(cardBox.width).toBeGreaterThan(rowBox.width * 0.95);
 
     await row.getByRole('button', { name: 'Ver tudo' }).click();
     await expect(page.locator('#view-library')).toBeVisible();

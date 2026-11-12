@@ -61,7 +61,7 @@ describe('userLists', () => {
   it('cleans the guest lists before the import', () => {
     const lists = normalizeGuestLists([
       { id: 'g1', name: ' Terror ', emoji: '👻', items: [
-        { id: 694, title: 'O Iluminado', poster: '/i.jpg', type: 'movie' },
+        { id: 694, title: 'O Iluminado', poster: '/i.jpg', type: 'movie', rating: 8.4 },
         { id: 694, title: 'repetido' },
         { id: 'x' },
         { id: 1, title: 'Hack', poster: 'https://evil.dev/a.jpg', type: 'person' },
@@ -71,7 +71,7 @@ describe('userLists', () => {
       null,
     ]);
     expect(lists).toEqual([{ id: 'g1', name: 'Terror', emoji: '👻', items: [
-      { id: 694, title: 'O Iluminado', poster: '/i.jpg', type: 'movie' },
+      { id: 694, title: 'O Iluminado', poster: '/i.jpg', type: 'movie', rating: 8.4 },
       { id: 1, title: 'Hack', poster: null, type: 'movie' },
     ] }]);
     expect(normalizeGuestLists('lixo')).toEqual([]);
@@ -81,12 +81,12 @@ describe('userLists', () => {
     const lists = buildLists(
       [{ id: 'l1', name: 'Terror', emoji: '👻' }, { id: 'l2', name: 'Vazia', emoji: '??' }],
       [
-        { list_id: 'l1', tmdb_id: 694, title: 'O Iluminado', poster_path: '/i.jpg', media_type: 'movie' },
+        { list_id: 'l1', tmdb_id: 694, title: 'O Iluminado', poster_path: '/i.jpg', media_type: 'movie', vote_average: 8.4 },
         { list_id: 'sumiu', tmdb_id: 1, title: 'Órfão', poster_path: null, media_type: 'movie' },
       ],
     );
     expect(lists).toEqual([
-      { id: 'l1', name: 'Terror', emoji: '👻', shareToken: null, items: [{ id: 694, title: 'O Iluminado', poster: '/i.jpg', type: 'movie' }] },
+      { id: 'l1', name: 'Terror', emoji: '👻', shareToken: null, items: [{ id: 694, title: 'O Iluminado', poster: '/i.jpg', type: 'movie', rating: 8.4 }] },
       { id: 'l2', name: 'Vazia', emoji: DEFAULT_EMOJI, shareToken: null, items: [] },
     ]);
   });

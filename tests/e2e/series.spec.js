@@ -65,7 +65,7 @@ test.describe('séries como convidado', () => {
     await openLibraryTab(page, 'andando');
     await expect(page.locator('.up-next-card')).toHaveCount(0);
     await openLibraryTab(page, 'vistos');
-    await expect(page.locator('#library-content .library-item__open').first()).toHaveAttribute('aria-label', / · Amei$/);
+    await expect(page.locator('#library-content .library-item__open').first()).toHaveAttribute('aria-label', /, Amei$/);
   });
 
   test('marcar a temporada inteira conclui a série sozinha', async ({ page }) => {
@@ -163,7 +163,7 @@ test.describe('séries com conta', () => {
     await page.keyboard.press('Escape');
 
     await openLibraryTab(page, 'vistos');
-    await expect(page.locator('.library-group-title')).toHaveText('DORAMAS (1)');
+    await expect(page.locator('.library-group-title')).toHaveText('Doramas ·\u00a01');
     await page.locator('#library-content .library-item__open').first().click();
     await expect(page.locator('.episode-checkbox:checked')).toHaveCount(3);
     await expect(seen(page)).toHaveText('Já visto');
@@ -268,7 +268,7 @@ test.describe('episódios: ajustes pedidos', () => {
     const box = await page.locator('#episodes-seasons').boundingBox();
     for (const pill of await pills.all()) {
       const b = await pill.boundingBox();
-      expect(b.x).toBeGreaterThanOrEqual(box.x);
+      expect(b.x).toBeGreaterThanOrEqual(box.x - 1); // 1px de folga para arredondamento
       expect(b.x + b.width).toBeLessThanOrEqual(box.x + box.width + 1);
     }
     await pills.nth(14).click();

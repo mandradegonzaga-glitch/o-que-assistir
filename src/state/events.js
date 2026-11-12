@@ -3,7 +3,7 @@
 // As escutas rodam na hora, na ordem em que foram registradas; `await emit(...)` espera as
 // que são assíncronas (ex.: a biblioteca terminar de desenhar antes de mover o foco).
 //
-//   'mode:changed'    { mode }  tela principal (discover, roulette, match, library)
+//   'mode:changed'    { mode, changed }  tela principal (discover, roulette, match, library); changed: veio de outra tela
 //   'type:changed'    { type }  filme, série ou dorama
 //   'tab:changed'     { tab }   aba da biblioteca
 //   'filters:changed' {}        um filtro mudou (pela pessoa, por um link ou pelo código); valores em state.filters

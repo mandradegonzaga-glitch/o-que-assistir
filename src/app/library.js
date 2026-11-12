@@ -12,7 +12,7 @@ import { seriesUpNext } from '../domain/seriesProgress.js';
 import { session, state } from '../state/appState.js';
 import { isPendingRemoval, scheduleUndoable, showToast } from '../ui/feedback.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
-import { pluralize } from '../utils/format.js';
+import { formatRating, joinMeta, pluralize } from '../utils/format.js';
 import { IMG_URL } from '../config/constants.js';
 import { CLOSE_ICON, posterImg } from '../ui/icons.js';
 import { TV_ICON } from '../ui/icons.js';
@@ -69,14 +69,27 @@ export async function toggleWatchlist(f) {
 // (senão a resposta atrasada de uma aba antiga desenha por cima da aba atual)
 let renderSeq = 0;
 
+// Trocar de parte começa sem filtro e fora do modo de edição
+let kindFilter = 'all';
+let editing = false;
+on('tab:changed', () => { kindFilter = 'all'; editing = false; });
 on('library:changed', renderLibrary);
 on('tab:changed', renderLibrary);
+
+const KINDS = [
+    { kind: 'movie', name: 'Filmes', match: i => i.type === 'movie' || !i.type },
+    { kind: 'tv', name: 'Séries', match: i => i.type === 'tv' },
+    { kind: 'dorama', name: 'Doramas', match: i => i.type === 'dorama' },
+];
 
 async function renderLibrary() {
     if (!session.currentUser) return;
     const seq = ++renderSeq;
 
     const div = document.getElementById('library-content');
+    // "Editar" (mostrar os x de remover) só existe em Quero assistir e Já vistos
+    div.classList.toggle('is-editable', state.tab === 'watchlist' || state.tab === 'vistos');
+    div.classList.toggle('is-editing', editing);
 
     if (state.tab === 'listas') {
         renderListsTab(div);
@@ -112,22 +125,35 @@ async function renderLibrary() {
     }
 
     const key = state.tab === 'watchlist' ? 'watchlist_obj' : 'vistos_obj';
-    div.innerHTML = [
-        libraryGroup('FILMES', list.filter(i => i.type === 'movie' || !i.type), 'movie', key),
-        libraryGroup('SÉRIES', list.filter(i => i.type === 'tv'), 'tv', key),
-        libraryGroup('DORAMAS', list.filter(i => i.type === 'dorama'), 'dorama', key),
-    ].join('');
+    const groups = KINDS.map(k => ({ ...k, items: list.filter(k.match) })).filter(g => g.items.length);
+    const shown = groups.filter(g => kindFilter === 'all' || g.kind === kindFilter);
+    div.innerHTML = libraryToolbar(groups) + (shown.length ? shown : groups)
+        .map(g => libraryGroup(g.name, g.items, g.kind, key)).join('');
+}
+
+// Filtro por tipo (só quando há mais de um tipo na lista) e "Editar", que mostra os x de remover
+function libraryToolbar(groups) {
+    const pills = groups.length > 1
+        ? [{ kind: 'all', name: 'Todos', items: groups.flatMap(g => g.items) }, ...groups].map(g =>
+            `<button type="button" class="library-filter__pill" data-action="filtrarBiblioteca" data-arg="${g.kind}" aria-pressed="${kindFilter === g.kind}">${g.name} <span class="library-filter__count">${g.items.length}</span></button>`).join('')
+        : '';
+    return `<div class="library-toolbar grid-full">
+        <div class="library-filter" role="group" aria-label="Mostrar">${pills}</div>
+        <button type="button" class="library-edit" data-action="alternarEdicaoBiblioteca" aria-pressed="${editing}">${editing ? 'Concluir' : 'Editar'}</button>
+    </div>`;
 }
 
 function libraryGroup(title, items, media, key) {
     if (items.length === 0) return '';
     const cards = items.map(f => {
         const reaction = key === 'vistos_obj' ? reactionOf(f.reaction) : null;
-        const name = escapeHtml(f.title || 'Abrir título') + (reaction ? ` · ${reaction.label}` : '');
+        const rating = f.rating ? formatRating(f.rating) : '';
+        const name = escapeHtml([f.title || 'Abrir título', rating && `nota ${rating}`, reaction?.label].filter(Boolean).join(', '));
         const badge = reaction ? `<span class="title-reaction" aria-hidden="true">${reaction.emoji}</span>` : '';
-        return `<div class="library-item"><button type="button" class="library-item__open" data-action="carregarDetalhes" data-id="${f.id}" data-media="${media}" aria-label="${name}">${posterImg(f.poster)}${badge}</button><button type="button" class="remove-btn" data-action="removeLibItem" data-key="${key}" data-id="${f.id}" aria-label="Remover ${escapeHtml(f.title || 'título')}">${CLOSE_ICON}</button></div>`;
+        const ratingLine = rating ? `<span class="library-item__rating" aria-hidden="true">★ ${rating}</span>` : '';
+        return `<div class="library-item"><button type="button" class="library-item__open" data-action="carregarDetalhes" data-id="${f.id}" data-media="${media}" aria-label="${name}">${posterImg(f.poster)}${badge}${ratingLine}</button><button type="button" class="remove-btn" data-action="removeLibItem" data-key="${key}" data-id="${f.id}" aria-label="Remover ${escapeHtml(f.title || 'título')}">${CLOSE_ICON}</button></div>`;
     });
-    return `<div class="library-group-title">${title} (${items.length})</div>${cards.join('')}`;
+    return `<div class="library-group-title">${joinMeta([title, String(items.length)])}</div>${cards.join('')}`;
 }
 
 // Séries com episódios marcados e ainda sem terminar, com o próximo episódio e o progresso.
@@ -179,7 +205,7 @@ async function renderAndando(div, isStale = () => false) {
                     }
                     <div class="up-next-card__info">
                         <button type="button" class="up-next-card__title" data-action="carregarDetalhes" data-id="${s.id}" data-media="${s.type || 'tv'}" aria-label="Continuar ${escapeHtml(s.title)}, próximo ${nextLabel}">${escapeHtml(s.title)}</button>
-                        <div class="up-next-card__episode">Próximo: ${nextLabel} · <span class="up-next-card__remaining">${remainingLabel}</span></div>
+                        <div class="up-next-card__episode">${joinMeta([`Próximo: ${nextLabel}`, remainingLabel])}</div>
                         <div class="up-next-card__progress-wrap">
                             <div class="up-next-card__progress-bar" style="width:${percent}%"></div>
                         </div>
@@ -206,7 +232,7 @@ function removeLibItem(key, id, btn) {
         apply: () => {
             const hadFocus = !!card?.contains(document.activeElement);
             if (card) card.hidden = true;
-            emit('library:changed'); // redesenha sem o item: atualiza a contagem "FILMES (n)"
+            emit('library:changed'); // redesenha sem o item: atualiza a contagem "Filmes · n"
             return hadFocus;
         },
         undo: async (refocus) => {
@@ -228,5 +254,7 @@ async function commitRemoveLibItem(key, id) {
 registerActions({
     click: {
         removeLibItem: el => removeLibItem(el.dataset.key, Number(el.dataset.id), el),
+        filtrarBiblioteca: el => { kindFilter = el.dataset.arg; renderLibrary(); },
+        alternarEdicaoBiblioteca: () => { editing = !editing; renderLibrary(); },
     },
 });

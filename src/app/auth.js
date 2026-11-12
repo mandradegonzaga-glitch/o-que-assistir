@@ -12,6 +12,7 @@ import { isAccount, isGuest, resetSession, session } from '../state/appState.js'
 import { emit } from '../state/events.js';
 import { showToast } from '../ui/feedback.js';
 import { closeModal, confirmDialog, openModal } from '../ui/modals.js';
+import { ph } from '../ui/phosphor.js';
 import { registerActions } from '../ui/actions.js';
 import { rememberPreferences, savedPreferences } from '../ui/navigation.js';
 
@@ -116,8 +117,10 @@ export function updateUserDisplay() {
     const name = isGuest() || !session.currentUser ? 'Convidado'
         : (session.userProfile ? session.user.name || 'Usuário' : 'Usuário');
     displayEl.textContent = name;
-    avatarEl.textContent = isGuest() || !session.userProfile ? '?' : name[0].toUpperCase();
-    logoutBtn.style.display = session.currentUser ? 'block' : 'none';
+    // Convidado: um boneco (o "?" de antes parecia o botão de ajuda); com conta, a inicial
+    if (isGuest() || !session.userProfile) avatarEl.innerHTML = ph('user', { weight: 'bold' });
+    else avatarEl.textContent = name[0].toUpperCase();
+    logoutBtn.hidden = !session.currentUser;
 }
 
 // FUNÇÕES DE LOGIN/CADASTRO
@@ -227,6 +230,7 @@ async function esqueceuSenha() {
 async function logout() {
     const sair = await confirmDialog({ title: 'Sair da conta', message: 'Deseja realmente sair?', confirmLabel: 'Sair' });
     if (!sair) return;
+    closeModal('modal-profile'); // o "Sair" fica no perfil: ele não fica aberto atrás da tela de entrada
     if (isAccount()) {
         // Tela, tipo e aba ficam na conta para o próximo aparelho
         await supabaseUpdatePreferences(session.currentUserId, savedPreferences());

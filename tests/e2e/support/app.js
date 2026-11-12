@@ -104,15 +104,17 @@ export const modal = page => page.locator('#modal-resultado');
 export const lastDiscover = urls => urls.filter(u => u.pathname.includes('/discover/')).pop();
 
 // A Biblioteca é uma tela própria (aba do topo no computador): abre e escolhe a aba
+// A Biblioteca abre na visão geral (cartões); dentro de uma parte, as abas trocam de parte
 export async function openLibraryTab(page, tab) {
   const library = page.locator('#tab-mode-library');
   if ((await library.getAttribute('aria-selected')) !== 'true') await library.click();
-  await page.locator(`#tab-${tab}`).click();
+  const tile = page.locator(`#library-overview [data-arg="${tab}"]`);
+  if (await tile.isVisible()) await tile.click();
+  else await page.locator(`#tab-${tab}`).click();
 }
 
 export async function openLibrary(page) {
-  const library = page.locator('#tab-mode-library');
-  if ((await library.getAttribute('aria-selected')) !== 'true') await library.click();
+  await openLibraryTab(page, 'watchlist');
 }
 
 // Filtros em pílulas (o <select> fica escondido, guardando o valor): toca na pílula do valor

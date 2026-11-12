@@ -1,6 +1,6 @@
 // Cliente Supabase e todas as chamadas ao banco
 import { MAX_SORTEIO_HISTORY, SUPABASE_URL, SUPABASE_ANON_KEY } from '../config/constants.js';
-import { getTitle } from '../domain/mediaItem.js';
+import { getTitle, storedRating, withRating } from '../domain/mediaItem.js';
 import { buildEpisodeKey } from '../domain/seriesProgress.js';
 import { storage } from '../utils/storage.js';
 
@@ -95,7 +95,8 @@ const insertOnce = (label, request, message) =>
     run(label, allowDuplicate(request), data => (data === ALREADY ? { message } : { data }));
 
 // Título do app ({ id, title, poster, type }) como colunas do banco
-const titleRow = item => ({ tmdb_id: item.id, title: item.title, poster_path: item.poster, media_type: item.type });
+// vote_average: database/title_rating.sql (nota guardada com o título; null nos antigos)
+const titleRow = item => ({ tmdb_id: item.id, title: item.title, poster_path: item.poster, media_type: item.type, vote_average: storedRating(item) });
 
 // Título cru do TMDB (sorteio e blacklist guardam o item como veio da API)
 const tmdbTitleRow = item => ({ tmdb_id: item.id, title: getTitle(item), poster_path: item.poster_path, media_type: item.media_type || 'movie' });
@@ -206,7 +207,7 @@ export function supabaseGetWatchHistory(userId) {
     return run('obter histórico',
         () => supabase.from(TABLE.HISTORY).select('*').eq('user_id', userId).order('watched_at', { ascending: false }),
         data => ({
-            history: data.map(item => ({
+            history: data.map(item => withRating({
                 id: item.tmdb_id,
                 title: item.title,
                 poster: item.poster_path,
@@ -215,7 +216,7 @@ export function supabaseGetWatchHistory(userId) {
                 genres: item.genres,
                 reaction: item.reaction || null,
                 watchedAt: item.watched_at,
-            })),
+            }, item)),
         }),
         { history: [] });
 }
@@ -247,7 +248,7 @@ export function supabaseRemoveFromHistory(userId, tmdbId) {
 export function supabaseGetWatchlist(userId) {
     return run('obter watchlist',
         () => supabase.from(TABLE.WATCHLIST).select('*').eq('user_id', userId).order('added_at', { ascending: false }),
-        data => ({ watchlist: data.map(item => ({ id: item.tmdb_id, title: item.title, poster: item.poster_path, type: item.media_type })) }),
+        data => ({ watchlist: data.map(item => withRating({ id: item.tmdb_id, title: item.title, poster: item.poster_path, type: item.media_type }, item)) }),
         { watchlist: [] });
 }
 

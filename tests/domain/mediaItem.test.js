@@ -1,7 +1,31 @@
 import { describe, it, expect } from '@jest/globals';
 import {
-  getTitle, getYear, getTmdbEndpoint
+  getTitle, getYear, getTmdbEndpoint, storedRating, toLibraryItem, withRating
 } from '../../src/domain/mediaItem.js';
+
+// Nota do TMDB guardada com o título salvo (repasse da etapa 3): só quando existe e faz sentido
+describe('nota guardada', () => {
+  it('vem do TMDB (vote_average) ou do que já estava guardado (rating), com uma casa', () => {
+    expect(storedRating({ vote_average: 8.456 })).toBe(8.5);
+    expect(storedRating({ rating: 7 })).toBe(7);
+    expect(storedRating({ vote_average: '6.1' })).toBe(6.1); // numeric do banco pode vir como texto
+  });
+
+  it('sem nota, zero ou fora de 0 a 10: nenhuma', () => {
+    expect(storedRating({})).toBeNull();
+    expect(storedRating({ vote_average: 0 })).toBeNull();
+    expect(storedRating({ vote_average: 11 })).toBeNull();
+    expect(storedRating({ vote_average: 'x' })).toBeNull();
+    expect(storedRating(null)).toBeNull();
+  });
+
+  it('o título guardado só ganha o campo quando há nota (os antigos ficam como eram)', () => {
+    expect(withRating({ id: 1 }, { vote_average: 8 })).toEqual({ id: 1, rating: 8 });
+    expect(withRating({ id: 1 }, {})).toEqual({ id: 1 });
+    expect(toLibraryItem({ id: 5, title: 'A', poster_path: '/a.jpg', vote_average: 7.25, media_type: 'movie' }))
+      .toEqual({ id: 5, poster: '/a.jpg', title: 'A', type: 'movie', rating: 7.3 });
+  });
+});
 
 describe('getTitle', () => {
   it('returns title when present', () => {

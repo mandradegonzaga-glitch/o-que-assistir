@@ -363,6 +363,7 @@ Use este documento para verificar se todas as funcionalidades estão funcionando
 - [ ] Pôsteres da grade com a nota no canto e "Estreia" nos lançamentos recentes; nenhum "·" sozinho no fim da linha; abas da Biblioteca inteiras no celular
 - [ ] Página do título da série: "Próximo episódio" com barra no alto; temporadas em pílulas; episódios com foto, nome inteiro, data e o visto à direita; um botão para a temporada; elenco com personagem e direção/criação
 - [ ] Link de título na primeira visita: o título abre antes das boas-vindas
+- [ ] Biblioteca: abertura em cartões com pilha de pôsteres (leque ao tocar) e contagem; "Editar" para remover; filtro por tipo; nota embaixo do pôster; "Sair" no perfil
 - [ ] Sorteio em baralho de ingressos: embaralha, vira no sorteado e vibra no celular
 - [ ] Gavetas no celular: janelas sobem de baixo e fecham puxando a alça para baixo
 - [ ] Filme, Série e Dorama em 3 pílulas numa fileira, a escolhida na cor do tipo

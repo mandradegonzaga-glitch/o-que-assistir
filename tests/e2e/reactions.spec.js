@@ -35,7 +35,7 @@ test.describe('reações rápidas', () => {
     await page.keyboard.press('Escape');
     await openLibraryTab(page, 'vistos');
     const item = page.locator('#library-content .library-item__open').first();
-    await expect(item).toHaveAttribute('aria-label', / · Ri muito$/);
+    await expect(item).toHaveAttribute('aria-label', /, Ri muito$/);
     await expect(item.locator('.title-reaction')).toHaveText('😂');
 
     await page.reload();

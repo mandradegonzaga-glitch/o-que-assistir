@@ -67,6 +67,11 @@ describe('createSorteioEntry', () => {
 });
 
 describe('createWatchedEntry', () => {
+  it('guarda a nota do TMDB quando há', () => {
+    expect(createWatchedEntry({ id: 1, title: 'A', vote_average: 8.1 }, 'movie').rating).toBe(8.1);
+    expect('rating' in createWatchedEntry({ id: 1, title: 'A' }, 'movie')).toBe(false);
+  });
+
   it('maps year from release_date', () => {
     const entry = createWatchedEntry({ id: 1, title: 'A', release_date: '2020-05-10' }, 'movie');
     expect(entry.year).toBe('2020');

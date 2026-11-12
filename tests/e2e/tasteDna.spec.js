@@ -171,8 +171,7 @@ test.describe('horas assistidas e ator mais visto', () => {
       await expect(page.locator('#dna-life')).toContainText('Horas assistidas4 h');
       expect(await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('title_facts'))).sort())).toEqual(['movie:11', 'tv:20']);
 
-      await page.keyboard.press('Escape');
-      await page.locator('#logout-btn').click();
+      await page.locator('#logout-btn').click(); // o "Sair" fica no perfil
       await page.locator('#confirm-ok').click();
       await expect(page.locator('#login-overlay')).toBeVisible();
       expect(await page.evaluate(() => localStorage.getItem('title_facts'))).toBeNull();

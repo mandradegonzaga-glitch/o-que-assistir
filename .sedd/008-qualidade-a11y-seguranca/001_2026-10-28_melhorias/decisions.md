@@ -550,6 +550,24 @@ Regras combinadas: cada etapa numa branch `redesign/etapa-N`, com commit e envio
 **Alternativas consideradas:**
 - Seguir corrigindo cada caso especial no lugar → o mesmo tipo de bug voltaria em cada tela nova.
 
+## D001-053 — Biblioteca com abertura em cartões, nota guardada e "Sair" no perfil
+
+**Data:** 2026-11-11 · **Tarefa:** T001-141
+
+**Contexto:** a Biblioteca abria direto em "Quero Assistir", sem visão geral; os x de remover ficavam sempre por cima dos pôsteres; a nota não era guardada com o título; o topo do celular mostrava "?" (avatar do convidado) e "Sair" com o mesmo peso de Amigos e Ajuda.
+
+**Decisão (aprovada pelo usuário):**
+- Abertura em 4 cartões (modelo do Binge) com a pilha de pôsteres que abre em leque (clleancode, escolhido pelo usuário). Aparece ao chegar na Biblioteca vindo de outra tela; abrir uma parte por código (aba lembrada, "Ver tudo", lista por link) vai direto à lista.
+- Nota do TMDB guardada com o título (coluna opcional `vote_average`); os títulos salvos antes ficam sem nota. Versões antigas do app seguem funcionando (a coluna é opcional).
+- Os cartões usam os mesmos nomes das abas e dos avisos ("Quero Assistir", "Já Assistidos"); renomear em todo o app ficou fora.
+- "Sair" no perfil.
+
+**Alternativas consideradas:**
+- Contagem nas abas, sem cartões → mais simples, mas sem visão geral.
+- Atalhos no Início no modelo do Showcase → repetiriam Top 10, Lançamentos e os filtros.
+
+**Próximo (pedido do usuário):** voltar às etapas 1 e 2 com o clleancode: tela de abertura com a pilha de pôsteres que embaralha e "Parecidos" em carrossel em disco.
+
 ## D001-052 — Repasse da página do título: episódios no modelo do Showcase e progresso no alto
 
 **Data:** 2026-11-11 · **Tarefa:** T001-139

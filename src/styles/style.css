@@ -549,8 +549,9 @@ header {
 }
 
 /* Continue assistindo: cartão deitado e baixo (pôster pequeno, nome, episódio e progresso) */
+/* Com um cartão só, ele ocupa a largura toda; com vários, cada um fica com ~300px e a fileira rola */
 .home-row__list > li:has(> .home-card--wide) {
-    flex-basis: min(300px, 86%);
+    flex: 1 0 min(300px, 86%);
 }
 
 .home-card.home-card--wide {
@@ -6865,15 +6866,17 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
    sem nada dizendo que havia mais), e numa fileira só quando cabem */
 .library-tabs {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
     gap: var(--space-sm);
     padding: 2px 2px var(--space-md);
 }
 
 .library-tabs .library-tab {
     justify-content: center;
+    gap: 6px;
     min-height: 40px;
-    padding: 0 var(--space-md);
+    padding: 0 var(--space-sm);
+    font-size: 0.85rem;
     background: var(--bg-card);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-full);
@@ -7439,3 +7442,189 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
 .draw-stage.is-revealed .draw-ticket__flip { transform: rotateY(180deg); }
 .draw-stage.is-revealed .draw-stage__caption { color: var(--text-primary); }
 
+
+/* ===== Repasse da etapa 3: Biblioteca (src/app/libraryOverview.js e library.js) =====
+   Abertura com um cartão por parte (modelo do Binge): pilha de 3 pôsteres levemente tortos,
+   nome e contagem. Tocar abre a pilha em leque (efeito do clleancode) e entra na lista. */
+.library-overview__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-md);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+@media (min-width: 641px) {
+    .library-overview__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+.library-tile {
+    display: grid;
+    justify-items: center;
+    gap: 2px;
+    width: 100%;
+    padding: var(--space-lg) var(--space-sm) var(--space-md);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font: inherit;
+    text-align: center;
+    cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .library-tile:hover { border-color: var(--border-strong); }
+}
+
+.library-tile__stack {
+    position: relative;
+    width: 100%;
+    height: 112px;
+    margin-bottom: var(--space-sm);
+}
+
+.library-tile__poster {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    width: 64px;
+    height: auto;
+    aspect-ratio: 2 / 3;
+    margin-left: -32px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-default);
+    background: var(--bg-elevated);
+    object-fit: cover;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.25s var(--ease-out);
+}
+
+.library-tile__poster--empty {
+    border-style: dashed;
+    box-shadow: none;
+}
+
+/* A pilha: o de cima no meio, os de baixo saindo um pouco para os lados */
+.library-tile__poster:nth-child(1) { z-index: 3; transform: rotate(0deg); }
+.library-tile__poster:nth-child(2) { z-index: 2; transform: translateX(-12px) rotate(-7deg); }
+.library-tile__poster:nth-child(3) { z-index: 1; transform: translateX(12px) rotate(7deg); }
+
+/* O leque ao tocar */
+.library-tile.is-fanning .library-tile__poster:nth-child(1) { transform: translateY(-6px); }
+.library-tile.is-fanning .library-tile__poster:nth-child(2) { transform: translateX(-40px) rotate(-16deg); }
+.library-tile.is-fanning .library-tile__poster:nth-child(3) { transform: translateX(40px) rotate(16deg); }
+
+.library-tile__name {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.library-tile__count {
+    font-size: 0.8rem;
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+}
+
+#library-overview[hidden],
+#library-browser[hidden] { display: none; }
+
+/* Voltar da lista para a visão geral */
+.library-back {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    min-height: 36px;
+    margin-bottom: var(--space-sm);
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.library-back svg { width: 16px; height: 16px; }
+
+/* Filtro por tipo e "Editar" no alto da lista */
+.library-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+}
+
+.library-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+}
+
+.library-filter__pill {
+    min-height: 32px;
+    padding: 0 var(--space-sm);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-full);
+    background: none;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.library-filter__pill[aria-pressed="true"] {
+    background: var(--bg-elevated);
+    border-color: var(--border-strong);
+    color: var(--text-primary);
+}
+
+.library-filter__count {
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.library-edit {
+    flex-shrink: 0;
+    min-height: 32px;
+    padding: 0 var(--space-sm);
+    border: 0;
+    background: none;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+
+.library-edit[aria-pressed="true"] { color: var(--accent-text); }
+
+/* Os x de remover só aparecem em "Editar" (antes ficavam sempre por cima dos pôsteres) */
+#library-content.is-editable:not(.is-editing) .remove-btn { display: none; }
+#library-content.is-editing .remove-btn { opacity: 1; }
+
+/* Nota embaixo do pôster (títulos salvos depois de database/title_rating.sql) */
+.library-item__rating {
+    display: block;
+    margin-top: var(--space-xs);
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+    text-align: left;
+}
+
+/* "Sair" dentro do perfil, discreto, depois de Salvar e Fechar */
+#logout-btn {
+    width: 100%;
+    margin-top: var(--space-md);
+}
+
+#logout-btn[hidden] { display: none; }
+
+/* Convidado: o boneco no avatar */
+.avatar svg { width: 18px; height: 18px; }

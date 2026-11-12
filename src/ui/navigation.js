@@ -55,7 +55,7 @@ export function switchMode(mode) {
     if (changed && document.activeElement?.closest('.bottom-nav')) window.scrollTo({ top: 0 });
 
     rememberPreferences({ last_mode: mode });
-    emit('mode:changed', { mode });
+    emit('mode:changed', { mode, changed });
 }
 
 // NAVEGAÇÃO POR SETAS (tabs e radiogroups com tabindex "roving")
