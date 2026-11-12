@@ -196,6 +196,22 @@ test.describe('carrossel em disco', () => {
     });
   }
 
+  // Achado do usuário (2026-11-11): com poucos atores, sem rolagem, só o 1º ficava em destaque
+  test('fileira que cabe inteira, sem rolagem: todos inteiros', async ({ page }) => {
+    await page.route(/\/tmdb\/movie\/1\/credits/, route => route.fulfill({ contentType: 'application/json',
+      json: { cast: Array.from({ length: 3 }, (_, i) => ({ id: i, name: `Pessoa ${i}`, character: `Papel ${i}`, profile_path: null })), crew: [] } }));
+    await page.setViewportSize({ width: 1000, height: 800 });
+    await openTitle(page, 'movie-1');
+    const list = page.locator('#cast-list');
+    await expect(list.locator(':scope > *')).toHaveCount(3);
+    expect(await list.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+    const all = await poses(list);
+    for (const p of all) {
+      expect(p.scale).toBeGreaterThan(0.98);
+      expect(p.opacity).toBeGreaterThan(0.95);
+    }
+  });
+
   test('com "reduzir movimento", fileira comum', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await openTitle(page, 'movie-1');

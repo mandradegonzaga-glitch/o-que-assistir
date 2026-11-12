@@ -24,8 +24,11 @@ function draw(list) {
   if (prefersReducedMotion()) return;
   const m = measure(list);
   if (!m) return;
+  // Fileira que cabe inteira não tem para onde rolar: o disco não teria como trazer os outros ao
+  // destaque, então todos ficam inteiros (achado do usuário com um elenco de 3 pessoas)
+  const fits = m.view.maxScroll < 1;
   m.items.forEach((item, i) => {
-    const pose = discPose((m.centers[i] - m.focus) / m.step);
+    const pose = discPose(fits ? 0 : (m.centers[i] - m.focus) / m.step);
     item.style.transform = `scale(${pose.scale})`;
     item.style.opacity = String(pose.opacity);
     item.style.zIndex = String(pose.z);
