@@ -142,7 +142,8 @@
         "T001-138",
         "T001-139",
         "T001-141",
-        "T001-142"
+        "T001-142",
+        "T001-143"
       ],
       "tasksCompleted": [
         "T001-001",
@@ -356,11 +357,12 @@
       "T001-138",
       "T001-139",
       "T001-141",
-      "T001-142"
+      "T001-142",
+      "T001-143"
     ],
     "inProgress": null,
     "nextSteps": [
-      "Repasse: etapas 1-3 + efeitos do clleancode feitos; próximo: etapa 4 (filtros em pílulas e busca) com captação antes"
+      "Repasse: etapas 1-4 feitas; próximo: etapa 5 (5a gavetas, 5b sorteio, depois 5c Match + Deu Match! com o círculo do clleancode), captação antes"
     ],
     "filesModified": [
       "index.html",

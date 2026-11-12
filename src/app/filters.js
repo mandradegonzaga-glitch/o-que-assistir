@@ -6,11 +6,12 @@
 import { CHOOSE_PROVIDERS_VALUE, MY_PROVIDERS_VALUE, discoverRequest as buildRequest, getRandomPage } from '../domain/filters.js';
 import { tmdbGet } from '../api/tmdb.js';
 import { MEDIA_KIND } from '../domain/mediaItem.js';
-import { state } from '../state/appState.js';
+import { emptyFilters, state } from '../state/appState.js';
 import { emit, on } from '../state/events.js';
 import { FILTER_FIELDS, filterField } from '../ui/filterFields.js';
 import { resolveProviderFilter } from './myProviders.js';
 import { joinMeta } from '../utils/format.js';
+import { registerActions } from '../ui/actions.js';
 
 const readField = el => el.value.trim();
 
@@ -59,8 +60,8 @@ export function initFilters() {
 }
 
 function filterOptions() {
-  const { genre, mood, duration, yearFrom, yearTo, personId, country } = state.filters;
-  return { genre, mood, provider: resolveProviderFilter(state.filters.provider), duration, yearFrom, yearTo, personId, country };
+  const { genre, mood, duration, rating, yearFrom, yearTo, personId, country } = state.filters;
+  return { genre, mood, provider: resolveProviderFilter(state.filters.provider), duration, minRating: rating ? Number(rating) : null, yearFrom, yearTo, personId, country };
 }
 
 // overrides: o que um modo ignora ou muda (ex.: Top 10 sem duração nem pessoa, minVotes próprio)
@@ -97,6 +98,13 @@ export function filtersSummary() {
   };
   const { yearFrom: from, yearTo: to, personName } = state.filters;
   const years = from && to ? `${from} a ${to}` : from ? `desde ${from}` : to ? `até ${to}` : '';
-  const parts = [personName, chosen('mood'), chosen('genre'), chosen('provider'), chosen('duration'), chosen('country'), years].filter(Boolean);
+  const parts = [personName, chosen('mood'), chosen('genre'), chosen('provider'), chosen('duration'), chosen('rating'), chosen('country'), years].filter(Boolean);
   return joinMeta([MEDIA_KIND[state.type].many, ...(parts.length ? parts : ['todos os gêneros'])]);
 }
+
+// "Limpar filtros": tudo volta ao começo de uma vez (o tipo Filme/Série/Dorama continua)
+registerActions({
+  click: {
+    limparFiltros: () => setFilters(emptyFilters()),
+  },
+});

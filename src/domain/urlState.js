@@ -12,6 +12,7 @@ const FIELDS = {
   mood: 'clima',
   provider: 'onde',
   duration: 'duracao',
+  rating: 'nota',
   similar: 'parecido',
   yearFrom: 'de',
   yearTo: 'ate',
@@ -21,6 +22,7 @@ const FIELDS = {
 };
 const DEFAULTS = { mode: 'discover', type: 'movie' };
 const DURATIONS = ['short', 'medium', 'long'];
+export const MIN_RATINGS = ['6', '7', '8']; // nota mínima do TMDB (6+, 7+, 8+)
 const TITLE_PATTERN = /^(movie|tv|dorama)-(\d+)$/;
 
 // Valores inválidos (link editado à mão) são ignorados em vez de quebrar o app
@@ -35,6 +37,7 @@ export function parseUrlState(search) {
   if (result.mode && !MODES.includes(result.mode)) delete result.mode;
   if (result.type && !MEDIA_TYPES.includes(result.type)) delete result.type;
   if (result.duration && !DURATIONS.includes(result.duration)) delete result.duration;
+  if (result.rating && !MIN_RATINGS.includes(result.rating)) delete result.rating;
   if (result.genre && !isGenreFilter(result.genre)) delete result.genre;
   if (result.provider && !isProviderFilter(result.provider)) delete result.provider;
   if (result.mood && !(result.mood in MOODS)) delete result.mood;

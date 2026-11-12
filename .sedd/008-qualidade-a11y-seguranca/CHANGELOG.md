@@ -2,6 +2,20 @@
 
 All notable changes to this feature will be documented in this file.
 
+## [2026-11-11, repasse do redesign: etapa 4] — branch `redesign/repasse` (local, ainda não publicado)
+
+### Added
+
+- Nota mínima nos filtros (★ 6+, 7+, 8+) e "Limpar filtros"
+- Selo "Já vi" no pôster do que você já assistiu
+- Filtros abrem e fecham em sanfona; resultados entram em sequência
+
+### Fixed
+
+- Clima e Onde assistir cortados na borda
+- Texto de exemplo cortado em "Mais filtros"
+- Busca no celular sem o nome e o ano dos títulos
+
 ## [2026-11-11, efeitos do clleancode] — branch `redesign/repasse` (local, ainda não publicado)
 
 ### Added

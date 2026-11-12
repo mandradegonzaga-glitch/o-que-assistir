@@ -17,6 +17,12 @@ describe('parseUrlState', () => {
     expect(parseUrlState('?clima=xyz&onde=abc')).toEqual({});
   });
 
+  it('nota mínima: 6, 7 ou 8; outro valor é ignorado', () => {
+    expect(parseUrlState('?nota=7')).toEqual({ rating: '7' });
+    expect(parseUrlState('?nota=9')).toEqual({});
+    expect(parseUrlState('?nota=abc')).toEqual({});
+  });
+
   it('keeps free text as text', () => {
     expect(parseUrlState('?parecido=Ocean%27s%20%26%2011').similar).toBe("Ocean's & 11");
   });

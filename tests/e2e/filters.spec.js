@@ -218,3 +218,110 @@ test.describe('busca no alto do Início', () => {
     await expect(top10.locator('.list-pill__label')).toHaveText('Top 10');
   });
 });
+
+// Repasse da etapa 4 (2026-11-11): defeitos achados na foto de hoje
+test.describe('filtros: tudo à vista', () => {
+  for (const [label, size] of [['celular', { width: 390, height: 844 }], ['computador', { width: 1280, height: 900 }]]) {
+    // Clima e Onde assistir cortavam na borda ("Para cho…", logo do Disney+) sem como rolar com o mouse
+    test(`no ${label}, clima e onde assistir ficam inteiros, sem fileira cortada`, async ({ page }) => {
+      await page.setViewportSize(size);
+      await enterAsGuest(page);
+      await expandFilters(page);
+      for (const id of ['input-mood', 'input-provider']) {
+        const group = page.locator(`.chip-group[data-chips-for="${id}"]`);
+        await expect(group.locator('.chip').first()).toBeVisible();
+        const box = await group.boundingBox();
+        for (const c of await group.locator('.chip').all()) {
+          const b = await c.boundingBox();
+          expect(b.x + b.width).toBeLessThanOrEqual(box.x + box.width + 1);
+        }
+      }
+    });
+  }
+
+  // "Com qual ator/diretor? (Ex: Wagne…" — o texto de exemplo não cabia no campo
+  test('no celular, o texto dos campos de "Mais filtros" cabe inteiro', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await enterAsGuest(page);
+    await expandFilters(page);
+    await openMoreFilters(page);
+    for (const id of ['#actor-input', '#input-similar']) {
+      const fits = await page.locator(id).evaluate(el => {
+        const cs = getComputedStyle(el);
+        const ctx = document.createElement('canvas').getContext('2d');
+        ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+        const room = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+        return ctx.measureText(el.placeholder).width <= room;
+      });
+      expect(fits, id).toBe(true);
+    }
+  });
+});
+
+// Busca no celular: os pôsteres não diziam o nome (só passando o mouse) — dois "Batman" ficavam iguais
+test('no celular, cada resultado mostra o nome e o ano', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await enterAsGuest(page);
+  await page.locator('#direct-search').fill('filme');
+  await page.locator('#direct-search').press('Enter');
+  const first = page.locator('#results-area .result-item').first();
+  await expect(first.locator('.result-item__name')).toBeVisible();
+  await expect(first.locator('.result-item__name')).toHaveText('Filme Um');
+  await expect(first.locator('.result-item__year')).toHaveText('2020');
+});
+
+// Repasse da etapa 4: nota mínima em pílulas e "Limpar filtros"
+test.describe('nota mínima e limpar', () => {
+  test('escolher "7+" vale no pedido ao TMDB, no link e no resumo', async ({ page, tmdbUrls }) => {
+    await enterAsGuest(page);
+    await expandFilters(page);
+    await expect(chips(page, 'input-rating')).toHaveText(['Qualquer', '★ 6+', '★ 7+', '★ 8+']);
+    await chip(page, 'input-rating', '7').click();
+    await expect(page).toHaveURL(/nota=7/);
+    await page.locator('#btn-top10').click();
+    await expect(page.locator('.result-item').first()).toBeVisible();
+    expect(lastDiscover(tmdbUrls).searchParams.get('vote_average.gte')).toBe('7');
+    await page.locator('#filters-toggle').click(); // recolhe: o resumo diz o que vale
+    await expect(page.locator('#filters-summary')).toHaveText('★ 7+');
+  });
+
+  test('"Limpar filtros" aparece com algum ativo e volta tudo ao começo', async ({ page }) => {
+    await enterAsGuest(page);
+    await expandFilters(page);
+    const clear = page.getByRole('button', { name: 'Limpar filtros' });
+    await expect(clear).toBeHidden();
+    await chip(page, 'input-genero', '27').click();
+    await chip(page, 'duration-select', 'short').click();
+    await expect(clear).toBeVisible();
+    await clear.click();
+    await expect(chip(page, 'input-genero', '')).toHaveAttribute('aria-checked', 'true');
+    await expect(chip(page, 'duration-select', '')).toHaveAttribute('aria-checked', 'true');
+    await expect(page).not.toHaveURL(/genero=|duracao=/);
+    await expect(clear).toBeHidden();
+  });
+});
+
+// Sanfona do clleancode (repasse da etapa 4): abrir os Filtros anima a altura; reduzir movimento abre na hora
+test.describe('sanfona dos filtros', () => {
+  const height = page => page.locator('#filters-body').evaluate(el => el.getBoundingClientRect().height);
+
+  test('abrir passa por alturas intermediárias e termina inteiro', async ({ page }) => {
+    await enterAsGuest(page);
+    await expect(page.locator('#filters-toggle')).toHaveAttribute('aria-expanded', 'false');
+    expect(await height(page)).toBe(0);
+    await page.locator('#filters-toggle').click();
+    await expect.poll(() => height(page), { intervals: [30] }).toBeGreaterThan(0);
+    const mid = await height(page);
+    await expect.poll(() => height(page)).toBeGreaterThan(mid); // ainda crescendo
+    await expect.poll(async () => { const a = await height(page); await page.waitForTimeout(100); return a === await height(page); }).toBe(true);
+    await expect(page.locator('#filters-body')).not.toHaveAttribute('inert', '');
+  });
+
+  test('com "reduzir movimento", abre na hora', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await enterAsGuest(page);
+    await page.locator('#filters-toggle').click();
+    const full = await page.locator('#filters-body').evaluate(el => el.scrollHeight);
+    expect(await height(page)).toBeGreaterThanOrEqual(full - 1);
+  });
+});

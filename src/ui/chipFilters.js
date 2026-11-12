@@ -21,6 +21,7 @@ const LABELS = {
   'input-genero': { '': 'Todos' },
   'input-provider': { '': 'Todas', [MY_PROVIDERS_VALUE]: 'Minhas plataformas' },
   'duration-select': { '': 'Qualquer', short: 'Até 1h30', medium: '1h30 a 2h', long: 'Mais de 2h' },
+  'input-rating': { '': 'Qualquer', 6: '★ 6+', 7: '★ 7+', 8: '★ 8+' },
 };
 
 // Gêneros à vista antes do "Ver todos"; o escolhido aparece sempre
@@ -149,7 +150,7 @@ export function refreshMoreFilters({ openIfActive = false } = {}) {
 // Resumo do que está valendo, à vista mesmo com os filtros recolhidos
 function activeLabels() {
   const labels = [];
-  ['mood', 'genre', 'provider', 'duration'].forEach(key => {
+  ['mood', 'genre', 'provider', 'duration', 'rating'].forEach(key => {
     const option = filterField(key)?.selectedOptions[0];
     if (option && option.value) labels.push(labelOf(FILTER_FIELDS[key], option));
   });
@@ -173,6 +174,7 @@ function updateSummary() {
   const labels = activeLabels();
   summary.textContent = labels.length ? joinMeta(labels) : 'Nenhum filtro: vale tudo';
   summary.classList.toggle('is-active', labels.length > 0);
+  document.getElementById('filters-clear').hidden = labels.length === 0;
 }
 
 function setFiltersOpen(open, { remember = true } = {}) {
@@ -180,7 +182,9 @@ function setFiltersOpen(open, { remember = true } = {}) {
   const body = document.getElementById('filters-body');
   if (!toggle || !body) return;
   toggle.setAttribute('aria-expanded', String(open));
-  body.hidden = !open;
+  // Fechado: altura zero (a sanfona anima no CSS) e inerte, sem foco nem toque lá dentro
+  body.classList.toggle('is-closed', !open);
+  body.inert = !open;
   if (remember) storage.set(OPEN_KEY, open);
 }
 
@@ -195,7 +199,9 @@ export function initChipFilters() {
   // Recolhido por padrão: o resumo diz o que está valendo; abrir fica lembrado
   setFiltersOpen(storage.get(OPEN_KEY, false) === true, { remember: false });
   document.getElementById('filters-toggle')?.addEventListener('click', () => {
-    setFiltersOpen(document.getElementById('filters-body').hidden);
+    // Só o toque da pessoa anima; o estado lembrado, ao abrir o app, entra parado
+    document.getElementById('filters-body').classList.add('is-animated');
+    setFiltersOpen(document.getElementById('filters-toggle').getAttribute('aria-expanded') !== 'true');
   });
   loadProviderLogos();
 }

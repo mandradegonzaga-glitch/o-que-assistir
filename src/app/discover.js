@@ -8,7 +8,7 @@ import { session, state } from '../state/appState.js';
 import { showToast } from '../ui/feedback.js';
 import { drawReveal, endDrawReveal } from '../ui/drawReveal.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
-import { MEDIA_KIND, getTmdbEndpoint, getTitle } from '../domain/mediaItem.js';
+import { MEDIA_KIND, getTmdbEndpoint, getTitle, getYear } from '../domain/mediaItem.js';
 import { debounce } from '../utils/debounce.js';
 import { personPhoto, posterImg } from '../ui/icons.js';
 import { on } from '../state/events.js';
@@ -319,25 +319,37 @@ function renderResults(list, rank=false, { caption = '', empty = '' } = {}) {
         return;
     }
 
+    const seenIds = new Set((session.user?.history || []).map(h => h.id));
     list.forEach((f, i) => {
         if(f.poster_path) {
             const title = getTitle(f);
+            const seen = seenIds.has(f.id);
             const rating = f.vote_average ? formatRating(f.vote_average) : '';
             const premiere = isRecentRelease(f, state.type);
             const item = document.createElement('button');
             item.type = 'button';
             item.className = 'result-item';
-            item.setAttribute('aria-label', [title, rank && `posição ${i+1}`, rating && `nota ${rating}`, premiere && 'estreia'].filter(Boolean).join(', '));
+            item.setAttribute('aria-label', [title, rank && `posição ${i+1}`, rating && `nota ${rating}`, premiere && 'estreia', seen && 'já visto'].filter(Boolean).join(', '));
             item.dataset.action = 'carregarDetalhes';
             item.dataset.id = f.id;
             item.dataset.media = state.type;
+            item.style.setProperty('--i', Math.min(i, 9)); // entrada em sequência (CSS), até o 10º
 
+            const year = getYear(f);
+            // Os selos ficam presos ao pôster (o nome e o ano vêm embaixo dele)
+            const bottom = [
+                premiere && '<span class="poster-badge poster-badge--premiere">Estreia</span>',
+                seen && '<span class="poster-badge poster-badge--seen">Já vi</span>',
+            ].filter(Boolean).join('');
             item.innerHTML = `
-                ${rank ? `<span class="result-rank">${i+1}º</span>` : ''}
-                ${rating ? `<span class="poster-badge poster-badge--rating" aria-hidden="true">${POSTER_STAR}${rating}</span>` : ''}
-                ${premiere ? '<span class="poster-badge poster-badge--premiere" aria-hidden="true">Estreia</span>' : ''}
-                ${posterImg(f.poster_path, { alt: escapeHtml(title) })}
-                <span class="result-title-preview">${escapeHtml(title)}</span>
+                <span class="result-item__poster">
+                    ${rank ? `<span class="result-rank">${i+1}º</span>` : ''}
+                    ${rating ? `<span class="poster-badge poster-badge--rating" aria-hidden="true">${POSTER_STAR}${rating}</span>` : ''}
+                    ${bottom ? `<span class="poster-badges" aria-hidden="true">${bottom}</span>` : ''}
+                    ${posterImg(f.poster_path, { alt: escapeHtml(title) })}
+                </span>
+                <span class="result-item__name" aria-hidden="true">${escapeHtml(title)}</span>
+                ${year ? `<span class="result-item__year" aria-hidden="true">${year}</span>` : ''}
             `;
 
             area.appendChild(item);

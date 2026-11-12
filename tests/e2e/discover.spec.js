@@ -312,3 +312,41 @@ test.describe('selos no pôster', () => {
     expect(rank.x + rank.width).toBeLessThan(badge.x);
   });
 });
+
+// Repasse da etapa 4: o que a pessoa já viu ganha o selo "Já vi" no pôster (o sorteio já deixa de fora;
+// a busca e as listas não avisavam)
+test('selo "Já vi" no pôster do que já foi visto', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('guest_history', JSON.stringify([{ id: 2, title: 'Filme Dois', poster: '/2.jpg', type: 'movie' }])));
+  await enterAsGuest(page);
+  await page.locator('#btn-top10').click();
+  const seen = page.locator('#results-area .result-item[data-id="2"]');
+  await expect(seen.locator('.poster-badge--seen')).toHaveText('Já vi');
+  await expect(seen).toHaveAttribute('aria-label', /, já visto$/);
+  await expect(page.locator('#results-area .result-item[data-id="1"] .poster-badge--seen')).toHaveCount(0);
+});
+
+// Resultados entrando em sequência (efeito do clleancode, repasse da etapa 4): 30 ms entre um e
+// outro, no máximo 10 de espera; com "reduzir movimento", todos juntos e sem animar
+test.describe('resultados em sequência', () => {
+  const timing = page => page.locator('#results-area .result-item').evaluateAll(els => els.map(el => {
+    const cs = getComputedStyle(el);
+    return { name: cs.animationName, delay: parseFloat(cs.animationDelay) };
+  }));
+
+  test('cada pôster entra um pouco depois do anterior', async ({ page }) => {
+    await enterAsGuest(page);
+    await page.locator('#btn-top10').click();
+    await expect(page.locator('#results-area .result-item')).toHaveCount(5);
+    const t = await timing(page);
+    expect(t.every(x => x.name === 'result-in')).toBe(true);
+    expect(t.map(x => x.delay)).toEqual([0, 0.03, 0.06, 0.09, 0.12]);
+  });
+
+  test('com "reduzir movimento", sem animação', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await enterAsGuest(page);
+    await page.locator('#btn-top10').click();
+    await expect(page.locator('#results-area .result-item')).toHaveCount(5);
+    expect((await timing(page)).every(x => x.name === 'none')).toBe(true);
+  });
+});

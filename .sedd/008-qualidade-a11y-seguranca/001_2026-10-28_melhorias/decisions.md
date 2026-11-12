@@ -550,6 +550,20 @@ Regras combinadas: cada etapa numa branch `redesign/etapa-N`, com commit e envio
 **Alternativas consideradas:**
 - Seguir corrigindo cada caso especial no lugar → o mesmo tipo de bug voltaria em cada tela nova.
 
+## D001-055 — Filtros sempre à vista, nota mínima, "Já vi" no pôster e a sanfona do clleancode
+
+**Data:** 2026-11-11 · **Tarefa:** T001-143
+
+**Decisão (aprovada pelo usuário):**
+- Nenhuma fileira de pílulas rola escondida: tudo quebra de linha (o mesmo defeito das temporadas).
+- Nome e ano sempre embaixo do pôster nas grades (no toque não há "passar o mouse").
+- "Já vi" avisa no pôster em vez de esconder o título (o sorteio já deixa de fora o que foi visto).
+- Sanfona animando até `auto` com `interpolate-size`/`::details-content`, sem medir altura no JS; quem não suporta abre na hora. Só anima depois do primeiro toque, para o estado lembrado não "fechar sozinho" ao abrir o app.
+
+**Alternativas consideradas:**
+- "N títulos encontrados" ao vivo → uma chamada a mais ao TMDB por filtro trocado; fora.
+- Filtros numa gaveta com abas (MasterClass) e atalhos em blocos (Showcase) → repetiriam o que já existe.
+
 ## D001-054 — Efeitos do clleancode na abertura e no "Parecidos"
 
 **Data:** 2026-11-11 · **Tarefa:** T001-142

@@ -5,6 +5,7 @@ export const FILTER_FIELDS = {
   mood: 'input-mood',
   provider: 'input-provider',
   duration: 'duration-select',
+  rating: 'input-rating',
   similar: 'input-similar',
   yearFrom: 'year-from',
   yearTo: 'year-to',

@@ -223,6 +223,7 @@
                         <span id="filters-summary" class="section-toggle__summary"></span>
                         <span class="section-toggle__caret" aria-hidden="true"></span>
                     </button>
+                    <button type="button" id="filters-clear" class="help-link" data-action="limparFiltros" hidden>Limpar filtros</button>
                     <button type="button" class="help-link" data-action="openHelp" data-arg="guia-filtros">Como funcionam?</button>
                 </div>
                 <div id="filters-body" class="filters-body">
@@ -286,6 +287,17 @@
                     </select>
                 </div>
 
+                <div class="chip-field">
+                    <span class="chip-field__label" id="chips-input-rating-label">Nota mínima</span>
+                    <div class="chip-group" data-chips-for="input-rating" role="radiogroup" aria-labelledby="chips-input-rating-label"></div>
+                    <select hidden id="input-rating" class="input-dark" aria-label="Nota mínima">
+                    <option value="">Nota: Qualquer</option>
+                    <option value="6">Nota 6+</option>
+                    <option value="7">Nota 7+</option>
+                    <option value="8">Nota 8+</option>
+                    </select>
+                </div>
+
                 <details class="more-filters" id="more-filters">
                     <summary class="more-filters__summary">
                         <span>Mais filtros</span>
@@ -294,13 +306,14 @@
                     </summary>
                     <div class="more-filters__body">
                         <div class="input-wrapper actor-field">
-                        <input type="text" id="actor-input" class="input-dark" placeholder="Com qual ator/diretor? (Ex: Wagner Moura)" data-input="buscarPessoa" aria-label="Buscar ator ou diretor" aria-autocomplete="list" aria-controls="actor-list">
+                        <input type="text" id="actor-input" class="input-dark" placeholder="Ator ou diretor" data-input="buscarPessoa" aria-label="Buscar ator ou diretor" aria-describedby="hint-actor" aria-autocomplete="list" aria-controls="actor-list">
                         <button class="input-clear" data-action="clearInput" data-arg="actor-input" aria-label="Limpar busca"><svg class="ph icon-x" data-icon="x" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M208.49,191.51a12,12,0,0,1-17,17L128,145,64.49,208.49a12,12,0,0,1-17-17L111,128,47.51,64.49a12,12,0,0,1,17-17L128,111l63.51-63.52a12,12,0,0,1,17,17L145,128Z"/></svg></button>
                         <div id="actor-list" class="suggestions-box" role="listbox" aria-label="Sugestões de atores"></div>
                         <button type="button" id="selected-person" class="selected-pill" data-action="limparPessoa" aria-label="Remover pessoa selecionada"><span id="person-name">Nome</span> <svg class="ph icon-x" data-icon="x" aria-hidden="true" focusable="false" viewBox="0 0 256 256" fill="currentColor"><path d="M208.49,191.51a12,12,0,0,1-17,17L128,145,64.49,208.49a12,12,0,0,1-17-17L111,128,47.51,64.49a12,12,0,0,1,17-17L128,111l63.51-63.52a12,12,0,0,1,17,17L145,128Z"/></svg></button>
                         </div>
-                        <input type="text" id="input-similar" class="input-dark mt-12" placeholder="Parecido com… (Ex: Breaking Bad)" aria-label="Buscar similares a um título" aria-describedby="hint-similar">
-                        <p id="hint-similar" class="field-hint">Digite um título de que você gostou para receber recomendações parecidas.</p>
+                        <p id="hint-actor" class="field-hint">Por exemplo, Wagner Moura ou Fernanda Montenegro.</p>
+                        <input type="text" id="input-similar" class="input-dark mt-12" placeholder="Parecido com…" aria-label="Buscar similares a um título" aria-describedby="hint-similar">
+                        <p id="hint-similar" class="field-hint">Um título de que você gostou, como Breaking Bad, para receber parecidos.</p>
                         <label class="more-filters__label" for="input-country">País de origem</label>
                         <select id="input-country" class="input-dark" aria-label="Selecionar país de origem" aria-describedby="hint-country">
                         <option value="">País: Qualquer</option>

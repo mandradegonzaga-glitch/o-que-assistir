@@ -1598,30 +1598,25 @@ header {
     }
 }
 
-.result-title-preview {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: var(--space-lg) var(--space-sm) var(--space-sm);
-    background: linear-gradient(to top, color-mix(in srgb, var(--bg-deep) 95%, transparent) 0%, transparent 100%);
+/* Nome e ano embaixo do pôster, sempre (antes só passando o mouse; no celular, nada) */
+.result-item__name {
+    display: -webkit-box;
+    margin-top: var(--space-sm);
+    overflow: hidden;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     color: var(--text-primary);
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-align: center;
+    font-size: 0.82rem;
+    font-weight: 500;
     line-height: 1.3;
-    opacity: 0;
-    transform: translateY(8px);
-    transition: opacity var(--duration-normal) var(--ease-smooth),
-                transform var(--duration-normal) var(--ease-smooth);
-    border-radius: 0 0 var(--radius-md) var(--radius-md);
 }
 
-@media (hover: hover) and (pointer: fine) {
-    .result-item:hover .result-title-preview {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.result-item__year {
+    display: block;
+    margin-top: 2px;
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
 }
 
 .result-rank {
@@ -1672,11 +1667,32 @@ header {
     color: var(--accent-gold);
 }
 
-.poster-badge--premiere {
-    bottom: 6px;
+.result-item__poster {
+    position: relative;
+    display: block;
+}
+
+/* Canto de baixo do pôster: "Estreia" e "Já vi", lado a lado quando há os dois */
+.poster-badges {
+    position: absolute;
     left: 6px;
+    bottom: 6px;
+    z-index: 1;
+    display: flex;
+    gap: 4px;
+}
+
+.poster-badges .poster-badge { position: static; }
+
+.poster-badge--premiere {
     background: var(--accent-primary);
     color: var(--accent-on);
+}
+
+/* Já visto: verde, o estado bom (DESIGN.md) */
+.poster-badge--seen {
+    background: var(--accent-success);
+    color: var(--bg-deep);
 }
 
 /* ==================== LIBRARY SECTION ==================== */
@@ -4197,9 +4213,6 @@ button:focus-visible,
     text-align: left;
 }
 
-.result-title-preview {
-    display: block;
-}
 
 /* ==================== IDENTIDADE: LETREIRO ==================== */
 /* Títulos e o ingresso falam a língua do cartaz: condensada e pesada. Botões e rótulos ficam na fonte de texto (DESIGN.md) */
@@ -6634,20 +6647,8 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
     gap: var(--space-sm);
 }
 
-/* Clima e Onde assistir: uma fileira que rola para o lado (no celular, não empurra a página) */
-.chip-group[data-chips-for="input-mood"],
-.chip-group[data-chips-for="input-provider"] {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding: 2px 2px var(--space-xs);
-    margin: -2px -2px 0;
-    scrollbar-width: none;
-}
-
-.chip-group[data-chips-for="input-mood"]::-webkit-scrollbar,
-.chip-group[data-chips-for="input-provider"]::-webkit-scrollbar {
-    display: none;
-}
+/* Clima e Onde assistir quebram de linha como os outros: antes rolavam de lado e cortavam na
+   borda ("Para cho…", o logo do Disney+), sem como rolar com o mouse (repasse da etapa 4) */
 
 .chip {
     flex-shrink: 0;
@@ -6958,12 +6959,49 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
     border-radius: var(--radius-sm);
 }
 
+/* Sanfona (efeito do FAQ do clleancode): a altura vai de 0 até o tamanho do conteúdo em 0,45 s e
+   o conteúdo aparece logo depois. Sem medir no JS: interpolate-size deixa animar até "auto".
+   Navegador sem suporte (Safari, hoje) abre e fecha na hora, como antes. */
+:root { interpolate-size: allow-keywords; }
+
 .filters-body {
     margin-top: var(--space-md);
+    height: auto;
+    overflow: clip;
 }
 
-.filters-body[hidden] {
-    display: none;
+.filters-body.is-closed {
+    height: 0;
+    margin-top: 0;
+    opacity: 0;
+}
+
+/* só depois do primeiro toque (o estado lembrado, ao abrir o app, entra parado) */
+.filters-body.is-animated {
+    transition: height 0.45s var(--ease-out), margin-top 0.45s var(--ease-out), opacity 0.35s var(--ease-out) 0.08s;
+}
+
+.filters-body.is-animated.is-closed {
+    transition: height 0.45s var(--ease-out), margin-top 0.45s var(--ease-out), opacity 0.2s var(--ease-out);
+}
+
+/* "Mais filtros" (<details>): a mesma sanfona no conteúdo */
+.more-filters::details-content {
+    height: 0;
+    overflow: clip;
+    opacity: 0;
+    transition: height 0.45s var(--ease-out), opacity 0.35s var(--ease-out), content-visibility 0.45s allow-discrete;
+}
+
+.more-filters[open]::details-content {
+    height: auto;
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .filters-body.is-animated,
+    .filters-body.is-animated.is-closed,
+    .more-filters::details-content { transition: none; }
 }
 
 /* ---------- Top 10 e Lançamentos: abertos ficam marcados; "Fechar" ao lado ---------- */
@@ -7712,5 +7750,21 @@ button, a, summary, [role="button"], [role="tab"], [role="radio"], .chip, .fun-m
     letter-spacing: var(--letter-spacing-tight);
     text-transform: uppercase;
     color: var(--accent-text);
+}
+
+/* Resultados entrando em sequência (efeito do clleancode, repasse da etapa 4): cada pôster sobe
+   8px e aparece, 30 ms depois do anterior (no máximo 10 esperam: tudo pronto em < 0,5 s).
+   "backwards": depois de entrar não sobra transform, e o efeito 3D do mouse segue funcionando. */
+#results-area .result-item {
+    animation: result-in 0.3s var(--ease-out) backwards;
+    animation-delay: calc(var(--i, 0) * 30ms);
+}
+
+@keyframes result-in {
+    from { opacity: 0; transform: translateY(8px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #results-area .result-item { animation: none; }
 }
 

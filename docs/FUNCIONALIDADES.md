@@ -365,6 +365,7 @@ Use este documento para verificar se todas as funcionalidades estão funcionando
 - [ ] Link de título na primeira visita: o título abre antes das boas-vindas
 - [ ] Biblioteca: abertura em cartões com pilha de pôsteres (leque ao tocar) e contagem; "Editar" para remover; filtro por tipo; nota embaixo do pôster; "Sair" no perfil
 - [ ] Abertura do app com a pilha de ingressos/pôsteres (uma vez por sessão; tocar pula) e "Parecidos" em carrossel em disco
+- [ ] Filtros: nota mínima, "Limpar filtros", tudo à vista (sem fileira cortada), sanfona; busca com nome, ano e selo "Já vi"
 - [ ] Sorteio em baralho de ingressos: embaralha, vira no sorteado e vibra no celular
 - [ ] Gavetas no celular: janelas sobem de baixo e fecham puxando a alça para baixo
 - [ ] Filme, Série e Dorama em 3 pílulas numa fileira, a escolhida na cor do tipo

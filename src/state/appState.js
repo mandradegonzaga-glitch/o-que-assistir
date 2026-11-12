@@ -6,7 +6,7 @@ export const state = { mode: 'discover', type: 'movie', filters: emptyFilters(),
 
 // Os filtros de descobrir. Só app/filters.js (setFilters) troca; os outros leem.
 export function emptyFilters() {
-  return { genre: '', mood: '', provider: '', duration: '', similar: '', yearFrom: '', yearTo: '', country: '', personId: null, personName: '' };
+  return { genre: '', mood: '', provider: '', duration: '', rating: '', similar: '', yearFrom: '', yearTo: '', country: '', personId: null, personName: '' };
 }
 
 // Episódios da série aberta na página do título
